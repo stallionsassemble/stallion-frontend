@@ -47,26 +47,23 @@ const cards = [
 ];
 
 const HeroCards = () => {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   const getCardStyle = (index: number) => {
-    const isHovered = hoveredIndex === index;
-    const isLeft = hoveredIndex !== null && index < hoveredIndex;
-    const isRight = hoveredIndex !== null && index > hoveredIndex;
-
-    // Base rotation
+    // Rotation: Straighten all cards on hover
     const rotate = isHovered ? "0deg" : cards[index].initialRotate;
 
-    // Spacing shift
-    let translateX = 0;
-    if (isLeft) translateX = -180;
-    if (isRight) translateX = 180;
+    // Spacing: Spread all cards out from the center on hover
+    // Index 2 is center. 
+    // We add extra spacing based on distance from center.
+    const spreadFactor = 130;
+    const translateX = isHovered ? (index - 2) * spreadFactor : 0;
 
-    // Scale
-    const scale = isHovered ? 1.1 : 1;
+    // Scale: Keep uniform
+    const scale = 1;
 
-    // Z-Index: Hovered card always on top
-    const zIndex = isHovered ? 100 : cards[index].zIndex;
+    // Z-Index: Keep original layering (center on top)
+    const zIndex = cards[index].zIndex;
 
     return {
       left: "50%",
@@ -78,17 +75,19 @@ const HeroCards = () => {
   };
 
   return (
-    <div className="relative w-[1400px] h-[600px] mx-auto hidden md:block origin-center scale-[0.6] lg:scale-[0.8] xl:scale-100 overflow-visible transition-transform duration-300">
+    <div
+      className="relative w-[1400px] h-[600px] mx-auto hidden md:block origin-center scale-[0.6] lg:scale-[0.8] xl:scale-100 overflow-visible transition-transform duration-300"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {cards.map((card, index) => (
         <div
           key={index}
-          className="absolute w-[276px] h-[357px] rounded-[30px] overflow-hidden transition-all duration-300"
+          className="absolute w-[276px] h-[357px] rounded-[30px] overflow-hidden transition-all duration-500 ease-out"
           style={{
             ...getCardStyle(index),
             cursor: 'pointer'
           }}
-          onMouseEnter={() => setHoveredIndex(index)}
-          onMouseLeave={() => setHoveredIndex(null)}
         >
           <Image
             src={card.src}
