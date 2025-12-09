@@ -20,25 +20,35 @@ export const GsapWrapper = ({ children, className = "", delay = 0 }: GsapWrapper
     const element = containerRef.current;
     if (!element) return;
 
-    gsap.fromTo(
-      element,
-      {
-        y: 50,
-        opacity: 0,
-      },
-      {
-        y: 0,
-        opacity: 1,
-        duration: 1,
-        ease: "power3.out",
-        delay: delay,
-        scrollTrigger: {
-          trigger: element,
-          start: "top 85%", // Trigger when top of element hits 85% of viewport height
-          toggleActions: "play none none reverse",
+    const mm = gsap.matchMedia();
+
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.fromTo(
+        element,
+        {
+          y: 50,
+          opacity: 0,
         },
-      }
-    );
+        {
+          y: 0,
+          opacity: 1,
+          duration: 1,
+          ease: "power3.out",
+          delay: delay,
+          scrollTrigger: {
+            trigger: element,
+            start: "top 85%", // Trigger when top of element hits 85% of viewport height
+            toggleActions: "play none none reverse",
+          },
+        }
+      );
+    });
+
+    mm.add("(prefers-reduced-motion: reduce)", () => {
+      // Ensure visible without animation
+      gsap.set(element, { opacity: 1, y: 0 });
+    });
+
   }, { scope: containerRef });
 
   return (

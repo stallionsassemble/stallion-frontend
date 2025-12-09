@@ -1,7 +1,12 @@
 "use client";
 
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from 'next/image';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const cards = [
   {
@@ -47,43 +52,60 @@ const cards = [
 ];
 
 const HeroCards = () => {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    ScrollTrigger.create({
+      trigger: document.body, // Use body to detect global scroll from top
+      start: "top top-=50",   // Trigger after scrolling down 50px
+      onEnter: () => setIsExpanded(true),
+      onLeaveBack: () => setIsExpanded(false), // Re-stack when scrolling back to very top
+      // We don't use 'once: true' so it toggles
+    });
+  }, { scope: containerRef });
 
   const getCardStyle = (index: number) => {
-    // Rotation: Straighten all cards on hover
-    const rotate = isHovered ? "0deg" : cards[index].initialRotate;
+    if (!isExpanded) {
+      // Stacked State (Now the "Initial Fan" state as requested)
+      // This matches the "Expanded" state from before (Manual offsets + rotations)
+      return {
+        left: "50%",
+        marginLeft: cards[index].marginLeft,
+        top: cards[index].initialTop,
+        transform: `rotate(${cards[index].initialRotate}) translateX(0px) scale(0.95)`,
+        zIndex: cards[index].zIndex,
+      };
+    }
 
-    // Spacing: Spread all cards out from the center on hover
-    // Index 2 is center. 
-    // We add extra spacing based on distance from center.
-    const spreadFactor = 130;
-    const translateX = isHovered ? (index - 2) * spreadFactor : 0;
-
-    // Scale: Keep uniform
-    const scale = 1;
-
-    // Z-Index: Keep original layering (center on top)
-    const zIndex = cards[index].zIndex;
+    // Expanded State (Spaced out further)
+    // We add extra spacing to the existing manual margins
+    const extraSpread = 120; // Increased to 120px for wider spread
+    const spreadOffset = (index - 2) * extraSpread;
 
     return {
       left: "50%",
       marginLeft: cards[index].marginLeft,
       top: cards[index].initialTop,
-      transform: `rotate(${rotate}) translateX(${translateX}px) scale(${scale})`,
-      zIndex: zIndex,
+      transform: `rotate(0deg) translateX(${spreadOffset}px) scale(1)`,
+      zIndex: cards[index].zIndex,
     };
   };
 
   return (
     <div
-      className="relative w-[1400px] h-[600px] mx-auto hidden md:block origin-center scale-[0.6] lg:scale-[0.8] xl:scale-100 overflow-visible transition-transform duration-300"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      ref={containerRef}
+      className="relative w-[1400px] h-[600px] mx-auto hidden md:block origin-center scale-[0.6] lg:scale-[0.8] xl:scale-100 overflow-visible"
+      onMouseEnter={() => setIsExpanded(true)}
+      onMouseLeave={() => setIsExpanded(false)}
     >
       {cards.map((card, index) => (
         <div
           key={index}
-          className="absolute w-[276px] h-[357px] rounded-[30px] overflow-hidden transition-all duration-500 ease-out"
+          className="absolute w-[276px] h-[357px] rounded-[30px] overflow-hidden transition-all duration-1000 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
           style={{
             ...getCardStyle(index),
             cursor: 'pointer'

@@ -1,8 +1,78 @@
 "use client";
 
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
+
+function HorizontalMarquee({
+  children,
+  direction = "left",
+  speed = 20,
+  className
+}: {
+  children: React.ReactNode,
+  direction?: "left" | "right",
+  speed?: number,
+  className?: string
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    const list = listRef.current;
+    if (!list) return;
+
+    const mm = gsap.matchMedia();
+
+    // Calculate initial xPercent based on direction
+    // If direction is left: animate 0 -> -50
+    // If direction is right: animate -50 -> 0 (so it looks like moving right continuously)
+    const fromX = direction === "left" ? 0 : -50;
+    const toX = direction === "left" ? -50 : 0;
+
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.set(list, { xPercent: fromX });
+
+      const tl = gsap.to(list, {
+        xPercent: toX,
+        ease: "none",
+        duration: speed,
+        repeat: -1,
+      });
+
+      const pause = () => tl.pause();
+      const play = () => tl.play();
+
+      containerRef.current?.addEventListener("mouseenter", pause);
+      containerRef.current?.addEventListener("mouseleave", play);
+
+      return () => {
+        containerRef.current?.removeEventListener("mouseenter", pause);
+        containerRef.current?.removeEventListener("mouseleave", play);
+      };
+    });
+
+    mm.add("(prefers-reduced-motion: reduce)", () => {
+      gsap.set(list, { xPercent: 0 });
+    });
+
+  }, { scope: containerRef, dependencies: [direction, speed] });
+
+  return (
+    <div className={`relative w-full overflow-hidden ${className}`} ref={containerRef}>
+      {/* Left Gradient Mask */}
+      <div className="absolute top-0 left-0 h-full w-24 bg-linear-to-r from-[#020617] to-transparent z-10 pointer-events-none" />
+      {/* Right Gradient Mask */}
+      <div className="absolute top-0 right-0 h-full w-24 bg-linear-to-l from-[#020617] to-transparent z-10 pointer-events-none" />
+
+      <div ref={listRef} className="flex gap-[29px] w-max will-change-transform px-4">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export function RecentWins() {
   const [mobileIndex, setMobileIndex] = useState(0);
@@ -50,9 +120,51 @@ export function RecentWins() {
       winner: "Sandipsinh",
       company: "Forge Code",
     },
+    // Adding more valid dummy data to make the scrolling list longer since we are splitting it
+    {
+      id: 7,
+      title: "Solana Indexer",
+      amount: "$1,200 USDC",
+      winner: "Sarah",
+      company: "Solana Fdn",
+    },
+    {
+      id: 8,
+      title: "Rust Smart Contract",
+      amount: "$3,000 USDC",
+      winner: "Alex",
+      company: "Near Protocol",
+    },
+    {
+      id: 9,
+      title: "DeFi Dashboard",
+      amount: "$1,800 USDC",
+      winner: "Maria",
+      company: "Uniswap",
+    },
+    {
+      id: 10,
+      title: "NFT Marketplace",
+      amount: "$2,200 USDC",
+      winner: "John",
+      company: "OpenSea",
+    },
   ];
 
-  // Chunk wins into groups of 3 for mobile
+  // Highlights: First 3
+  const highlightedWins = wins.slice(0, 3);
+  // Scrolling: Rest
+  const scrollingWinsBase = wins.slice(3);
+
+  // Duplicate scrolling data for seamless loop
+  const marqueeData = [...scrollingWinsBase, ...scrollingWinsBase, ...scrollingWinsBase];
+
+  // Row Data for Marquees (Identical for now, could be offset)
+  const row1Marquee = marqueeData;
+  const row2Marquee = marqueeData;
+  const row3Marquee = marqueeData;
+
+  // Chunk for mobile (using all wins)
   const chunkSize = 3;
   const chunks = [];
   for (let i = 0; i < wins.length; i += chunkSize) {
@@ -67,8 +179,12 @@ export function RecentWins() {
     setMobileIndex((prev) => (prev - 1 + chunks.length) % chunks.length);
   };
 
-  const renderCard = (win: typeof wins[0], index: number) => {
-    const isHighlighted = index < 3;
+  const renderCard = (win: typeof wins[0], index: number, forceHighlight: boolean = false) => {
+    // Determine highlighting:
+    // If it's in the static section (forceHighlight=true), it's highlighted.
+    // If it's in the marquee, it is standard (not highlighted).
+    const isHighlighted = forceHighlight;
+
     const badgeBgClass = isHighlighted ? "bg-blue" : "bg-[#06022C]";
     const winnerClass = isHighlighted ? 'text-[#D2D1FA]' : 'text-[#FAFAFA]'
 
@@ -85,7 +201,7 @@ export function RecentWins() {
 
     return (
       <div
-        key={win.id}
+        key={`${win.id}-${index}`}
         className={`relative rounded-xl p-3 w-[301.98px] h-[83.27px] md:w-[325px] md:h-[90px] flex flex-col justify-center overflow-visible shrink-0 transition-all duration-300 ${!isHighlighted ? 'border-[0.9px] border-[#292537] hover:border-[#007AFF]' : ''}`}
         style={cardStyle}
       >
@@ -129,15 +245,44 @@ export function RecentWins() {
   };
 
   return (
-    <section className="container mx-auto py-20 text-center">
+    <section className="py-20 text-center overflow-hidden">
 
       {/* Desktop View */}
-      <div className="hidden md:flex flex-wrap justify-center gap-x-[29px] gap-y-[40px]">
-        {wins.map((win, index) => renderCard(win, index))}
+      <div className="hidden md:flex flex-col gap-10 w-full px-4">
+
+        {/* Row 1: Static #1 + Scroll Left */}
+        <div className="flex items-center gap-[29px] w-full">
+          <div className="shrink-0 z-20">
+            {renderCard(highlightedWins[0], 0, true)}
+          </div>
+          <HorizontalMarquee direction="left" speed={40} className="flex-1 mask-gradient">
+            {row1Marquee.map((win, index) => renderCard(win, index, false))}
+          </HorizontalMarquee>
+        </div>
+
+        {/* Row 2: Static #2 + Scroll Right */}
+        <div className="flex items-center gap-[29px] w-full">
+          <div className="shrink-0 z-20">
+            {renderCard(highlightedWins[1], 1, true)}
+          </div>
+          <HorizontalMarquee direction="right" speed={45} className="flex-1 mask-gradient">
+            {row2Marquee.map((win, index) => renderCard(win, index + 100, false))}
+          </HorizontalMarquee>
+        </div>
+
+        {/* Row 3: Static #3 + Scroll Left */}
+        <div className="flex items-center gap-[29px] w-full">
+          <div className="shrink-0 z-20">
+            {renderCard(highlightedWins[2], 2, true)}
+          </div>
+          <HorizontalMarquee direction="left" speed={35} className="flex-1 mask-gradient">
+            {row3Marquee.map((win, index) => renderCard(win, index + 200, false))}
+          </HorizontalMarquee>
+        </div>
       </div>
 
-      {/* Mobile View */}
-      <div className="md:hidden flex flex-col items-center w-full">
+      {/* Mobile View: Carousel (Unchanged) */}
+      <div className="md:hidden flex flex-col items-center w-full container mx-auto">
         <div className="flex flex-row items-center justify-center gap-3 w-full mb-8">
           {/* Prev Arrow */}
           <button
@@ -154,7 +299,8 @@ export function RecentWins() {
             {chunks[mobileIndex].map((win) => {
               // Calculate original index to maintain styling logic
               const originalIndex = wins.findIndex(w => w.id === win.id);
-              return renderCard(win, originalIndex);
+              // Reuse renderCard. For mobile we preserve the visual "top 3 highlighted" logic from the original list.
+              return renderCard(win, originalIndex, originalIndex < 3);
             })}
           </div>
 
