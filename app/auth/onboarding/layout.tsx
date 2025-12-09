@@ -19,13 +19,7 @@ export default function OnboardingLayout({
   return (
     <div className="min-h-screen  font-sans text-white">
       {/* BACKGROUND GRID */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0 opacity-20"
-        style={{
-          backgroundImage: "url('/grid-bg.png')",
-          backgroundRepeat: "repeat",
-        }}
-      />
+
 
       {/* HEADER */}
       <header className="relative z-10 flex items-center justify-between px-6 py-6 md:px-12">

@@ -202,7 +202,7 @@ export function RecentWins() {
     return (
       <div
         key={`${win.id}-${index}`}
-        className={`relative rounded-xl p-3 w-[301.98px] h-[83.27px] md:w-[325px] md:h-[90px] flex flex-col justify-center overflow-visible shrink-0 transition-all duration-300 ${!isHighlighted ? 'border-[0.9px] border-[#292537] hover:border-[#007AFF]' : ''}`}
+        className={`relative rounded-xl p-3 w-[80vw] max-w-[301.98px] h-[83.27px] md:w-[325px] md:h-[90px] flex flex-col justify-center overflow-visible shrink-0 transition-all duration-300 ${!isHighlighted ? 'border-[0.9px] border-[#292537] hover:border-[#007AFF]' : ''}`}
         style={cardStyle}
       >
         {/* Price Badge */}

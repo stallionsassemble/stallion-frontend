@@ -38,7 +38,7 @@ export const GsapWrapper = ({ children, className = "", delay = 0 }: GsapWrapper
           scrollTrigger: {
             trigger: element,
             start: "top 85%", // Trigger when top of element hits 85% of viewport height
-            toggleActions: "play none none reverse",
+            toggleActions: "play none none none",
           },
         }
       );

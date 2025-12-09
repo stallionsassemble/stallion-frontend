@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Manrope, Space_Grotesk, Syne, Poppins } from "next/font/google";
+import { Inter, Manrope, Poppins, Space_Grotesk, Syne } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -41,9 +41,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${syne.variable} ${spaceGrotesk.variable} ${manrope.variable} ${poppins.variable} font-sans antialiased`}
+        className={`${inter.variable} ${syne.variable} ${spaceGrotesk.variable} ${manrope.variable} ${poppins.variable} font-sans antialiased relative bg-[#04020e] overflow-x-hidden`}
       >
-        {children}
+        {/* GLOBAL GRID OVERLAY */}
+        <div
+          className="fixed inset-0 pointer-events-none z-0 opacity-20"
+          style={{
+            backgroundImage: "url('/grid-bg.png')",
+            backgroundRepeat: "repeat",
+            backgroundSize: "auto"
+          }}
+        />
+        <div className="relative z-10">
+          {children}
+        </div>
       </body>
     </html>
   );

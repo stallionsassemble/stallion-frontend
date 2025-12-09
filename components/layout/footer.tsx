@@ -29,7 +29,11 @@ export function Footer() {
         </Link>
       </div>
 
-      <div className="p-5 flex flex-col md:flex-row gap-3 justify-center md:bg-[linear-gradient(135deg,#000000_0%,#09090B_100%)]">
+      <div className="p-5 flex flex-col md:flex-row gap-3 justify-center md:bg-transparent"
+        style={{
+          borderTop: "0.79px solid #FFFFFF1A",
+          borderBottom: "0.79px solid #FFFFFF1A"
+        }}>
         <div className="mx-auto md:mx-0">
           <p className="font-inter text-sm font-normal text-white tracking-[-0.32px] flex items-center justify-center gap-2 border border-[#71717A] rounded-[8px] w-[200px] h-[48px]">
             <Phone color="white" className="w-4 h-4" />
