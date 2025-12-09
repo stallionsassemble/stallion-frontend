@@ -3,9 +3,33 @@
 import { AuthRightSection } from "@/components/auth/auth-right-section";
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { loginSchema, LoginValues } from "@/lib/schemas/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useForm } from "react-hook-form";
 
 export default function LoginPage() {
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  function onSubmit(data: LoginValues) {
+    console.log(data);
+    // Add login logic here
+  }
+
   return (
     <AuthSplitLayout rightContent={<AuthRightSection variant="bounties" />}>
       <div className="space-y-2">
@@ -42,23 +66,27 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <form className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium text-white">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="name@email.com"
-              className="flex h-12 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-white">Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="name@email.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <Button className="h-12 w-full rounded-lg bg-blue text-white hover:bg-[#0066CC]">
-            Continue with Email
-          </Button>
-        </form>
+            <Button type="submit" className="h-12 w-full rounded-lg bg-blue text-white hover:bg-[#0066CC]">
+              Continue with Email
+            </Button>
+          </form>
+        </Form>
       </div>
 
       <div className="text-sm text-gray-400">

@@ -1,7 +1,13 @@
 
 "use client";
 
-import { ChevronDown, Linkedin, Mail, X, Youtube } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, Linkedin, LogOut, Mail, X, Youtube } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -32,14 +38,25 @@ export default function OnboardingLayout({
             className="h-auto w-28 object-contain"
           />
         </Link>
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          {/* Mock User Dropdown */}
-          <div className="h-6 w-6 rounded-full bg-gray-700 overflow-hidden">
-            {/* Placeholder for avatar */}
-          </div>
-          <span>tundeojo@earnstallion.com</span>
-          <ChevronDown className="h-4 w-4" />
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex cursor-pointer items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+              <div className="h-6 w-6 rounded-full bg-gray-700 overflow-hidden">
+                {/* Placeholder for avatar */}
+              </div>
+              <span className="hidden md:inline">tundeojo@earnstallion.com</span>
+              <ChevronDown className="h-4 w-4" />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 bg-[#090715] border-white/10 text-white">
+            <DropdownMenuItem asChild>
+              <Link href="/auth/login" className="flex w-full items-center gap-2 text-red-500 focus:bg-white/5 focus:text-red-500 cursor-pointer">
+                <LogOut className="h-4 w-4" />
+                <span>Log out</span>
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       {/* MAIN CONTENT */}
@@ -84,7 +101,7 @@ export default function OnboardingLayout({
           {/* Links Columns */}
           <div className="flex flex-1 flex-wrap gap-12 md:justify-end">
             <div className="space-y-4">
-              <h4 className="text-xs font-meidum font-inter uppercase tracking-wider text-white">Opportunities</h4>
+              <h4 className="text-xs font-medium font-inter uppercase tracking-wider text-white">Opportunities</h4>
               <ul className="space-y-2 text-xs font-light font-inter text-gray-400">
                 <li><Link href="#" className="hover:text-white">Bounties</Link></li>
                 <li><Link href="#" className="hover:text-white">Projects</Link></li>

@@ -3,14 +3,35 @@
 import { AuthRightSection } from "@/components/auth/auth-right-section";
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout";
 import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { registerSchema, RegisterValues } from "@/lib/schemas/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 
 export default function RegisterPage(props: { searchParams: Promise<{ role?: string }> }) {
   const router = useRouter();
   const searchParams = use(props.searchParams);
   const initialRole = (searchParams.role === "owner" ? "owner" : "talent") as "talent" | "owner";
   const [role, setRole] = useState<"talent" | "owner">(initialRole);
+
+  const form = useForm<RegisterValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
+
+  function onSubmit(data: RegisterValues) {
+    console.log(data);
+    if (role === "talent") {
+      router.push("/auth/onboarding/talent");
+    } else {
+      router.push("/auth/onboarding/owner");
+    }
+  }
 
   useEffect(() => {
     console.log("Role", role)
@@ -57,37 +78,34 @@ export default function RegisterPage(props: { searchParams: Promise<{ role?: str
           </div>
         </div>
 
-        <form className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium text-white">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="name@email.com"
-              className="flex h-12 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-white">Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="name@email.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <Button
-            type="button" // preventing submit to handle via onClick for demo flow
-            onClick={() => {
-              if (role === "talent") {
-                router.push("/auth/onboarding/talent");
-              } else {
-                router.push("/auth/onboarding/owner");
-              }
-            }}
-            className="h-12 w-full rounded-lg bg-blue text-white hover:bg-[#0066CC]"
-          >
-            Continue with Email
-          </Button>
+            <Button
+              type="submit"
+              className="h-12 w-full rounded-lg bg-blue text-white hover:bg-[#0066CC]"
+            >
+              Continue with Email
+            </Button>
 
-          <p className="text-sm text-gray-400">
-            Here to {role === "owner" ? "win bounties" : "hire talent"}? <button type="button" onClick={() => setRole(role === "owner" ? "owner" : "talent")} className="text-white hover:underline underline font-medium">Join as {role === "owner" ? "Talent" : "Owner"}</button>
-          </p>
-        </form>
+            <p className="text-sm text-gray-400">
+              Here to {role === "owner" ? "win bounties" : "hire talent"}? <button type="button" onClick={() => setRole(role === "owner" ? "owner" : "talent")} className="text-white hover:underline underline font-medium">Join as {role === "owner" ? "Talent" : "Owner"}</button>
+            </p>
+          </form>
+        </Form>
       </div>
 
     </AuthSplitLayout>

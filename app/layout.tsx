@@ -41,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${syne.variable} ${spaceGrotesk.variable} ${manrope.variable} ${poppins.variable} font-sans antialiased`}
+        className={`${inter.variable} ${syne.variable} ${spaceGrotesk.variable} ${manrope.variable} ${poppins.variable} font-sans antialiased dark`}
       >
         {children}
       </body>
