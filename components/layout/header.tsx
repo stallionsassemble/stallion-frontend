@@ -43,7 +43,7 @@ export function Header() {
 
         {/* Desktop Buttons */}
         <div className="hidden lg:flex items-center gap-4">
-          <Link href="/login">
+          <Link href="/auth/login">
             <Button
               variant="ghost"
               className="text-gray-300 hover:text-white hover:bg-white/0"
@@ -51,7 +51,7 @@ export function Header() {
               Login
             </Button>
           </Link>
-          <Link href="/register">
+          <Link href="/auth/register">
             <Button className="bg-white text-black hover:bg-gray-200 font-semibold">
               Sign Up
             </Button>
@@ -90,7 +90,7 @@ export function Header() {
                 ))}
               </nav>
               <div className="flex flex-col gap-4 pt-4 border-t border-white/10">
-                <Link href="/login" onClick={() => setIsOpen(false)}>
+                <Link href="/auth/login" onClick={() => setIsOpen(false)}>
                   <Button
                     variant="ghost"
                     className="w-full justify-start text-gray-300 hover:text-white hover:bg-white/10 px-0"
@@ -98,7 +98,7 @@ export function Header() {
                     Login
                   </Button>
                 </Link>
-                <Link href="/register" onClick={() => setIsOpen(false)}>
+                <Link href="/auth/register" onClick={() => setIsOpen(false)}>
                   <Button className="w-full bg-white text-black hover:bg-gray-200 font-semibold">
                     Sign Up
                   </Button>

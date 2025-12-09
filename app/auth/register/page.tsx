@@ -102,7 +102,7 @@ export default function RegisterPage(props: { searchParams: Promise<{ role?: str
             </Button>
 
             <p className="text-sm text-gray-400">
-              Here to {role === "owner" ? "win bounties" : "hire talent"}? <button type="button" onClick={() => setRole(role === "owner" ? "owner" : "talent")} className="text-white hover:underline underline font-medium">Join as {role === "owner" ? "Talent" : "Owner"}</button>
+              Here to {role === "owner" ? "win bounties" : "hire talent"}? <button type="button" onClick={() => setRole(role === "owner" ? "talent" : "owner")} className="text-white hover:underline underline font-medium">Join as {role === "owner" ? "Talent" : "Owner"}</button>
             </p>
           </form>
         </Form>
