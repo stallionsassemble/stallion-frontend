@@ -68,7 +68,7 @@ export function FAQSections() {
                   {faq.question}
                 </h3>
                 <button
-                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${openIndex === index
+                  className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${openIndex === index
                     ? "bg-[#007AFF] text-white"
                     : "bg-[#27272A] text-white"
                     }`}

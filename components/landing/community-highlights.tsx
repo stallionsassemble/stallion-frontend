@@ -65,13 +65,13 @@ const CommunityHighlight = () => {
 
       <div className='max-w-2xl mx-auto relative px-4 md:px-0'>
         {/* Vertical Line */}
-        <div className='absolute left-[34px] md:left-[34px] top-4 bottom-4 w-[1px] bg-[#27272A] -z-10' />
+        <div className='absolute left-[34px] md:left-[34px] top-4 bottom-4 w-px bg-[#27272A] -z-10' />
 
         <div className='flex flex-col gap-8 h-[500px] overflow-y-auto pr-4 scrollbar-hide'>
           {highlights.map((item) => (
             <div key={item.id} className='flex items-center gap-4 md:gap-6 border border-transparent hover:border-[#007AFF] rounded-xl p-3 transition-all duration-300'>
               {/* Avatars */}
-              <div className='relative flex-shrink-0 w-[70px] h-[40px] flex items-center'>
+              <div className='relative shrink-0 w-[70px] h-[40px] flex items-center'>
                 {item.type === 'awarded' ? (
                   <>
                     <div className='absolute left-0 z-10 rounded-full border-2 border-black bg-black'>

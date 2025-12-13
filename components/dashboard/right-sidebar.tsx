@@ -150,7 +150,7 @@ export function DashboardRightSidebar() {
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
                   {/* Avatar */}
-                  <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500"></div>
+                  <div className="w-full h-full bg-linear-to-br from-purple-500 to-blue-500"></div>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-white">{earner.name}</p>

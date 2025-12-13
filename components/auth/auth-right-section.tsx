@@ -61,9 +61,9 @@ function VerticalMarquee({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative h-[800px] overflow-hidden w-full" ref={containerRef}>
       {/* Top Gradient Mask */}
-      <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-[#020617] to-transparent z-10 pointer-events-none" />
+      <div className="absolute top-0 inset-x-0 h-40 bg-linear-to-b from-[#02010A] to-transparent z-10" />
       {/* Bottom Gradient Mask */}
-      <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-[#020617] to-transparent z-10 pointer-events-none" />
+      <div className="absolute bottom-0 inset-x-0 h-40 bg-linear-to-t from-[#02010A] to-transparent z-10 pointer-events-none" />
 
       <div ref={listRef} className="will-change-transform w-full">
         {children}

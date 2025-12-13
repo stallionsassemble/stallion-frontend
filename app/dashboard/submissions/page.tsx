@@ -3,7 +3,7 @@
 import { SubmissionCard } from "@/components/submissions/submission-card";
 import { SubmissionDetailsModal } from "@/components/submissions/submission-details-modal";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 // Mock Data
 const submissions = [
@@ -45,7 +45,7 @@ const submissions = [
   }
 ];
 
-export default function SubmissionsPage() {
+function SubmissionsContent() {
   const [selectedSubmission, setSelectedSubmission] = useState<typeof submissions[0] | null>(null);
   const searchParams = useSearchParams();
 
@@ -76,5 +76,13 @@ export default function SubmissionsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function SubmissionsPage() {
+  return (
+    <Suspense fallback={<div className="text-white">Loading...</div>}>
+      <SubmissionsContent />
+    </Suspense>
   );
 }

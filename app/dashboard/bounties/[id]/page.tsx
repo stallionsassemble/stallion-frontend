@@ -85,7 +85,7 @@ export default function BountyDetailsPage() {
 
         {/* Requirements */}
         <section className="space-y-4 rounded-xl border border-white/10 bg-[#09090B]/50 p-6">
-          <h3 className="text-base font-bold text-white text-[#007AFF]">Requirements</h3>
+          <h3 className="text-base font-bold text-[#007AFF]">Requirements</h3>
           <ul className="space-y-2 text-sm text-gray-400">
             <li className="flex items-start gap-2">
               <span className="text-[#007AFF] mt-1">•</span>
@@ -104,7 +104,7 @@ export default function BountyDetailsPage() {
 
         {/* Deliverables */}
         <section className="space-y-4 rounded-xl border border-white/10 bg-[#09090B]/50 p-6">
-          <h3 className="text-base font-bold text-white text-[#007AFF]">Deliverables</h3>
+          <h3 className="text-base font-bold text-[#007AFF]">Deliverables</h3>
           <ul className="space-y-2 text-sm text-gray-400">
             <li className="text-blue-400 flex items-center gap-2">
               <span className="bg-blue-500/10 p-1 rounded-sm">✓</span> Detailed Audit Report
