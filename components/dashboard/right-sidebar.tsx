@@ -1,0 +1,169 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Wallet } from "lucide-react";
+import Image from "next/image";
+
+// Vertical Marquee Component (CSS Animation)
+function VerticalMarquee({
+  children,
+  height = "h-[200px]",
+  duration = "30s",
+  reverse = false,
+}: {
+  children: React.ReactNode;
+  height?: string;
+  duration?: string;
+  reverse?: boolean;
+}) {
+  return (
+    <div className={`relative w-full overflow-hidden ${height}`}>
+      {/* Gradient Masks */}
+      <div className="absolute top-0 left-0 right-0 h-8 bg-linear-to-b from-[#04020E] to-transparent z-10 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-[#04020E] to-transparent z-10 pointer-events-none" />
+
+      <div
+        className="flex flex-col gap-3 w-full hover:paused"
+        style={{
+          animation: `verticalMarquee ${duration} linear infinite ${reverse ? 'reverse' : 'normal'}`
+        }}
+      >
+        {children}
+        {children} {/* Duplicate content for seamless loop */}
+      </div>
+      <style jsx>{`
+        @keyframes verticalMarquee {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-50%); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+
+const topEarners = [
+  { name: "Emmanuel Malik", role: "FC2 Front-end Engineer", amount: "$200,800", avatar: "https://avatar.vercel.sh/emmanuel" },
+  { name: "Sarah Jenkins", role: "UI Designer", amount: "$180,500", avatar: "https://avatar.vercel.sh/sarah" },
+  { name: "David Chen", role: "Smart Contract Dev", amount: "$150,000", avatar: "https://avatar.vercel.sh/david" },
+  { name: "Maria Garcia", role: "Product Manager", amount: "$120,800", avatar: "https://avatar.vercel.sh/maria" },
+  { name: "James Smith", role: "Backend Engineer", amount: "$110,000", avatar: "https://avatar.vercel.sh/james" },
+  { name: "Linda Kim", role: "Full Stack Dev", amount: "$95,000", avatar: "https://avatar.vercel.sh/linda" },
+];
+
+const recentEarners = [
+  { name: "Emmanuel Malik", role: "award paid from...", amount: "$2,800", bg: "bg-purple-500/10", text: "text-purple-400" },
+  { name: "John Doe", role: "award paid from...", amount: "$3,800", bg: "bg-blue-500/10", text: "text-blue-400" },
+  { name: "Alice Wonderland", role: "award paid from...", amount: "$1,200", bg: "bg-purple-500/10", text: "text-purple-400" },
+  { name: "Bob Builder", role: "award paid from...", amount: "$500", bg: "bg-green-500/10", text: "text-green-400" },
+  { name: "Charlie Brown", role: "award paid from...", amount: "$4,100", bg: "bg-blue-500/10", text: "text-blue-400" },
+  { name: "Diana Prince", role: "award paid from...", amount: "$900", bg: "bg-orange-500/10", text: "text-orange-400" },
+]
+
+export function DashboardRightSidebar() {
+  return (
+    <div className="space-y-8 w-full">
+      {/* Top Earners */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Top Earners</h3>
+          <button className="text-xs text-[#007AFF] hover:underline">Leaderboard &gt;</button>
+        </div>
+
+        {/* Vertical Marquee Top Earners */}
+        <VerticalMarquee height="h-[200px]" duration="20s">
+          {topEarners.map((earner, i) => (
+            <div key={i} className="flex items-center justify-between gap-3 p-1">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
+                  <Image src={earner.avatar} width={32} height={32} alt={earner.name} className="h-full w-full object-cover" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white">{earner.name}</p>
+                  <p className="text-[10px] text-gray-500">{earner.role}</p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-xs font-bold text-white">{earner.amount}</p>
+                <div className="flex justify-end gap-0.5 mt-0.5">
+                  {/* Rank dots or similar indicator */}
+                  <div className="w-1 h-1 rounded-full bg-[#007AFF]"></div>
+                  <div className="w-1 h-1 rounded-full bg-[#007AFF]"></div>
+                  <div className="w-1 h-1 rounded-full bg-[#007AFF]"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </VerticalMarquee>
+      </div>
+
+      {/* Total Balance Card */}
+      <div className="rounded-2xl border border-[#007AFF]/30 bg-[#050B1C] p-6 text-center shadow-[0_0_40px_-10px_rgba(0,122,255,0.2)]">
+        <div className="mb-2 flex justify-center text-gray-400">
+          <span className="text-xs flex items-center gap-1 uppercase tracking-widest"><Wallet className="w-3 h-3" /> Total Balance</span>
+        </div>
+        <h2 className="text-3xl font-bold text-white mb-6">$5,590.90</h2>
+
+        <div className="space-y-3 mb-6">
+          <div className="flex items-center justify-between py-2 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-[8px] text-white">U</div>
+              <span className="text-xs font-medium text-white">USDC</span>
+              <span className="text-[10px] text-gray-500">Stallion Circle</span>
+            </div>
+            <span className="text-sm font-bold text-white">$5,590.90</span>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-cyan-500 flex items-center justify-center text-[8px] text-white">U</div>
+              <span className="text-xs font-medium text-white">USDC</span>
+              <span className="text-[10px] text-gray-500">Stallion Circle</span>
+            </div>
+            <span className="text-sm font-bold text-white">$5,590.90</span>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center text-[8px] text-white">S</div>
+              <span className="text-xs font-medium text-white">SOL</span>
+              <span className="text-[10px] text-gray-500">Stallion Circle</span>
+            </div>
+            <span className="text-sm font-bold text-white">$5,590.90</span>
+          </div>
+        </div>
+
+        <Button className="w-full bg-[#007AFF] hover:bg-[#0066CC] text-white h-10 rounded-lg font-medium">
+          Withdraw
+        </Button>
+      </div>
+
+      {/* Recent Earners */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Recent Earners</h3>
+          <button className="text-xs text-[#007AFF] hover:underline">Leaderboard &gt;</button>
+        </div>
+
+        {/* Vertical Marquee Recent Earners */}
+        <VerticalMarquee height="h-[200px]" duration="25s" reverse={true}>
+          {recentEarners.map((earner, i) => (
+            <div key={i} className="flex items-center justify-between gap-3 p-1">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
+                  {/* Avatar */}
+                  <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500"></div>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white">{earner.name}</p>
+                  <p className="text-[10px] text-gray-500">{earner.role}</p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${earner.bg} ${earner.text}`}>{earner.amount}</span>
+              </div>
+            </div>
+          ))}
+        </VerticalMarquee>
+      </div>
+    </div>
+  );
+}
