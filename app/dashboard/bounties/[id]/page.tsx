@@ -3,7 +3,7 @@
 import { BountyDetailsSidebar } from "@/components/bounties/bounty-details-sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Bookmark, Download, FileText, Share2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bookmark, Download, FileText, Image as ImageIcon, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -182,7 +182,7 @@ export default function BountyDetailsPage() {
 
             <div className="flex items-center gap-3 p-2 pr-4 rounded bg-[#09090B] border border-white/10">
               <div className="h-8 w-8 bg-blue-500/10 flex items-center justify-center rounded">
-                <Image className="h-4 w-4 text-blue-400" />
+                <ImageIcon className="h-4 w-4 text-blue-400" />
               </div>
               <div className="flex flex-col">
                 <span className="text-xs font-medium text-white">Architecture_Diagram.png</span>
