@@ -1,5 +1,6 @@
 "use client";
 
+import { StatsRow } from "@/components/dashboard/stats-row";
 import { SubmissionCard } from "@/components/submissions/submission-card";
 import { SubmissionDetailsModal } from "@/components/submissions/submission-details-modal";
 import { useSearchParams } from "next/navigation";
@@ -59,6 +60,8 @@ function SubmissionsContent() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">My Submissions</h1>
       </div>
+
+      <StatsRow />
 
       <div className="grid grid-cols-1 gap-4">
         {submissions.map((submission) => (

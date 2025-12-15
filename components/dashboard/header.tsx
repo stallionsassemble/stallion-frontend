@@ -1,7 +1,6 @@
 "use client";
 
 import { MobileSidebar } from "@/components/dashboard/sidebar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -83,52 +82,84 @@ export function Header() {
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500"></span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80 bg-[#09090B] border-white/10 text-white p-0">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <span className="font-bold">Notifications</span>
-              <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full">2 News</span>
+          <DropdownMenuContent align="end" className="w-[312px] h-[425px] bg-[#020617] border-white/10 text-white p-0 shadow-2xl flex flex-col gap-[10px]">
+            <div
+              className="flex items-center justify-between px-[10px] h-[30px] w-full bg-primary/[0.08] rounded-[6.2px] shrink-0"
+              style={{ border: "0.77px solid #007AFF5C" }}
+            >
+              <span className="font-bold text-xs">Notifications</span>
+              <span className="text-[10px] bg-primary/20 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">2 News</span>
             </div>
-            <div className="max-h-[300px] overflow-y-auto">
-              <div className="p-4 border-b border-white/5 bg-[#FF3B30]/10 border-l-2 border-l-[#FF3B30]">
-                <div className="flex gap-3">
-                  <Badge variant="outline" className="h-6 rounded-full border-[#FF3B30]/20 bg-[#FF3B30]/10 text-[#FF3B30] text-[10px] px-2 flex items-center gap-1 shrink-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#FF3B30]" />
-                    Rejected
-                  </Badge>
-                  <div>
-                    <div className="flex justify-between items-start w-full">
-                      <p className="text-sm font-medium text-white">Stallion Foundation</p>
-                      <span className="text-[10px] text-gray-500 whitespace-nowrap ml-2">Jan 10, 12:00 PM</span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-1">Submitted complete 3-part video series</p>
+            <div className="flex-1 overflow-y-auto flex flex-col gap-[10px] p-[10px]">
+
+              {/* Payment Received Notification - Blue Highlight */}
+              <div className="w-[290px] h-[60px] mx-auto p-[10px] rounded-[5px] bg-primary flex justify-between items-center group relative shrink-0">
+                <div className="flex gap-3 items-center w-full">
+                  <div className="h-8 w-8 rounded-full border border-white/20 flex items-center justify-center shrink-0">
+                    <DollarSign className="h-4 w-4 text-white" />
                   </div>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <div className="flex justify-between items-center">
+                      <p className="text-[12px] font-bold text-white leading-none truncate pr-2">Payment Received</p>
+                      <span className="text-[9px] text-white/80 shrink-0">2h ago</span>
+                    </div>
+                    <p className="text-[10px] text-white/90 font-light truncate leading-tight mt-1">You received 500 USDC for Summer...</p>
+                  </div>
+                  <div className="h-2 w-2 rounded-full bg-white shrink-0 self-center" />
                 </div>
               </div>
 
-              <div className="p-4 border-b border-white/5 bg-[#007AFF]/20 border-l-2 border-l-[#007AFF]">
-                <div className="flex gap-3">
-                  <div className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                    <DollarSign className="h-4 w-4 text-white" />
+              {/* Generic Notification 1 */}
+              <div className="w-[290px] h-[60px] mx-auto p-[10px] rounded-[5px] hover:bg-white/5 transition-colors flex justify-between items-center group relative shrink-0">
+                <div className="flex gap-3 items-center w-full">
+                  <div className="h-8 w-8 rounded-full bg-transparent border border-white/20 flex items-center justify-center shrink-0 text-primary relative">
+                    <User className="h-4 w-4" />
+                    <div className="absolute bottom-0 right-0 text-[6px]">⭐</div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">Payment Received</p>
-                    <p className="text-xs text-gray-400 mt-0.5">You received 500 USDC for Summer Fashion Lookbook</p>
-                    <p className="text-[10px] text-gray-500 mt-1">2 hours ago</p>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <div className="flex justify-between items-center">
+                      <p className="text-[12px] font-bold text-white leading-none truncate pr-2">New bounty matches</p>
+                      <span className="text-[9px] text-gray-500 shrink-0">1d ago</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-light truncate leading-tight mt-1">Techbrands - Design of new...</p>
                   </div>
-                  <div className="h-2 w-2 rounded-full bg-white shrink-0 mt-1.5" />
+                  <div className="h-2 w-2 rounded-full bg-primary shrink-0 self-center" />
                 </div>
               </div>
-              <div className="p-4 hover:bg-white/5 transition-colors">
-                <div className="flex gap-3">
-                  <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center shrink-0 text-[#007AFF]">
+
+              {/* Generic Notification 2 */}
+              <div className="w-[290px] h-[60px] mx-auto p-[10px] rounded-[5px] hover:bg-white/5 transition-colors flex justify-between items-center group relative shrink-0">
+                <div className="flex gap-3 items-center w-full">
+                  <div className="h-8 w-8 rounded-full bg-transparent border border-white/20 flex items-center justify-center shrink-0 text-primary relative">
                     <User className="h-4 w-4" />
+                    <div className="absolute bottom-0 right-0 text-[6px]">⭐</div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">New bounty matches your skills</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Techbrands - Design of new company brand guide</p>
-                    <p className="text-[10px] text-gray-500 mt-1">1 day ago</p>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <div className="flex justify-between items-center">
+                      <p className="text-[12px] font-bold text-white leading-none truncate pr-2">New bounty matches</p>
+                      <span className="text-[9px] text-gray-500 shrink-0">1d ago</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-light truncate leading-tight mt-1">Techbrands - Design of new...</p>
                   </div>
-                  <div className="h-2 w-2 rounded-full bg-[#007AFF] shrink-0 mt-1.5" />
+                  <div className="h-2 w-2 rounded-full bg-primary shrink-0 self-center" />
+                </div>
+              </div>
+
+              {/* Generic Notification 3 */}
+              <div className="w-[290px] h-[60px] mx-auto p-[10px] rounded-[5px] hover:bg-white/5 transition-colors flex justify-between items-center group relative shrink-0">
+                <div className="flex gap-3 items-center w-full">
+                  <div className="h-8 w-8 rounded-full bg-transparent border border-white/20 flex items-center justify-center shrink-0 text-primary relative">
+                    <User className="h-4 w-4" />
+                    <div className="absolute bottom-0 right-0 text-[6px]">⭐</div>
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <div className="flex justify-between items-center">
+                      <p className="text-[12px] font-bold text-white leading-none truncate pr-2">New bounty matches</p>
+                      <span className="text-[9px] text-gray-500 shrink-0">1d ago</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-light truncate leading-tight mt-1">Techbrands - Design of new...</p>
+                  </div>
+                  <div className="h-2 w-2 rounded-full bg-primary shrink-0 self-center" />
                 </div>
               </div>
             </div>
@@ -161,9 +192,9 @@ export function Header() {
               </div>
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-[#09090B] border-white/10 text-white">
+          <DropdownMenuContent align="end" className="w-56 bg-[#09090B] border-white/10 text-white font-inter">
             <div className="bg-[#004085] -mt-1 -mx-1 p-3 rounded-t-md mb-2">
-              <p className="text-lg font-bold text-white">Profile</p>
+              <p className="text-sm font-medium text-white">Profile</p>
             </div>
 
             <DropdownMenuItem asChild>
@@ -186,7 +217,7 @@ export function Header() {
                 Get Help
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-white/10 focus:text-white cursor-pointer py-2 mt-2 font-bold text-red-500 hover:text-red-400">
+            <DropdownMenuItem className="focus:bg-white/10 focus:text-white cursor-pointer py-2">
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

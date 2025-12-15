@@ -69,7 +69,7 @@ const CommunityHighlight = () => {
 
         <div className='flex flex-col gap-8 h-[500px] overflow-y-auto pr-4 scrollbar-hide'>
           {highlights.map((item) => (
-            <div key={item.id} className='flex items-center gap-4 md:gap-6 border border-transparent hover:border-[#007AFF] rounded-xl p-3 transition-all duration-300'>
+            <div key={item.id} className='flex items-center gap-4 md:gap-6 border border-transparent hover:border-primary rounded-xl p-3 transition-all duration-300'>
               {/* Avatars */}
               <div className='relative shrink-0 w-[70px] h-[40px] flex items-center'>
                 {item.type === 'awarded' ? (
@@ -91,7 +91,7 @@ const CommunityHighlight = () => {
                   </>
                 ) : (
                   <div className='absolute left-3 z-10'>
-                    <div className='w-10 h-10 rounded-md bg-[#007AFF] flex items-center justify-center text-white font-bold text-sm border-2 border-black'>
+                    <div className='w-10 h-10 rounded-md bg-primary flex items-center justify-center text-white font-bold text-sm border-2 border-black'>
                       ts
                     </div>
                   </div>
@@ -113,7 +113,7 @@ const CommunityHighlight = () => {
                       <span className='text-[#94969D]'>a</span>
                     </>
                   )}
-                  <span className='text-[#007AFF] font-medium'>
+                  <span className='text-primary font-medium'>
                     {item.amount}
                   </span>
                 </div>

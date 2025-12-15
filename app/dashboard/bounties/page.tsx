@@ -2,6 +2,9 @@
 
 import { BountyCard } from "@/components/bounties/bounty-card";
 import { BountyFilters } from "@/components/bounties/bounty-filters";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useState } from "react";
 
 // Mock Data
@@ -83,20 +86,35 @@ const bounties = [
 export default function BountiesPage() {
   const [activeTab, setActiveTab] = useState("All");
 
-  const filteredBounties = activeTab === "All"
+  // Pagination Logic
+  const [rowsPerPage, setRowsPerPage] = useState("10");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Filter first
+  const filteredList = activeTab === "All"
     ? bounties
-    : bounties.filter(b => b.tags.some(tag => tag.includes(activeTab) || tag === activeTab) || b.title.includes(activeTab) || b.description.includes(activeTab)); // Simple loose matching for demo
+    : bounties.filter(b => b.tags.some(tag => tag.includes(activeTab) || tag === activeTab) || b.title.includes(activeTab) || b.description.includes(activeTab));
+
+  const totalPages = Math.ceil(filteredList.length / Number(rowsPerPage));
+  const paginatedBounties = filteredList.slice((currentPage - 1) * Number(rowsPerPage), currentPage * Number(rowsPerPage));
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex-1 items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Browse Bounties</h1>
+        <p>Browse and manage available bounties.</p>
       </div>
 
-      <BountyFilters activeTab={activeTab} onTabChange={setActiveTab} />
+      <BountyFilters activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setCurrentPage(1); }} />
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        {filteredBounties.map((bounty) => (
+      <div className="flex flex-wrap gap-5 justify-center md:justify-start">
+        {paginatedBounties.map((bounty) => (
           <BountyCard
             key={bounty.id}
             {...bounty}
@@ -106,11 +124,62 @@ export default function BountiesPage() {
         ))}
       </div>
 
-      {/* Pagination Mock */}
-      <div className="flex justify-end pt-4 border-t border-white/5">
-        <div className="flex gap-2 text-sm text-gray-400">
-          <span>Rows per page: 10</span>
-          <span>Page 1 of 1</span>
+      {/* Pagination */}
+      <div className="flex items-center justify-end gap-x-6 pt-4 border-t border-white/5">
+        <div className="flex items-center gap-2 text-sm font-medium text-gray-400">
+          <span>Rows per page</span>
+          <Select value={rowsPerPage} onValueChange={(val) => { setRowsPerPage(val); setCurrentPage(1); }}>
+            <SelectTrigger className="h-8 px-2 w-[60px] rounded-md bg-black border border-white/10 text-white focus:ring-0 focus:ring-offset-0 gap-1">
+              <SelectValue placeholder="10" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#04020E] border-white/10 text-white">
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <span className="text-sm font-medium text-gray-400">Page {currentPage} of {totalPages || 1}</span>
+
+        <div className="flex items-center gap-2 ml-2">
+          <Button
+            size="icon"
+            variant="secondary"
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+            className="h-8 w-8 rounded-md bg-zinc-600/50 text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed border border-white/5 hover:bg-zinc-600/50"
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="secondary"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="h-8 w-8 rounded-md bg-zinc-600/50 text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed border border-white/5 hover:bg-zinc-600/50"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="h-8 w-8 rounded-md bg-black border-white/10 text-white hover:bg-black/80 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+            className="h-8 w-8 rounded-md bg-black border-white/10 text-white hover:bg-black/80 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>

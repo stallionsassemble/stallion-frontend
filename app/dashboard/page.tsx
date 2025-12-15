@@ -11,7 +11,7 @@ export default function DashboardPage() {
       {/* Main Column */}
       <div className="space-y-8 min-w-0">
         {/* Welcome Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-[#007AFF] p-6 md:p-10 text-white">
+        <div className="relative overflow-hidden rounded-2xl bg-primary p-6 md:p-10 text-white">
           {/* Grid Pattern Overlay */}
           <div className="absolute inset-0 z-0 opacity-20"
             style={{

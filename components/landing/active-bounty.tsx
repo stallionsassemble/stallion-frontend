@@ -97,7 +97,7 @@ const ActiveBounties = () => {
         {bounties.map((bounty, index) => (
           <div
             key={bounty.id}
-            className={`bg-[#050505] border rounded-[20px] p-6 md:p-8 flex flex-col items-center text-center border-[#007AFF]/50 transition-colors duration-300 ${index === currentIndex ? 'flex' : 'hidden md:flex'
+            className={`bg-[#050505] border rounded-[20px] p-6 md:p-8 flex flex-col items-center text-center border-primary/50 transition-colors duration-300 ${index === currentIndex ? 'flex' : 'hidden md:flex'
               }`}
           >
             {/* Header */}
@@ -125,7 +125,7 @@ const ActiveBounties = () => {
             {/* Stats */}
             <div className='grid grid-cols-3 gap-4 w-full mb-8 pt-3'>
               <div className='flex flex-col'>
-                <span className='text-[#007AFF] font-bold text-xl md:text-2xl font-space-grotesk'>
+                <span className='text-primary font-bold text-xl md:text-2xl font-space-grotesk'>
                   {bounty.active}
                 </span>
                 <span className='text-[#A1A1AA] text-xs md:text-sm font-inter mt-1'>
@@ -133,7 +133,7 @@ const ActiveBounties = () => {
                 </span>
               </div>
               <div className='flex flex-col'>
-                <span className='text-[#007AFF] font-bold text-xl md:text-2xl font-space-grotesk'>
+                <span className='text-primary font-bold text-xl md:text-2xl font-space-grotesk'>
                   {bounty.submissions}
                 </span>
                 <span className='text-[#A1A1AA] text-xs md:text-sm font-inter mt-1'>
@@ -141,7 +141,7 @@ const ActiveBounties = () => {
                 </span>
               </div>
               <div className='flex flex-col'>
-                <span className='text-[#007AFF] font-bold text-xl md:text-2xl font-inter'>
+                <span className='text-primary font-bold text-xl md:text-2xl font-inter'>
                   {bounty.contributors}
                 </span>
                 <span className='text-[#94969D] text-xs md:text-sm font-inter mt-1'>
@@ -152,7 +152,7 @@ const ActiveBounties = () => {
 
             {/* Distributed Badge */}
             <div className='w-full mb-6'>
-              <div className='w-full py-3 rounded-xl border border-[#007AFF]/30 bg-[#007AFF]/5 text-[#007AFF] font-medium font-space-grotesk text-sm md:text-base'>
+              <div className='w-full py-3 rounded-xl border border-primary/30 bg-primary/5 text-primary font-medium font-space-grotesk text-sm md:text-base'>
                 {bounty.distributed}
               </div>
             </div>
@@ -176,7 +176,7 @@ const ActiveBounties = () => {
             <button
               key={idx}
               onClick={() => setCurrentIndex(idx)}
-              className={`w-2 h-2 rounded-full transition-colors ${idx === currentIndex ? 'bg-[#007AFF]' : 'bg-white/20'
+              className={`w-2 h-2 rounded-full transition-colors ${idx === currentIndex ? 'bg-primary' : 'bg-white/20'
                 }`}
             />
           ))}
@@ -188,8 +188,8 @@ const ActiveBounties = () => {
             onClick={handlePrev}
             disabled={currentIndex === 0}
             className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${currentIndex === 0
-                ? 'border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed'
-                : 'border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF] hover:text-white'
+              ? 'border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed'
+              : 'border-primary text-primary hover:bg-primary hover:text-white'
               }`}
           >
             <ChevronLeft className='w-3 h-3' strokeWidth={2.5} />
@@ -198,8 +198,8 @@ const ActiveBounties = () => {
             onClick={handleNext}
             disabled={currentIndex === bounties.length - 1}
             className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${currentIndex === bounties.length - 1
-                ? 'border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed'
-                : 'border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF] hover:text-white'
+              ? 'border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed'
+              : 'border-primary text-primary hover:bg-primary hover:text-white'
               }`}
           >
             <ChevronRight className='w-3 h-3' strokeWidth={2.5} />

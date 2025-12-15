@@ -202,7 +202,7 @@ export function RecentWins() {
     return (
       <div
         key={`${win.id}-${index}`}
-        className={`relative rounded-xl p-3 w-[80vw] max-w-[301.98px] h-[83.27px] md:w-[325px] md:h-[90px] flex flex-col justify-center overflow-visible shrink-0 transition-all duration-300 ${!isHighlighted ? 'border-[0.9px] border-[#292537] hover:border-[#007AFF]' : ''}`}
+        className={`relative rounded-xl p-3 w-[80vw] max-w-[301.98px] h-[83.27px] md:w-[325px] md:h-[90px] flex flex-col justify-center overflow-visible shrink-0 transition-all duration-300 ${!isHighlighted ? 'border-[0.9px] border-[#292537] hover:border-primary' : ''}`}
         style={cardStyle}
       >
         {/* Price Badge */}
@@ -289,7 +289,7 @@ export function RecentWins() {
             onClick={handlePrev}
             className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${mobileIndex === 0
               ? "border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed"
-              : "border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF] hover:text-white"
+              : "border-primary text-primary hover:bg-primary hover:text-white"
               }`}
           >
             <ChevronLeft className="w-2 h-2" strokeWidth={2.5} />
@@ -309,7 +309,7 @@ export function RecentWins() {
             onClick={handleNext}
             className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${mobileIndex === chunks.length - 1
               ? "border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed"
-              : "border-[#007AFF] text-[#007AFF] hover:bg-[#007AFF] hover:text-white"
+              : "border-primary text-primary hover:bg-primary hover:text-white"
               }`}
           >
             <ChevronRight className="w-2 h-2" strokeWidth={2.5} />
@@ -322,7 +322,7 @@ export function RecentWins() {
             <button
               key={idx}
               onClick={() => setMobileIndex(idx)}
-              className={`w-1 h-1 rounded-full transition-colors ${idx === mobileIndex ? "bg-[#007AFF]" : "bg-white/20"
+              className={`w-1 h-1 rounded-full transition-colors ${idx === mobileIndex ? "bg-primary" : "bg-white/20"
                 }`}
             />
           ))}

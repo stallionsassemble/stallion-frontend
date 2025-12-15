@@ -51,7 +51,7 @@ export function CongratulationsModal({ isOpen, onClose }: CongratulationsModalPr
           {/* Text */}
           <div className="relative w-full mb-4">
             {/* Glow Effect */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-12 bg-[#007AFF] blur-2xl opacity-40 rounded-full pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-12 bg-primary blur-2xl opacity-40 rounded-full pointer-events-none" />
             <h2 className="relative text-4xl md:text-5xl font-black text-white italic tracking-tighter" style={{ fontFamily: 'var(--font-heading)' }}>
               Congratulations
             </h2>
@@ -63,7 +63,7 @@ export function CongratulationsModal({ isOpen, onClose }: CongratulationsModalPr
 
           <div className="flex flex-col gap-3 w-full max-w-xs">
             <Button
-              className="w-full bg-[#007AFF] hover:bg-[#0066CC] h-11 font-medium text-white"
+              className="w-full bg-primary hover:bg-[#0066CC] h-11 font-medium text-white"
               onClick={() => {
                 onClose();
                 router.push("/dashboard/bounties");

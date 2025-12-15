@@ -108,7 +108,7 @@ export default function MySubmissionsPage() {
                 variant={activeTab === cat ? "default" : "outline"}
                 onClick={() => setActiveTab(cat)}
                 className={`h-8 text-xs whitespace-nowrap px-4 ${activeTab === cat
-                  ? "bg-[#007AFF] hover:bg-[#007AFF]/90 text-white border-0"
+                  ? "bg-primary hover:bg-primary/90 text-white border-0"
                   : "bg-transparent border-white/10 text-gray-400 hover:text-white hover:bg-white/5"
                   }`}
               >

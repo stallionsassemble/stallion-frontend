@@ -111,9 +111,9 @@ export function TestimonialsSection() {
       <div className="relative h-[500px] w-full max-w-6xl mx-auto overflow-hidden">
 
         {/* Top Gradient Mask */}
-        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-[#020617] to-transparent z-10 pointer-events-none" />
+        <div className="absolute top-0 left-0 w-full h-24 bg-linear-to-b from-[#020617] to-transparent z-10 pointer-events-none" />
         {/* Bottom Gradient Mask */}
-        <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-[#020617] to-transparent z-10 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-full h-24 bg-linear-to-t from-[#020617] to-transparent z-10 pointer-events-none" />
 
         <div className="flex gap-6 justify-center h-full items-start">
           {/* Column 1: Scrolls UP */}
@@ -138,10 +138,10 @@ export function TestimonialsSection() {
 function TestimonialCard({ testimonial }: { testimonial: any }) {
   return (
     <div
-      className="bg-transparent rounded-[32px] p-8 min-h-[300px] flex flex-col justify-between relative transition-all duration-300 hover:border-[#007AFF] hover:bg-white/5 group border border-[#E1E6EC1A] shrink-0 h-fit"
+      className="bg-transparent rounded-[32px] p-8 min-h-[300px] flex flex-col justify-between relative transition-all duration-300 hover:border-primary hover:bg-white/5 group border border-[#E1E6EC1A] shrink-0 h-fit"
     >
       <div>
-        <div className="bg-[#007AFF] text-white font-manrope text-[15px] font-normal tracking-[-0.32px] leading-[19.2px] px-4 py-1.5 rounded-full w-fit mb-4">
+        <div className="bg-primary text-white font-manrope text-[15px] font-normal tracking-[-0.32px] leading-[19.2px] px-4 py-1.5 rounded-full w-fit mb-4">
           {testimonial.category}
         </div>
         <div className="flex gap-1 mb-6">

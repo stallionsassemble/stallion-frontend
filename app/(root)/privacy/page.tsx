@@ -26,8 +26,8 @@ export default function PrivacyPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 1. Scope and updates to this privacy notice.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   This Privacy Notice applies when we process your personal
                   information and is subject to change from time to time.
                 </p>
@@ -57,8 +57,8 @@ export default function PrivacyPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 2. Personal information we collect.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   This Privacy Notice applies to information you provide
                   directly to us, information collected automatically from you,
                   and information collected from other third-party sources
@@ -134,8 +134,8 @@ export default function PrivacyPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 3. How we use your personal information.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   We use your personal information to operate our Services,
                   improve the user experience, verify your eligibility for
                   bounties, and comply with legal obligations.
@@ -176,8 +176,8 @@ export default function PrivacyPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 4. How we disclose your personal information.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   We may share your information with service providers who help
                   us operate, or if required by law. We do not sell your
                   personal data to advertisers.
@@ -221,8 +221,8 @@ export default function PrivacyPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 5. Your privacy choices and rights.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   You have control over the information you provide. You can
                   update your profile or disconnect your wallet at any time,
                   though public blockchain data cannot be deleted.
@@ -258,8 +258,8 @@ export default function PrivacyPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 6. International transfers of personal information.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   We operate globally. Your information may be transferred to
                   and processed in countries other than your own, where data
                   protection laws may differ.
@@ -282,8 +282,8 @@ export default function PrivacyPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 7. Children's information.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   Our Services are not intended for anyone under the age of 18.
                   We do not knowingly collect data from children.
                 </p>
@@ -304,8 +304,8 @@ export default function PrivacyPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 8. Retention.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   We retain your personal information only as long as necessary
                   to provide the Services or as required by law.
                 </p>
@@ -327,8 +327,8 @@ export default function PrivacyPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 9. Supplemental notice for specific regions.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   If you are a resident of California, the EEA, or the UK, you
                   may have additional rights under local laws like the CCPA or
                   GDPR.
@@ -358,8 +358,8 @@ export default function PrivacyPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 10. Contact us.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   If you have questions about this policy or wish to exercise
                   your rights, please reach out to our legal team.
                 </p>
@@ -372,7 +372,7 @@ export default function PrivacyPage() {
                   Stallion Labs Ltd. Email:{' '}
                   <a
                     href='mailto:legal@stallion.xyz'
-                    className='text-[#007AFF] hover:underline'
+                    className='text-primary hover:underline'
                   >
                     legal@stallion.xyz
                   </a>
@@ -388,61 +388,61 @@ export default function PrivacyPage() {
               <nav className='flex flex-col space-y-2 text-sm text-gray-400 font-inter'>
                 <a
                   href='#scope'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   1. Scope and updates
                 </a>
                 <a
                   href='#personal-info'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   2. Personal information we collect
                 </a>
                 <a
                   href='#how-we-use'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   3. How we use your information
                 </a>
                 <a
                   href='#disclosure'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   4. How we disclose information
                 </a>
                 <a
                   href='#rights'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   5. Your privacy choices
                 </a>
                 <a
                   href='#international'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   6. International transfers
                 </a>
                 <a
                   href='#children'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   7. Children's information
                 </a>
                 <a
                   href='#retention'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   8. Retention
                 </a>
                 <a
                   href='#supplemental'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   9. Supplemental notice
                 </a>
                 <a
                   href='#contact'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   10. Contact us
                 </a>

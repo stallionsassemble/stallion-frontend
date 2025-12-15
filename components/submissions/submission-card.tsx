@@ -48,7 +48,7 @@ export function SubmissionCard({
   lastUpdated,
 }: SubmissionCardProps) {
   return (
-    <div className="group rounded-xl border border-white/10 bg-[#09090B] p-5 transition-all hover:border-[#007AFF] hover:bg-[#007AFF]/5">
+    <div className="group rounded-xl border border-white/10 bg-[#09090B] p-5 transition-all hover:border-primary hover:bg-primary/5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-4">
           {/* Logo */}
@@ -65,11 +65,11 @@ export function SubmissionCard({
           {/* Content */}
           <div className="space-y-1">
             <div className="flex items-center gap-2 mb-1">
-              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-[#007AFF] text-[#007AFF] bg-[#007AFF]/10 rounded-sm">
+              <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-primary text-primary bg-primary/10 rounded-sm">
                 Project
               </Badge>
             </div>
-            <h3 className="text-lg font-bold text-white group-hover:text-[#007AFF] transition-colors">
+            <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors">
               {title}
             </h3>
             <p className="line-clamp-2 text-sm text-gray-400 max-w-2xl">
@@ -102,7 +102,7 @@ export function SubmissionCard({
               </Badge>
             </div>
 
-            <Button variant="ghost" size="sm" className="h-8 gap-2 text-[#007AFF] hover:text-[#007AFF] hover:bg-[#007AFF]/10 p-0 sm:px-3">
+            <Button variant="ghost" size="sm" className="h-8 gap-2 text-primary hover:text-primary hover:bg-primary/10 p-0 sm:px-3">
               <Eye className="h-3.5 w-3.5" />
               View Details
             </Button>

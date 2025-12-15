@@ -1,3 +1,4 @@
+import { ThemeProvider } from "@/components/theme-provider";
 import type { Metadata } from "next";
 import { Inter, Manrope, Poppins, Space_Grotesk, Syne } from "next/font/google";
 import "./globals.css";
@@ -39,22 +40,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${syne.variable} ${spaceGrotesk.variable} ${manrope.variable} ${poppins.variable} font-sans antialiased relative bg-[#04020e] overflow-x-hidden`}
+        className={`${inter.variable} ${syne.variable} ${spaceGrotesk.variable} ${manrope.variable} ${poppins.variable} font-sans antialiased relative overflow-x-hidden bg-background text-foreground`}
       >
-        {/* GLOBAL GRID OVERLAY */}
-        <div
-          className="fixed inset-0 pointer-events-none z-0 opacity-20"
-          style={{
-            backgroundImage: "url('/grid-bg.png')",
-            backgroundRepeat: "repeat",
-            backgroundSize: "auto"
-          }}
-        />
-        <div className="relative z-10">
-          {children}
-        </div>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {/* GLOBAL GRID OVERLAY */}
+          <div
+            className="fixed inset-0 pointer-events-none z-0 opacity-20"
+            style={{
+              backgroundImage: "url('/grid-bg.png')",
+              backgroundRepeat: "repeat",
+              backgroundSize: "auto"
+            }}
+          />
+          <div className="relative z-10">
+            {children}
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

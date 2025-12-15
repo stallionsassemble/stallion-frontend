@@ -10,7 +10,7 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
+import { Send, Upload } from "lucide-react";
 import { useState } from "react";
 
 export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
@@ -28,8 +28,11 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
         <DialogTrigger asChild>{children}</DialogTrigger>
         <DialogContent className="bg-[#09090B] border-white/10 sm:max-w-3xl max-h-[90vh] overflow-y-auto block p-0 gap-0">
           <DialogHeader className="p-6 border-b border-white/10 relative">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge className="bg-[#007AFF] hover:bg-[#007AFF] text-white rounded-sm px-2 py-0.5 text-xs">$3,500 <span className="text-[10px] ml-1 opacity-80">USDC</span></Badge>
+            <div className="flex items-center gap-1 mb-2 font-inter">
+              <Badge className="bg-[#007AFF78] hover:bg-[#007AFF78] text-white rounded-[13.7px] px-2 py-0.5 font-bold text-xs tracking-[-4%]">
+                $3,500
+                <span className="text-[8px] font-medium opacity-80 bg-primary text-center rounded-[3422.21px]">USDC</span>
+              </Badge>
             </div>
             <DialogTitle className="text-2xl font-bold text-white">Bounty Submission</DialogTitle>
             <p className="text-sm text-gray-400 mt-1">
@@ -44,8 +47,8 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
                 Main Project URL <span className="text-red-500">*</span>
               </Label>
               <p className="text-[10px] text-gray-500">Share the primary link where your project can be viewed or accessed.</p>
-              <div className="flex rounded-lg border border-white/10 bg-[#050B1C] overflow-hidden focus-within:border-[#007AFF]">
-                <span className="px-3 py-2.5 text-sm text-gray-500 border-r border-white/10 bg-white/5">https://</span>
+              <div className="flex rounded-lg border border-white/10  bg-transparent overflow-hidden focus-within:border-primary">
+                <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
                 <input
                   className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600"
                   placeholder="Submission Link"
@@ -59,8 +62,8 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
                 X (Twitter) Post URL
               </Label>
               <p className="text-[10px] text-gray-500">Optional: Add the link to your X post about this project to help others discover it.</p>
-              <div className="flex rounded-lg border border-white/10 bg-[#050B1C] overflow-hidden focus-within:border-[#007AFF]">
-                <span className="px-3 py-2.5 text-sm text-gray-500 border-r border-white/10 bg-white/5">https://</span>
+              <div className="flex rounded-lg border border-white/10  bg-transparent overflow-hidden focus-within:border-primary">
+                <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
                 <input
                   className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600"
                   placeholder="Submission Link"
@@ -74,8 +77,8 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
                 Provide a public GitHub link to your project repository <span className="text-red-500">*</span>
               </Label>
               <p className="text-[10px] text-gray-500">Provide the public link to your codebase or repository.</p>
-              <div className="flex rounded-lg border border-white/10 bg-[#050B1C] overflow-hidden focus-within:border-[#007AFF]">
-                <span className="px-3 py-2.5 text-sm text-gray-500 border-r border-white/10 bg-white/5">https://</span>
+              <div className="flex rounded-lg border border-white/10  bg-transparent overflow-hidden focus-within:border-primary">
+                <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
                 <input
                   className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600"
                   placeholder="Submission Link"
@@ -89,8 +92,8 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
                 Project Social Handle (Twitter/X) <span className="text-red-500">*</span>
               </Label>
               <p className="text-[10px] text-gray-500">Drop the link to your project's official social profile.</p>
-              <div className="flex rounded-lg border border-white/10 bg-[#050B1C] overflow-hidden focus-within:border-[#007AFF]">
-                <span className="px-3 py-2.5 text-sm text-gray-500 border-r border-white/10 bg-white/5">https://</span>
+              <div className="flex rounded-lg border border-white/10  bg-transparent overflow-hidden focus-within:border-primary">
+                <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
                 <input
                   className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600"
                   placeholder="Submission Link"
@@ -104,8 +107,8 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
                 Showcase Video
               </Label>
               <p className="text-[10px] text-gray-500">Insert a link to a short demo or trailer (YouTube, Vimeo, etc.) that highlights what your project does.</p>
-              <div className="flex rounded-lg border border-white/10 bg-[#050B1C] overflow-hidden focus-within:border-[#007AFF]">
-                <span className="px-3 py-2.5 text-sm text-gray-500 border-r border-white/10 bg-white/5">https://</span>
+              <div className="flex rounded-lg border border-white/10  bg-transparent overflow-hidden focus-within:border-primary">
+                <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
                 <input
                   className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600"
                   placeholder="Submission Link"
@@ -119,8 +122,8 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
                 Project Link (If live) <span className="text-red-500">*</span>
               </Label>
               <p className="text-[10px] text-gray-500">If your project is already deployed, share the live link here.</p>
-              <div className="flex rounded-lg border border-white/10 bg-[#050B1C] overflow-hidden focus-within:border-[#007AFF]">
-                <span className="px-3 py-2.5 text-sm text-gray-500 border-r border-white/10 bg-white/5">https://</span>
+              <div className="flex rounded-lg border border-white/10  bg-transparent overflow-hidden focus-within:border-primary">
+                <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
                 <input
                   className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600"
                   placeholder="Submission Link"
@@ -133,8 +136,8 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
               <Label className="text-white text-sm font-semibold">
                 Description of project (250 characters or less) <span className="text-red-500">*</span>
               </Label>
-              <div className="flex rounded-lg border border-white/10 bg-[#050B1C] overflow-hidden focus-within:border-[#007AFF]">
-                <span className="px-3 py-2.5 text-sm text-gray-500 border-r border-white/10 bg-white/5">https://</span>
+              <div className="flex rounded-lg border border-white/10  bg-transparent overflow-hidden focus-within:border-primary">
+                <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
                 <input
                   className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600"
                   placeholder="Submission Link"
@@ -147,8 +150,8 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
               <Label className="text-white text-sm font-semibold">
                 What makes your project interesting/different (1000 characters or less) <span className="text-red-500">*</span>
               </Label>
-              <div className="flex rounded-lg border border-white/10 bg-[#050B1C] overflow-hidden focus-within:border-[#007AFF]">
-                <span className="px-3 py-2.5 text-sm text-gray-500 border-r border-white/10 bg-white/5">https://</span>
+              <div className="flex rounded-lg border border-white/10  bg-transparent overflow-hidden focus-within:border-primary">
+                <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
                 <input
                   className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600"
                   placeholder="Submission Link"
@@ -161,8 +164,8 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
               <Label className="text-white text-sm font-semibold">
                 Team member Twitter account(s) <span className="text-red-500">*</span>
               </Label>
-              <div className="flex rounded-lg border border-white/10 bg-[#050B1C] overflow-hidden focus-within:border-[#007AFF]">
-                <span className="px-3 py-2.5 text-sm text-gray-500 border-r border-white/10 bg-white/5">https://</span>
+              <div className="flex rounded-lg border border-white/10 bg-transparent overflow-hidden focus-within:border-primary">
+                <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
                 <input
                   className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600"
                   placeholder="Submission Link"
@@ -175,8 +178,8 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
               <Label className="text-white text-sm font-semibold">
                 Any useful link <span className="text-red-500">*</span>
               </Label>
-              <div className="flex rounded-lg border border-white/10 bg-[#050B1C] overflow-hidden focus-within:border-[#007AFF]">
-                <span className="px-3 py-2.5 text-sm text-gray-500 border-r border-white/10 bg-white/5">https://</span>
+              <div className="flex rounded-lg border border-white/10 bg-transparent overflow-hidden focus-within:border-primary">
+                <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
                 <input
                   className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600"
                   placeholder="Submission Link"
@@ -190,8 +193,8 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
                 Additional Attachments (Optional) <span className="text-red-500">*</span>
               </Label>
               <p className="text-[10px] text-gray-500">Attach relevant documents, screenshots, or files (max 5 files)</p>
-              <div className="mt-2 flex h-32 flex-col items-center justify-center rounded-lg border border-dashed border-white/20 bg-[#050B1C] transition-colors hover:bg-white/5 cursor-pointer group">
-                <div className="h-12 w-12 rounded-lg bg-[#007AFF] text-white flex items-center justify-center mb-3 group-hover:bg-[#0066CC]">
+              <div className="mt-2 flex h-32 flex-col items-center justify-center rounded-lg border border-dashed border-white/20  bg-transparent transition-colors hover:bg-white/5 cursor-pointer group">
+                <div className="h-12 w-12 rounded-lg bg-primary text-white flex items-center justify-center mb-3 group-hover:bg-[#0066CC]">
                   <Upload className="h-6 w-6" />
                 </div>
                 <div className="text-sm text-gray-400 font-medium">
@@ -206,10 +209,10 @@ export function SubmitBountyModal({ children }: { children: React.ReactNode }) {
 
           <DialogFooter className="sticky bottom-0 bg-[#09090B] p-6 border-t border-white/10 z-10">
             <Button
-              className="w-full bg-[#007AFF] hover:bg-[#0066CC] font-bold h-12 text-base rounded-lg flex items-center justify-center gap-2"
+              className="w-full bg-primary hover:bg-[#0066CC] font-bold h-12 text-base rounded-lg flex items-center justify-center gap-2 text-white"
               onClick={handleSubmit}
             >
-              <span className="-rotate-45 pb-1">✈️</span> Submit Application
+              <Send className="h-5 w-5" color="white" /> Submit Application
             </Button>
           </DialogFooter>
           <div className="px-6 pb-6 text-center text-[10px] text-gray-500">

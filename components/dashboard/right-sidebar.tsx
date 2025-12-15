@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Wallet } from "lucide-react";
+import { BadgeDollarSign, Crown, Wallet } from "lucide-react";
 import Image from "next/image";
 
 // Vertical Marquee Component (CSS Animation)
@@ -64,33 +64,34 @@ export function DashboardRightSidebar() {
   return (
     <div className="space-y-8 w-full">
       {/* Top Earners */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Top Earners</h3>
-          <button className="text-xs text-[#007AFF] hover:underline">Leaderboard &gt;</button>
+      <div className="flex flex-col justify-center items-start gap-[10px] relative w-[312px] h-[425px]">
+        <div className="flex items-center justify-between w-full">
+          <h3 className="text-sm font-bold flex items-center gap-1 text-gray-400 uppercase tracking-wider">
+            <Crown className="h-4 w-4" />
+            Top Earners
+          </h3>
+          <button className="text-xs text-primary hover:underline">Leaderboard &gt;</button>
         </div>
 
         {/* Vertical Marquee Top Earners */}
-        <VerticalMarquee height="h-[200px]" duration="20s">
+        <VerticalMarquee height="h-full" duration="40s">
           {topEarners.map((earner, i) => (
-            <div key={i} className="flex items-center justify-between gap-3 p-1">
+            <div key={i} className="flex items-center justify-between gap-3 p-1 w-full">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
                   <Image src={earner.avatar} width={32} height={32} alt={earner.name} className="h-full w-full object-cover" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-white">{earner.name}</p>
+                  <p className="text-xs font-semibold text-white">{earner.name}</p>
                   <p className="text-[10px] text-gray-500">{earner.role}</p>
                 </div>
               </div>
-              <div className="text-right shrink-0">
-                <p className="text-xs font-bold text-white">{earner.amount}</p>
-                <div className="flex justify-end gap-0.5 mt-0.5">
-                  {/* Rank dots or similar indicator */}
-                  <div className="w-1 h-1 rounded-full bg-[#007AFF]"></div>
-                  <div className="w-1 h-1 rounded-full bg-[#007AFF]"></div>
-                  <div className="w-1 h-1 rounded-full bg-[#007AFF]"></div>
+              <div className="flex flex-col items-end gap-0.5">
+                <div className="flex items-center justify-end gap-2">
+                  <p className="text-xs font-extrabold text-white">{earner.amount}</p>
+                  <div className="w-[36px] h-[26px] rounded-full bg-primary flex items-center justify-center text-[10px] font-medium font-inter">USDC</div>
                 </div>
+                <p className="text-[10px] text-gray-500 text-right">#{i + 1}</p>
               </div>
             </div>
           ))}
@@ -98,7 +99,7 @@ export function DashboardRightSidebar() {
       </div>
 
       {/* Total Balance Card */}
-      <div className="rounded-2xl border border-[#007AFF]/30 bg-[#050B1C] p-6 text-center shadow-[0_0_40px_-10px_rgba(0,122,255,0.2)]">
+      <div className="rounded-2xl border border-primary/30 bg-[#050B1C] p-6 text-center shadow-[0_0_40px_-10px_rgba(0,122,255,0.2)]">
         <div className="mb-2 flex justify-center text-gray-400">
           <span className="text-xs flex items-center gap-1 uppercase tracking-widest"><Wallet className="w-3 h-3" /> Total Balance</span>
         </div>
@@ -131,7 +132,7 @@ export function DashboardRightSidebar() {
           </div>
         </div>
 
-        <Button className="w-full bg-[#007AFF] hover:bg-[#0066CC] text-white h-10 rounded-lg font-medium">
+        <Button className="w-full bg-primary hover:bg-[#0066CC] text-white h-10 rounded-lg font-medium">
           Withdraw
         </Button>
       </div>
@@ -139,8 +140,10 @@ export function DashboardRightSidebar() {
       {/* Recent Earners */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Recent Earners</h3>
-          <button className="text-xs text-[#007AFF] hover:underline">Leaderboard &gt;</button>
+          <h3 className="text-sm font-bold text-gray-400 flex items-center gap-1 uppercase tracking-wider">
+            <BadgeDollarSign className="w-4 h-4" />
+            Recent Earners</h3>
+          <button className="text-xs text-primary hover:underline">Leaderboard &gt;</button>
         </div>
 
         {/* Vertical Marquee Recent Earners */}

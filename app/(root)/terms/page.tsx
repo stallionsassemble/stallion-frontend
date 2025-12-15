@@ -33,8 +33,8 @@ export default function TermsPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 1. Agreement to Terms.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   By accessing or using our Services, you agree to be bound by
                   these Terms and our Privacy Notice.
                 </p>
@@ -55,8 +55,8 @@ export default function TermsPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 2. Use of Services.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   You agree to use the Services only for lawful purposes and in
                   accordance with these Terms.
                 </p>
@@ -78,8 +78,8 @@ export default function TermsPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 3. User Accounts and Security.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   You are responsible for maintaining the security of your
                   wallet and account credentials.
                 </p>
@@ -101,8 +101,8 @@ export default function TermsPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 4. Bounties and Payments.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   Stallion facilitates bounty payments but is not a party to the
                   agreement between bounty posters and hunters.
                 </p>
@@ -124,8 +124,8 @@ export default function TermsPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 5. Intellectual Property.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   You retain ownership of your work, but grant us a license to
                   display it on the platform.
                 </p>
@@ -146,8 +146,8 @@ export default function TermsPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 6. Prohibited Activities.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   You agree not to engage in any activity that interferes with
                   or disrupts the Services.
                 </p>
@@ -174,8 +174,8 @@ export default function TermsPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 7. Disclaimers.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   The Services are provided "as is" without warranties of any
                   kind.
                 </p>
@@ -196,8 +196,8 @@ export default function TermsPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 8. Limitation of Liability.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   Our liability is limited to the extent permitted by law.
                 </p>
               </div>
@@ -218,8 +218,8 @@ export default function TermsPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 9. Changes to Terms.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   We may update these Terms at any time.
                 </p>
               </div>
@@ -239,8 +239,8 @@ export default function TermsPage() {
               <h2 className='text-xl font-bold text-white mb-4 font-syne'>
                 10. Contact Us.
               </h2>
-              <div className='bg-[#007AFF3D] border border-[#007AFF]/20 rounded-lg p-4 mb-6'>
-                <p className='text-[#007AFF] text-sm font-medium'>
+              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+                <p className='text-primary text-sm font-medium'>
                   If you have questions about these Terms, please contact us.
                 </p>
               </div>
@@ -251,7 +251,7 @@ export default function TermsPage() {
                   Stallion Labs Ltd. Email:{' '}
                   <a
                     href='mailto:legal@stallion.xyz'
-                    className='text-[#007AFF] hover:underline'
+                    className='text-primary hover:underline'
                   >
                     legal@stallion.xyz
                   </a>
@@ -267,61 +267,61 @@ export default function TermsPage() {
               <nav className='flex flex-col space-y-2 text-sm text-gray-400 font-inter'>
                 <a
                   href='#agreement'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   1. Agreement to Terms
                 </a>
                 <a
                   href='#use-of-services'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   2. Use of Services
                 </a>
                 <a
                   href='#user-accounts'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   3. User Accounts
                 </a>
                 <a
                   href='#bounties'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   4. Bounties and Payments
                 </a>
                 <a
                   href='#intellectual-property'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   5. Intellectual Property
                 </a>
                 <a
                   href='#prohibited'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   6. Prohibited Activities
                 </a>
                 <a
                   href='#disclaimers'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   7. Disclaimers
                 </a>
                 <a
                   href='#liability'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   8. Limitation of Liability
                 </a>
                 <a
                   href='#changes'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   9. Changes to Terms
                 </a>
                 <a
                   href='#contact'
-                  className='hover:text-[#007AFF] transition-colors'
+                  className='hover:text-primary transition-colors'
                 >
                   10. Contact Us
                 </a>

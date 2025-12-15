@@ -102,8 +102,8 @@ function SidebarContent({ onLinkClick }: SidebarContentProps) {
               href={item.href}
               onClick={onLinkClick}
               className={cn(
-                "group flex items-center justify-between rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-white/5",
-                isActive ? "bg-[#007AFF] text-white" : "text-gray-400 hover:text-white"
+                "group flex items-center justify-between rounded-lg px-3 py-3 text-[20px] leading-[29px] font-normal font-inter transition-colors hover:bg-white/5",
+                isActive ? "bg-[#007AFF66] text-white" : "text-gray-400 hover:text-white"
               )}
             >
               <div className="flex items-center gap-3">
@@ -116,7 +116,7 @@ function SidebarContent({ onLinkClick }: SidebarContentProps) {
                 <span>{item.title}</span>
               </div>
               {item.badge && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#007AFF] text-[10px] font-bold text-white">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
                   {item.badge}
                 </span>
               )}

@@ -30,10 +30,10 @@ export default function NotificationsPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-xl border border-white/10 bg-[#007AFF]/10 border-l-2 border-l-[#007AFF]">
+        <div className="p-4 rounded-xl border border-white/10 bg-primary/10 border-l-2 border-l-primary">
           <div className="flex gap-4">
-            <div className="h-10 w-10 rounded-full bg-[#007AFF]/20 flex items-center justify-center shrink-0">
-              <DollarSign className="h-5 w-5 text-[#007AFF]" />
+            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <DollarSign className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
               <div className="flex justify-between items-start">
@@ -47,7 +47,7 @@ export default function NotificationsPage() {
 
         <div className="p-4 rounded-xl border border-white/10 bg-[#09090B] hover:bg-white/5 transition-colors">
           <div className="flex gap-4">
-            <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 text-[#007AFF]">
+            <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 text-primary">
               <User className="h-5 w-5" />
             </div>
             <div className="flex-1">
@@ -61,7 +61,7 @@ export default function NotificationsPage() {
         </div>
         <div className="p-4 rounded-xl border border-white/10 bg-[#09090B] hover:bg-white/5 transition-colors">
           <div className="flex gap-4">
-            <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 text-[#007AFF]">
+            <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 text-primary">
               <User className="h-5 w-5" />
             </div>
             <div className="flex-1">
