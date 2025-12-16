@@ -8,8 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Bell, ChevronDown, DollarSign, Search, User } from "lucide-react";
+import { Bell, DollarSign, PanelLeft, Search, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -50,29 +49,38 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-white/10 bg-[#04020E]/80 backdrop-blur-md px-4 md:px-8">
-      {/* Left: Page Title */}
-      <div className="flex items-center gap-3 md:gap-4">
-        <MobileSidebar />
-        <h1 className="text-xl font-medium text-white">{pageTitle}</h1>
+      {/* Left: Sidebar Toggle + Title */}
+      <div className="flex items-center gap-4">
+        {/* Mobile Sidebar Trigger (Hidden on Desktop) */}
+        <div className="md:hidden">
+          <MobileSidebar />
+        </div>
+
+        {/* Desktop Sidebar Toggle (PanelLeft) */}
+        <Button variant="ghost" size="icon" className="hidden md:flex text-gray-400 hover:text-white">
+          <PanelLeft className="h-5 w-5" />
+        </Button>
+
+        {/* Vertical Separator */}
+        <div className="hidden md:block h-6 w-px bg-white/10"></div>
+
+        {/* Page Title */}
+        <h1 className="text-lg md:text-xl font-medium text-gray-400">{pageTitle}</h1>
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-4">
-        {/* Search - Visible on desktop */}
-        <div className="relative hidden w-64 md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-          <Input
-            placeholder="Search..."
-            className="h-9 w-full rounded-full border-white/10 bg-white/5 pl-9 text-sm text-white placeholder:text-gray-500 focus-visible:ring-blue"
-          />
-        </div>
+      <div className="flex items-center gap-6">
+        {/* Search Button */}
+        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white border border-white/10 rounded-md w-10 h-10">
+          <Search className="h-5 w-5" />
+        </Button>
 
-        {/* Wallet Address */}
-        <div className="hidden items-center gap-2 rounded-full border border-blue bg-[#050B1C] px-3 py-1.5 md:flex">
-          <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-          <span className="text-xs text-gray-400">Wallet Address</span>
-          <span className="font-mono text-xs font-medium text-white">G...X4KL</span>
-        </div>
+        {/* Wallet Address Button */}
+        <button className="hidden md:flex items-center gap-3 rounded-full border border-[#007AFF] bg-transparent px-4 py-2 transition-colors hover:bg-[#007AFF]/10">
+          <div className="h-2 w-2 rounded-full bg-[#007AFF]"></div>
+          <span className="text-sm font-medium text-gray-400">Wallet Address</span>
+          <span className="text-sm font-medium text-white/50">G...X4KL</span>
+        </button>
 
         {/* Notification Dropdown */}
         <DropdownMenu>
@@ -95,7 +103,7 @@ export function Header() {
               {/* Payment Received Notification - Blue Highlight */}
               <div className="w-[290px] h-[60px] mx-auto p-[10px] rounded-[5px] bg-primary flex justify-between items-center group relative shrink-0">
                 <div className="flex gap-3 items-center w-full">
-                  <div className="h-8 w-8 rounded-full border border-white/20 flex items-center justify-center shrink-0">
+                  <div className="h-full w-full rounded-full bg-primary/8 flex items-center justify-center border border-primary/20">
                     <DollarSign className="h-4 w-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -176,23 +184,23 @@ export function Header() {
         {/* User Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="flex items-center gap-2 border-l border-white/10 pl-4 cursor-pointer">
-              <div className="h-8 w-8 overflow-hidden rounded-full border border-white/10">
+            <div className="flex items-center gap-3 cursor-pointer group">
+              {/* Blue dot indicator for profile? Image has a blue dot floating? Or maybe it's spacing. */}
+              {/* Actually image shows a blue dot between wallet and profile? "•" or just alignment? */}
+              {/* I'll skip the random dot. */}
+              <div className="h-9 w-9 overflow-hidden rounded-full border border-white/10 transition-colors group-hover:border-white/30">
                 <Image
                   src="https://avatar.vercel.sh/tunde"
-                  width={32}
-                  height={32}
+                  width={36}
+                  height={36}
                   alt="User"
                   className="h-full w-full object-cover"
                 />
               </div>
-              <div className="hidden items-center gap-1 md:flex">
-                <span className="text-sm font-medium text-white">Tunde</span>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
-              </div>
+              <span className="hidden md:block text-sm font-medium text-gray-400 group-hover:text-white transition-colors">Tunde</span>
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-[#09090B] border-white/10 text-white font-inter">
+          <DropdownMenuContent align="end" className="w-56 bg-[#09090B] border-white/10 text-white font-inter mt-2">
             <div className="bg-[#004085] -mt-1 -mx-1 p-3 rounded-t-md mb-2">
               <p className="text-sm font-medium text-white">Profile</p>
             </div>

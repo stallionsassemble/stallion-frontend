@@ -4,10 +4,9 @@ import { BountyCard } from "@/components/bounties/bounty-card";
 import { BountyDetailsSidebar } from "@/components/bounties/bounty-details-sidebar";
 import { DetailsHeader } from "@/components/bounties/details-header";
 import { DetailsNavigation } from "@/components/bounties/details-navigation";
-import { Badge } from "@/components/ui/badge";
+import { PaymentMilestones, type Milestone } from "@/components/bounties/payment-milestones";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, FileUp, Gift, Image as ImageIcon, Info, MessageSquare } from "lucide-react";
-import Image from "next/image";
+import { Download, FileText, FileUp, Gift, Image as ImageIcon, Info } from "lucide-react";
 import { useParams } from "next/navigation";
 
 export default function BountyDetailsPage() {
@@ -53,10 +52,34 @@ export default function BountyDetailsPage() {
     }
   ];
 
+  const milestones: Milestone[] = [
+    {
+      id: 1,
+      title: "Detailed Audit Report",
+      dueDate: "Dec 8, 2024",
+      amount: "$1,000",
+      status: "pending"
+    },
+    {
+      id: 2,
+      title: "Detailed Audit Report",
+      dueDate: "Dec 8, 2024",
+      amount: "$1,000",
+      status: "pending"
+    },
+    {
+      id: 3,
+      title: "Detailed Audit Report",
+      dueDate: "Dec 8, 2024",
+      amount: "$1,000",
+      status: "pending"
+    }
+  ];
+
   return (
     <div className="pb-20 space-y-8">
       {/* Top Navigation Bar */}
-      <DetailsNavigation backLink="/dashboard/bounties" backText="Back to Bounties" />
+      <DetailsNavigation backLink="/dashboard/projects" backText="Back to Projects" />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_454px] gap-8">
         {/* Main Content Column */}
@@ -65,15 +88,15 @@ export default function BountyDetailsPage() {
           {/* Header Section */}
           <section className="rounded-xl border-[0.69px] border-primary bg-[#09090B]/30 p-6">
             <DetailsHeader
-              type="BOUNTY"
+              type="PROJECT"
               title="Smart Contract Security Audit"
               company="Stallion Foundation"
               logo="/assets/icons/sdollar.png"
-              participants={12}
-              dueDate="5d"
+              participants={200}
+              dueDate="10d"
               tags={["Solidity", "Smart Contract", "Audit", "DeFi"]}
               status="Submission Open"
-              commentsCount={2}
+              commentsCount={20}
             />
           </section>
 
@@ -145,6 +168,9 @@ export default function BountyDetailsPage() {
             </ul>
           </section>
 
+          {/* Payment Milestones */}
+          <PaymentMilestones milestones={milestones} />
+
           {/* Attachments */}
           <section className="space-y-4 p-6 border-[0.69px] border-primary">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -191,100 +217,25 @@ export default function BountyDetailsPage() {
 
         {/* Right Sidebar Column */}
         <div className="hidden lg:block space-y-8">
-          <BountyDetailsSidebar />
+          <BountyDetailsSidebar type="PROJECT" />
         </div>
 
         {/* Mobile Footer */}
         <div className="lg:hidden block mt-8">
-          <BountyDetailsSidebar />
+          <BountyDetailsSidebar type="PROJECT" />
         </div>
       </div>
       <div className="space-y-8">
-        {/* Similar Bounties */}
+        {/* Similar Projects */}
         <section className="space-y-6 pt-8 border-t border-white/10">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             <Gift className="h-5 w-5" color="#007AFF" />
-            Similar Bounties
+            Similar Projects
           </h3>
           <div className="flex overflow-x-auto pb-6 gap-5 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent pl-1">
             {similarBounties.map((bounty) => (
-              <BountyCard key={bounty.id} {...bounty} />
+              <BountyCard key={bounty.id} {...bounty} version="PROJECT" />
             ))}
-          </div>
-        </section>
-
-        {/* Discussion */}
-        <section className="space-y-6 pt-8 border-t  border-[0.69px] border-primary p-6 h-auto w-full ">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" /> Discussion <span className="text-xs text-gray-500 ml-2">2 comments</span>
-          </h3>
-
-          {/* Comment Input */}
-          <div className="relative">
-            {/* Avatar Decoration */}
-            <div className="h-10 w-10 absolute left-3 top-3 rounded-full bg-linear-to-r from-purple-500 to-pink-500 p-px">
-              <div className="h-full w-full rounded-full bg-black flex items-center justify-center">
-                <span className="text-xs text-white">You</span>
-              </div>
-            </div>
-            <textarea
-              className="w-full bg-[#09090B] border-[0.69px] border-primary rounded-xl p-4 pl-16 min-h-[120px] text-sm text-white focus:outline-none focus:border-primary resize-none"
-              placeholder="Ask a question or leave a comment..."
-            />
-            <Button className="absolute bottom-3 right-3 bg-primary hover:bg-[#0066CC] h-8 text-xs font-medium px-4">Post Comment</Button>
-          </div>
-
-          {/* Comment List */}
-          <div className="space-y-8">
-            {/* Comment 1 */}
-            <div className="group">
-              <div className="flex gap-4">
-                <div className="h-10 w-10 rounded-full bg-red-500 overflow-hidden shrink-0">
-                  <Image src="https://avatar.vercel.sh/alex" width={40} height={40} alt="User" />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-white">Alex Chen</span>
-                    <span className="text-xs text-gray-500">2 days ago</span>
-                  </div>
-                  <p className="text-sm text-gray-400 leading-relaxed">
-                    Is there any specific testing framework you prefer we use for the audit? I typically work with Foundry but can adapt to Hardhat if needed.
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500 pt-2">
-                    <button className="hover:text-white flex items-center gap-1 transition-colors"><span className="text-red-500">❤️</span> 42</button>
-                    <button className="hover:text-white flex items-center gap-1 transition-colors">💬 Reply</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Comment 2 (Reply) */}
-            <div className="group pl-14 relative">
-              {/* Thread Line */}
-              <div className="absolute left-[27px] -top-8 bottom-8 w-px bg-white/10 -z-10 rounded-full"></div>
-
-              <div className="flex gap-4">
-                <div className="h-8 w-8 rounded-full bg-white/10 overflow-hidden shrink-0 p-1 flex items-center justify-center">
-                  <Image src="/assets/icons/sdollar.png" width={32} height={32} alt="Stallion" className="object-contain" />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-white">Solana Foundation</span>
-                      <Badge className="bg-[#113264] text-white border-0 text-[10px] px-1.5 h-4">Author</Badge>
-                    </div>
-                    <span className="text-xs text-gray-500">1 day ago</span>
-                  </div>
-                  <p className="text-sm text-gray-400 leading-relaxed">
-                    We prefer Foundry for this project, but Hardhat is acceptable if coverage is comprehensive.
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500 pt-2">
-                    <button className="hover:text-white flex items-center gap-1 transition-colors"><span className="text-red-500">❤️</span> 12</button>
-                    <button className="hover:text-white flex items-center gap-1 transition-colors">💬 Reply</button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
       </div>

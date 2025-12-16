@@ -6,47 +6,63 @@ import { ArrowRight, BadgeDollarSign, Calendar, Gift, InfoIcon, Star } from "luc
 import Image from "next/image";
 import Link from "next/link";
 
-export function BountyDetailsSidebar() {
+interface BountyDetailsSidebarProps {
+  type?: "BOUNTY" | "PROJECT";
+}
+
+export function BountyDetailsSidebar({ type = "BOUNTY" }: BountyDetailsSidebarProps) {
+  const isProject = type === "PROJECT";
+
   return (
     <div className="space-y-6 w-full">
-      {/* Prize Card */}
+      {/* Prize/Budget Card */}
       <div className="rounded-xl border-[0.69px] border-primary bg-[#09090B] overflow-hidden font-inter">
         <div className="p-6 text-center border-b border-[1.16px] border-[#007AFF5C] bg-[#007AFF14]">
           <div className="flex justify-center mb-2">
             <BadgeDollarSign className="h-5 w-5" color="white" />
           </div>
-          <p className="text-sm text-gray-400 mb-1">Total Prizes</p>
+          <p className="text-sm text-gray-400 mb-1">{isProject ? "Project Budget" : "Total Prizes"}</p>
           <h2 className="text-4xl font-bold text-white">$10,000</h2>
         </div>
 
         <div className="p-4 space-y-3">
-          <div className="flex items-center justify-between p-3 rounded-lg bg-[#0C62C024]">
-            <div className="flex items-center gap-3">
-              <span className="text-xl">🥇</span>
-              <span className="text-sm font-medium text-gray-300">Winner</span>
+          {isProject ? (
+            // Project specific content or simply nothing if just budget
+            // Maybe a simplified text or just skip the breakdown
+            <div className="p-2 text-center text-sm text-gray-400">
+              Fixed price project
             </div>
-            <span className="font-bold text-white">$5,000</span>
-          </div>
-          <div className="flex items-center justify-between p-3 rounded-lg bg-[#0C62C024]">
-            <div className="flex items-center gap-3">
-              <span className="text-xl">🥈</span>
-              <span className="text-sm font-medium text-gray-300">1st Runner up</span>
-            </div>
-            <span className="font-bold text-white">$3,000</span>
-          </div>
-          <div className="flex items-center justify-between p-3 rounded-lg bg-[#0C62C024]">
-            <div className="flex items-center gap-3">
-              <span className="text-xl">🥉</span>
-              <span className="text-sm font-medium text-gray-300">Second Runner up</span>
-            </div>
-            <span className="font-bold text-white">$1,000</span>
-          </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-[#0C62C024]">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🥇</span>
+                  <span className="text-sm font-medium text-gray-300">Winner</span>
+                </div>
+                <span className="font-bold text-white">$5,000</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-[#0C62C024]">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🥈</span>
+                  <span className="text-sm font-medium text-gray-300">1st Runner up</span>
+                </div>
+                <span className="font-bold text-white">$3,000</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-[#0C62C024]">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🥉</span>
+                  <span className="text-sm font-medium text-gray-300">Second Runner up</span>
+                </div>
+                <span className="font-bold text-white">$1,000</span>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="p-4 pt-0">
-          <SubmitBountyModal>
+          <SubmitBountyModal type={type}>
             <Button className="w-full bg-primary hover:bg-[#007AFF/95] text-white font-bold h-11">
-              Submit Bounty
+              {isProject ? "Apply for Project" : "Submit Bounty"}
             </Button>
           </SubmitBountyModal>
 
@@ -110,7 +126,7 @@ export function BountyDetailsSidebar() {
 
       {/* Footer Info */}
       <div className="font-medium font-inter px-2">
-        <p className="text-[16px] text-white uppercase mb-1">Winner Announcement By</p>
+        <p className="text-[16px] text-white uppercase mb-1">{isProject ? "Project Owner" : "Winner Announcement By"}</p>
         <p className="text-[14px] text-white">December 20, 2025 - as scheduled by the project owner</p>
       </div>
     </div>

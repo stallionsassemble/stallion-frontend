@@ -16,7 +16,7 @@ export function CongratulationsModal({ isOpen, onClose }: CongratulationsModalPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#02010A] border-white/10 sm:max-w-md p-0 overflow-hidden flex flex-col items-center justify-center text-center [&>button]:hidden">
+      <DialogContent className="bg-[#02010A] border-white/10 sm:max-w-md p-0 overflow-hidden flex flex-col items-center justify-center text-center">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground text-white z-50"
@@ -25,45 +25,50 @@ export function CongratulationsModal({ isOpen, onClose }: CongratulationsModalPr
           <span className="sr-only">Close</span>
         </button>
 
-        <div className="pt-12 pb-6 px-6 flex flex-col items-center w-full">
+        <div className="pt-12 pb-10 px-6 flex flex-col items-center w-full">
           {/* Logo Cluster */}
-          <div className="relative mb-8">
-            <div className="h-24 w-24 rounded-full overflow-hidden border-4 border-[#02010A] relative z-10 -mr-6 inline-block">
+          <div className="relative mb-8 flex items-center justify-center">
+            {/* User Avatar (Front/Left) */}
+            <div className="h-20 w-20 rounded-full overflow-hidden border-[3px] border-[#02010A] relative z-20 -mr-4">
               <Image
                 src="https://avatar.vercel.sh/john"
-                width={96}
-                height={96}
+                width={80}
+                height={80}
                 alt="User"
                 className="h-full w-full object-cover"
               />
             </div>
-            <div className="h-24 w-24 rounded-full overflow-hidden border-4 border-[#02010A] bg-white relative z-0 inline-flex items-center justify-center">
+            {/* Stallion Logo (Back/Right) */}
+            <div className="h-20 w-20 rounded-full overflow-hidden border-[3px] border-[#02010A] bg-white relative z-10 flex items-center justify-center">
               <Image
-                src="/assets/icons/sdollar.png"
-                width={60}
-                height={60}
+                src="https://avatar.vercel.sh/shadcn"
+                width={80}
+                height={80}
                 alt="Stallion"
-                className="object-contain"
+                className="h-full w-full object-cover"
               />
             </div>
           </div>
 
-          {/* Text */}
-          <div className="relative w-full mb-4">
-            {/* Glow Effect */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-12 bg-primary blur-2xl opacity-40 rounded-full pointer-events-none" />
-            <h2 className="relative text-4xl md:text-5xl font-black text-white italic tracking-tighter" style={{ fontFamily: 'var(--font-heading)' }}>
-              Congratulations
-            </h2>
-            {/* Text Outline/Stroke workaround if needed, but font-black usually sufficient */}
+          {/* Congratulations Pill */}
+          <div className="relative w-full max-w-sm mb-6">
+            <div className="bg-[#007AFF] rounded-[1666.13px] py-4 px-2 w-[392px] h-[69px] flex items-center justify-center shadow-[0px_8.33px_16.66px_-4px_#007AFF45)]">
+              <h2 className="text-3xl md:text-3xl font-extrabold leading-[68.18px] text-white italic -tracking-[1.55px] font-syne">
+                Congratulations
+              </h2>
+            </div>
           </div>
 
-          <p className="text-gray-400 text-sm mb-1">Your application has been successfully submitted.</p>
-          <p className="text-gray-400 text-sm mb-8">We'll notify you once it's been reviewed.</p>
+          <div className="space-y-1 mb-10">
+            <p className="text-[#A1A1AA] tracking-[4%] font-light text-xs">Your application has been successfully submitted.
+              <br />
+              We'll notify you once it's been reviewed.
+            </p>
+          </div>
 
-          <div className="flex flex-col gap-3 w-full max-w-xs">
+          <div className="flex flex-col gap-4 w-full max-w-[300px]">
             <Button
-              className="w-full bg-primary hover:bg-[#0066CC] h-11 font-medium text-white"
+              className="w-full bg-primary hover:bg-primary/95 h-12 rounded-[10px] font-medium font-inter leading-[23px] text-white text-base"
               onClick={() => {
                 onClose();
                 router.push("/dashboard/bounties");
@@ -73,7 +78,8 @@ export function CongratulationsModal({ isOpen, onClose }: CongratulationsModalPr
             </Button>
             <Button
               variant="outline"
-              className="w-full bg-transparent border-white/20 text-white h-11 hover:bg-white/5"
+              className="w-full bg-[#04020E] hover:bg-[#04020E]/95 border-[1.19px] border-white text-white h-12 rounded-[10px] leading-[23px text-base font-normal"
+              style={{ boxShadow: "0px 1.19px 2.37px 0px #0000001A" }}
               onClick={() => {
                 onClose();
                 router.push("/dashboard/submissions");

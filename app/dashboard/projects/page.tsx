@@ -107,8 +107,8 @@ export default function BountiesPage() {
   return (
     <div className="space-y-6">
       <div className="flex-1 items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Browse Bounties</h1>
-        <p>Browse and manage available bounties.</p>
+        <h1 className="text-2xl font-bold text-white">Browse Projects</h1>
+        <p>Browse and manage available projects.</p>
       </div>
 
       <BountyFilters activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setCurrentPage(1); }} />
@@ -121,6 +121,7 @@ export default function BountiesPage() {
             className="w-full min-w-0 md:w-full md:min-w-0"
             // fix type mismatch if any, mock data aligns with interface
             type={bounty.type as any}
+            version="PROJECT"
           />
         ))}
       </div>

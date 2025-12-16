@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CircleCheck, ListFilter } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, CircleCheck, Gift, ListFilter, Timer, User } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -200,7 +200,6 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
         {/* Gradient Fade for scroll indication on mobile */}
         <div className="absolute right-0 top-0 bottom-2 w-12 bg-linear-to-l from-[#04020E] to-transparent pointer-events-none md:hidden" />
       </div>
-      {/* )} */}
 
       <div className="grid gap-3">
         {filteredOpportunities.length > 0 ? (
@@ -235,26 +234,25 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
                   <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400 font-medium">
                     <div className="flex items-center gap-1.5">
                       <div className="w-3.5 h-3.5 flex items-center justify-center text-primary">
-                        {/* Stallion Logo/Icon */}
-                        <svg className="w-full h-full" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" /></svg>
+                        <BriefcaseBusiness />
                       </div>
                       <span className="text-gray-300">{opp.company}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-3.5 h-3.5 text-primary">
-                        <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        <User className="w-3.5 h-3.5" />
                       </div>
                       <span>200</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-3.5 h-3.5 text-primary">
-                        <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <Timer className="w-3.5 h-3.5" />
                       </div>
                       <span>Due in 10d</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-3.5 h-3.5 text-primary">
-                        <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 4 0 0 0-2 2v16"></path></svg>
+                        <Gift className="w-3.5 h-3.5" />
                       </div>
                       <span className="capitalize">{opp.type || "Bounty"}</span>
                     </div>

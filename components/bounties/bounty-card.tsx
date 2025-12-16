@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ChevronRight, Clock, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,6 +19,8 @@ export interface BountyCardProps {
   participants: number;
   dueDate: string;
   isVerified?: boolean;
+  className?: string;
+  version?: "BOUNTY" | "PROJECT";
 }
 
 export function BountyCard({
@@ -31,14 +34,17 @@ export function BountyCard({
   tags,
   participants,
   dueDate,
+  className,
+  version = "BOUNTY",
 }: BountyCardProps) {
   return (
     <div
-      className="group relative flex flex-col shrink-0 bg-card"
+      className={cn(
+        "group relative flex flex-col shrink-0 bg-card w-full md:w-[450.93px] md:min-w-[450.93px]",
+        className
+      )}
       style={{
-        minWidth: "450px",
-        flex: "1 1 450px",
-        minHeight: "303.1px",
+        minHeight: "258.19px",
         gap: "10.31px",
         paddingTop: "25.77px",
         paddingRight: "30.92px",
@@ -70,7 +76,7 @@ export function BountyCard({
 
       {/* 2. Main Content */}
       <div className="flex flex-col gap-2 mt-2">
-        <Link href={`/dashboard/bounties/${id}`} className="block">
+        <Link href={`${version === "BOUNTY" ? "/dashboard/bounties" : "/dashboard/projects"}/${id}`} className="block">
           <h3 className="text-xl font-inter font-bold text-white leading-tight group-hover:text-primary transition-colors line-clamp-1">
             {title}
           </h3>
@@ -119,7 +125,7 @@ export function BountyCard({
         </div>
 
         {/* Action Button */}
-        <Link href={`/dashboard/bounties/${id}`}>
+        <Link href={`${version === "BOUNTY" ? "/dashboard/bounties" : "/dashboard/projects"}/${id}`}>
           <Button
             size="icon"
             className="h-11 w-11 py-[4.85px] rounded-full bg-primary text-white hover:bg-[#0066CC] shadow-lg shadow-blue-900/20"
