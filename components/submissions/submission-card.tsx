@@ -48,7 +48,7 @@ export function SubmissionCard({
   lastUpdated,
 }: SubmissionCardProps) {
   return (
-    <div className="group rounded-xl border-[0.77px] border-[#007AFF] bg-[#04020E] p-5 transition-all">
+    <div className="group rounded-xl border-[0.77px] border-[#007AFF] bg-background p-5 transition-all">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-4">
           {/* Logo */}

@@ -78,7 +78,7 @@ function SidebarContent({ onLinkClick }: SidebarContentProps) {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full flex-col bg-[#04020E]">
+    <div className="flex h-full flex-col bg-background">
       {/* Logo Area */}
       <div className="flex h-20 items-center px-6">
         <Link href="/" className="flex items-center gap-2" onClick={onLinkClick}>
@@ -142,7 +142,7 @@ function SidebarContent({ onLinkClick }: SidebarContentProps) {
 
 export function Sidebar() {
   return (
-    <aside className="hidden h-screen w-64 flex-col border-r border-white/10 bg-[#04020E] md:flex sticky top-0">
+    <aside className="hidden h-screen w-64 flex-col border-r border-white/10 bg-background md:flex sticky top-0">
       <SidebarContent />
     </aside>
   );
@@ -158,7 +158,7 @@ export function MobileSidebar() {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 border-r border-white/10 bg-[#04020E] w-72">
+      <SheetContent side="left" className="p-0 border-r border-white/10 bg-background w-72">
         <SidebarContent onLinkClick={() => setOpen(false)} />
       </SheetContent>
     </Sheet>

@@ -7,7 +7,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-[#04020E] text-white">
+    <div className="flex min-h-screen bg-background text-white">
       {/* Sidebar - Fixed width */}
       <Sidebar />
 
@@ -16,7 +16,13 @@ export default function DashboardLayout({
         <Header />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8"
+          style={{
+            backgroundImage: "url('/grid-bg.png')",
+            backgroundRepeat: "repeat",
+            backgroundSize: "auto"
+          }}
+        >
           {children}
         </main>
       </div>

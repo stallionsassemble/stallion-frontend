@@ -3,8 +3,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { KpiCard } from "@/components/ui/kpi-card";
 import { AddPaymentMethodModal } from "@/components/wallet/add-payment-method-modal";
-import { ArrowDownLeft, ArrowUpRight, Calendar, ChevronLeft, ChevronRight, Clock, DollarSign, Download, Search, Send, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, Calendar, ChevronLeft, ChevronRight, Clock, Coins, DollarSign, History, Pencil, Plus, Search, Wallet } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 
 const assets = [
@@ -14,7 +16,6 @@ const assets = [
     amount: "500 USGLO",
     value: "$5,590.90",
     icon: "/assets/icons/usglo.png",
-    color: "bg-blue-500",
   },
   {
     symbol: "USDC",
@@ -22,7 +23,6 @@ const assets = [
     amount: "3,240.5 USDC",
     value: "$5,590.90",
     icon: "/assets/icons/usdc.png",
-    color: "bg-cyan-500",
   },
   {
     symbol: "XLM",
@@ -30,7 +30,27 @@ const assets = [
     amount: "15,420 XLM",
     value: "$5,590.90",
     icon: "/assets/icons/xlm.png",
-    color: "bg-white",
+  },
+];
+
+const payoutMethods = [
+  {
+    id: 1,
+    name: "Crypto Wallet",
+    value: "0x742d35Cc6634C0532925a3b844Bc9e7595f2bD38",
+    type: "wallet",
+  },
+  {
+    id: 2,
+    name: "Crypto Wallet",
+    value: "0x742d35Cc6634C0532925a3b844Bc9e7595f2bD38",
+    type: "wallet",
+  },
+  {
+    id: 3,
+    name: "Crypto Wallet",
+    value: "0x742d35Cc6634C0532925a3b844Bc9e7595f2bD38",
+    type: "wallet",
   },
 ];
 
@@ -43,7 +63,6 @@ const transactions = [
     status: "Paid",
     amount: "$3,500",
     currency: "USDC",
-    currencyColor: "bg-blue-500",
     icon: ArrowDownLeft,
   },
   {
@@ -54,7 +73,6 @@ const transactions = [
     status: "Paid",
     amount: "$3,500",
     currency: "USGLO",
-    currencyColor: "bg-blue-600",
     icon: ArrowDownLeft,
   },
   {
@@ -65,7 +83,6 @@ const transactions = [
     status: "In Progress",
     amount: "$3,500",
     currency: "XLM",
-    currencyColor: "bg-white text-black",
     icon: ArrowUpRight,
   },
   {
@@ -76,7 +93,6 @@ const transactions = [
     status: "Paid",
     amount: "$3,500",
     currency: "XLM",
-    currencyColor: "bg-white text-black",
     icon: ArrowDownLeft,
   },
   {
@@ -87,7 +103,6 @@ const transactions = [
     status: "Paid",
     amount: "$3,500",
     currency: "XLM",
-    currencyColor: "bg-white text-black",
     icon: ArrowDownLeft,
   },
   {
@@ -98,7 +113,6 @@ const transactions = [
     status: "In Progress",
     amount: "$3,500",
     currency: "XLM",
-    currencyColor: "bg-white text-black",
     icon: ArrowUpRight,
   },
 ];
@@ -111,71 +125,66 @@ export default function WalletPage() {
     <div className="space-y-8">
       {/* Stats Cards Row */}
       <div className="grid gap-4 md:grid-cols-3">
-        {/* Total Balance */}
-        <div className="rounded-2xl border border-white/10 bg-[#09090B] p-6 relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-gray-400 font-medium">Total Balance</h3>
-            <DollarSign className="w-5 h-5 text-gray-400" />
-          </div>
-          <div className="space-y-1">
-            <h2 className="text-4xl font-bold text-white">$22,960</h2>
-            <p className="text-primary text-sm font-medium">Across all tokens</p>
-          </div>
-        </div>
-
-        {/* Pending */}
-        <div className="rounded-2xl border border-white/10 bg-[#09090B] p-6 relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-gray-400 font-medium">Pending</h3>
-            <Clock className="w-5 h-5 text-gray-400" />
-          </div>
-          <div className="space-y-1">
-            <h2 className="text-4xl font-bold text-white">$5,000</h2>
-            <p className="text-[#FF9500] text-sm font-medium">Awaiting release</p>
-          </div>
-        </div>
-
-        {/* This Month */}
-        <div className="rounded-2xl border border-white/10 bg-[#09090B] p-6 relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="text-gray-400 font-medium">This Month</h3>
-            <DollarSign className="w-5 h-5 text-gray-400" />
-          </div>
-          <div className="space-y-1">
-            <h2 className="text-4xl font-bold text-white">$4,300</h2>
-            <p className="text-green-500 text-sm font-medium">+12% from last month</p>
-          </div>
-        </div>
+        <KpiCard
+          label="Total Balance"
+          value="$22,960"
+          status="Across all tokens"
+          statusColor="text-primary font-medium text-sm"
+          icon={DollarSign}
+          valueClassName="text-4xl text-white"
+          className="rounded-2xl border-white/10 bg-[#09090B]"
+          layout="row"
+        />
+        <KpiCard
+          label="Pending"
+          value="$5,000"
+          status="Awaiting release"
+          statusColor="text-[#FF9500] font-medium text-sm"
+          icon={Clock}
+          valueClassName="text-4xl text-white"
+          className="rounded-2xl border-white/10 bg-[#09090B]"
+          layout="row"
+        />
+        <KpiCard
+          label="This Month"
+          value="$4,300"
+          status="+12% from last month"
+          statusColor="text-green-500 font-medium text-sm"
+          icon={DollarSign}
+          valueClassName="text-4xl text-white"
+          className="rounded-2xl border-white/10 bg-[#09090B]"
+          layout="row"
+        />
       </div>
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-1 p-1 bg-[#09090B] border border-white/10 rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-[#18181B] rounded-[12px]">
           {["Assets", "Transactions", "Payouts"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === tab
-                ? "bg-[#1C1C1E] text-white"
+              className={`px-4 py-2 text-sm font-inter font-normal rounded-md transition-colors ${activeTab === tab
+                ? "bg-background text-white"
                 : "text-gray-400 hover:text-white"
                 }`}
             >
               <span className="flex items-center gap-2">
-                {tab === "Assets" && <Wallet className="w-3.5 h-3.5" />}
-                {tab === "Transactions" && <ArrowUpRight className="w-3.5 h-3.5" />}
-                {tab === "Payouts" && <ArrowDownLeft className="w-3.5 h-3.5" />}
+                {tab === "Assets" && <Coins className="w-3.5 h-3.5 text-primary" />}
+                {tab === "Transactions" && <History className="w-3.5 h-3.5 text-primary" />}
+                {tab === "Payouts" && <BadgeDollarSign className="w-3.5 h-3.5 text-primary" />}
                 {tab}
               </span>
             </button>
           ))}
         </div>
 
-        <Button
+        {/* <Button
           className="bg-primary hover:bg-[#0066CC] text-white font-medium rounded-lg px-6 gap-2"
           onClick={() => setShowWithdrawModal(true)}
         >
           <Send className="w-4 h-4" /> Withdraw Fund
-        </Button>
+        </Button> */}
       </div>
 
       {/* Tab Content */}
@@ -185,21 +194,25 @@ export default function WalletPage() {
             {assets.map((asset, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-[#050B1C] hover:bg-[#050B1C]/80 transition-colors"
+                className="flex items-center justify-between p-4 rounded-xl bg-[#0C62C024] hover:bg-[#0C62C024] transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full ${asset.color} flex items-center justify-center text-white/20 font-bold overflow-hidden`}>
-                    <div className="w-full h-full flex items-center justify-center bg-white/10 backdrop-blur-md">
-                      <span className="text-white text-[10px] font-bold">{asset.symbol[0]}</span>
-                    </div>
+                  <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                    <Image
+                      src={asset.icon}
+                      alt={asset.name}
+                      className="w-6 h-6 object-contain"
+                      width={24}
+                      height={24}
+                    />
                   </div>
                   <div>
-                    <h4 className="text-white font-bold">{asset.symbol}</h4>
-                    <p className="text-sm text-gray-400">{asset.amount}</p>
+                    <h4 className="text-white font-bold font-inter">{asset.symbol}</h4>
+                    <p className="text-sm font-inter text-[#737373]">{asset.amount}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-white font-bold block">{asset.value}</span>
+                  <span className="text-white font-bold font-space-grotesk block">{asset.value}</span>
                 </div>
               </div>
             ))}
@@ -225,37 +238,36 @@ export default function WalletPage() {
             </div>
 
             {/* Table */}
-            <div className="rounded-xl border border-white/10 bg-[#050B1C] overflow-hidden">
+            <div className="bg-[#0C62C024] overflow-hidden">
               {transactions.map((tx, i) => (
-                <div key={tx.id} className={`flex items-center justify-between p-4 ${i !== transactions.length - 1 ? 'border-b border-white/10' : ''} hover:bg-white/5 transition-colors`}>
+                <div key={tx.id} className={`flex items-center justify-between p-4 ${i !== transactions.length - 1 ? 'border-b border-[#007AFF]' : ''} hover:bg-white/5 transition-colors`}>
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+                    <div className="w-10 h-10 rounded-full bg-[#007AFF7A] flex items-center justify-center text-white">
                       <tx.icon className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="text-white font-bold text-sm">{tx.title}</h4>
-                        <Badge variant="secondary" className={`${tx.status === 'Paid' ? 'bg-green-500/20 text-green-500' : 'bg-yellow-500/20 text-yellow-500'} text-[10px] h-5 px-1.5`}>
+                        <h4 className="text-white font-inter font-bold text-[16px]">{tx.title}</h4>
+                        <Badge variant="secondary" className={`${tx.status === 'Paid' ? 'bg-[#30A46C80] text-white' : 'bg-[#A47230AB] text-white'} text-[10px] h-5 px-1.5`}>
                           {tx.status}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-0.5">
+                      <div className="flex flex-col text-[12px] font-inter font-medium text-muted-foreground mt-0.5">
                         <span>{tx.type}</span>
-                        <span className="w-0.5 h-0.5 rounded-full bg-gray-500" />
                         <span>{tx.date}</span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-white font-bold text-lg">{tx.amount}</span>
-                    <Badge className={`${tx.currencyColor} text-[10px] px-1.5 h-5`}>{tx.currency}</Badge>
+                    <span className="text-white font-inter font-bold text-[24px]">{tx.amount}</span>
+                    <Badge className="font-inter text-white text-[10px] px-1.5 h-5">{tx.currency}</Badge>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Pagination */}
-            <div className="flex justify-end items-center gap-4 text-xs text-gray-400 py-2">
+            <div className="flex justify-end items-center gap-4 text-sm font-inter text-foreground py-2">
               <div className="flex items-center gap-2">
                 <span>Rows per page</span>
                 <select className="bg-[#09090B] border border-white/10 rounded px-2 py-1">
@@ -274,12 +286,37 @@ export default function WalletPage() {
         )}
 
         {activeTab === "Payouts" && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-              <Download className="w-8 h-8 text-gray-500" />
+          <div className="space-y-6">
+            <h3 className="text-white font-bold font-inter text-lg">Payout Methods</h3>
+
+            <div className="space-y-3">
+              {payoutMethods.map((method) => (
+                <div key={method.id} className="flex items-center justify-between p-4 rounded-xl bg-[#0C62C024]">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-[#007AFF7A] flex items-center justify-center shrink-0">
+                      <Wallet className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-white font-bold font-inter">{method.name}</h4>
+                      <p className="text-xs font-inter text-ring">{method.value}</p>
+                    </div>
+                  </div>
+                  <button className="flex items-center gap-2 text-sm text-white hover:text-white transition-colors">
+                    <Pencil className="w-4 h-4" />
+                    <span>Edit</span>
+                  </button>
+                </div>
+              ))}
             </div>
-            <h3 className="text-white font-medium mb-1">No Payouts Yet</h3>
-            <p className="text-gray-500 text-sm">Your payout history will appear here.</p>
+
+            <Button
+              variant="stallion-outline"
+              className="w-full border-dashed border-[0.77px]  h-[52px] gap-2 rounded-xl text-foreground hover:text-foreground hover:bg-[#007AFF]/5 cursor-pointer"
+              onClick={() => setShowWithdrawModal(true)}
+            >
+              <Plus className="w-5 h-5" />
+              Add Payment Method
+            </Button>
           </div>
         )}
       </div>

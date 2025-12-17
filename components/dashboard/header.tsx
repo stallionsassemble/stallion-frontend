@@ -48,7 +48,7 @@ export function Header() {
   const pageTitle = getPageTitle(pathname);
 
   return (
-    <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-white/10 bg-[#04020E]/80 backdrop-blur-md px-4 md:px-8">
+    <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-white/10 bg-background/80 backdrop-blur-md px-4 md:px-8">
       {/* Left: Sidebar Toggle + Title */}
       <div className="flex items-center gap-4">
         {/* Mobile Sidebar Trigger (Hidden on Desktop) */}

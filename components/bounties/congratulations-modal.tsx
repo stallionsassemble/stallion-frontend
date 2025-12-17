@@ -78,7 +78,7 @@ export function CongratulationsModal({ isOpen, onClose }: CongratulationsModalPr
             </Button>
             <Button
               variant="outline"
-              className="w-full bg-[#04020E] hover:bg-[#04020E]/95 border-[1.19px] border-white text-white h-12 rounded-[10px] leading-[23px text-base font-normal"
+              className="w-full bg-background hover:bg-background/95 border-[1.19px] border-white text-white h-12 rounded-[10px] leading-[23px text-base font-normal"
               style={{ boxShadow: "0px 1.19px 2.37px 0px #0000001A" }}
               onClick={() => {
                 onClose();

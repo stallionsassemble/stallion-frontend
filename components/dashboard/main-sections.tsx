@@ -198,7 +198,7 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
           })}
         </div>
         {/* Gradient Fade for scroll indication on mobile */}
-        <div className="absolute right-0 top-0 bottom-2 w-12 bg-linear-to-l from-[#04020E] to-transparent pointer-events-none md:hidden" />
+        <div className="absolute right-0 top-0 bottom-2 w-12 bg-linear-to-l from-background to-transparent pointer-events-none md:hidden" />
       </div>
 
       <div className="grid gap-3">

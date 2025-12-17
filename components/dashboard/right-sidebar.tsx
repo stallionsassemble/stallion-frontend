@@ -19,8 +19,8 @@ function VerticalMarquee({
   return (
     <div className={`relative w-full overflow-hidden ${height}`}>
       {/* Gradient Masks */}
-      <div className="absolute top-0 left-0 right-0 h-8 bg-linear-to-b from-[#04020E] to-transparent z-10 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-[#04020E] to-transparent z-10 pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-8 bg-linear-to-b from-background to-transparent z-10 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-background to-transparent z-10 pointer-events-none" />
 
       <div
         className="flex flex-col gap-3 w-full hover:paused"
@@ -100,29 +100,12 @@ export function DashboardRightSidebar() {
 
       {/* Total Balance Card */}
       {/* Total Balance Card */}
-      <div className="rounded-[20px] border border-[#1E293B] bg-[#020617] p-5 shadow-2xl relative overflow-hidden group">
+      <div className="rounded-[20px] border border-[#1E293B] bg-[#020617] relative overflow-hidden group shadow-2xl">
         {/* Top Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px] bg-linear-to-r from-transparent via-blue-500 to-transparent opacity-50 blur-sm"></div>
 
         {/* Total Balance Header Card */}
-        <div
-          className="flex flex-col items-center justify-center mb-6 relative z-10"
-          style={{
-            width: "calc(100% + 42px)", // 20px padding * 2 + 2px borders
-            marginLeft: "-21px", // Pull left
-            marginTop: "-21px", // Pull top
-            marginRight: "-21px", // Pull right
-            height: "155px",
-            background: "#007AFF14",
-            borderBottom: "1.16px solid #007AFF5C",
-            borderRadius: "20px 20px 0 0", // Matching parent top corners for seamless fit
-            paddingTop: "13.53px",
-            paddingBottom: "13.53px",
-            paddingLeft: "20px",
-            paddingRight: "20px",
-            gap: "10px",
-          }}
-        >
+        <div className="flex flex-col items-center justify-center mb-6 relative z-10 w-full bg-[#007AFF]/8 border-b border-[#007AFF]/36 pt-[14px] pb-[14px] px-5">
           {/* Header Icon */}
           <div className="mb-1 text-gray-400">
             <BadgeDollarSign className="w-5 h-5 mx-auto mb-1" color="white" strokeWidth={1.5} />
@@ -131,59 +114,55 @@ export function DashboardRightSidebar() {
           <h2 className="text-[32px] font-inter font-bold md:text-[40px] leading-tight text-white tracking-tight text-center">$5,590.90</h2>
         </div>
 
-        <div className="space-y-3 mb-6">
-          {/* USGLO */}
-          <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#0C62C024] border border-[#1E293B]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#007AFF]/20 flex items-center justify-center shrink-0 border border-[#007AFF]/30">
-                <span className="text-[10px] font-bold text-[#007AFF]">$</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-white">USGLO</span>
-                <span className="text-[10px] font-inter text-[#737373]">500 USGLO</span>
-              </div>
-            </div>
-            <span className="text-[20px] font-space-grotesk leading-[23px] font-bold text-white">$5,590.90</span>
-          </div>
-
-          {/* USDC */}
-          <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#0C62C024] border border-[#1E293B]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#14F195]/20 flex items-center justify-center shrink-0 border border-[#14F195]/30">
-                <div className="w-4 h-4 rounded-full border border-[#14F195] flex items-center justify-center">
-                  <span className="text-[8px] font-bold text-[#14F195]">$</span>
+        <div className="space-y-3 mb-6 px-5">
+          {[
+            {
+              name: "USGLO",
+              amount: "500 USGLO",
+              value: "$5,590.90",
+              icon: "/assets/icons/usglo.png"
+            },
+            {
+              name: "USDC",
+              amount: "3,240.5 USDC",
+              value: "$5,590.90",
+              icon: "/assets/icons/usdc.png"
+            },
+            {
+              name: "XLM",
+              amount: "15,420 XLM",
+              value: "$5,590.90",
+              icon: "/assets/icons/xlm.png"
+            }
+          ].map((currency, index) => (
+            <div key={index} className="flex items-center justify-between p-3.5 rounded-xl bg-[#0C62C024] border border-[#1E293B]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+                  <img
+                    src={currency.icon}
+                    alt={currency.name}
+                    className="w-5 h-5 object-contain"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-white">{currency.name}</span>
+                  <span className="text-[10px] font-inter text-[#737373]">{currency.amount}</span>
                 </div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-white">USDC</span>
-                <span className="text-[10px] font-inter text-[#737373]">3,240.5 USDC</span>
-              </div>
+              <span className="text-[20px] font-space-grotesk leading-[23px] font-bold text-white">{currency.value}</span>
             </div>
-            <span className="text-[20px] font-space-grotesk leading-[23px] font-bold text-white">$5,590.90</span>
-          </div>
-
-          {/* XLM */}
-          <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#0C62C024] border border-[#1E293B]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
-                <span className="text-[10px] font-bold text-white">X</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-white">XLM</span>
-                <span className="text-[10px] font-inter text-[#737373]">15,420 XLM</span>
-              </div>
-            </div>
-            <span className="text-[20px] font-space-grotesk leading-[23px] font-bold text-white">$5,590.90</span>
-          </div>
+          ))}
         </div>
 
-        <Button className="w-full bg-[#0052CC] hover:bg-[#0042a3] text-white h-[46px] rounded-xl font-medium font-inter text-[16px] leading-[23px] transition-all shadow-[0_0_15px_rgba(0,82,204,0.3)]">
-          Withdraw
-        </Button>
-      </div>
+        <div className="px-5 pb-5">
+          <Button className="w-full bg-[#0052CC] hover:bg-[#0042a3] text-white h-[46px] rounded-xl font-medium font-inter text-[16px] leading-[23px] transition-all shadow-[0_0_15px_rgba(0,82,204,0.3)]">
+            Withdraw
+          </Button>
+        </div>
+      </div >
 
       {/* Recent Earners */}
-      <div className="space-y-4">
+      < div className="space-y-4" >
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-white flex items-center gap-1 uppercase tracking-wider">
             <BadgeDollarSign className="w-4 h-4" />
@@ -213,7 +192,7 @@ export function DashboardRightSidebar() {
             </div>
           ))}
         </VerticalMarquee>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

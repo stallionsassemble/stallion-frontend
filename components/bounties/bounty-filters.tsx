@@ -14,7 +14,7 @@ export function BountyFilters({ activeTab, onTabChange }: BountyFiltersProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex bg-[#04020E] h-[78px] items-center border border-[#007AFF4D] rounded-[10px]">
+      <div className="flex bg-background h-[78px] items-center border border-[#007AFF4D] rounded-[10px]">
         {/* Search and Main Filters */}
         <div className="w-full px-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="relative w-full md:w-96">

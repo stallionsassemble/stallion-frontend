@@ -126,7 +126,7 @@ export function AuthRightSection({ variant }: AuthRightSectionProps) {
             {bountiesMarquee.map((bounty, index) => (
               <div
                 key={`${bounty.id}-${index}`}
-                className="flex items-start justify-between rounded-xl border border-white/10 bg-[#04020E] p-6 transition-colors hover:border-white/20"
+                className="flex items-start justify-between rounded-xl border border-white/10 bg-background p-6 transition-colors hover:border-white/20"
               >
                 <div className="space-y-4">
                   <div className="text-3xl font-bold text-white">{bounty.amount}</div>
@@ -177,7 +177,7 @@ export function AuthRightSection({ variant }: AuthRightSectionProps) {
             {companiesMarquee.map((company, index) => (
               <div
                 key={`${company.id}-${index}`}
-                className="flex items-start justify-between rounded-xl border border-white/10 bg-[#04020E] p-6 transition-colors hover:border-white/20"
+                className="flex items-start justify-between rounded-xl border border-white/10 bg-background p-6 transition-colors hover:border-white/20"
               >
                 <div className="space-y-4">
                   <div className="text-2xl font-bold text-white">{company.name}</div>

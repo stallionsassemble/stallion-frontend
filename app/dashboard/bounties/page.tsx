@@ -133,7 +133,7 @@ export default function BountiesPage() {
             <SelectTrigger className="h-8 px-2 w-[60px] rounded-md bg-black border border-white/10 text-white focus:ring-0 focus:ring-offset-0 gap-1">
               <SelectValue placeholder="10" />
             </SelectTrigger>
-            <SelectContent className="bg-[#04020E] border-white/10 text-white">
+            <SelectContent className="bg-background border-white/10 text-white">
               <SelectItem value="5">5</SelectItem>
               <SelectItem value="10">10</SelectItem>
               <SelectItem value="20">20</SelectItem>

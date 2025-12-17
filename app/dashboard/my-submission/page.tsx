@@ -140,7 +140,7 @@ export default function MySubmissionsPage() {
               <SelectTrigger className="w-[120px] h-9 bg-[#0A0A0A] border-[#404040] text-white text-xs">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent className="bg-[#04020E] border-white/10 text-white">
+              <SelectContent className="bg-background border-white/10 text-white">
                 <SelectItem value="newest">Newest First</SelectItem>
                 <SelectItem value="oldest">Oldest First</SelectItem>
               </SelectContent>
@@ -171,7 +171,7 @@ export default function MySubmissionsPage() {
               <SelectTrigger className="h-8 w-[60px] bg-black border-white/10 text-white text-xs">
                 <SelectValue placeholder="10" />
               </SelectTrigger>
-              <SelectContent className="bg-[#04020E] border-white/10 text-white">
+              <SelectContent className="bg-background border-white/10 text-white">
                 <SelectItem value="5">5</SelectItem>
                 <SelectItem value="10">10</SelectItem>
                 <SelectItem value="20">20</SelectItem>

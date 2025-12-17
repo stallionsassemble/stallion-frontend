@@ -11,7 +11,7 @@ interface StatCardProps {
 function StatCard({ label, value, icon }: StatCardProps) {
   return (
     <div
-      className="flex items-center justify-between bg-[#04020E] relative overflow-hidden"
+      className="flex items-center justify-between bg-background relative overflow-hidden"
       style={{
         borderRadius: "14.33px",
         padding: "28.66px",

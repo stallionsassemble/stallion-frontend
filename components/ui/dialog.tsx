@@ -64,6 +64,11 @@ function DialogContent({
           className
         )}
         {...props}
+        style={{
+          backgroundImage: "url('/grid-bg.png')",
+          backgroundRepeat: "repeat",
+          backgroundSize: "auto"
+        }}
       >
         {children}
         {showCloseButton && (
