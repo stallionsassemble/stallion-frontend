@@ -92,7 +92,7 @@ export function Header() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[312px] h-[425px] bg-[#020617] border-white/10 text-white p-0 shadow-2xl flex flex-col gap-[10px]">
             <div
-              className="flex items-center justify-between px-[10px] h-[30px] w-full bg-primary/[0.08] rounded-[6.2px] shrink-0"
+              className="flex items-center justify-between px-[10px] h-[30px] w-full bg-primary/8 rounded-[6.2px] shrink-0"
               style={{ border: "0.77px solid #007AFF5C" }}
             >
               <span className="font-bold text-xs">Notifications</span>

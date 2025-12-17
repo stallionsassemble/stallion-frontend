@@ -102,7 +102,7 @@ export function DashboardRightSidebar() {
       {/* Total Balance Card */}
       <div className="rounded-[20px] border border-[#1E293B] bg-[#020617] p-5 shadow-2xl relative overflow-hidden group">
         {/* Top Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50 blur-sm"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px] bg-linear-to-r from-transparent via-blue-500 to-transparent opacity-50 blur-sm"></div>
 
         {/* Total Balance Header Card */}
         <div

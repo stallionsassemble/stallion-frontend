@@ -26,8 +26,8 @@ export function DetailsNavigation({ backLink, backText }: DetailsNavigationProps
       <div className="flex items-center gap-3">
         {/* Avatar Stack */}
         <div className="flex -space-x-3 mr-2">
-          <div className="h-9 w-9 rounded-full border-2 border-[#09090B] bg-gradient-to-br from-green-400 to-blue-500 overflow-hidden relative z-30" />
-          <div className="h-9 w-9 rounded-full border-2 border-[#09090B] bg-gradient-to-br from-yellow-400 to-orange-500 overflow-hidden relative z-20" />
+          <div className="h-9 w-9 rounded-full border-2 border-[#09090B] bg-linear-to-br from-green-400 to-blue-500 overflow-hidden relative z-30" />
+          <div className="h-9 w-9 rounded-full border-2 border-[#09090B] bg-linear-to-br from-yellow-400 to-orange-500 overflow-hidden relative z-20" />
           <div className="h-9 w-9 rounded-full border-2 border-[#09090B] bg-white flex items-center justify-center relative z-10">
             <Image src="/assets/icons/sdollar.png" width={20} height={20} alt="Stallion" className="object-contain" />
           </div>

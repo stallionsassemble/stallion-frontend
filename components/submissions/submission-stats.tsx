@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, DollarSign, FileText } from "lucide-react";
+import { BadgeCheck, DollarSign, FilePen } from "lucide-react";
 
 interface StatCardProps {
   label: string;
@@ -10,12 +10,22 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon }: StatCardProps) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#09090B] p-6">
-      <div className="space-y-1">
-        <p className="text-sm text-gray-400">{label}</p>
-        <p className="text-3xl font-bold text-white">{value}</p>
+    <div
+      className="flex items-center justify-between bg-[#04020E] relative overflow-hidden"
+      style={{
+        borderRadius: "14.33px",
+        padding: "28.66px",
+        border: "1.19px solid #404040",
+        boxShadow: "0px 1.19px 3.58px 0px #0000001A",
+        minHeight: "127.49px",
+      }}
+    >
+      <div className="space-y-1 z-10 font-inter">
+        <p className="text-[16px] text-muted-foreground font-normal">{label}</p>
+        <p className="text-3xl font-extrabold text-[#FAFAFA]">{value}</p>
       </div>
-      <div className="rounded-full bg-white/5 p-3 text-white">
+      <div className="rounded-full bg-[#09090B] p-3 text-white z-10"
+        style={{ boxShadow: "0px 4.82px 4.82px 0px #00000040" }}>
         {icon}
       </div>
     </div>
@@ -24,7 +34,7 @@ function StatCard({ label, value, icon }: StatCardProps) {
 
 export function SubmissionStats() {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-[28.66px] sm:grid-cols-2 lg:grid-cols-4">
       <StatCard
         label="Total Earned"
         value="$3,700"
@@ -33,7 +43,7 @@ export function SubmissionStats() {
       <StatCard
         label="Total Submission"
         value="50"
-        icon={<FileText className="h-6 w-6" />}
+        icon={<FilePen className="h-6 w-6" />}
       />
       <StatCard
         label="Pending Pay"
@@ -43,7 +53,7 @@ export function SubmissionStats() {
       <StatCard
         label="Completed"
         value="20"
-        icon={<CheckCircle2 className="h-6 w-6" />}
+        icon={<BadgeCheck className="h-6 w-6" />}
       />
     </div>
   );
