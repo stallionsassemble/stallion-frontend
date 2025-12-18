@@ -107,8 +107,8 @@ export default function BountiesPage() {
   return (
     <div className="space-y-6">
       <div className="flex-1 items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Browse Bounties</h1>
-        <p>Browse and manage available bounties.</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Browse Bounties</h1>
+        <p className="text-muted-foreground">Browse and manage available bounties.</p>
       </div>
 
       <BountyFilters activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setCurrentPage(1); }} />
@@ -126,14 +126,14 @@ export default function BountiesPage() {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-end gap-x-6 pt-4 border-t border-white/5">
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-400">
+      <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-6 gap-y-4 pt-4 border-t border-border">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <span>Rows per page</span>
           <Select value={rowsPerPage} onValueChange={(val) => { setRowsPerPage(val); setCurrentPage(1); }}>
-            <SelectTrigger className="h-8 px-2 w-[60px] rounded-md bg-black border border-white/10 text-white focus:ring-0 focus:ring-offset-0 gap-1">
+            <SelectTrigger className="h-8 px-2 w-[60px] rounded-md bg-card border border-border text-foreground focus:ring-0 focus:ring-offset-0 gap-1">
               <SelectValue placeholder="10" />
             </SelectTrigger>
-            <SelectContent className="bg-background border-white/10 text-white">
+            <SelectContent className="bg-popover border-border text-popover-foreground">
               <SelectItem value="5">5</SelectItem>
               <SelectItem value="10">10</SelectItem>
               <SelectItem value="20">20</SelectItem>
@@ -142,45 +142,46 @@ export default function BountiesPage() {
           </Select>
         </div>
 
-        <span className="text-sm font-medium text-gray-400">Page {currentPage} of {totalPages || 1}</span>
-
-        <div className="flex items-center gap-2 ml-2">
-          <Button
-            size="icon"
-            variant="secondary"
-            onClick={() => handlePageChange(1)}
-            disabled={currentPage === 1}
-            className="h-8 w-8 rounded-md bg-zinc-600/50 text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed border border-white/5 hover:bg-zinc-600/50"
-          >
-            <ChevronsLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="secondary"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="h-8 w-8 rounded-md bg-zinc-600/50 text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed border border-white/5 hover:bg-zinc-600/50"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="h-8 w-8 rounded-md bg-black border-white/10 text-white hover:bg-black/80 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => handlePageChange(totalPages)}
-            disabled={currentPage === totalPages}
-            className="h-8 w-8 rounded-md bg-black border-white/10 text-white hover:bg-black/80 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronsRight className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+          <span className="text-sm font-medium text-muted-foreground mr-2">Page {currentPage} of {totalPages || 1}</span>
+          <div className="flex items-center gap-1">
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8 rounded-md bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed border border-border hover:bg-secondary/80"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8 rounded-md bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed border border-border hover:bg-secondary/80"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 rounded-md bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8 rounded-md bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

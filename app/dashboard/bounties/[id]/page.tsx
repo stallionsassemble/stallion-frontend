@@ -63,7 +63,7 @@ export default function BountyDetailsPage() {
         <div className="min-w-0 space-y-8">
 
           {/* Header Section */}
-          <section className="rounded-xl border-[0.69px] border-primary bg-[#09090B]/30 p-6">
+          <section className="rounded-xl border border-primary bg-card/30 p-6">
             <DetailsHeader
               type="BOUNTY"
               title="Smart Contract Security Audit"
@@ -78,14 +78,14 @@ export default function BountyDetailsPage() {
           </section>
 
           {/* Divider */}
-          <div className="h-px w-full bg-white/10" />
+          <div className="h-px w-full bg-border" />
 
           {/* Description */}
-          <section className="space-y-4 rounded-xl border-[0.69px] border-primary bg-[#09090B]/30 p-6">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Info className="h-4 w-4" color="#007AFF" /> Description
+          <section className="space-y-4 rounded-xl border border-primary bg-card/30 p-6">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <Info className="h-4 w-4 text-primary" /> Description
             </h3>
-            <div className="prose prose-invert max-w-none text-gray-400 text-sm leading-relaxed">
+            <div className="prose prose-invert max-w-none text-muted-foreground text-sm leading-relaxed">
               <p className="mb-4">
                 We are looking for an experienced smart contract security auditor to perform a comprehensive security audit of our protocol smart contracts.
                 The protocol is built on custom Solidity contracts with heavy dependency on 3rd party oracles.
@@ -102,11 +102,11 @@ export default function BountyDetailsPage() {
           </section>
 
           {/* Requirements */}
-          <section className="space-y-4 rounded-xl border-[0.69px] border-primary bg-[#09090B]/30 p-6">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <FileText className="h-4 w-4" color="#007AFF" /> Requirements
+          <section className="space-y-4 rounded-xl border border-primary bg-card/30 p-6">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" /> Requirements
             </h3>
-            <ul className="space-y-2 text-sm text-gray-400">
+            <ul className="space-y-2 text-sm text-muted-foreground">
               {[
                 "3+ years of smart contract auditing experience",
                 "Proven track record with DeFi protocols",
@@ -123,11 +123,11 @@ export default function BountyDetailsPage() {
           </section>
 
           {/* Deliverables */}
-          <section className="space-y-4 rounded-xl border-[0.69px] border-primary bg-[#09090B]/30 p-6">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <FileText className="h-4 w-4" color="#007AFF" /> Deliverables
+          <section className="space-y-4 rounded-xl border border-primary bg-card/30 p-6">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" /> Deliverables
             </h3>
-            <ul className="space-y-2 text-sm text-gray-400">
+            <ul className="space-y-2 text-sm text-muted-foreground">
               {[
                 "Comprehensive security audit report",
                 "Severity classification for each finding",
@@ -146,23 +146,23 @@ export default function BountyDetailsPage() {
           </section>
 
           {/* Attachments */}
-          <section className="space-y-4 p-6 border-[0.69px] border-primary">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <FileUp className="h-5 w-5" color="#007AFF" />
+          <section className="space-y-4 p-6 border border-primary text-foreground">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+              <FileUp className="h-5 w-5 text-primary" />
               Attachments
             </h3>
             <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-[#09090B] border-[0.69px] border-primary min-w-[240px]">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-card border border-primary min-w-[240px]">
                 <div className="h-10 w-10 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20">
                   <FileText className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-white">Contract_Sepc...pdf</span>
-                  <span className="text-[10px] text-gray-500">2.4 MB</span>
+                  <span className="text-sm font-medium text-foreground">Contract_Sepc...pdf</span>
+                  <span className="text-[10px] text-muted-foreground">2.4 MB</span>
                 </div>
-                <Button variant="ghost" size="icon" className="ml-auto text-blue-500 hover:text-blue-400 hover:bg-transparent"><Download className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="ml-auto text-primary hover:text-primary hover:bg-transparent"><Download className="h-4 w-4" /></Button>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-[#09090B] border-[0.69px] border-primary min-w-[240px]">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-card border border-primary min-w-[240px]">
                 <div className="h-10 w-10 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20">
                   <ImageIcon className="h-5 w-5 text-primary" />
                 </div>
@@ -170,17 +170,17 @@ export default function BountyDetailsPage() {
                   <span className="text-sm font-medium text-white">Architecture_D...png</span>
                   <span className="text-[10px] text-gray-500">4.8 MB</span>
                 </div>
-                <Button variant="ghost" size="icon" className="ml-auto text-blue-500 hover:text-blue-400 hover:bg-transparent"><Download className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="ml-auto text-primary hover:text-primary hover:bg-transparent"><Download className="h-4 w-4" /></Button>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-[#09090B] border border-white/10 min-w-[240px]">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border min-w-[240px]">
                 <div className="h-10 w-10 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20">
                   <FileText className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-white">Protocol_Spec...docx</span>
-                  <span className="text-[10px] text-gray-500">1.2 MB</span>
+                  <span className="text-sm font-medium text-foreground">Protocol_Spec...docx</span>
+                  <span className="text-[10px] text-muted-foreground">1.2 MB</span>
                 </div>
-                <Button variant="ghost" size="icon" className="ml-auto text-blue-500 hover:text-blue-400 hover:bg-transparent"><Download className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="ml-auto text-primary hover:text-primary hover:bg-transparent"><Download className="h-4 w-4" /></Button>
               </div>
             </div>
           </section>
@@ -201,12 +201,12 @@ export default function BountyDetailsPage() {
       </div>
       <div className="space-y-8">
         {/* Similar Bounties */}
-        <section className="space-y-6 pt-8 border-t border-white/10">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <Gift className="h-5 w-5" color="#007AFF" />
+        <section className="space-y-6 pt-8 border-t border-border">
+          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <Gift className="h-5 w-5 text-primary" />
             Similar Bounties
           </h3>
-          <div className="flex overflow-x-auto pb-6 gap-5 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent pl-1">
+          <div className="flex overflow-x-auto pb-6 gap-5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pl-1">
             {similarBounties.map((bounty) => (
               <BountyCard key={bounty.id} {...bounty} />
             ))}
@@ -214,24 +214,24 @@ export default function BountyDetailsPage() {
         </section>
 
         {/* Discussion */}
-        <section className="space-y-6 pt-8 border-t  border-[0.69px] border-primary p-6 h-auto w-full ">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-primary" /> Discussion <span className="text-xs text-gray-500 ml-2">2 comments</span>
+        <section className="space-y-6 pt-8 border-t  border border-primary p-6 h-auto w-full ">
+          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" /> Discussion <span className="text-xs text-muted-foreground ml-2">2 comments</span>
           </h3>
 
           {/* Comment Input */}
           <div className="relative">
             {/* Avatar Decoration */}
             <div className="h-10 w-10 absolute left-3 top-3 rounded-full bg-linear-to-r from-purple-500 to-pink-500 p-px">
-              <div className="h-full w-full rounded-full bg-black flex items-center justify-center">
-                <span className="text-xs text-white">You</span>
+              <div className="h-full w-full rounded-full bg-background flex items-center justify-center">
+                <span className="text-xs text-foreground">You</span>
               </div>
             </div>
             <textarea
-              className="w-full bg-[#09090B] border-[0.69px] border-primary rounded-xl p-4 pl-16 min-h-[120px] text-sm text-white focus:outline-none focus:border-primary resize-none"
+              className="w-full bg-card border border-primary rounded-xl p-4 pl-16 min-h-[120px] text-sm text-foreground focus:outline-none focus:border-primary resize-none"
               placeholder="Ask a question or leave a comment..."
             />
-            <Button className="absolute bottom-3 right-3 bg-primary hover:bg-[#0066CC] h-8 text-xs font-medium px-4">Post Comment</Button>
+            <Button className="absolute bottom-3 right-3 bg-primary hover:bg-primary/90 h-8 text-xs font-medium px-4">Post Comment</Button>
           </div>
 
           {/* Comment List */}
@@ -244,15 +244,15 @@ export default function BountyDetailsPage() {
                 </div>
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-white">Alex Chen</span>
-                    <span className="text-xs text-gray-500">2 days ago</span>
+                    <span className="text-sm font-bold text-foreground">Alex Chen</span>
+                    <span className="text-xs text-muted-foreground">2 days ago</span>
                   </div>
-                  <p className="text-sm text-gray-400 leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Is there any specific testing framework you prefer we use for the audit? I typically work with Foundry but can adapt to Hardhat if needed.
                   </p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500 pt-2">
-                    <button className="hover:text-white flex items-center gap-1 transition-colors"><span className="text-red-500">❤️</span> 42</button>
-                    <button className="hover:text-white flex items-center gap-1 transition-colors">💬 Reply</button>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
+                    <button className="hover:text-foreground flex items-center gap-1 transition-colors"><span className="text-red-500">❤️</span> 42</button>
+                    <button className="hover:text-foreground flex items-center gap-1 transition-colors">💬 Reply</button>
                   </div>
                 </div>
               </div>
@@ -261,26 +261,26 @@ export default function BountyDetailsPage() {
             {/* Comment 2 (Reply) */}
             <div className="group pl-14 relative">
               {/* Thread Line */}
-              <div className="absolute left-[27px] -top-8 bottom-8 w-px bg-white/10 -z-10 rounded-full"></div>
+              <div className="absolute left-[27px] -top-8 bottom-8 w-px bg-border -z-10 rounded-full"></div>
 
               <div className="flex gap-4">
-                <div className="h-8 w-8 rounded-full bg-white/10 overflow-hidden shrink-0 p-1 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-primary/10 overflow-hidden shrink-0 p-1 flex items-center justify-center">
                   <Image src="/assets/icons/sdollar.png" width={32} height={32} alt="Stallion" className="object-contain" />
                 </div>
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-white">Solana Foundation</span>
-                      <Badge className="bg-[#113264] text-white border-0 text-[10px] px-1.5 h-4">Author</Badge>
+                      <span className="text-sm font-bold text-foreground">Solana Foundation</span>
+                      <Badge className="bg-primary/30 text-foreground border-0 text-[10px] px-1.5 h-4">Author</Badge>
                     </div>
-                    <span className="text-xs text-gray-500">1 day ago</span>
+                    <span className="text-xs text-muted-foreground">1 day ago</span>
                   </div>
-                  <p className="text-sm text-gray-400 leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     We prefer Foundry for this project, but Hardhat is acceptable if coverage is comprehensive.
                   </p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500 pt-2">
-                    <button className="hover:text-white flex items-center gap-1 transition-colors"><span className="text-red-500">❤️</span> 12</button>
-                    <button className="hover:text-white flex items-center gap-1 transition-colors">💬 Reply</button>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
+                    <button className="hover:text-foreground flex items-center gap-1 transition-colors"><span className="text-red-500">❤️</span> 12</button>
+                    <button className="hover:text-foreground flex items-center gap-1 transition-colors">💬 Reply</button>
                   </div>
                 </div>
               </div>

@@ -13,6 +13,7 @@ import {
   Search,
   Settings,
   User,
+  Users,
   Wallet
 } from "lucide-react";
 import Image from "next/image";
@@ -45,6 +46,12 @@ const sidebarItems = [
     title: "Messages",
     href: "/dashboard/messages",
     icon: MessageSquare,
+    badge: 2,
+  },
+  {
+    title: "Forums",
+    href: "/dashboard/forums",
+    icon: Users,
     badge: 2,
   },
   {
@@ -102,21 +109,21 @@ function SidebarContent({ onLinkClick }: SidebarContentProps) {
               href={item.href}
               onClick={onLinkClick}
               className={cn(
-                "group flex items-center justify-between rounded-lg px-3 py-3 text-[20px] leading-[29px] font-normal font-inter transition-colors hover:bg-white/5",
-                isActive ? "bg-[#007AFF66] text-white" : "text-gray-400 hover:text-white"
+                "group flex items-center justify-between rounded-lg px-3 py-3 text-[20px] leading-[29px] font-normal font-inter transition-colors hover:bg-accent",
+                isActive ? "bg-primary/40 text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <div className="flex items-center gap-3">
                 <item.icon
                   className={cn(
                     "h-5 w-5 shrink-0",
-                    isActive ? "text-white" : "text-gray-400 group-hover:text-white"
+                    isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
                   )}
                 />
                 <span>{item.title}</span>
               </div>
               {item.badge && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                   {item.badge}
                 </span>
               )}
@@ -125,14 +132,13 @@ function SidebarContent({ onLinkClick }: SidebarContentProps) {
         })}
       </nav>
 
-      {/* Bottom Area */}
-      <div className="p-4 border-t border-white/10">
+      <div className="p-4 border-t border-border">
         <Link
           href="/help"
           onClick={onLinkClick}
-          className="group flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
+          className="group flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          <CircleHelp className="h-5 w-5 text-gray-400 group-hover:text-white" />
+          <CircleHelp className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
           <span>Get Help</span>
         </Link>
       </div>
@@ -142,7 +148,7 @@ function SidebarContent({ onLinkClick }: SidebarContentProps) {
 
 export function Sidebar() {
   return (
-    <aside className="hidden h-screen w-64 flex-col border-r border-white/10 bg-background md:flex sticky top-0">
+    <aside className="hidden h-screen w-64 flex-col border-r border-border bg-background md:flex sticky top-0">
       <SidebarContent />
     </aside>
   );
@@ -154,11 +160,11 @@ export function MobileSidebar() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="md:hidden text-gray-400 hover:text-white">
+        <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground hover:text-foreground">
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="p-0 border-r border-white/10 bg-background w-72">
+      <SheetContent side="left" className="p-0 border-r border-border bg-background w-72">
         <SidebarContent onLinkClick={() => setOpen(false)} />
       </SheetContent>
     </Sheet>

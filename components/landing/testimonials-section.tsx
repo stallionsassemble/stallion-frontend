@@ -101,8 +101,8 @@ export function TestimonialsSection() {
   return (
     <section className="container mx-auto py-20 text-center overflow-hidden" ref={containerRef}>
       <div className="mb-12">
-        <h2 className="text-[45px] md:text-[64px] font-bold font-syne text-white mb-2">Trusted by the Visionaries.</h2>
-        <p className="text-white max-w-2xl font-inter font-normal text-[12px] md:text-[16px] text-center mx-auto tracking-[-0.32px] leading-[19.2px]">
+        <h2 className="text-[45px] md:text-[64px] font-bold font-syne text-foreground mb-2">Trusted by the Visionaries.</h2>
+        <p className="text-muted-foreground max-w-2xl font-inter font-normal text-[12px] md:text-[16px] text-center mx-auto tracking-[-0.32px] leading-[19.2px]">
           Stallion is the operating system of choice for high-signal builders. See why the top 1% of contributors have made the switch.
         </p>
       </div>
@@ -111,9 +111,9 @@ export function TestimonialsSection() {
       <div className="relative h-[500px] w-full max-w-6xl mx-auto overflow-hidden">
 
         {/* Top Gradient Mask */}
-        <div className="absolute top-0 left-0 w-full h-24 bg-linear-to-b from-[#020617] to-transparent z-10 pointer-events-none" />
+        <div className="absolute top-0 left-0 w-full h-24 bg-linear-to-b from-background to-transparent z-10 pointer-events-none" />
         {/* Bottom Gradient Mask */}
-        <div className="absolute bottom-0 left-0 w-full h-24 bg-linear-to-t from-[#020617] to-transparent z-10 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-full h-24 bg-linear-to-t from-background to-transparent z-10 pointer-events-none" />
 
         <div className="flex gap-6 justify-center h-full items-start">
           {/* Column 1: Scrolls UP */}
@@ -138,18 +138,18 @@ export function TestimonialsSection() {
 function TestimonialCard({ testimonial }: { testimonial: any }) {
   return (
     <div
-      className="bg-transparent rounded-[32px] p-8 min-h-[300px] flex flex-col justify-between relative transition-all duration-300 hover:border-primary hover:bg-white/5 group border border-[#E1E6EC1A] shrink-0 h-fit"
+      className="bg-transparent rounded-[32px] p-8 min-h-[300px] flex flex-col justify-between relative transition-all duration-300 hover:border-primary hover:bg-accent group border border-border shrink-0 h-fit"
     >
       <div>
-        <div className="bg-primary text-white font-manrope text-[15px] font-normal tracking-[-0.32px] leading-[19.2px] px-4 py-1.5 rounded-full w-fit mb-4">
+        <div className="bg-primary text-primary-foreground font-manrope text-[15px] font-normal tracking-[-0.32px] leading-[19.2px] px-4 py-1.5 rounded-full w-fit mb-4">
           {testimonial.category}
         </div>
         <div className="flex gap-1 mb-6">
           {[...Array(testimonial.rating)].map((_, i) => (
-            <Star key={i} className="w-3.5 h-3.5 fill-[#FF3B30] text-[#FF3B30]" />
+            <Star key={i} className="w-3.5 h-3.5 fill-red-500 text-red-500" />
           ))}
         </div>
-        <p className="text-white/80 font-manrope text-lg leading-relaxed text-left group-hover:text-white transition-colors">
+        <p className="text-muted-foreground font-manrope text-lg leading-relaxed text-left group-hover:text-foreground transition-colors">
           {testimonial.text}
         </p>
       </div>
@@ -159,10 +159,10 @@ function TestimonialCard({ testimonial }: { testimonial: any }) {
           <img src={testimonial.avatar} alt="User" className="w-full h-full object-cover" />
         </div>
         <div className="flex flex-col items-start text-left">
-          <h2 className="text-white font-manrope text-[15px] font-normal tracking-[-0.32px] leading-[19.2px]">
+          <h2 className="text-foreground font-manrope text-[15px] font-normal tracking-[-0.32px] leading-[19.2px]">
             {testimonial.name}
           </h2>
-          <p className="text-white/60 font-manrope text-[13px] font-normal tracking-[-0.32px] leading-[19.2px]">
+          <p className="text-muted-foreground/60 font-manrope text-[13px] font-normal tracking-[-0.32px] leading-[19.2px]">
             {testimonial.role}
           </p>
         </div>

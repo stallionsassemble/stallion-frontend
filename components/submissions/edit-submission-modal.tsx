@@ -41,7 +41,7 @@ export function EditSubmissionModal({ isOpen, onClose, submission }: EditSubmiss
       <DialogContent className="bg-[#09090B] border-white/10 sm:max-w-3xl max-h-[90vh] overflow-y-auto block p-0 gap-0">
         <DialogHeader className="p-6 border-b border-white/10 relative">
           <div className="flex items-center gap-1 mb-2 font-inter">
-            <Badge className="bg-[#007AFF] hover:bg-[#007AFF]/90 text-white rounded-[13.7px] px-3 py-0.5 font-bold text-xs tracking-[-4%]">
+            <Badge className="bg-background hover:bg-background/90 text-white rounded-[13.7px] px-3 py-0.5 font-bold text-xs tracking-[-4%]">
               Bounty
             </Badge>
           </div>
@@ -134,7 +134,7 @@ export function EditSubmissionModal({ isOpen, onClose, submission }: EditSubmiss
               Additional Attachments <span className="text-red-500">*</span>
             </Label>
             <div className="mt-2 flex h-[98px] items-center gap-4 rounded-lg border border-dashed border-[#E5E5E5] bg-transparent px-6 transition-colors hover:bg-white/5 cursor-pointer group">
-              <div className="h-12 w-12 rounded-xl bg-[#007AFF] text-white flex items-center justify-center group-hover:bg-[#0066CC] shrink-0">
+              <div className="h-12 w-12 rounded-xl bg-background text-white flex items-center justify-center group-hover:bg-[#0066CC] shrink-0">
                 <Upload className="h-6 w-6" />
               </div>
               <div className="flex flex-col gap-1">
@@ -151,7 +151,7 @@ export function EditSubmissionModal({ isOpen, onClose, submission }: EditSubmiss
 
         <DialogFooter className="sticky bottom-0 bg-[#09090B] p-6 border-t border-white/10 z-10">
           <Button
-            className="w-full bg-[#007AFF] hover:bg-[#0066CC] font-bold h-12 text-base rounded-lg flex items-center justify-center gap-2 text-white"
+            className="w-full bg-background hover:bg-[#0066CC] font-bold h-12 text-base rounded-lg flex items-center justify-center gap-2 text-white"
             onClick={handleSave}
           >
             <Save className="h-5 w-5" /> Save Changes

@@ -99,8 +99,8 @@ export default function MySubmissionsPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-1">
-        <h1 className="text-4xl font-inter -tracking-[4%] font-bold text-white">My Submissions</h1>
-        <p className="text-[#FAFAFAE5] font-medium font-inter">Track and manage all your submissions across bounties, grants, and projects.</p>
+        <h1 className="text-3xl md:text-4xl font-inter -tracking-[4%] font-bold text-foreground">My Submissions</h1>
+        <p className="text-muted-foreground font-medium font-inter">Track and manage all your submissions across bounties, grants, and projects.</p>
       </div>
 
       <SubmissionStats />
@@ -127,20 +127,20 @@ export default function MySubmissionsPage() {
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {/* Search */}
-            <div className="relative flex-1 sm:w-72 border border-[#404040] rounded-md">
+            <div className="relative flex-1 sm:w-72 border border-border rounded-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by title or skill..."
-                className="pl-9 h-9 bg-black border-white/10 text-muted-foreground placeholder:text-muted-foreground rounded-lg w-full focus:ring-1 "
+                placeholder="Search..."
+                className="pl-9 h-9 bg-card border-none text-foreground placeholder:text-muted-foreground rounded-lg w-full focus-visible:ring-1 "
               />
             </div>
 
             {/* Sort */}
             <Select defaultValue="newest">
-              <SelectTrigger className="w-[120px] h-9 bg-[#0A0A0A] border-[#404040] text-white text-xs">
+              <SelectTrigger className="w-[120px] h-9 bg-secondary border-border text-foreground text-xs">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent className="bg-background border-white/10 text-white">
+              <SelectContent className="bg-popover border-border text-popover-foreground">
                 <SelectItem value="newest">Newest First</SelectItem>
                 <SelectItem value="oldest">Oldest First</SelectItem>
               </SelectContent>
@@ -161,17 +161,17 @@ export default function MySubmissionsPage() {
         </div>
 
         {/* Pagination Footer */}
-        <div className="flex items-center justify-end gap-x-6 pt-4 border-t border-white/5">
-          <div className="flex items-center gap-2 text-sm font-medium text-gray-400">
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-6 gap-y-4 pt-4 border-t border-border">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <span>Rows per page</span>
             <Select
               value={rowsPerPage}
               onValueChange={(val) => { setRowsPerPage(val); setCurrentPage(1); }}
             >
-              <SelectTrigger className="h-8 w-[60px] bg-black border-white/10 text-white text-xs">
+              <SelectTrigger className="h-8 w-[60px] bg-card border-border text-foreground text-xs">
                 <SelectValue placeholder="10" />
               </SelectTrigger>
-              <SelectContent className="bg-background border-white/10 text-white">
+              <SelectContent className="bg-popover border-border text-popover-foreground">
                 <SelectItem value="5">5</SelectItem>
                 <SelectItem value="10">10</SelectItem>
                 <SelectItem value="20">20</SelectItem>
@@ -180,45 +180,46 @@ export default function MySubmissionsPage() {
             </Select>
           </div>
 
-          <span className="text-sm font-medium text-gray-400">Page {currentPage} of {totalPages || 1}</span>
-
-          <div className="flex items-center gap-2 ml-2">
-            <Button
-              size="icon"
-              variant="secondary"
-              onClick={() => handlePageChange(1)}
-              disabled={currentPage === 1}
-              className="h-8 w-8 rounded-md bg-zinc-600/50 text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed border border-white/5 hover:bg-zinc-600/50"
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="h-8 w-8 rounded-md bg-zinc-600/50 text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed border border-white/5 hover:bg-zinc-600/50"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="h-8 w-8 rounded-md bg-black border-white/10 text-white hover:bg-black/80 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() => handlePageChange(totalPages)}
-              disabled={currentPage === totalPages}
-              className="h-8 w-8 rounded-md bg-black border-white/10 text-white hover:bg-black/80 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+            <span className="text-sm font-medium text-muted-foreground mr-2">Page {currentPage} of {totalPages || 1}</span>
+            <div className="flex items-center gap-1">
+              <Button
+                size="icon"
+                variant="secondary"
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+                className="h-8 w-8 rounded-md bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed border border-border hover:bg-secondary/80"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="secondary"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="h-8 w-8 rounded-md bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed border border-border hover:bg-secondary/80"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="h-8 w-8 rounded-md bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+                className="h-8 w-8 rounded-md bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 

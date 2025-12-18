@@ -3,10 +3,10 @@ export default function PrivacyPage() {
     <div className='container mx-auto px-4 py-12 md:py-20'>
       <div className='max-w-[1200px] mx-auto'>
         <div className='mb-12'>
-          <h1 className='text-4xl md:text-6xl font-bold font-syne text-white mb-4'>
+          <h1 className='text-4xl md:text-6xl font-bold font-syne text-foreground mb-4'>
             Privacy Notice
           </h1>
-          <p className='text-gray-400 font-inter text-sm'>
+          <p className='text-muted-foreground font-inter text-sm'>
             Last Modified: November 28, 2024
           </p>
         </div>
@@ -14,7 +14,7 @@ export default function PrivacyPage() {
         <div className='flex flex-col lg:flex-row gap-12 relative'>
           {/* Main Content */}
           <div className='lg:w-2/3 space-y-12'>
-            <p className='text-gray-300 font-inter leading-relaxed'>
+            <p className='text-muted-foreground font-inter leading-relaxed'>
               This Privacy Notice is designed to help you understand how
               Stallion Labs Ltd. ("Company", "we", "us", or "our") collects,
               uses, and shares your personal information, and to help you
@@ -23,16 +23,16 @@ export default function PrivacyPage() {
 
             {/* Section 1 */}
             <section id='scope' className='scroll-mt-24'>
-              <h2 className='text-xl font-bold text-white mb-4 font-syne'>
+              <h2 className='text-xl font-bold text-foreground mb-4 font-syne'>
                 1. Scope and updates to this privacy notice.
               </h2>
-              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+              <div className='bg-primary/20 border border-primary/20 rounded-lg p-4 mb-6'>
                 <p className='text-primary text-sm font-medium'>
                   This Privacy Notice applies when we process your personal
                   information and is subject to change from time to time.
                 </p>
               </div>
-              <div className='space-y-4 text-gray-300 font-inter text-sm leading-relaxed'>
+              <div className='space-y-4 text-muted-foreground font-inter text-sm leading-relaxed'>
                 <p>
                   This Privacy Notice applies to personal information processed
                   by us, including on our websites, mobile applications, and
@@ -54,10 +54,10 @@ export default function PrivacyPage() {
 
             {/* Section 2 */}
             <section id='personal-info' className='scroll-mt-24'>
-              <h2 className='text-xl font-bold text-white mb-4 font-syne'>
+              <h2 className='text-xl font-bold text-foreground mb-4 font-syne'>
                 2. Personal information we collect.
               </h2>
-              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+              <div className='bg-primary/20 border border-primary/20 rounded-lg p-4 mb-6'>
                 <p className='text-primary text-sm font-medium'>
                   This Privacy Notice applies to information you provide
                   directly to us, information collected automatically from you,
@@ -65,13 +65,13 @@ export default function PrivacyPage() {
                   (including public blockchains).
                 </p>
               </div>
-              <div className='space-y-4 text-gray-300 font-inter text-sm leading-relaxed'>
+              <div className='space-y-4 text-muted-foreground font-inter text-sm leading-relaxed'>
                 <p>
                   The categories of personal information we collect depend on
                   how you interact with our Services.
                 </p>
 
-                <h3 className='text-white font-bold mt-4'>
+                <h3 className='text-foreground font-bold mt-4'>
                   A. Information you provide to us directly.
                 </h3>
                 <p>
@@ -95,7 +95,7 @@ export default function PrivacyPage() {
                   </li>
                 </ul>
 
-                <h3 className='text-white font-bold mt-4'>
+                <h3 className='text-foreground font-bold mt-4'>
                   B. Information collected automatically.
                 </h3>
                 <p>
@@ -115,7 +115,7 @@ export default function PrivacyPage() {
                   </li>
                 </ul>
 
-                <h3 className='text-white font-bold mt-4'>
+                <h3 className='text-foreground font-bold mt-4'>
                   C. Information from third-party sources.
                 </h3>
                 <ul className='list-disc pl-5 space-y-2'>
@@ -355,16 +355,16 @@ export default function PrivacyPage() {
 
             {/* Section 10 */}
             <section id='contact' className='scroll-mt-24'>
-              <h2 className='text-xl font-bold text-white mb-4 font-syne'>
+              <h2 className='text-xl font-bold text-foreground mb-4 font-syne'>
                 10. Contact us.
               </h2>
-              <div className='bg-[#007AFF3D] border border-primary/20 rounded-lg p-4 mb-6'>
+              <div className='bg-primary/20 border border-primary/20 rounded-lg p-4 mb-6'>
                 <p className='text-primary text-sm font-medium'>
                   If you have questions about this policy or wish to exercise
                   your rights, please reach out to our legal team.
                 </p>
               </div>
-              <div className='space-y-4 text-gray-300 font-inter text-sm leading-relaxed'>
+              <div className='space-y-4 text-muted-foreground font-inter text-sm leading-relaxed'>
                 <p>
                   If you have any questions about our privacy practices or this
                   Privacy Notice, or if you would like to exercise your rights,
@@ -384,8 +384,8 @@ export default function PrivacyPage() {
           {/* Table of Contents - Desktop Only */}
           <div className='hidden lg:block lg:w-1/3 relative'>
             <div className='sticky top-24 space-y-2'>
-              <h3 className='text-white font-bold mb-4 font-syne'></h3>
-              <nav className='flex flex-col space-y-2 text-sm text-gray-400 font-inter'>
+              <h3 className='text-foreground font-bold mb-4 font-syne'></h3>
+              <nav className='flex flex-col space-y-2 text-sm text-muted-foreground font-inter'>
                 <a
                   href='#scope'
                   className='hover:text-primary transition-colors'

@@ -19,8 +19,8 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
-        stallion: "bg-[#007AFF] hover:bg-[#007AFF]/90 text-white font-medium border-t-[1.19px] border-t-[#007AFF] shadow-[0px_1.19px_2.37px_0px_#0000001A]",
-        "stallion-outline": "bg-transparent border-[1.19px] border-[#007AFF] hover:bg-white/5 text-white font-medium shadow-[0px_1.19px_2.37px_0px_#0000001A]",
+        stallion: "bg-primary text-primary-foreground hover:bg-primary/90 font-medium shadow-sm",
+        "stallion-outline": "bg-transparent border border-input text-foreground hover:bg-accent hover:text-accent-foreground font-medium shadow-sm",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

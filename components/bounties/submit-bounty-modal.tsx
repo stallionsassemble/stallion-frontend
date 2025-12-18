@@ -43,15 +43,15 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
       {/* Cover Letter */}
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <Label className="text-white text-[16px] font-medium font-inter">
-            Cover Letter <span className="text-red-500">*</span>
+          <Label className="text-foreground text-[16px] font-medium font-inter">
+            Cover Letter <span className="text-destructive">*</span>
           </Label>
         </div>
         <textarea
-          className="flex min-h-[140px] w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-3 py-2 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 font-inter font-normal"
+          className="flex min-h-[140px] w-full rounded-lg border-[1.19px] border-input bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 font-inter font-normal"
           placeholder="Introduce yourself and explain why you're the best fit for this project. Include relevant experience, approach to the problem and what makes you stand out..."
         />
-        <div className="flex justify-between text-[12px] font-inter text-white font-light">
+        <div className="flex justify-between text-[12px] font-inter text-foreground font-light">
           <span>Be specific about your experience and approach</span>
           <span>180 characters left</span>
         </div>
@@ -59,17 +59,17 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
 
       {/* Estimated Completion Time */}
       <div className="space-y-2">
-        <Label className="text-white text-[16px] font-medium font-inter">
-          Estimated Completion Time <span className="text-red-500">*</span>
+        <Label className="text-foreground text-[16px] font-medium font-inter">
+          Estimated Completion Time <span className="text-destructive">*</span>
         </Label>
         <div className="flex gap-3">
-          <div className="flex-1 flex rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent overflow-hidden focus-within:border-primary">
-            <div className="px-3 py-2.5 flex items-center justify-center border-r border-[#E5E5E5]">
-              <Info className="h-4 w-4 text-white" color="white" />
+          <div className="flex-1 flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary">
+            <div className="px-3 py-2.5 flex items-center justify-center border-r border-input">
+              <Info className="h-4 w-4 text-foreground" />
             </div>
             <input
               type="number"
-              className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600 appearance-none"
+              className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground appearance-none"
               placeholder="Enter time"
             />
             <div className="px-3 py-2.5 flex items-center justify-center text-gray-500">
@@ -80,10 +80,10 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
             </div>
           </div>
           <Select defaultValue="days">
-            <SelectTrigger className="w-[110px] bg-transparent border-[1.19px] border-[#E5E5E5] text-white h-[42px]">
+            <SelectTrigger className="w-[110px] bg-transparent border-[1.19px] border-input text-foreground h-[42px]">
               <SelectValue placeholder="Unit" />
             </SelectTrigger>
-            <SelectContent className="bg-[#09090B] border-[1.19px] border-[#E5E5E5] text-white">
+            <SelectContent className="bg-card border-[1.19px] border-input text-foreground">
               <SelectItem value="days">Days</SelectItem>
               <SelectItem value="weeks">Weeks</SelectItem>
               <SelectItem value="months">Months</SelectItem>
@@ -94,42 +94,42 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
 
       {/* Portfolio Links */}
       <div className="space-y-1">
-        <Label className="text-white text-[16px] font-medium font-inter">
-          Portfolio Links <span className="text-red-500">*</span>
+        <Label className="text-foreground text-[16px] font-medium font-inter">
+          Portfolio Links <span className="text-destructive">*</span>
         </Label>
-        <p className="-mt-2 text-[12px] text-white font-light font-inter">Attach relevant documents, portfolio samples, or certifications (max 5 files)</p>
+        <p className="-mt-2 text-[12px] text-foreground font-light font-inter">Attach relevant documents, portfolio samples, or certifications (max 5 files)</p>
         <div className="flex gap-3 items-center">
           <Input
-            className="bg-transparent border-[1.19px] border-[#E5E5E5] text-white placeholder:text-gray-600 h-[42px] flex-1"
+            className="bg-transparent border-[1.19px] border-input text-foreground placeholder:text-muted-foreground h-[42px] flex-1"
             placeholder="Link title"
           />
-          <div className="flex-1 flex rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent overflow-hidden focus-within:border-primary h-[42px]">
+          <div className="flex-1 flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary h-[42px]">
             <input
-              className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600"
+              className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground"
               placeholder="https://"
             />
           </div>
-          <Button variant="secondary" className="h-[42px] w-[42px] p-0 bg-foreground hover:bg-foreground/95">
-            <Plus className="h-4 w-4 text-gray-400" />
+          <Button variant="secondary" className="h-[42px] w-[42px] p-0 bg-secondary hover:bg-secondary/90">
+            <Plus className="h-4 w-4 text-muted-foreground" />
           </Button>
         </div>
       </div>
 
       {/* Additional Attachments */}
       <div className="space-y-1">
-        <Label className="text-white text-[16px] font-medium">
-          Additional Attachments (Optional) <span className="text-red-500">*</span>
+        <Label className="text-foreground text-[16px] font-medium">
+          Additional Attachments (Optional) <span className="text-destructive">*</span>
         </Label>
-        <p className="-mt-2 text-[12px] text-white font-light font-inter">Attach relevant documents, portfolio samples, or certifications (max 5 files)</p>
-        <div className="mt-2 flex h-[98px] items-center gap-4 rounded-lg border border-dashed border-[#E5E5E5] bg-transparent px-6 transition-colors hover:bg-white/5 cursor-pointer group">
-          <div className="h-12 w-12 rounded-xl bg-primary text-white flex items-center justify-center group-hover:bg-[#0066CC] shrink-0">
+        <p className="-mt-2 text-[12px] text-foreground font-light font-inter">Attach relevant documents, portfolio samples, or certifications (max 5 files)</p>
+        <div className="mt-2 flex h-[98px] items-center gap-4 rounded-lg border border-dashed border-input bg-transparent px-6 transition-colors hover:bg-muted cursor-pointer group">
+          <div className="h-12 w-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center group-hover:bg-primary/90 shrink-0">
             <Upload className="h-6 w-6" />
           </div>
           <div className="flex flex-col gap-1">
-            <div className="text-[14px] text-gray-300 font-medium font-inter">
+            <div className="text-[14px] text-foreground font-medium font-inter">
               Choose or drag and drop media
             </div>
-            <div className="text-[12px] text-gray-500 font-inter font-light">
+            <div className="text-[12px] text-muted-foreground font-inter font-light">
               Maximum size 5 MB
             </div>
           </div>
@@ -148,28 +148,28 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
       */}
       {/* Main Project URL */}
       <div className="space-y-2">
-        <Label className="text-white text-sm font-semibold">
-          Main Project URL <span className="text-red-500">*</span>
+        <Label className="text-foreground text-sm font-semibold">
+          Main Project URL <span className="text-destructive">*</span>
         </Label>
-        <div className="flex rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent overflow-hidden focus-within:border-primary">
-          <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
-          <input className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600" placeholder="Submission Link" />
+        <div className="flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary">
+          <span className="px-3 py-2.5 text-sm text-foreground border-r border-input bg-muted">https://</span>
+          <input className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground" placeholder="Submission Link" />
         </div>
       </div>
       {/* Other fields simplified for this implementation, focusing on Project form as requested */}
       {/* GitHub */}
       <div className="space-y-2">
-        <Label className="text-white text-sm font-semibold">GitHub Repository <span className="text-red-500">*</span></Label>
-        <div className="flex rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent overflow-hidden focus-within:border-primary">
-          <span className="px-3 py-2.5 text-sm text-white border-r border-[#404040] bg-muted">https://</span>
-          <input className="flex-1 bg-transparent px-3 py-2 text-sm text-white focus:outline-none placeholder:text-gray-600" placeholder="Repository Link" />
+        <Label className="text-foreground text-sm font-semibold">GitHub Repository <span className="text-destructive">*</span></Label>
+        <div className="flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary">
+          <span className="px-3 py-2.5 text-sm text-foreground border-r border-input bg-muted">https://</span>
+          <input className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground" placeholder="Repository Link" />
         </div>
       </div>
       {/* Attachments for Bounty */}
       <div className="space-y-2">
-        <Label className="text-white text-sm font-semibold">Attachments</Label>
-        <div className="mt-2 flex h-24 flex-col items-center justify-center rounded-lg border-dashed border-[1.19px] border-[#E5E5E5] bg-transparent hover:bg-white/5 cursor-pointer group">
-          <div className="text-sm text-gray-400">Drag & drop files</div>
+        <Label className="text-foreground text-sm font-semibold">Attachments</Label>
+        <div className="mt-2 flex h-24 flex-col items-center justify-center rounded-lg border-dashed border-[1.19px] border-input bg-transparent hover:bg-muted cursor-pointer group">
+          <div className="text-sm text-muted-foreground">Drag & drop files</div>
         </div>
       </div>
     </div>
@@ -179,34 +179,34 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent className="bg-[#09090B] border-white/10 sm:max-w-3xl max-h-[90vh] overflow-y-auto block p-0 gap-0">
-          <DialogHeader className="p-6 border-b border-white/10 relative">
+        <DialogContent className="bg-card border-border sm:max-w-3xl max-h-[90vh] overflow-y-auto block p-0 gap-0">
+          <DialogHeader className="p-6 border-b border-border relative">
             <div className="flex items-center gap-1 mb-2 font-inter">
-              <Badge className="bg-[#007AFF78] hover:bg-[#007AFF78] text-white rounded-[13.7px] px-2 py-0.5 font-bold text-xs tracking-[-4%]">
+              <Badge className="bg-primary/50 hover:bg-primary/60 text-foreground rounded-[13.7px] px-2 py-0.5 font-bold text-xs tracking-[-4%]">
                 $3,500
                 <span className="text-[8px] font-medium opacity-80 bg-primary text-center rounded-[3422.21px] ml-1 px-1">USDC</span>
               </Badge>
             </div>
-            <DialogTitle className="text-2xl font-bold text-white">
+            <DialogTitle className="text-2xl font-bold text-foreground">
               {isProject ? "Apply for Project" : "Bounty Submission"}
             </DialogTitle>
-            <p className="text-sm text-gray-400 mt-1">
-              {isProject ? "Submit your application for" : "Submit your work for"} <span className="text-white font-medium">React Dashboard UI Design</span>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isProject ? "Submit your application for" : "Submit your work for"} <span className="text-foreground font-medium">React Dashboard UI Design</span>
             </p>
           </DialogHeader>
 
           {isProject ? renderProjectForm() : renderBountyForm()}
 
-          <DialogFooter className="sticky bottom-0 bg-[#09090B] p-6 border-t border-white/10 z-10">
+          <DialogFooter className="sticky bottom-0 bg-card p-6 border-t border-border z-10">
             <Button
-              className="w-full bg-primary hover:bg-[#0066CC] font-bold h-12 text-base rounded-lg flex items-center justify-center gap-2 text-white"
+              className="w-full bg-primary hover:bg-primary/90 font-bold h-12 text-base rounded-lg flex items-center justify-center gap-2 text-primary-foreground"
               onClick={handleSubmit}
             >
-              <Send className="h-5 w-5" color="white" /> {isProject ? "Submit Application" : "Submit Bounty"}
+              <Send className="h-5 w-5" /> {isProject ? "Submit Application" : "Submit Bounty"}
             </Button>
           </DialogFooter>
-          <div className="px-6 pb-6 text-center text-[10px] text-gray-500">
-            By submitting/applying to this listing, you agree to our <span className="underline cursor-pointer hover:text-white">Terms of Use</span>.
+          <div className="px-6 pb-6 text-center text-[10px] text-muted-foreground">
+            By submitting/applying to this listing, you agree to our <span className="underline cursor-pointer hover:text-primary">Terms of Use</span>.
           </div>
         </DialogContent>
       </Dialog>

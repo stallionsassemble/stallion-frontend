@@ -11,7 +11,7 @@ export default function DashboardPage() {
       {/* Main Column */}
       <div className="space-y-8 min-w-0">
         {/* Welcome Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-primary p-6 md:p-10 text-white">
+        <div className="relative overflow-hidden rounded-2xl bg-primary p-6 md:p-10 text-primary-foreground">
           {/* Grid Pattern Overlay */}
           <div className="absolute inset-0 z-0 opacity-20"
             style={{
@@ -21,7 +21,7 @@ export default function DashboardPage() {
           ></div>
 
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border-4 border-white/20">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-full border-4 border-primary-foreground/20">
               <Image
                 src="https://avatar.vercel.sh/john"
                 width={80}
@@ -32,7 +32,7 @@ export default function DashboardPage() {
             </div>
             <div className="text-center md:text-left">
               <h1 className="text-3xl font-bold mb-2">Welcome back, John!</h1>
-              <p className="text-blue-100/90 text-sm md:text-base font-medium">Ready to build something amazing today?</p>
+              <p className="text-primary-foreground/90 text-sm md:text-base font-medium">Ready to build something amazing today?</p>
             </div>
           </div>
         </div>
@@ -58,7 +58,7 @@ export default function DashboardPage() {
       {/* Mobile Right Sidebar Fallback (shown below on mobile if needed, or hidden) */}
       {/* Currently hidden by layout, or can be stacked. The grid puts it below on mobile which is standard. */}
       <div className="lg:hidden space-y-8">
-        <div className="w-full h-px bg-white/10 my-4"></div>
+        <div className="w-full h-px bg-border my-4"></div>
         <DashboardRightSidebar />
       </div>
     </div>

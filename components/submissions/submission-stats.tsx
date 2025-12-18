@@ -11,21 +11,13 @@ interface StatCardProps {
 function StatCard({ label, value, icon }: StatCardProps) {
   return (
     <div
-      className="flex items-center justify-between bg-background relative overflow-hidden"
-      style={{
-        borderRadius: "14.33px",
-        padding: "28.66px",
-        border: "1.19px solid #404040",
-        boxShadow: "0px 1.19px 3.58px 0px #0000001A",
-        minHeight: "127.49px",
-      }}
+      className="flex items-center justify-between bg-card text-card-foreground relative overflow-hidden rounded-xl p-7 border border-border shadow-sm min-h-[128px]"
     >
       <div className="space-y-1 z-10 font-inter">
         <p className="text-[16px] text-muted-foreground font-normal">{label}</p>
-        <p className="text-3xl font-extrabold text-[#FAFAFA]">{value}</p>
+        <p className="text-3xl font-extrabold text-foreground">{value}</p>
       </div>
-      <div className="rounded-full bg-[#09090B] p-3 text-white z-10"
-        style={{ boxShadow: "0px 4.82px 4.82px 0px #00000040" }}>
+      <div className="rounded-full bg-primary p-3 text-primary-foreground z-10 shadow-md">
         {icon}
       </div>
     </div>

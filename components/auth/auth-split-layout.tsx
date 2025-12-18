@@ -12,7 +12,7 @@ export function AuthSplitLayout({ children, rightContent }: AuthSplitLayoutProps
   return (
     <div className="flex min-h-screen w-full">
       {/* Left Side - Form/Actions */}
-      <div className="flex w-full flex-col justify-between bg-transparent p-8 lg:w-[40%] lg:border-r lg:border-[#007AFF66] lg:px-12 lg:py-10">
+      <div className="flex w-full flex-col justify-between bg-transparent p-8 lg:w-[40%] lg:border-r lg:border-border lg:px-12 lg:py-10">
         {/* Header / Logo */}
         <div>
           <Link href="/" className="flex items-center gap-2">
@@ -33,13 +33,13 @@ export function AuthSplitLayout({ children, rightContent }: AuthSplitLayoutProps
         </div>
 
         {/* Footer */}
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-muted-foreground">
           By continuing, you agree to our{" "}
-          <Link href="/terms" className="text-gray-400 underline hover:text-white">
+          <Link href="/terms" className="text-muted-foreground underline hover:text-foreground">
             terms
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-gray-400 underline hover:text-white">
+          <Link href="/privacy" className="text-muted-foreground underline hover:text-foreground">
             privacy policy
           </Link>
           .

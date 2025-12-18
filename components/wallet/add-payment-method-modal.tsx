@@ -56,16 +56,16 @@ export function AddPaymentMethodModal({ isOpen, onClose }: AddPaymentMethodModal
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#02010A] border-white/10 sm:max-w-xl p-0 gap-0" >
-        <DialogHeader className="p-6 border-b border-primary/23 flex flex-row items-center justify-between">
+      <DialogContent className="bg-popover border-border sm:max-w-xl p-0 gap-0" >
+        <DialogHeader className="p-4 sm:p-6 border-b border-border flex flex-row items-center justify-between">
           <div>
-            <DialogTitle className="text-[32px] font-inter font-bold text-white tracking-tight">Add Payment Method</DialogTitle>
-            <p className="text-white/90 font-inter font-medium text-[12px] mt-1">Add a new bank account or crypto wallet for withdrawals</p>
+            <DialogTitle className="text-[24px] sm:text-[32px] font-inter font-bold text-foreground tracking-tight">Add Payment Method</DialogTitle>
+            <p className="text-muted-foreground font-inter font-medium text-[12px] mt-1">Add a new bank account or crypto wallet for withdrawals</p>
           </div>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 space-y-6 font-inter text-white font-medium text-[16px]">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 sm:p-6 space-y-4 sm:space-y-6 font-inter text-foreground font-medium text-[16px]">
             {/* Wallet Name */}
             <FormField
               control={form.control}
@@ -76,7 +76,7 @@ export function AddPaymentMethodModal({ isOpen, onClose }: AddPaymentMethodModal
                   <FormControl>
                     <Input
                       placeholder="Enter Wallet Name"
-                      className="bg-background border-[1.19px] border-white/90 h-12 text-white placeholder:text-muted-foreground "
+                      className="bg-background border-input h-12 text-foreground placeholder:text-muted-foreground "
                       {...field}
                     />
                   </FormControl>
@@ -91,11 +91,11 @@ export function AddPaymentMethodModal({ isOpen, onClose }: AddPaymentMethodModal
               name="walletAddress"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Wallet Address <span className="text-red-500">*</span></FormLabel>
+                  <FormLabel>Wallet Address <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Enter Wallet Address"
-                      className="bg-background border-[1.19px] border-white/90 h-12 text-white placeholder:text-muted-foreground "
+                      className="bg-background border-input h-12 text-foreground placeholder:text-muted-foreground "
                       {...field}
                     />
                   </FormControl>
@@ -110,14 +110,14 @@ export function AddPaymentMethodModal({ isOpen, onClose }: AddPaymentMethodModal
               name="network"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Network <span className="text-red-500">*</span></FormLabel>
+                  <FormLabel>Network <span className="text-destructive">*</span></FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="w-full bg-background border-white/90 h-12 text-gray-500">
+                      <SelectTrigger className="w-full bg-background border-input h-12 text-foreground">
                         <SelectValue placeholder="Select Network" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-background border-white/10 text-white">
+                    <SelectContent className="bg-background border-border text-foreground">
                       <SelectItem value="ethereum">Ethereum (ERC20)</SelectItem>
                       <SelectItem value="solana">Solana (SPL)</SelectItem>
                       <SelectItem value="polygon">Polygon</SelectItem>
@@ -133,7 +133,7 @@ export function AddPaymentMethodModal({ isOpen, onClose }: AddPaymentMethodModal
             {/* Add Method Button */}
             <Button
               type="submit"
-              className="w-full h-12 bg-primary hover:bg-[#0066CC] text-white font-medium text-sm rounded-lg mt-2"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm rounded-lg mt-2"
             >
               <span>+</span> Add Method
             </Button>

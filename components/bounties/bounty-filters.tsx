@@ -14,14 +14,14 @@ export function BountyFilters({ activeTab, onTabChange }: BountyFiltersProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex bg-background h-[78px] items-center border border-[#007AFF4D] rounded-[10px]">
+      <div className="flex bg-background min-h-[78px] h-auto py-4 items-center border border-primary/30 rounded-[10px]">
         {/* Search and Main Filters */}
         <div className="w-full px-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by title or skill..."
-              className="pl-10 bg-[#09090B] border-white/10 text-white placeholder:text-gray-500 focus-visible:ring-primary"
+              className="pl-10 bg-card border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
             />
           </div>
 
@@ -33,14 +33,14 @@ export function BountyFilters({ activeTab, onTabChange }: BountyFiltersProps) {
                 variant={activeTab === cat ? "default" : "outline"}
                 onClick={() => onTabChange(cat)}
                 className={`h-9 text-xs whitespace-nowrap px-4 ${activeTab === cat
-                  ? "bg-primary hover:bg-primary/90 text-white border-0"
-                  : "bg-transparent border-white/10 text-gray-400 hover:text-white hover:bg-white/5"
+                  ? "bg-primary hover:bg-primary/90 text-primary-foreground border-0"
+                  : "bg-secondary border-border text-muted-foreground hover:text-foreground hover:bg-secondary/80"
                   }`}
               >
                 {cat}
               </Button>
             ))}
-            <Button variant="outline" size="sm" className="h-9 gap-2 border-white/10 bg-transparent text-gray-400 hover:text-white hover:bg-white/5">
+            <Button variant="outline" size="sm" className="h-9 gap-2 border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted">
               <SlidersHorizontal className="h-3.5 w-3.5" />
               More Filter
             </Button>
@@ -48,11 +48,11 @@ export function BountyFilters({ activeTab, onTabChange }: BountyFiltersProps) {
         </div>
       </div>
       {/* Sub-header / Sort */}
-      <div className="flex items-center justify-between text-xs text-gray-500 border-b border-white/10 pb-4">
+      <div className="flex items-center justify-between text-xs text-muted-foreground border-b border-border pb-4">
         <span>Showing 8 Bounties</span>
         <div className="flex items-center gap-2">
           <span>Sort by:</span>
-          <select className="bg-transparent text-white font-medium focus:outline-none">
+          <select className="bg-transparent text-foreground font-medium focus:outline-none">
             <option>Newest First</option>
             <option>Highest Price</option>
             <option>Ending Soon</option>

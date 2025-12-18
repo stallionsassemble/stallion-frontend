@@ -23,15 +23,15 @@ export interface SubmissionCardProps {
 const getStatusColor = (status: SubmissionStatus) => {
   switch (status) {
     case "Approved":
-      return "text-[#86EAD4] border-green/11 bg-[#FFFFFF29]";
+      return "text-green-500 border-green-500/20 bg-green-500/10";
     case "Pending Review":
-      return "text-[#FFD19A] border-orange/5 bg-[#FFFFFF29]";
+      return "text-orange-500 border-orange-500/20 bg-orange-500/10";
     case "Revision Requested":
-      return "text-[#ABC978] border-[#ABC978] bg-white/16";
+      return "text-yellow-500 border-yellow-500/20 bg-yellow-500/10";
     case "Rejected":
-      return "text-red/10 border-[#DC3E42] bg-[#C8292929]";
+      return "text-destructive border-destructive/20 bg-destructive/10";
     default:
-      return "text-gray-400 border-gray-500/20 bg-gray-500/10";
+      return "text-muted-foreground border-border bg-muted";
   }
 };
 
@@ -48,7 +48,7 @@ export function SubmissionCard({
   lastUpdated,
 }: SubmissionCardProps) {
   return (
-    <div className="group rounded-xl border-[0.77px] border-[#007AFF] bg-background p-5 transition-all">
+    <div className="group rounded-xl border border-border bg-card p-5 transition-all">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-4">
           {/* Logo */}
@@ -65,18 +65,18 @@ export function SubmissionCard({
           {/* Content */}
           <div className="space-y-1">
             <div className="flex items-center gap-2 mb-1">
-              <Badge variant="outline" className="h-5 px-1.5 font-inter font-medium text-[8px] border-[#113264] border-[0.54px] text-white bg-[#113264] rounded-full">
+              <Badge variant="outline" className="h-5 px-1.5 font-inter font-medium text-[8px] border-primary border-[0.54px] text-primary-foreground bg-primary rounded-full">
                 Project
               </Badge>
             </div>
-            <h3 className="text-lg font-bold font-inter text-[#FAFAFAE5] transition-colors">
+            <h3 className="text-lg font-bold font-inter text-foreground transition-colors">
               {title}
             </h3>
-            <p className="line-clamp-2 break-all font-inter font-light text-[10px] text-[#A1A1AA]">
+            <p className="line-clamp-2 break-all font-inter font-light text-[10px] text-muted-foreground">
               {description}
             </p>
 
-            <div className="flex items-center gap-2 pt-3 text-[8px] text-[#F5F5F5] font-inter font-extralight">
+            <div className="flex items-center gap-2 pt-3 text-[8px] text-muted-foreground font-inter font-extralight">
               <div className="flex items-center">
                 <BriefcaseBusiness className="h-2.5 w-2.5 text-primary" />
                 <span>{project}</span>
@@ -90,7 +90,7 @@ export function SubmissionCard({
         </div>
 
         {/* Status & Action */}
-        <div className="flex flex-row items-center justify-between border-t border-white/5 pt-4 sm:flex-col sm:items-end sm:border-t-0 sm:pt-0 gap-2 sm:gap-6 self-start w-full sm:w-auto">
+        <div className="flex flex-row items-center justify-between border-t border-border pt-4 sm:flex-col sm:items-end sm:border-t-0 sm:pt-0 gap-2 sm:gap-6 self-start w-full sm:w-auto">
           <Badge variant="outline" className={`h-6 px-2.5 text-[8px] font-inter font-medium border-[0.54px] ${getStatusColor(status)}`}>
             <CircleCheckBig />
             {status}
@@ -98,8 +98,8 @@ export function SubmissionCard({
 
           <div className="text-right">
             <div className="flex items-center justify-end gap-1 mb-2">
-              <span className="text-xl font-inter font-bold text-white/90">{amount}</span>
-              <Badge variant="secondary" className="bg-blue-500 px-1 py-0 text-[9px] text-[#F5F5F5] rounded-sm h-4">
+              <span className="text-xl font-inter font-bold text-foreground">{amount}</span>
+              <Badge variant="secondary" className="bg-primary px-1 py-0 text-[9px] text-primary-foreground rounded-sm h-4">
                 {type}
               </Badge>
             </div>

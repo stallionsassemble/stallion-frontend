@@ -40,7 +40,7 @@ export function BountyCard({
   return (
     <div
       className={cn(
-        "group relative flex flex-col shrink-0 bg-card w-full md:w-[450.93px] md:min-w-[450.93px]",
+        "group relative flex flex-col shrink-0 bg-card w-full md:w-[450.93px] md:min-w-[450.93px] border border-primary shadow-sm",
         className
       )}
       style={{
@@ -52,13 +52,11 @@ export function BountyCard({
         paddingLeft: "30.92px",
         borderRadius: "9.58px",
         borderWidth: "0.8px",
-        borderColor: "#007AFF",
-        boxShadow: "0px 4px 4px 0px #00000040",
       }}
     >
       {/* 1. Header: Logo + Company */}
       <div className="flex items-center gap-3">
-        <div className="h-[48px] w-[48px] shrink-0 overflow-hidden rounded-full bg-white flex items-center justify-center">
+        <div className="h-[48px] w-[48px] shrink-0 overflow-hidden rounded-full bg-background flex items-center justify-center">
           {/* Assuming logo is black on transparent, user image shows White 'S' on Dark. 
                The code previously had bg-white/5. 
                Image shows a very clear White Logo. 
@@ -71,25 +69,25 @@ export function BountyCard({
             className="h-full w-full object-cover"
           />
         </div>
-        <span className="text-lg text-[#94A3B8] font-inter font-medium">{company}</span>
+        <span className="text-lg text-muted-foreground font-inter font-medium">{company}</span>
       </div>
 
       {/* 2. Main Content */}
       <div className="flex flex-col gap-2 mt-2">
         <Link href={`${version === "BOUNTY" ? "/dashboard/bounties" : "/dashboard/projects"}/${id}`} className="block">
-          <h3 className="text-xl font-inter font-bold text-white leading-tight group-hover:text-primary transition-colors line-clamp-1">
+          <h3 className="text-xl font-inter font-bold text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-1">
             {title}
           </h3>
         </Link>
-        <p className="line-clamp-2 text-[10px] font-inter text-[#94A3B8] font-light leading-relaxed">
+        <p className="line-clamp-2 text-[10px] font-inter text-muted-foreground font-light leading-relaxed">
           {description}
         </p>
       </div>
 
       {/* 3. Price Amount */}
       <div className="flex items-center gap-3 mt-1">
-        <span className="text-[24px] leading-[46px] font-inter font-bold text-white">{amount}</span>
-        <Badge className="bg-primary hover:bg-primary text-white border-0 rounded-[5606.55px] px-3 py-1 text-xs font-medium font-inter text-[10px]">
+        <span className="text-[24px] leading-[46px] font-inter font-bold text-foreground">{amount}</span>
+        <Badge className="bg-primary hover:bg-primary text-primary-foreground border-0 rounded-[5606.55px] px-3 py-1 text-xs font-medium font-inter text-[10px]">
           {type}
         </Badge>
       </div>
@@ -103,7 +101,7 @@ export function BountyCard({
               <Badge
                 key={tag}
                 variant="secondary"
-                className="bg-[#113264] text-white border-[0.54px] border-[#113264] rounded-[5606.55px] px-2 py-0.5 text-[8px] font-normal"
+                className="bg-primary/30 text-foreground border-[0.54px] border-primary/20 rounded-[5606.55px] px-2 py-0.5 text-[8px] font-normal"
               >
                 {tag}
               </Badge>
@@ -111,7 +109,7 @@ export function BountyCard({
           </div>
 
           {/* Meta Info */}
-          <div className="flex items-center gap-6 text-sm text-[#94A3B8]">
+          <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Users className="h-3 w-3 text-primary" />
               <span>{participants}</span>
@@ -128,7 +126,7 @@ export function BountyCard({
         <Link href={`${version === "BOUNTY" ? "/dashboard/bounties" : "/dashboard/projects"}/${id}`}>
           <Button
             size="icon"
-            className="h-11 w-11 py-[4.85px] rounded-full bg-primary text-white hover:bg-[#0066CC] shadow-lg shadow-blue-900/20"
+            className="h-11 w-11 py-[4.85px] rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20"
           >
             <ChevronRight className="h-full w-full" strokeWidth={3} />
           </Button>

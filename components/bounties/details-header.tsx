@@ -32,16 +32,16 @@ export function DetailsHeader({
   return (
     <div className="flex flex-col sm:flex-row items-start gap-6 font-inter">
       {/* Logo */}
-      <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-full bg-white flex items-center justify-center border border-white/10">
+      <div className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-full bg-background flex items-center justify-center border border-border">
         <Image src={logo} width={80} height={80} alt={company} className="object-contain h-full w-full" />
       </div>
 
       {/* Content */}
       <div className="flex-1 space-y-3">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">{title}</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">{title}</h1>
 
         {/* Metadata Row */}
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-400">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Briefcase className="h-4 w-4 text-primary" />
             <span>{company}</span>
@@ -79,7 +79,7 @@ export function DetailsHeader({
             <Badge
               key={tag}
               variant="secondary"
-              className="bg-[#113264] hover:bg-[#113264]/90 text-white border-0 rounded-full px-4 py-1 text-xs font-medium transition-colors"
+              className="bg-primary/20 hover:bg-primary/30 text-foreground border-0 rounded-full px-4 py-1 text-xs font-medium transition-colors"
             >
               {tag}
             </Badge>

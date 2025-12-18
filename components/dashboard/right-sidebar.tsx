@@ -66,8 +66,8 @@ export function DashboardRightSidebar() {
       {/* Top Earners */}
       <div className="flex flex-col justify-center items-start gap-[10px] relative h-[250px]">
         <div className="flex items-center justify-between w-full">
-          <h3 className="text-sm font-medium flex items-center gap-1 text-white uppercase tracking-wider">
-            <Crown className="h-4 w-4" color="white" />
+          <h3 className="text-sm font-medium flex items-center gap-1 text-foreground uppercase tracking-wider">
+            <Crown className="h-4 w-4 text-foreground" />
             Top Earners
           </h3>
           <button className="text-[10px] text-primary hover:underline">Leaderboard &gt;</button>
@@ -82,16 +82,16 @@ export function DashboardRightSidebar() {
                   <Image src={earner.avatar} width={32} height={32} alt={earner.name} className="h-full w-full object-cover" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-white">{earner.name}</p>
-                  <p className="text-[10px] text-gray-500">{earner.role}</p>
+                  <p className="text-xs font-semibold text-foreground">{earner.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{earner.role}</p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-0.5">
                 <div className="flex items-center justify-end gap-2">
-                  <p className="text-xs font-extrabold text-white">{earner.amount}</p>
-                  <div className="w-[36px] h-[26px] rounded-full bg-primary flex items-center justify-center text-[10px] font-medium font-inter">USDC</div>
+                  <p className="text-xs font-extrabold text-foreground">{earner.amount}</p>
+                  <div className="w-[36px] h-[26px] rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium font-inter">USDC</div>
                 </div>
-                <p className="text-[10px] text-gray-500 text-right">#{i + 1}</p>
+                <p className="text-[10px] text-muted-foreground text-right">#{i + 1}</p>
               </div>
             </div>
           ))}
@@ -100,18 +100,18 @@ export function DashboardRightSidebar() {
 
       {/* Total Balance Card */}
       {/* Total Balance Card */}
-      <div className="rounded-[20px] border border-[#1E293B] bg-[#020617] relative overflow-hidden group shadow-2xl">
+      <div className="rounded-[20px] border border-border bg-card relative overflow-hidden group shadow-2xl">
         {/* Top Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px] bg-linear-to-r from-transparent via-blue-500 to-transparent opacity-50 blur-sm"></div>
 
         {/* Total Balance Header Card */}
-        <div className="flex flex-col items-center justify-center mb-6 relative z-10 w-full bg-[#007AFF]/8 border-b border-[#007AFF]/36 pt-[14px] pb-[14px] px-5">
+        <div className="flex flex-col items-center justify-center mb-6 relative z-10 w-full bg-primary/5 border-b border-border pt-[14px] pb-[14px] px-5">
           {/* Header Icon */}
-          <div className="mb-1 text-gray-400">
-            <BadgeDollarSign className="w-5 h-5 mx-auto mb-1" color="white" strokeWidth={1.5} />
-            <span className="text-[16px] font-inter font-medium text-white">Total Balance</span>
+          <div className="mb-1 text-muted-foreground text-center">
+            <BadgeDollarSign className="w-5 h-5 mx-auto mb-1 text-foreground" strokeWidth={1.5} />
+            <span className="text-[16px] font-inter font-medium text-foreground">Total Balance</span>
           </div>
-          <h2 className="text-[32px] font-inter font-bold md:text-[40px] leading-tight text-white tracking-tight text-center">$5,590.90</h2>
+          <h2 className="text-[32px] font-inter font-bold md:text-[40px] leading-tight text-foreground tracking-tight text-center">$5,590.90</h2>
         </div>
 
         <div className="space-y-3 mb-6 px-5">
@@ -135,7 +135,7 @@ export function DashboardRightSidebar() {
               icon: "/assets/icons/xlm.png"
             }
           ].map((currency, index) => (
-            <div key={index} className="flex items-center justify-between p-3.5 rounded-xl bg-[#0C62C024] border border-[#1E293B]">
+            <div key={index} className="flex items-center justify-between p-3.5 rounded-xl bg-primary/10 border border-border">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
                   <img
@@ -145,17 +145,17 @@ export function DashboardRightSidebar() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-white">{currency.name}</span>
-                  <span className="text-[10px] font-inter text-[#737373]">{currency.amount}</span>
+                  <span className="text-xs font-bold text-foreground">{currency.name}</span>
+                  <span className="text-[10px] font-inter text-muted-foreground">{currency.amount}</span>
                 </div>
               </div>
-              <span className="text-[20px] font-space-grotesk leading-[23px] font-bold text-white">{currency.value}</span>
+              <span className="text-[20px] font-space-grotesk leading-[23px] font-bold text-foreground">{currency.value}</span>
             </div>
           ))}
         </div>
 
         <div className="px-5 pb-5">
-          <Button className="w-full bg-[#0052CC] hover:bg-[#0042a3] text-white h-[46px] rounded-xl font-medium font-inter text-[16px] leading-[23px] transition-all shadow-[0_0_15px_rgba(0,82,204,0.3)]">
+          <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-[46px] rounded-xl font-medium font-inter text-[16px] leading-[23px] transition-all shadow-lg shadow-primary/20">
             Withdraw
           </Button>
         </div>
@@ -164,8 +164,8 @@ export function DashboardRightSidebar() {
       {/* Recent Earners */}
       < div className="space-y-4" >
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-white flex items-center gap-1 uppercase tracking-wider">
-            <BadgeDollarSign className="w-4 h-4" />
+          <h3 className="text-sm font-medium text-foreground flex items-center gap-1 uppercase tracking-wider">
+            <BadgeDollarSign className="w-4 h-4 text-primary" />
             Recent Earners</h3>
           <button className="text-[10px] text-primary hover:underline">Leaderboard &gt;</button>
         </div>
@@ -179,14 +179,14 @@ export function DashboardRightSidebar() {
                   <Image src={earner.avatar} width={32} height={32} alt={earner.name} className="h-full w-full object-cover" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-[#B5B5B5]">{earner.name}</p>
-                  <p className="text-[10px] text-[#B5B5B5]">{earner.role}</p>
+                  <p className="text-xs font-semibold text-foreground">{earner.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{earner.role}</p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-0.5">
                 <div className="flex items-center justify-end gap-2">
-                  <p className="text-xs font-extrabold text-white">{earner.amount}</p>
-                  <div className="w-[36px] h-[26px] rounded-full bg-primary flex items-center justify-center text-[10px] font-medium font-inter">USDC</div>
+                  <p className="text-xs font-extrabold text-foreground">{earner.amount}</p>
+                  <div className="w-[36px] h-[26px] rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium font-inter">USDC</div>
                 </div>
               </div>
             </div>

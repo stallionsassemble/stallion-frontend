@@ -27,7 +27,7 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="bg-[#02010A] border-[0.5px] border-[#404040] sm:max-w-4xl max-h-[90vh] overflow-hidden p-0 gap-0 block font-inter shadow-2xl">
+        <DialogContent className="bg-background border border-border sm:max-w-4xl max-h-[90vh] overflow-hidden p-0 gap-0 block font-inter shadow-2xl">
 
           {/* Background Grid */}
           <div
@@ -41,24 +41,24 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
 
           <div className="relative z-10 flex flex-col h-full max-h-[90vh]">
             {/* Header */}
-            <div className="flex items-start justify-between p-8 pb-4 shrink-0 border-b border-[#007AFF3B]">
+            <div className="flex items-start justify-between p-8 pb-4 shrink-0 border-b border-border">
               <div>
-                <DialogTitle className="text-[32px] font-bold text-white mb-1">
+                <DialogTitle className="text-[32px] font-bold text-foreground mb-1">
                   {submission.title || "React Dashboard UI Design"}
                 </DialogTitle>
-                <p className="text-[12px] text-white mb-4">Solana Foundation</p>
+                <p className="text-[12px] text-muted-foreground mb-4">Solana Foundation</p>
                 <div className="flex gap-2">
-                  <Badge className="bg-[#007AFF]/47 hover:bg-[#007AFF]/47 text-white border-0 h-6 px-3 rounded-full gap-1.5 font-normal">
+                  <Badge className="bg-muted hover:bg-muted/80 text-foreground border-0 h-6 px-3 rounded-full gap-1.5 font-normal">
                     <Eye className="w-3 h-3" />
                     Bounty
                   </Badge>
-                  <Badge variant="outline" className="border-[#FFD19A] bg-[#FFD19A]/20 text-[#FFD19A] h-6 px-3 rounded-full flex items-center gap-1.5 font-normal">
+                  <Badge variant="outline" className="border-yellow-500/50 bg-yellow-500/20 text-yellow-500 h-6 px-3 rounded-full flex items-center gap-1.5 font-normal">
                     <Clock className="w-3 h-3" />
                     Pending Review
                   </Badge>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400 hover:text-white">
+              <Button variant="ghost" size="icon" onClick={onClose} className="text-muted-foreground hover:text-foreground">
                 <X className="h-6 w-6" />
               </Button>
             </div>
@@ -71,10 +71,10 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
                   value="3,700"
                   valuePrefix="$"
                   valueSuffix="$"
-                  activeColor="text-[#A1A1AA]"
+                  activeColor="text-muted-foreground"
                   status="USDC"
-                  statusColor="text-[#007AFF]"
-                  borderColor="hover:border-[#007AFF]/50"
+                  statusColor="text-foreground"
+                  borderColor="hover:border-foreground/50"
                   valueClassName="text-3xl"
                 />
 
@@ -83,8 +83,8 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
                   value="Jan 15, 2024"
                   icon={CalendarDays}
                   status="Pending Review"
-                  statusColor="text-[#FFD19A] font-medium"
-                  borderColor="hover:border-[#007AFF]/50"
+                  statusColor="text-yellow-500 font-medium"
+                  borderColor="hover:border-foreground/50"
                   valueClassName="text-xl"
                 />
 
@@ -93,16 +93,16 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
                   value="Jan 20, 2024"
                   icon={CalendarDays}
                   status="20 days left"
-                  statusColor="text-[#007AFF] font-medium"
-                  borderColor="hover:border-[#007AFF]/50"
+                  statusColor="text-foreground font-medium"
+                  borderColor="hover:border-foreground/50"
                   valueClassName="text-xl"
                 />
               </div>
 
               {/* Content Submission */}
               <div className="space-y-4">
-                <h3 className="text-lg font-bold font-inter text-white flex items-center gap-2">
-                  <span className="p-1 rounded"><FileUp className="h-4 w-4 text-[#007AFF]" /></span>
+                <h3 className="text-lg font-bold font-inter text-foreground flex items-center gap-2">
+                  <span className="p-1 rounded"><FileUp className="h-4 w-4 text-primary" /></span>
                   Content Submission
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -111,21 +111,21 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
                     { name: 'Contract_Specifications.pdf', size: '2.4 MB' }, // Duplicate for mockup
                     { name: 'Form Submission Details', size: '' },
                   ].map((file, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#0C62C024] group cursor-pointer hover:bg-[#0C62C024]/20 transition-colors">
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 group cursor-pointer hover:bg-primary/20 transition-colors">
                       <div className="shrink-0">
-                        <FileText className="h-5 w-5 text-[#007AFF]" />
+                        <FileText className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className="text-xs text-white truncate font-medium">
+                        <span className="text-xs text-foreground truncate font-medium">
                           {file.name}
                         </span>
                         {file.size && (
-                          <span className="text-[10px] text-[#A1A1AA] shrink-0">
+                          <span className="text-[10px] text-muted-foreground shrink-0">
                             {file.size}
                           </span>
                         )}
                       </div>
-                      <ExternalLink className="h-3.5 w-3.5 text-[#007AFF]" />
+                      <ExternalLink className="h-3.5 w-3.5 text-primary" />
                     </div>
                   ))}
                 </div>
@@ -133,14 +133,14 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
 
               {/* Bounty Progress (Timeline) */}
               <div className="space-y-4">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <span className="p-1 rounded"><Clock className="h-4 w-4 text-[#007AFF]" /></span>
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <span className="p-1 rounded"><Clock className="h-4 w-4 text-primary" /></span>
                   Bounty Progress
                 </h3>
 
                 <div className="relative pl-2 ml-1">
                   {/* Vertical Line */}
-                  <div className="absolute left-[3px] top-2 bottom-4 w-px bg-[#404040/50] bg-linear-to-b from-[#404040] to-transparent h-[85%]" />
+                  <div className="absolute left-[3px] top-2 bottom-4 w-px bg-border bg-linear-to-b from-border to-transparent h-[85%]" />
 
                   <div className="space-y-4">
                     {[
@@ -151,10 +151,10 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
                     ].map((item, i) => (
                       <div key={i} className="relative pl-5">
                         <div
-                          className="absolute left-[-5.5px] top-1.5 h-1.5 w-1.5 rounded-full ring-4 ring-[#02010A] z-10"
+                          className="absolute left-[-5.5px] top-1.5 h-1.5 w-1.5 rounded-full ring-4 ring-background z-10"
                           style={{ backgroundColor: item.color }}
                         />
-                        <div className="border border-[#404040] bg-[#0A0A0A] rounded-xl p-4">
+                        <div className="border border-border bg-card rounded-xl p-4">
                           <div className="flex justify-between items-start mb-3">
                             <Badge
                               variant="secondary"
@@ -167,15 +167,15 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
                             >
                               <CheckCircle2 className="w-3 h-3" /> {item.status}
                             </Badge>
-                            <span className="text-[10px] text-[#71717A]">{item.date}</span>
+                            <span className="text-[10px] text-muted-foreground">{item.date}</span>
                           </div>
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="h-4 w-4 rounded-full border border-white/20 flex items-center justify-center overflow-hidden">
-                              <span className="text-[8px] text-white">{item.authorInitial}</span>
+                            <div className="h-4 w-4 rounded-full border border-border flex items-center justify-center overflow-hidden">
+                              <span className="text-[8px] text-foreground">{item.authorInitial}</span>
                             </div>
-                            <span className="text-xs text-white font-medium">{item.author}</span>
+                            <span className="text-xs text-foreground font-medium">{item.author}</span>
                           </div>
-                          <p className="text-xs text-[#A1A1AA]">{item.content}</p>
+                          <p className="text-xs text-muted-foreground">{item.content}</p>
                         </div>
                       </div>
                     ))}
@@ -185,12 +185,12 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
 
               {/* Latest Feedback */}
               <div className="space-y-4">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <span className="p-1 rounded"><MessageCircle className="h-4 w-4 text-[#007AFF]" /></span>
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <span className="p-1 rounded"><MessageCircle className="h-4 w-4 text-primary" /></span>
                   Latest Feedback
                 </h3>
-                <div className="pl-[10px] pr-[10px] pt-[13px] pb-[13px] border-l-2 border-[#113264] rounded-[8.24px]">
-                  <p className="text-sm text-[#E4E4E7]">Perfect execution! Looking forward to more collaborations.</p>
+                <div className="pl-[10px] pr-[10px] pt-[13px] pb-[13px] border-l-2 border-primary rounded-[8.24px]">
+                  <p className="text-sm text-foreground">Perfect execution! Looking forward to more collaborations.</p>
                 </div>
               </div>
             </div>

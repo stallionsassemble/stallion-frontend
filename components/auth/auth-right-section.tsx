@@ -61,9 +61,9 @@ function VerticalMarquee({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative h-[800px] overflow-hidden w-full" ref={containerRef}>
       {/* Top Gradient Mask */}
-      <div className="absolute top-0 inset-x-0 h-40 bg-linear-to-b from-[#02010A] to-transparent z-10" />
+      <div className="absolute top-0 inset-x-0 h-40 bg-linear-to-b from-background to-transparent z-10" />
       {/* Bottom Gradient Mask */}
-      <div className="absolute bottom-0 inset-x-0 h-40 bg-linear-to-t from-[#02010A] to-transparent z-10 pointer-events-none" />
+      <div className="absolute bottom-0 inset-x-0 h-40 bg-linear-to-t from-background to-transparent z-10 pointer-events-none" />
 
       <div ref={listRef} className="will-change-transform w-full">
         {children}
@@ -78,18 +78,18 @@ export function AuthRightSection({ variant }: AuthRightSectionProps) {
       <div className="relative z-10 max-w-xl space-y-8">
         <div className="relative">
           <Quote
-            className="absolute -left-8 -top-10 h-16 w-16 -scale-x-100 fill-transparent text-white"
+            className="absolute -left-8 -top-10 h-16 w-16 -scale-x-100 fill-transparent text-foreground"
             strokeWidth={0.5}
           />
         </div>
         <blockquote className="space-y-6">
-          <p className="font-inter text-2xl font-medium leading-tight text-white">
+          <p className="font-inter text-2xl font-medium leading-tight text-foreground">
             We were doing bounties on Stallion, and this one developer Nick kept
             solving them. His personality really came through in the GitHub
             issues and code. We ended up hiring him from that.
           </p>
           <footer className="flex items-center gap-4">
-            <div className="h-12 w-12 overflow-hidden rounded-full bg-gray-800">
+            <div className="h-12 w-12 overflow-hidden rounded-full bg-muted">
               <Image
                 src="/jane-avatar.png"
                 width={48}
@@ -99,8 +99,8 @@ export function AuthRightSection({ variant }: AuthRightSectionProps) {
               />
             </div>
             <div className="space-y-1">
-              <div className="text-base font-medium font-inter text-[#737373]">Jane Smith</div>
-              <div className="text-sm font-inter text-[#F5F5F5]">
+              <div className="text-base font-medium font-inter text-muted-foreground">Jane Smith</div>
+              <div className="text-sm font-inter text-foreground">
                 CTO at Tech Innovators Inc.
               </div>
             </div>
@@ -117,7 +117,7 @@ export function AuthRightSection({ variant }: AuthRightSectionProps) {
     return (
       <div className="w-full max-w-xl space-y-6 -mt-12">
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-white">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             RECENTLY COMPLETED BOUNTIES
           </h2>
         </div>
@@ -126,20 +126,20 @@ export function AuthRightSection({ variant }: AuthRightSectionProps) {
             {bountiesMarquee.map((bounty, index) => (
               <div
                 key={`${bounty.id}-${index}`}
-                className="flex items-start justify-between rounded-xl border border-white/10 bg-background p-6 transition-colors hover:border-white/20"
+                className="flex items-start justify-between rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/50"
               >
                 <div className="space-y-4">
-                  <div className="text-3xl font-bold text-white">{bounty.amount}</div>
+                  <div className="text-3xl font-bold text-foreground">{bounty.amount}</div>
                   <div className="space-y-1">
-                    <div className="text-sm font-medium text-blue-500">{bounty.company}</div>
-                    <div className="max-w-[280px] text-base font-medium text-white">{bounty.title}</div>
+                    <div className="text-sm font-medium text-primary">{bounty.company}</div>
+                    <div className="max-w-[280px] text-base font-medium text-foreground">{bounty.title}</div>
                   </div>
-                  <div className="text-xs text-gray-500">{bounty.time}</div>
+                  <div className="text-xs text-muted-foreground">{bounty.time}</div>
                 </div>
 
-                <div className="flex flex-col items-center gap-2 border-l border-white/10 pl-6 text-center">
-                  <span className="text-[10px] text-white uppercase tracking-wider">AWARDED TO</span>
-                  <div className="h-12 w-12 overflow-hidden rounded-full bg-gray-800 ring-2 ring-white/10">
+                <div className="flex flex-col items-center gap-2 border-l border-border pl-6 text-center">
+                  <span className="text-[10px] text-foreground uppercase tracking-wider">AWARDED TO</span>
+                  <div className="h-12 w-12 overflow-hidden rounded-full bg-muted ring-2 ring-border">
                     <Image
                       src="/jane-avatar.png" // Placeholder
                       width={48}
@@ -149,8 +149,8 @@ export function AuthRightSection({ variant }: AuthRightSectionProps) {
                     />
                   </div>
                   <div className="text-center">
-                    <div className="text-xs font-semibold text-white">{bounty.awardedTo}</div>
-                    <div className="text-[10px] text-white">{bounty.location}</div>
+                    <div className="text-xs font-semibold text-foreground">{bounty.awardedTo}</div>
+                    <div className="text-[10px] text-foreground">{bounty.location}</div>
                   </div>
                 </div>
               </div>
@@ -168,7 +168,7 @@ export function AuthRightSection({ variant }: AuthRightSectionProps) {
     return (
       <div className="w-full max-w-xl space-y-6 -mt-12">
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             COMPANY IN STALLION COMMUNITY
           </h2>
         </div>
@@ -177,29 +177,29 @@ export function AuthRightSection({ variant }: AuthRightSectionProps) {
             {companiesMarquee.map((company, index) => (
               <div
                 key={`${company.id}-${index}`}
-                className="flex items-start justify-between rounded-xl border border-white/10 bg-background p-6 transition-colors hover:border-white/20"
+                className="flex items-start justify-between rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/50"
               >
                 <div className="space-y-4">
-                  <div className="text-2xl font-bold text-white">{company.name}</div>
+                  <div className="text-2xl font-bold text-foreground">{company.name}</div>
 
                   <div className="space-y-1">
-                    <div className="text-sm font-medium text-blue-500">{company.handle}</div>
-                    <div className="max-w-[280px] text-sm text-white">{company.description}</div>
+                    <div className="text-sm font-medium text-primary">{company.handle}</div>
+                    <div className="max-w-[280px] text-sm text-foreground">{company.description}</div>
                   </div>
-                  <div className="text-xs text-gray-500">{company.time}</div>
+                  <div className="text-xs text-muted-foreground">{company.time}</div>
                 </div>
 
-                <div className="flex flex-col items-center gap-4 border-l border-white/10 pl-6 text-center min-w-[100px]">
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wider">Human Resource</span>
+                <div className="flex flex-col items-center gap-4 border-l border-border pl-6 text-center min-w-[100px]">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Human Resource</span>
                   {/* Stallion Logo or Company Logo */}
-                  <div className="text-white">
-                    <svg width="40" height="40" viewBox="0 0 40 40" fill="white" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M20 40C31.0457 40 40 31.0457 40 20C40 8.9543 31.0457 0 20 0C8.9543 0 0 8.9543 0 20C0 31.0457 8.9543 40 20 40Z" fill="white" fillOpacity="0.0" />
+                  <div className="text-foreground">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M20 40C31.0457 40 40 31.0457 40 20C40 8.9543 31.0457 0 20 0C8.9543 0 0 8.9543 0 20C0 31.0457 8.9543 40 20 40Z" fill="currentColor" fillOpacity="0.0" />
                       {/* Simple 'S' shape placeholder if actual path unavailable, but trying to mimic the logo roughly or use Image */}
-                      <path d="M11 25C11 22 13 20 15 20H25C27 20 29 18 29 16C29 14 27 12 25 12H15V8H25C30 8 33 11 33 16C33 21 30 23 25 24H15C13 24 11 26 11 28C11 30 13 32 15 32H25V36H15C10 36 7 33 7 28C7 25 9 23 11 22V25Z" fill="white" />
+                      <path d="M11 25C11 22 13 20 15 20H25C27 20 29 18 29 16C29 14 27 12 25 12H15V8H25C30 8 33 11 33 16C33 21 30 23 25 24H15C13 24 11 26 11 28C11 30 13 32 15 32H25V36H15C10 36 7 33 7 28C7 25 9 23 11 22V25Z" fill="currentColor" />
                     </svg>
                   </div>
-                  <div className="text-[10px] text-gray-500">{company.location}</div>
+                  <div className="text-[10px] text-muted-foreground">{company.location}</div>
                 </div>
               </div>
             ))}

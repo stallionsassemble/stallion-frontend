@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { AddPaymentMethodModal } from "@/components/wallet/add-payment-method-modal";
-import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, Calendar, ChevronLeft, ChevronRight, Clock, Coins, DollarSign, History, Pencil, Plus, Search, Wallet } from "lucide-react";
+import { WithdrawFundsModal } from "@/components/wallet/withdraw-funds-modal";
+import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, Calendar, ChevronLeft, ChevronRight, Clock, Coins, DollarSign, History, Pencil, Plus, Search, Send, Wallet } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -119,7 +120,8 @@ const transactions = [
 
 export default function WalletPage() {
   const [activeTab, setActiveTab] = useState("Assets");
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [showAddMethodModal, setShowAddMethodModal] = useState(false);
+  const [showWithdrawFundsModal, setShowWithdrawFundsModal] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -132,7 +134,7 @@ export default function WalletPage() {
           statusColor="text-primary font-medium text-sm"
           icon={DollarSign}
           valueClassName="text-4xl text-white"
-          className="rounded-2xl border-white/10 bg-[#09090B]"
+          className="rounded-2xl border-border bg-card"
           layout="row"
         />
         <KpiCard
@@ -142,7 +144,7 @@ export default function WalletPage() {
           statusColor="text-[#FF9500] font-medium text-sm"
           icon={Clock}
           valueClassName="text-4xl text-white"
-          className="rounded-2xl border-white/10 bg-[#09090B]"
+          className="rounded-2xl border-border bg-card"
           layout="row"
         />
         <KpiCard
@@ -151,22 +153,22 @@ export default function WalletPage() {
           status="+12% from last month"
           statusColor="text-green-500 font-medium text-sm"
           icon={DollarSign}
-          valueClassName="text-4xl text-white"
-          className="rounded-2xl border-white/10 bg-[#09090B]"
+          valueClassName="text-4xl text-foreground"
+          className="rounded-2xl border-border bg-card"
           layout="row"
         />
       </div>
 
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-1 p-1 bg-[#18181B] rounded-[12px]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-1 p-1 bg-muted rounded-[12px] overflow-x-auto no-scrollbar max-w-full">
           {["Assets", "Transactions", "Payouts"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 text-sm font-inter font-normal rounded-md transition-colors ${activeTab === tab
-                ? "bg-background text-white"
-                : "text-gray-400 hover:text-white"
+                ? "bg-background text-foreground"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               <span className="flex items-center gap-2">
@@ -179,12 +181,12 @@ export default function WalletPage() {
           ))}
         </div>
 
-        {/* <Button
-          className="bg-primary hover:bg-[#0066CC] text-white font-medium rounded-lg px-6 gap-2"
-          onClick={() => setShowWithdrawModal(true)}
+        <Button
+          className="bg-primary hover:bg-primary/90 text-sm sm:text-[16px] text-primary-foreground font-medium font-inter rounded-lg px-6 gap-2 w-full sm:w-auto h-11 sm:h-12"
+          onClick={() => setShowWithdrawFundsModal(true)}
         >
           <Send className="w-4 h-4" /> Withdraw Fund
-        </Button> */}
+        </Button>
       </div>
 
       {/* Tab Content */}
@@ -194,7 +196,7 @@ export default function WalletPage() {
             {assets.map((asset, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-4 rounded-xl bg-[#0C62C024] hover:bg-[#0C62C024] transition-colors"
+                className="flex items-center justify-between p-4 rounded-xl bg-primary/10 hover:bg-primary/15 transition-colors"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 flex items-center justify-center shrink-0">
@@ -207,12 +209,12 @@ export default function WalletPage() {
                     />
                   </div>
                   <div>
-                    <h4 className="text-white font-bold font-inter">{asset.symbol}</h4>
-                    <p className="text-sm font-inter text-[#737373]">{asset.amount}</p>
+                    <h4 className="text-foreground font-bold font-inter">{asset.symbol}</h4>
+                    <p className="text-sm font-inter text-muted-foreground">{asset.amount}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-white font-bold font-space-grotesk block">{asset.value}</span>
+                  <span className="text-foreground font-bold font-space-grotesk block">{asset.value}</span>
                 </div>
               </div>
             ))}
@@ -222,33 +224,35 @@ export default function WalletPage() {
         {activeTab === "Transactions" && (
           <div className="space-y-4">
             {/* Filters */}
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-white font-bold">Transaction History</h3>
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                  <Input placeholder="Search by title or skill..." className="pl-9 bg-[#09090B] border-white/10 h-9 w-64 text-xs" />
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+              <h3 className="text-foreground font-bold">Transaction History</h3>
+              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input placeholder="Search by title or skill..." className="pl-9 bg-card border-border h-9 w-full text-xs" />
                 </div>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                  <Button variant="outline" className="pl-9 bg-[#09090B] border-white/10 h-9 text-xs text-gray-400 font-normal">Pick a date range</Button>
+                <div className="flex gap-2">
+                  <div className="relative flex-1 sm:flex-none">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Button variant="outline" className="pl-9 bg-card border-border h-9 text-xs text-muted-foreground font-normal w-full sm:w-auto">Pick a date range</Button>
+                  </div>
+                  <Button variant="outline" className="bg-card border-border h-9 text-xs text-muted-foreground font-normal">Newest</Button>
                 </div>
-                <Button variant="outline" className="bg-[#09090B] border-white/10 h-9 text-xs text-gray-400 font-normal">Newest</Button>
               </div>
             </div>
 
             {/* Table */}
-            <div className="bg-[#0C62C024] overflow-hidden">
+            <div className="bg-primary/10 overflow-hidden rounded-xl">
               {transactions.map((tx, i) => (
-                <div key={tx.id} className={`flex items-center justify-between p-4 ${i !== transactions.length - 1 ? 'border-b border-[#007AFF]' : ''} hover:bg-white/5 transition-colors`}>
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-[#007AFF7A] flex items-center justify-center text-white">
+                <div key={tx.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 ${i !== transactions.length - 1 ? 'border-b border-border' : ''} hover:bg-muted/50 transition-colors gap-4`}>
+                  <div className="flex items-start sm:items-center gap-4 w-full">
+                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary-foreground shrink-0 mt-1 sm:mt-0">
                       <tx.icon className="w-5 h-5" />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-white font-inter font-bold text-[16px]">{tx.title}</h4>
-                        <Badge variant="secondary" className={`${tx.status === 'Paid' ? 'bg-[#30A46C80] text-white' : 'bg-[#A47230AB] text-white'} text-[10px] h-5 px-1.5`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="text-foreground font-inter font-bold text-[16px] truncate">{tx.title}</h4>
+                        <Badge variant="secondary" className={`${tx.status === 'Paid' ? 'bg-green-500/20 text-green-500' : 'bg-orange-500/20 text-orange-500'} text-[10px] h-5 px-1.5 shrink-0`}>
                           {tx.status}
                         </Badge>
                       </div>
@@ -258,28 +262,30 @@ export default function WalletPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-inter font-bold text-[24px]">{tx.amount}</span>
-                    <Badge className="font-inter text-white text-[10px] px-1.5 h-5">{tx.currency}</Badge>
+                  <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                    <span className="text-foreground font-inter font-bold text-[24px]">{tx.amount}</span>
+                    <Badge className="font-inter text-foreground text-[10px] px-1.5 h-5 bg-card border border-border shrink-0">{tx.currency}</Badge>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Pagination */}
-            <div className="flex justify-end items-center gap-4 text-sm font-inter text-foreground py-2">
-              <div className="flex items-center gap-2">
-                <span>Rows per page</span>
-                <select className="bg-[#09090B] border border-white/10 rounded px-2 py-1">
+            <div className="flex flex-wrap justify-between sm:justify-end items-center gap-4 text-sm font-inter text-foreground py-4">
+              <div className="flex items-center gap-2 order-2 sm:order-1">
+                <span className="text-muted-foreground whitespace-nowrap">Rows per page</span>
+                <select className="bg-card border border-border rounded px-2 py-1 text-foreground text-xs">
                   <option>6</option>
                   <option>10</option>
                   <option>20</option>
                 </select>
               </div>
-              <span>Page 1 of 1</span>
-              <div className="flex gap-1">
-                <Button size="icon" variant="outline" className="h-7 w-7 border-white/10 bg-transparent" disabled><ChevronLeft className="w-4 h-4" /></Button>
-                <Button size="icon" variant="outline" className="h-7 w-7 border-white/10 bg-transparent" disabled><ChevronRight className="w-4 h-4" /></Button>
+              <div className="flex items-center gap-4 order-1 sm:order-2 w-full sm:w-auto justify-between sm:justify-end">
+                <span className="text-muted-foreground">Page 1 of 1</span>
+                <div className="flex gap-1">
+                  <Button size="icon" variant="outline" className="h-8 w-8 border-border bg-transparent text-foreground" disabled><ChevronLeft className="w-4 h-4" /></Button>
+                  <Button size="icon" variant="outline" className="h-8 w-8 border-border bg-transparent text-foreground" disabled><ChevronRight className="w-4 h-4" /></Button>
+                </div>
               </div>
             </div>
           </div>
@@ -287,32 +293,32 @@ export default function WalletPage() {
 
         {activeTab === "Payouts" && (
           <div className="space-y-6">
-            <h3 className="text-white font-bold font-inter text-lg">Payout Methods</h3>
+            <h3 className="text-foreground font-bold font-inter text-lg">Payout Methods</h3>
 
             <div className="space-y-3">
-              {payoutMethods.map((method) => (
-                <div key={method.id} className="flex items-center justify-between p-4 rounded-xl bg-[#0C62C024]">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-[#007AFF7A] flex items-center justify-center shrink-0">
-                      <Wallet className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="text-white font-bold font-inter">{method.name}</h4>
-                      <p className="text-xs font-inter text-ring">{method.value}</p>
-                    </div>
+              {payoutMethods.map((method) => <div key={method.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl bg-primary/10 gap-4">
+                <div className="flex items-start sm:items-center gap-4 w-full min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <Wallet className="w-5 h-5 text-foreground" />
                   </div>
-                  <button className="flex items-center gap-2 text-sm text-white hover:text-white transition-colors">
-                    <Pencil className="w-4 h-4" />
-                    <span>Edit</span>
-                  </button>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-foreground font-bold font-inter truncate">{method.name}</h4>
+                    <p className="text-xs font-inter text-ring break-all leading-relaxed">{method.value}</p>
+                  </div>
                 </div>
-              ))}
+
+                <button className="flex items-center gap-2 text-sm text-foreground hover:text-foreground/80 transition-colors ml-14 sm:ml-0">
+                  <Pencil className="w-4 h-4" />
+                  <span>Edit</span>
+                </button>
+              </div>
+              )}
             </div>
 
             <Button
               variant="stallion-outline"
-              className="w-full border-dashed border-[0.77px]  h-[52px] gap-2 rounded-xl text-foreground hover:text-foreground hover:bg-[#007AFF]/5 cursor-pointer"
-              onClick={() => setShowWithdrawModal(true)}
+              className="w-full border-dashed border-[0.77px]  h-[52px] gap-2 rounded-xl text-foreground hover:text-foreground hover:bg-background/5 cursor-pointer"
+              onClick={() => setShowAddMethodModal(true)}
             >
               <Plus className="w-5 h-5" />
               Add Payment Method
@@ -321,7 +327,8 @@ export default function WalletPage() {
         )}
       </div>
 
-      <AddPaymentMethodModal isOpen={showWithdrawModal} onClose={() => setShowWithdrawModal(false)} />
-    </div>
+      <AddPaymentMethodModal isOpen={showAddMethodModal} onClose={() => setShowAddMethodModal(false)} />
+      <WithdrawFundsModal isOpen={showWithdrawFundsModal} onClose={() => setShowWithdrawFundsModal(false)} />
+    </div >
   );
 }
