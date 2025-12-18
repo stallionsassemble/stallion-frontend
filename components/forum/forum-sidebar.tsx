@@ -22,9 +22,9 @@ export function ForumSidebar() {
   ];
 
   return (
-    <div className="hidden lg:block space-y-6 w-[471px] shrink-0 font-inter">
+    <div className="space-y-6 w-full lg:w-[471px] shrink-0 font-inter">
       {/* Author Card */}
-      <Card className="bg-card border-primary/50 py-[12.85px] border-[0.68px] px-[19.77px] rounded-[10px] w-[471px] h-[177.81px] flex flex-col justify-between shadow-sm">
+      <Card className="bg-card border-primary/50 py-[12.85px] border-[0.68px] px-[19.77px] rounded-[10px] w-full h-[177.81px] flex flex-col justify-between shadow-sm">
         <div className="flex flex-col items-start space-y-2">
           <div className="h-[52px] w-[52px] rounded-full overflow-hidden border-2 border-primary/20 bg-primary/20">
             <Image

@@ -26,11 +26,12 @@ function ReplyItem({ item, isRoot = true }: { item: ReplyProps; isRoot?: boolean
   // The actual reply content block
   const contentNode = (
     <div className="space-y-3">
-      <div className="flex gap-4">
+      <div className="flex gap-3 md:gap-4">
         <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-primary/20 mt-1">
           <Image src={`https://avatar.vercel.sh/${item.author}`} width={40} height={40} alt={item.author} />
         </div>
         <div className="flex-1 space-y-2">
+          {/* ... keeping content unchanged ... */}
           <div className="flex items-center gap-2 font-inter">
             <span className="text-[16px] font-bold text-foreground">{item.author}</span>
             <span className="text-[12px] text-muted-foreground font-light">{item.timeAgo}</span>
@@ -56,6 +57,7 @@ function ReplyItem({ item, isRoot = true }: { item: ReplyProps; isRoot?: boolean
 
       {/* Actions (Aligned with Avatar) */}
       <div className="flex items-center gap-0 left-[14px]">
+        {/* ... keeping actions unchanged ... */}
         <Button
           variant="ghost"
           onClick={() => setIsLiked(!isLiked)}
@@ -78,10 +80,10 @@ function ReplyItem({ item, isRoot = true }: { item: ReplyProps; isRoot?: boolean
 
   if (isRoot) {
     return (
-      <div className="max-w-[862px] border border-primary/40 bg-card rounded-[12px] p-5 space-y-2 transition-all hover:border-primary/60">
+      <div className="w-full max-w-[862px] border border-primary/40 bg-card rounded-[12px] p-5 space-y-2 transition-all hover:border-primary/60">
         {contentNode}
         {item.replies_list && item.replies_list.length > 0 && (
-          <div className="space-y-3 ml-12">
+          <div className="space-y-3 ml-4 md:ml-12">
             {item.replies_list.map((reply) => (
               <ReplyItem key={reply.id} item={reply} isRoot={false} />
             ))}
@@ -96,7 +98,7 @@ function ReplyItem({ item, isRoot = true }: { item: ReplyProps; isRoot?: boolean
     <div className="space-y-6">
       {contentNode}
       {item.replies_list && item.replies_list.length > 0 && (
-        <div className="space-y-6 ml-12">
+        <div className="space-y-6 ml-4 md:ml-12">
           {item.replies_list.map((reply) => (
             <ReplyItem key={reply.id} item={reply} isRoot={false} />
           ))}
@@ -110,6 +112,7 @@ function ReplyItem({ item, isRoot = true }: { item: ReplyProps; isRoot?: boolean
 
 export function ForumReplies() {
   const mockReplies: ReplyProps[] = [
+    // ... items ...
     {
       id: "1",
       author: "Alex Rivera",
@@ -146,7 +149,7 @@ export function ForumReplies() {
       <h3 className="text-xl font-bold text-foreground">Replies (20)</h3>
 
       {/* Input Box */}
-      <div className="flex gap-4 bg-card rounded-[12px]">
+      <div className="flex gap-3 md:gap-4 bg-card rounded-[12px]">
         <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-primary/20">
           <Image src="https://avatar.vercel.sh/user" width={40} height={40} alt="Current User" />
         </div>

@@ -33,9 +33,9 @@ export function ForumDiscussionCard({
     <div className="group border-b border-[0.68px] border-primary/50 bg-card p-5 transition-all hover:border-primary/50 hover:bg-primary/10"
     // style={{ borderTop: "9.89px", borderTopColor: "purple" }}
     >
-      <div className="flex gap-4">
+      <div className="flex gap-3 md:gap-4">
         {/* Avatar Placeholder/User Icon */}
-        <div className="h-[91px] w-[91px] shrink-0 overflow-hidden rounded-[8000.41px] bg-primary/20 flex items-center justify-center mt-6.5">
+        <div className="h-[60px] w-[60px] md:h-[91px] md:w-[91px] shrink-0 overflow-hidden rounded-[8000.41px] bg-primary/20 flex items-center justify-center mt-6.5">
           <Image
             src={`https://avatar.vercel.sh/${author}`}
             width={91}
@@ -61,7 +61,7 @@ export function ForumDiscussionCard({
 
           {/* Title & Description */}
           <div className="space-y-1 font-inter">
-            <h3 className="text-[24px] -tracking-[4%] font-bold text-foreground/90 line-clamp-1">
+            <h3 className="text-lg md:text-[24px] -tracking-[4%] font-bold text-foreground/90 line-clamp-1">
               {title}
             </h3>
             <p className="text-sm font-light text-foreground/50 line-clamp-2 text-clip text-balance leading-relaxed">

@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Eye, Heart, MessageCircle, Share2, ThumbsUp, User, UserCog, Users } from "lucide-react";
+import { Clock, Eye, Heart, MessageCircle, Share2, ThumbsUp, UserCog } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -43,7 +43,7 @@ export function ForumPostContent({
           </Badge>
         </div>
 
-        <h1 className="text-[32px] font-bold text-foreground leading-tight -tracking-[4%] font-inter">
+        <h1 className="text-2xl md:text-[32px] font-bold text-foreground leading-tight -tracking-[4%] font-inter">
           {title}
         </h1>
 
@@ -65,7 +65,7 @@ export function ForumPostContent({
             </div>
 
             {/* Row 2: Stats */}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground font-light text-[10px] font-inter">
+            <div className="flex items-center flex-wrap gap-y-2 gap-x-4 text-xs text-muted-foreground font-light text-[10px] font-inter">
               <div className="flex items-center gap-1.5">
                 <Clock className="h-[10px] w-[10px] text-primary" />
                 <span className="text-muted">{timeAgo}</span>
@@ -89,17 +89,17 @@ export function ForumPostContent({
 
       {/* Post Content & Actions Container */}
       <div className="border-[0.68px] border-primary/50 rounded-[10px] overflow-hidden bg-card/30">
-        <div className="prose prose-invert max-w-none p-6 md:p-8 font-inter text-muted-foreground font-light text-[14px] leading-relaxed">
+        <div className="prose prose-invert max-w-none p-4 md:p-8 font-inter text-muted-foreground font-light text-[14px] leading-relaxed">
           {content}
         </div>
 
         {/* Top Divider (Not Full Width) */}
-        <div className="px-6 md:px-8">
+        <div className="px-4 md:px-8">
           <div className="h-[0.68px] bg-primary/50 w-full" />
         </div>
 
         {/* Actions */}
-        <div className="flex items-center py-3 px-6 md:px-8">
+        <div className="flex items-center py-3 px-4 md:px-8">
           <Button
             variant="ghost"
             onClick={() => setIsLiked(!isLiked)}
