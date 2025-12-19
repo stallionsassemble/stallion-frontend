@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Search,
   Settings,
+  Trophy,
   User,
   Users,
   Wallet
@@ -36,6 +37,11 @@ const sidebarItems = [
     title: "Browse Projects",
     href: "/dashboard/projects",
     icon: Briefcase,
+  },
+  {
+    title: "Leaderboard",
+    href: "/dashboard/leaderboard",
+    icon: Trophy,
   },
   {
     title: "My Submission",
