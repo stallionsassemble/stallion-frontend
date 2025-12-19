@@ -14,7 +14,7 @@ const socialLinks = [
 export function ProfileSidebar() {
   return (
     <div className="space-y-3">
-      <div className="border-[0.68px] border-primary/20 rounded-xl p-4 w-[477px] h-[202px] bg-background">
+      <div className="border-[0.68px] border-primary/20 rounded-xl p-4 w-full md:w-[477px] h-auto md:h-[202px] bg-background">
         <h3 className="text-lg font-bold font-inter mb-2 text-foreground">Links</h3>
         <div className="space-y-1 mb-3">
           {socialLinks.map((link, i) => (

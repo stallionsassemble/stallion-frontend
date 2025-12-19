@@ -67,12 +67,12 @@ export function PortfolioView() {
   return (
     <div className="space-y-6">
       {/* Filters Bar */}
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-col md:flex-row md:flex-wrap items-stretch md:items-center gap-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search by title or skill..."
-            className="pl-9 bg-background border-border w-[322px] h-[36px] shadow-none"
+            className="pl-9 bg-background border-border w-full md:w-[322px] h-[36px] shadow-none"
           />
         </div>
 
@@ -81,7 +81,7 @@ export function PortfolioView() {
             <Button
               id="date"
               className={cn(
-                "w-[322px] h-[36px] justify-start text-left font-normal bg-background border border-border rounded-md px-3 text-sm hover:bg-background hover:text-foreground shadow-none",
+                "w-full md:w-[322px] h-[36px] justify-start text-left font-normal bg-background border border-border rounded-md px-3 text-sm hover:bg-background hover:text-foreground shadow-none",
                 !date && "text-muted-foreground"
               )}
             >
@@ -113,7 +113,7 @@ export function PortfolioView() {
         </Popover>
 
         <Select defaultValue="newest">
-          <SelectTrigger className="w-[121px] h-[36px] bg-background border-border shadow-none">
+          <SelectTrigger className="w-full md:w-[121px] h-[36px] bg-background border-border shadow-none">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
@@ -125,35 +125,35 @@ export function PortfolioView() {
       </div>
 
       {/* Recent Activity / Portfolio List */}
-      <div className="border-[0.68px] border-primary/20 rounded-xl p-6 bg-background">
+      <div className="border-[0.68px] border-primary/20 rounded-xl p-4 md:p-6 bg-background">
         <h3 className="text-lg font-bold font-inter mb-6">Recent Activity</h3>
         <div>
           {portfolioItems.map((item, i) => (
             <div
               key={i}
-              className="flex items-start justify-between py-4 border-b border-primary bg-primary/14 p-3 last:border-0 last:pb-0"
+              className="flex items-start justify-between py-4 border-b border-primary bg-primary/14 p-3"
             >
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-normal font-inter text-foreground">
+              <div className="flex flex-col gap-1 flex-1 min-w-0 pr-2">
+                <p className="text-sm font-normal font-inter text-foreground truncate">
                   {item.title}
                 </p>
-                <p className="text-sm font-normal font-inter text-muted-foreground/80">
+                <p className="text-sm font-normal font-inter text-muted-foreground/80 line-clamp-2">
                   {item.description}
                 </p>
-                <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground/60">
-                  <span className="flex items-center gap-1">
+                <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground/60 flex-wrap">
+                  <span className="flex items-center gap-1 whitespace-nowrap">
                     <CalendarIcon className="w-3 h-3 text-primary" /> {item.date}
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 whitespace-nowrap">
                     <Briefcase className="w-3 h-3 text-primary" /> {item.org}
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 whitespace-nowrap">
                     <Gift className="w-3 h-3 text-primary" /> {item.type}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <span className="font-bold font-inter text-foreground text-base">
                   {item.amount}
                 </span>

@@ -52,7 +52,7 @@ export function RecentActivity() {
       <h3 className="text-lg font-bold font-inter mb-6">Recent Activity</h3>
       <div>
         {activities.map((item, i) => (
-          <div key={i} className="flex items-start justify-between py-4 border-b border-primary bg-primary/14 p-3 last:border-0 last:pb-0">
+          <div key={i} className="flex items-start justify-between py-4 border-b border-primary bg-primary/14 p-3">
             <div className="flex flex-col gap-1">
               <p className="text-sm font-normal font-inter text-muted-foreground/80">
                 {item.action} <span className="text-foreground font-normal ml-1">{item.title}</span>

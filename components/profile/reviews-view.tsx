@@ -48,13 +48,13 @@ const reviews = [
 
 export function ReviewsView() {
   return (
-    <div className="border-[0.68px] border-primary/20 rounded-xl p-6 bg-background">
+    <div className="border-[0.68px] border-primary/20 rounded-xl p-4 md:p-6 bg-background">
       <h3 className="text-lg font-bold font-inter mb-6">Reviews</h3>
       <div>
         {reviews.map((item, i) => (
           <div
             key={i}
-            className="flex items-start gap-4 py-4 border-b border-primary bg-primary/14 p-3 last:border-0 last:pb-0 mb-4 last:mb-0 rounded-lg"
+            className="flex items-start gap-4 py-4 border-b border-primary bg-primary/14 p-3"
           >
             {/* Logo */}
             <div className="w-[48px] h-[48px] rounded-full bg-white flex items-center justify-center shrink-0">

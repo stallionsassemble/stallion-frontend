@@ -17,7 +17,7 @@ export function ProfileTabs() {
 
   return (
     <div className="mb-4 overflow-x-auto">
-      <div className="inline-flex items-center bg-muted-foreground/20 border border-white/5 backdrop-blur-sm w-[346.44px] h-[44.58px] rounded-[11.76px] p-[4.41px] justify-between">
+      <div className="inline-flex items-center bg-muted-foreground/20 border border-white/5 backdrop-blur-sm w-full md:w-[346.44px] h-[44.58px] rounded-[11.76px] p-[4.41px] justify-between">
         {tabs.map((tab) => {
           const isActive = currentTab === tab.name.toLowerCase();
           return (
