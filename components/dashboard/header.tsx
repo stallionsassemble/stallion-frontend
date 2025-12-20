@@ -1,7 +1,6 @@
 "use client";
 
 import { MobileSidebar } from "@/components/dashboard/sidebar";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Bell, DollarSign, PanelLeft, Search, User } from "lucide-react";
+import { Bell, ChevronDown, DollarSign, PanelLeft, Search, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -70,113 +69,126 @@ export function Header() {
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-2">
         {/* Search Button */}
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground border border-border rounded-md w-10 h-10">
-          <Search className="h-5 w-5" />
+        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground border border-white/20 rounded-[8px] w-9 h-9">
+          <Search className="h-4 w-4" />
         </Button>
 
-        {/* Wallet Address Button */}
-        <button className="hidden md:flex items-center gap-3 rounded-full border border-background bg-transparent px-4 py-2 transition-colors hover:bg-muted/50">
+        {/* Wallet Address Button - Hidden as per design */}
+        {/* <button className="hidden md:flex items-center gap-3 rounded-full border border-background bg-transparent px-4 py-2 transition-colors hover:bg-muted/50">
           <div className="h-2 w-2 rounded-full bg-background"></div>
           <span className="text-sm font-medium text-muted-foreground">Wallet Address</span>
           <span className="text-sm font-medium text-muted-foreground/50">G...X4KL</span>
-        </button>
+        </button> */}
 
-        {/* Theme Toggle */}
-        <ThemeToggle />
+        {/* Theme Toggle - Hidden as per design */}
+        {/* <ThemeToggle /> */}
 
         {/* Notification Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" size="icon" className="relative text-foreground hover:text-foreground">
               <Bell className="h-5 w-5" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive"></span>
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#0066FF] border border-background"></span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[312px] h-[425px] bg-popover border-border text-popover-foreground p-0 shadow-2xl flex flex-col gap-[10px]">
-            <div
-              className="flex items-center justify-between px-[10px] h-[30px] w-full bg-primary/10 rounded-[6.2px] shrink-0 border border-primary/40"
-            >
-              <span className="font-bold text-xs">Notifications</span>
-              <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full border border-primary/20">2 News</span>
+          <DropdownMenuContent align="end" className="w-[320px] bg-popover border-border text-popover-foreground p-0 shadow-2xl flex flex-col rounded-xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/[0.08]">
+              <span className="font-bold text-base">Notifications</span>
+              <span className="text-xs bg-secondary text-secondary-foreground px-3 py-1 rounded-full border border-border">2 News</span>
             </div>
-            <div className="flex-1 overflow-y-auto flex flex-col gap-[10px] p-[10px]">
 
+            <div className="flex-1 overflow-y-auto max-h-[400px] py-2 flex flex-col gap-2">
               {/* Payment Received Notification - Blue Highlight */}
-              <div className="w-[290px] h-[60px] mx-auto p-[10px] rounded-[5px] bg-primary flex justify-between items-center group relative shrink-0">
-                <div className="flex gap-3 items-center w-full">
-                  <div className="h-full w-full rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-                    <DollarSign className="h-4 w-4 text-primary-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="flex justify-between items-center">
-                      <p className="text-[12px] font-bold text-primary-foreground leading-none truncate pr-2">Payment Received</p>
-                      <span className="text-[9px] text-primary-foreground/80 shrink-0">2h ago</span>
-                    </div>
-                    <p className="text-[10px] text-primary-foreground/90 font-light truncate leading-tight mt-1">You received 500 USDC for Summer...</p>
-                  </div>
-                  <div className="h-2 w-2 rounded-full bg-primary-foreground shrink-0 self-center" />
+              <div className="w-[290px] h-[60px] mx-auto px-3 rounded-lg bg-primary text-primary-foreground flex gap-3 items-center relative group cursor-pointer transition-transform active:scale-[0.98] shrink-0">
+                {/* Icon */}
+                <div className="h-8 w-8 rounded-full border border-primary-foreground/30 flex items-center justify-center shrink-0">
+                  <DollarSign className="h-4 w-4" />
                 </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <div className="flex justify-between items-center w-full">
+                    <h5 className="text-[12px] font-bold leading-none truncate pr-2">Payment Received</h5>
+                    <span className="text-[9px] opacity-80 shrink-0">2h ago</span>
+                  </div>
+                  <p className="text-[10px] opacity-90 font-light truncate leading-tight mt-1">You received 500 USDC for Summer...</p>
+                </div>
+
+                {/* Dot */}
+                <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground shrink-0" />
               </div>
 
               {/* Generic Notification 1 */}
-              <div className="w-[290px] h-[60px] mx-auto p-[10px] rounded-[5px] hover:bg-muted transition-colors flex justify-between items-center group relative shrink-0">
-                <div className="flex gap-3 items-center w-full">
-                  <div className="h-8 w-8 rounded-full bg-transparent border border-border flex items-center justify-center shrink-0 text-primary relative">
-                    <User className="h-4 w-4" />
-                    <div className="absolute bottom-0 right-0 text-[6px]">⭐</div>
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="flex justify-between items-center">
-                      <p className="text-[12px] font-bold text-foreground leading-none truncate pr-2">New bounty matches</p>
-                      <span className="text-[9px] text-muted-foreground shrink-0">1d ago</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground font-light truncate leading-tight mt-1">Techbrands - Design of new...</p>
-                  </div>
-                  <div className="h-2 w-2 rounded-full bg-primary shrink-0 self-center" />
+              <div className="w-[290px] h-[60px] mx-auto px-3 rounded-lg hover:bg-muted/50 transition-colors flex gap-3 items-center relative group cursor-pointer shrink-0">
+                {/* Icon */}
+                <div className="h-8 w-8 relative shrink-0 flex items-center justify-center">
+                  <User className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                  <div className="absolute -bottom-0.5 -right-0.5 text-[8px]">⭐</div>
                 </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <div className="flex justify-between items-center w-full">
+                    <h5 className="text-[12px] font-bold text-foreground leading-none truncate pr-2">New bounty matches your...</h5>
+                    <span className="text-[9px] text-muted-foreground shrink-0">1d ago</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground font-light truncate leading-tight mt-1">Techbrands - Design of new company...</p>
+                </div>
+
+                {/* Dot */}
+                <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
               </div>
 
               {/* Generic Notification 2 */}
-              <div className="w-[290px] h-[60px] mx-auto p-[10px] rounded-[5px] hover:bg-muted transition-colors flex justify-between items-center group relative shrink-0">
-                <div className="flex gap-3 items-center w-full">
-                  <div className="h-8 w-8 rounded-full bg-transparent border border-border flex items-center justify-center shrink-0 text-primary relative">
-                    <User className="h-4 w-4" />
-                    <div className="absolute bottom-0 right-0 text-[6px]">⭐</div>
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="flex justify-between items-center">
-                      <p className="text-[12px] font-bold text-foreground leading-none truncate pr-2">New bounty matches</p>
-                      <span className="text-[9px] text-muted-foreground shrink-0">1d ago</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground font-light truncate leading-tight mt-1">Techbrands - Design of new...</p>
-                  </div>
-                  <div className="h-2 w-2 rounded-full bg-primary shrink-0 self-center" />
+              <div className="w-[290px] h-[60px] mx-auto px-3 rounded-lg hover:bg-muted/50 transition-colors flex gap-3 items-center relative group cursor-pointer shrink-0">
+                {/* Icon */}
+                <div className="h-8 w-8 relative shrink-0 flex items-center justify-center">
+                  <User className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                  <div className="absolute -bottom-0.5 -right-0.5 text-[8px]">⭐</div>
                 </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <div className="flex justify-between items-center w-full">
+                    <h5 className="text-[12px] font-bold text-foreground leading-none truncate pr-2">New bounty matches your...</h5>
+                    <span className="text-[9px] text-muted-foreground shrink-0">1d ago</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground font-light truncate leading-tight mt-1">Techbrands - Design of new company...</p>
+                </div>
+
+                {/* Dot */}
+                <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
               </div>
 
               {/* Generic Notification 3 */}
-              <div className="w-[290px] h-[60px] mx-auto p-[10px] rounded-[5px] hover:bg-muted transition-colors flex justify-between items-center group relative shrink-0">
-                <div className="flex gap-3 items-center w-full">
-                  <div className="h-8 w-8 rounded-full bg-transparent border border-border flex items-center justify-center shrink-0 text-primary relative">
-                    <User className="h-4 w-4" />
-                    <div className="absolute bottom-0 right-0 text-[6px]">⭐</div>
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="flex justify-between items-center">
-                      <p className="text-[12px] font-bold text-foreground leading-none truncate pr-2">New bounty matches</p>
-                      <span className="text-[9px] text-muted-foreground shrink-0">1d ago</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground font-light truncate leading-tight mt-1">Techbrands - Design of new...</p>
-                  </div>
-                  <div className="h-2 w-2 rounded-full bg-primary shrink-0 self-center" />
+              <div className="w-[290px] h-[60px] mx-auto px-3 rounded-lg hover:bg-muted/50 transition-colors flex gap-3 items-center relative group cursor-pointer shrink-0">
+                {/* Icon */}
+                <div className="h-8 w-8 relative shrink-0 flex items-center justify-center">
+                  <User className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                  <div className="absolute -bottom-0.5 -right-0.5 text-[8px]">⭐</div>
                 </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                  <div className="flex justify-between items-center w-full">
+                    <h5 className="text-[12px] font-bold text-foreground leading-none truncate pr-2">New bounty matches your...</h5>
+                    <span className="text-[9px] text-muted-foreground shrink-0">1d ago</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground font-light truncate leading-tight mt-1">Techbrands - Design of new company...</p>
+                </div>
+
+                {/* Dot */}
+                <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
               </div>
             </div>
-            <div className="p-3 border-t border-border">
-              <Link href="/dashboard/notifications" className="w-full">
-                <Button className="w-full bg-muted hover:bg-muted/80 text-muted-foreground text-xs h-8">
+
+            {/* Footer */}
+            <div className="p-0 border-t border-border">
+              <Link href="/dashboard/notifications" className="block w-full">
+                <Button className="w-full bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-medium h-10 rounded-none">
                   View all Notifications
                 </Button>
               </Link>
@@ -188,9 +200,6 @@ export function Header() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-3 cursor-pointer group">
-              {/* Blue dot indicator for profile? Image has a blue dot floating? Or maybe it's spacing. */}
-              {/* Actually image shows a blue dot between wallet and profile? "•" or just alignment? */}
-              {/* I'll skip the random dot. */}
               <div className="h-9 w-9 overflow-hidden rounded-full border border-border transition-colors group-hover:border-primary/50">
                 <Image
                   src="https://avatar.vercel.sh/tunde"
@@ -200,7 +209,10 @@ export function Header() {
                   className="h-full w-full object-cover"
                 />
               </div>
-              <span className="hidden md:block text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Tunde</span>
+              <span className="hidden md:flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                Tunde
+                <ChevronDown className="h-4 w-4" />
+              </span>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-popover border-border text-popover-foreground font-inter mt-2">
