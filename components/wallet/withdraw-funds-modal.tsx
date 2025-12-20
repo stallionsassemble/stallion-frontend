@@ -197,14 +197,7 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 22960.0
 
             <div className="relative mb-6 w-full flex justify-center mt-2">
               {/* Blue Pill for Amount */}
-              <div
-                className="rounded-[1666px] bg-primary shadow-[0_0_30px_rgba(var(--primary),0.4)] relative z-10 flex items-center justify-center mx-auto"
-                style={{
-                  width: '333.27px',
-                  height: '72.59px',
-                  padding: '11.19px 37.32px'
-                }}
-              >
+              <div className="rounded-[1666px] bg-primary shadow-[0_0_30px_rgba(var(--primary),0.4)] relative z-10 flex items-center justify-center mx-auto w-full max-w-[333px] h-[72px] px-4 md:px-9">
                 <span className="text-[32px] sm:text-[36px] font-extrabold font-syne text-primary-foreground tracking-widest block text-center leading-none">
                   ${parseFloat(withdrawnAmount).toLocaleString('en-US')}
                 </span>
@@ -229,6 +222,6 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 22960.0
           </div>
         )}
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 }

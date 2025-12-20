@@ -40,16 +40,12 @@ export function BountyCard({
   return (
     <div
       className={cn(
-        "group relative flex flex-col shrink-0 bg-card w-full md:w-[450.93px] md:min-w-[450.93px] border border-primary shadow-sm",
+        "group relative flex flex-col shrink-0 bg-card w-full md:w-[450.93px] md:min-w-[450.93px] border border-primary shadow-sm p-5 md:py-[25.77px] md:px-[30.92px]",
         className
       )}
       style={{
         minHeight: "258.19px",
         gap: "10.31px",
-        paddingTop: "25.77px",
-        paddingRight: "30.92px",
-        paddingBottom: "25.77px",
-        paddingLeft: "30.92px",
         borderRadius: "9.58px",
         borderWidth: "0.8px",
       }}

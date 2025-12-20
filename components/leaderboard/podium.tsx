@@ -81,7 +81,7 @@ export function Podium({ topUsers }: PodiumProps) {
   };
 
   return (
-    <div className="flex items-start justify-center gap-4 mx-auto w-[517px] h-[212px] scale-[0.65] xs:scale-[0.75] sm:scale-100 origin-top">
+    <div className="flex items-start justify-center gap-4 mx-auto w-[517px] h-[212px] scale-[0.55] xs:scale-[0.75] sm:scale-100 origin-top">
       {/* Order: 2 - 1 - 3 */}
       {second && <PodiumCard user={second} position={2} />}
       {first && <PodiumCard user={first} position={1} />}

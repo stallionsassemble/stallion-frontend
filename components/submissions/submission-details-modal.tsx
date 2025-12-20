@@ -41,13 +41,13 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
 
           <div className="relative z-10 flex flex-col h-full max-h-[90vh]">
             {/* Header */}
-            <div className="flex items-start justify-between p-8 pb-4 shrink-0 border-b border-border">
+            <div className="flex items-start justify-between p-4 sm:p-8 pb-4 shrink-0 border-b border-border">
               <div>
-                <DialogTitle className="text-[32px] font-bold text-foreground mb-1">
+                <DialogTitle className="text-xl sm:text-[32px] font-bold text-foreground mb-1 leading-tight">
                   {submission.title || "React Dashboard UI Design"}
                 </DialogTitle>
-                <p className="text-[12px] text-muted-foreground mb-4">Solana Foundation</p>
-                <div className="flex gap-2">
+                <p className="text-[12px] text-muted-foreground mb-3 sm:mb-4">Solana Foundation</p>
+                <div className="flex flex-wrap gap-2">
                   <Badge className="bg-muted hover:bg-muted/80 text-foreground border-0 h-6 px-3 rounded-full gap-1.5 font-normal">
                     <Eye className="w-3 h-3" />
                     Bounty
@@ -58,12 +58,12 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
                   </Badge>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={onClose} className="text-muted-foreground hover:text-foreground">
+              <Button variant="ghost" size="icon" onClick={onClose} className="text-muted-foreground hover:text-foreground -mr-2 -mt-2 sm:mr-0 sm:mt-0">
                 <X className="h-6 w-6" />
               </Button>
             </div>
 
-            <div className="p-8 pt-4 space-y-8 overflow-y-auto flex-1 custom-scrollbar">
+            <div className="p-4 sm:p-8 pt-4 space-y-6 sm:space-y-8 overflow-y-auto flex-1 custom-scrollbar">
               {/* Info Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <KpiCard
@@ -196,11 +196,11 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
             </div>
 
             {/* Footer Actions */}
-            <div className="p-8 pt-0 mt-4 flex gap-4 shrink-0">
+            <div className="p-4 sm:p-8 pt-0 mt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 shrink-0">
               <Button
                 variant="stallion"
                 size="xl"
-                className="flex-1"
+                className="flex-1 w-full"
                 onClick={() => setIsEditModalOpen(true)}
               >
                 <Pencil className="h-4 w-4" /> Edit Submission
@@ -208,7 +208,7 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
               <Button
                 variant="stallion-outline"
                 size="xl"
-                className="flex-1"
+                className="flex-1 w-full"
               >
                 <Phone className="h-4 w-4" /> Contact Stallion
               </Button>

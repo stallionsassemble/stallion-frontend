@@ -52,8 +52,8 @@ export function CongratulationsModal({ isOpen, onClose }: CongratulationsModalPr
 
           {/* Congratulations Pill */}
           <div className="relative w-full max-w-sm mb-6">
-            <div className="bg-background rounded-[1666.13px] py-4 px-2 w-[392px] h-[69px] flex items-center justify-center shadow-lg">
-              <h2 className="text-3xl md:text-3xl font-extrabold leading-[68.18px] text-foreground italic -tracking-[1.55px] font-syne">
+            <div className="bg-background rounded-full py-2 px-6 w-full max-w-[392px] flex items-center justify-center shadow-lg mx-auto">
+              <h2 className="text-2xl md:text-3xl font-extrabold leading-normal text-foreground italic -tracking-[1.55px] font-syne">
                 Congratulations
               </h2>
             </div>

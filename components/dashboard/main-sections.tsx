@@ -149,16 +149,27 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
   return (
     <div className="space-y-4">
       {/* Header Section */}
+      {/* Header Section */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex flex-row items-center gap-4 w-full sm:w-auto">
-          <h2 className="text-xl font-bold text-foreground shrink-0">{title}</h2>
-          <div className="h-4 w-px bg-border"></div>
-          <ul className="flex flex-row gap-4 text-sm font-medium text-muted-foreground overflow-x-auto no-scrollbar pb-1">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
+          {/* Title Row (Mobile: Title + Filter) */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground shrink-0">{title}</h2>
+
+            {/* Mobile Filter Button */}
+            <Button variant="default" size="icon" className="sm:hidden text-muted-foreground bg-transparent hover:text-foreground h-auto p-0">
+              <ListFilter className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="hidden sm:block h-4 w-px bg-border"></div>
+
+          <ul className="flex flex-row gap-4 text-sm font-medium text-muted-foreground overflow-x-auto no-scrollbar pb-1 w-full sm:w-auto">
             {["For you", "Projects", "Bounties"].map((view) => (
               <li
                 key={view}
                 onClick={() => setActiveView(view)}
-                className={`cursor-pointer transition-all pb-1 border-b-2 ${activeView === view
+                className={`cursor-pointer transition-all pb-1 border-b-2 whitespace-nowrap ${activeView === view
                   ? "text-foreground border-primary"
                   : "border-transparent hover:text-foreground hover:border-primary"
                   }`}
@@ -169,7 +180,8 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
           </ul>
         </div>
 
-        <Button variant="default" size="icon" className="text-muted-foreground bg-transparent hover:text-foreground">
+        {/* Desktop Filter Button */}
+        <Button variant="default" size="icon" className="hidden sm:flex text-muted-foreground bg-transparent hover:text-foreground">
           <ListFilter className="h-4 w-4" />
         </Button>
       </div>
@@ -209,9 +221,9 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
               className="group relative flex flex-col sm:flex-row items-stretch overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-primary/50"
             >
               {/* Left Content Wrapper */}
-              <div className="flex flex-1 items-center p-6 gap-6">
+              <div className="flex flex-1 items-start md:items-center p-4 md:p-6 gap-3 md:gap-6">
                 {/* Logo */}
-                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-white p-2 flex items-center justify-center">
+                <div className="h-10 w-10 md:h-16 md:w-16 shrink-0 overflow-hidden rounded-full bg-white p-1.5 md:p-2 flex items-center justify-center mt-1 md:mt-0">
                   <Image
                     src={opp.logo}
                     width={64}
@@ -222,21 +234,21 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
                 </div>
 
                 {/* Main Info */}
-                <div className="flex flex-col gap-3 min-w-0 flex-1">
+                <div className="flex flex-col gap-2 md:gap-3 min-w-0 flex-1">
                   <div>
-                    <h3 className="text-2xl font-bold text-foreground mb-1">{opp.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 max-w-2xl font-light">
+                    <h3 className="text-lg md:text-2xl font-bold text-foreground mb-1 leading-tight">{opp.title}</h3>
+                    <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 max-w-2xl font-light">
                       {opp.description}
                     </p>
                   </div>
 
                   {/* Meta Row */}
-                  <div className="flex wrap items-center gap-4 text-xs text-muted-foreground font-medium">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2 md:gap-4 text-[10px] md:text-xs text-muted-foreground font-medium">
                     <div className="flex items-center gap-1.5">
                       <div className="w-3.5 h-3.5 flex items-center justify-center text-primary">
-                        <BriefcaseBusiness />
+                        <BriefcaseBusiness className="w-full h-full" />
                       </div>
-                      <span className="text-foreground">{opp.company}</span>
+                      <span className="text-foreground truncate max-w-[100px] md:max-w-none">{opp.company}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-3.5 h-3.5 text-primary">
@@ -259,12 +271,12 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
                   </div>
 
                   {/* Tags */}
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-1.5 md:gap-2 mt-1">
                     {opp.tags.map((tag) => (
                       <Badge
                         key={tag}
                         variant="secondary"
-                        className="bg-primary/10 text-xs text-primary border-[0.54px] border-primary/20 font-inter text-[8px] font-medium px-3 py-1 rounded-full"
+                        className="bg-primary/10 text-xs text-primary border-[0.54px] border-primary/20 font-inter text-[8px] font-medium px-2 py-0.5 md:px-3 md:py-1 rounded-full"
                       >
                         {tag}
                       </Badge>
@@ -274,8 +286,8 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
               </div>
 
               {/* Right Side Info (Price) */}
-              <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center p-6 sm:pr-24 gap-2 border-t sm:border-t-0 border-border bg-card sm:bg-transparent">
-                <span className="text-3xl font-bold text-foreground tracking-tight">{opp.price}</span>
+              <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center p-4 md:p-6 sm:pr-24 lg:pr-6 gap-2 border-t sm:border-t-0 border-border bg-card sm:bg-transparent md:mr-[68px]">
+                <span className="text-xl md:text-3xl font-bold text-foreground tracking-tight">{opp.price}</span>
                 <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 rounded-full px-4 py-0.5 text-xs font-semibold">
                   USDC
                 </Badge>
