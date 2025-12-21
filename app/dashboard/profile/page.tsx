@@ -10,7 +10,9 @@ import { ReviewsView } from "@/components/profile/reviews-view";
 import { SkillsSection } from "@/components/profile/skills-section";
 import { useSearchParams } from "next/navigation";
 
-export default function ProfilePage() {
+import { Suspense } from "react";
+
+function ProfileContent() {
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") || "overview";
 
@@ -42,5 +44,13 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-center">Loading profile...</div>}>
+      <ProfileContent />
+    </Suspense>
   );
 }

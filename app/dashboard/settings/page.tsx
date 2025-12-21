@@ -6,7 +6,9 @@ import { SecuritySettingsView } from "@/components/settings/security-settings-vi
 import { SettingsTabs } from "@/components/settings/settings-tabs";
 import { useSearchParams } from "next/navigation";
 
-export default function SettingsPage() {
+import { Suspense } from "react";
+
+function SettingsContent() {
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab") || "profile";
 
@@ -25,5 +27,13 @@ export default function SettingsPage() {
 
       {currentTab === "notification" && <NotificationSettingsView />}
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div>Loading settings...</div>}>
+      <SettingsContent />
+    </Suspense>
   );
 }
