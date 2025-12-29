@@ -16,6 +16,11 @@ class ChatService {
     return response.data
   }
 
+  async getMessages(id: string) {
+    const response = await api.get(`/chat/conversations/${id}/messages`)
+    return response.data
+  }
+
   async addParticipants(id: string, payload: any) {
     const response = await api.post(
       `/chat/conversations/${id}/participants`,
