@@ -5,10 +5,10 @@ import { AuthSplitLayout } from "@/components/auth/auth-split-layout";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/store/use-auth";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-export default function VerifyPage() {
+function VerifyContent() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [totp, setTotp] = useState(["", "", "", "", "", ""]);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -263,5 +263,13 @@ export default function VerifyPage() {
         </div>
       </div>
     </AuthSplitLayout>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={<div className="flex bg-black min-h-screen items-center justify-center text-white">Loading...</div>}>
+      <VerifyContent />
+    </Suspense>
   );
 }
