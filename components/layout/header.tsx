@@ -43,19 +43,20 @@ export function Header() {
 
         {/* Desktop Buttons */}
         <div className="hidden lg:flex items-center gap-4">
-          <Link href="/auth/login">
-            <Button
-              variant="ghost"
-              className="text-gray-300 hover:text-white hover:bg-white/0"
-            >
+          <Button
+            asChild
+            variant="ghost"
+            className="text-gray-300 hover:text-white hover:bg-white/0"
+          >
+            <Link href="/auth/login">
               Login
-            </Button>
-          </Link>
-          <Link href="/auth/register">
-            <Button className="bg-white text-black hover:bg-gray-200 font-semibold">
+            </Link>
+          </Button>
+          <Button asChild className="bg-white text-black hover:bg-gray-200 font-semibold">
+            <Link href="/auth/register">
               Sign Up
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
         {/* Mobile Navigation */}
@@ -90,19 +91,20 @@ export function Header() {
                 ))}
               </nav>
               <div className="flex flex-col gap-4 pt-4 border-t border-white/10">
-                <Link href="/auth/login" onClick={() => setIsOpen(false)}>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-gray-300 hover:text-white hover:bg-white/10 px-0"
-                  >
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="w-full justify-start text-gray-300 hover:text-white hover:bg-white/10 px-0"
+                >
+                  <Link href="/auth/login" onClick={() => setIsOpen(false)}>
                     Login
-                  </Button>
-                </Link>
-                <Link href="/auth/register" onClick={() => setIsOpen(false)}>
-                  <Button className="w-full bg-white text-black hover:bg-gray-200 font-semibold">
+                  </Link>
+                </Button>
+                <Button asChild className="w-full bg-white text-black hover:bg-gray-200 font-semibold">
+                  <Link href="/auth/register" onClick={() => setIsOpen(false)}>
                     Sign Up
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
           )}

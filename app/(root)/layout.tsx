@@ -8,7 +8,7 @@ export default function MarketingLayout({
 }>) {
   return (
     <div
-      className="flex min-h-screen flex-col p-4"
+      className="flex min-h-screen flex-col"
       style={{
         backgroundImage: "url('/grid-bg.png')",
         backgroundRepeat: "repeat",

@@ -19,21 +19,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { authService } from "@/lib/api/auth";
 import { profileSchema, ProfileValues } from "@/lib/schemas/profile";
+import { useAuth } from "@/lib/store/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  AlertCircle,
+  Check,
   Gamepad2,
   Github,
   Globe,
   Instagram,
   Linkedin,
+  Loader2,
   Twitter,
   Upload,
   UserCheck,
   X as XIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -49,8 +54,12 @@ const socialConfigs = [
 const suggestedSkills = ["Frontend", "Backend", "UI/UX Design", "Writing", "Digital Marketing"];
 
 export function ProfileSettingsForm() {
+  const { user } = useAuth();
   const [avatarPreview, setAvatarPreview] = useState<string>("https://avatar.vercel.sh/johndoe");
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const form = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
@@ -70,10 +79,32 @@ export function ProfileSettingsForm() {
     },
   });
 
+  // Effect to populate form with user data
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        username: user.username || "",
+        location: user.location || "",
+        bio: user.companyBio || "",
+        skills: user.skills ? (Array.isArray(user.skills) ? user.skills : []) : [],
+        twitter: user.socials?.twitter || "",
+        website: user.socials?.website || "",
+        github: user.socials?.github || "",
+        discord: user.socials?.discord || "",
+        linkedin: user.socials?.linkedin || "",
+        instagram: user.socials?.instagram || "",
+      });
+      if (user.profilePicture) {
+        setAvatarPreview(user.profilePicture);
+      }
+    }
+  }, [user, form]);
+
   const onSubmit = (data: ProfileValues) => {
     console.log("Form Submitted:", data);
-    // In a real app, you'd upload the image file here if changed
-    toast.success("Profile updated successfully!");
+    toast.warning("Update endpoint is not yet available.");
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,7 +112,6 @@ export function ProfileSettingsForm() {
     if (file) {
       const url = URL.createObjectURL(file);
       setAvatarPreview(url);
-      // You would also typically set a form field for the file here if handling file upload directly in form data
     }
   };
 
@@ -110,6 +140,49 @@ export function ProfileSettingsForm() {
         input.value = "";
       }
     }
+  };
+
+  const checkUsername = async (username: string) => {
+    if (!username || username === user?.username) {
+      setIsCheckingUsername(false);
+      setUsernameAvailable(null);
+      return;
+    }
+
+    setIsCheckingUsername(true);
+    setUsernameAvailable(null);
+
+    try {
+      const response = await authService.checkUsername(username);
+      setUsernameAvailable(response.available);
+    } catch (error) {
+      console.error("Failed to check username availability", error);
+      setUsernameAvailable(null);
+    } finally {
+      setIsCheckingUsername(false);
+    }
+  };
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    form.setValue("username", value);
+
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Reset status while typing
+    if (!value) {
+      setUsernameAvailable(null);
+      setIsCheckingUsername(false);
+      return;
+    }
+
+    // Debounce check
+    debounceTimerRef.current = setTimeout(() => {
+      checkUsername(value);
+    }, 500);
   };
 
   return (
@@ -198,11 +271,34 @@ export function ProfileSettingsForm() {
                       <div className="w-12 flex items-center justify-center bg-[#0066FF] rounded-l-lg border border-foreground">
                         <span className="text-white font-medium text-lg">@</span>
                       </div>
-                      <Input placeholder="johndoe" className="pl-4 bg-transparent border-foreground rounded-l-none h-12 flex-1" {...field} />
-                      <UserCheck className="absolute right-3 top-3.5 w-5 h-5 text-green-500" />
+                      <Input
+                        placeholder="johndoe"
+                        className={`pl-4 bg-transparent border-foreground rounded-l-none h-12 flex-1 ${usernameAvailable === true ? "border-green-500 focus-visible:ring-green-500" :
+                          usernameAvailable === false ? "border-red-500 focus-visible:ring-red-500" : ""
+                          }`}
+                        {...field}
+                        onChange={handleUsernameChange}
+                      />
+                      <div className="absolute right-3 top-3.5 flex items-center pointer-events-none">
+                        {isCheckingUsername ? (
+                          <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+                        ) : usernameAvailable === true ? (
+                          <Check className="w-5 h-5 text-green-500" />
+                        ) : usernameAvailable === false ? (
+                          <XIcon className="w-5 h-5 text-red-500" />
+                        ) : (
+                          <UserCheck className="w-5 h-5 text-muted-foreground opacity-50" />
+                        )}
+                      </div>
                     </div>
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {usernameAvailable === false && (
+                      <span className="text-red-500 flex items-center gap-1 mt-1 text-xs">
+                        <AlertCircle className="w-3 h-3" /> Username is taken
+                      </span>
+                    )}
+                  </FormMessage>
                 </FormItem>
               )}
             />

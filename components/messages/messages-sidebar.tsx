@@ -1,12 +1,12 @@
 "use client";
 
-import { Conversation } from "@/app/dashboard/messages/page"; // Import active interfaces
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/store/use-auth";
+import { Conversation } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Search, SearchX, UserCog } from "lucide-react";
-import Image from "next/image";
 
 interface MessagesSidebarProps {
   conversations: Conversation[];
@@ -15,6 +15,14 @@ interface MessagesSidebarProps {
 }
 
 export function MessagesSidebar({ conversations, selectedId, onSelect }: MessagesSidebarProps) {
+  const { user: currentUser } = useAuth();
+
+  const getPartner = (participants: Conversation['participants']) => {
+    if (!currentUser) return participants[0]?.user;
+    const partner = participants.find((p) => p.user.id !== currentUser.id);
+    return partner ? partner.user : participants[0]?.user;
+  };
+
   return (
     <div className="w-full lg:w-[400px] border-r border-[0.68px] border-primary/50 flex flex-col bg-background h-[calc(100vh-80px)]">
       {/* Search Header */}
@@ -40,6 +48,13 @@ export function MessagesSidebar({ conversations, selectedId, onSelect }: Message
         ) : (
           conversations.map((conv) => {
             const isSelected = selectedId === conv.id;
+            const partner = getPartner(conv.participants);
+            // TODO: Fallback if partner is missing?
+            if (!partner) return null;
+
+            const lastMessage = conv.messages?.[0]?.content || "No messages yet";
+            const isAdmin = false; // TODO: Check if user is admin from their role?
+
             return (
               <div
                 key={conv.id}
@@ -51,15 +66,19 @@ export function MessagesSidebar({ conversations, selectedId, onSelect }: Message
               >
                 {/* Avatar */}
                 <div className="relative shrink-0">
-                  <div className="h-12 w-12 rounded-full overflow-hidden border border-primary/20">
-                    <Image
-                      src={`https://avatar.vercel.sh/${conv.user.avatar}`}
-                      width={48}
-                      height={48}
-                      alt={conv.user.name}
-                    />
+                  <div className="h-12 w-12 rounded-full overflow-hidden border border-primary/20 bg-muted">
+                    {partner.profilePicture ? (
+                      <img
+                        src={partner.profilePicture}
+                        className="w-full h-full object-cover"
+                        alt={partner.username}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center w-full h-full bg-primary/20 text-primary font-bold">
+                        {partner.firstName?.[0] || partner.username?.[0] || "?"}
+                      </div>
+                    )}
                   </div>
-                  {/* Online Dot (removed) */}
                 </div>
 
                 {/* Info */}
@@ -67,14 +86,14 @@ export function MessagesSidebar({ conversations, selectedId, onSelect }: Message
                   <div className="flex items-center justify-between mb-0.5">
                     <div className="flex items-center gap-2">
                       <span className="text-[16px] font-medium text-foreground truncate font-inter">
-                        {conv.user.name}
+                        {partner.firstName ? `${partner.firstName} ${partner.lastName || ''}` : partner.username}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] text-muted-foreground font-light font-inter">@{conv.user.handle}</span>
-                    {conv.user.isAdmin && (
+                    <span className="text-[10px] text-muted-foreground font-light font-inter">@{partner.username}</span>
+                    {isAdmin && (
                       <Badge className="bg-amber-900/80 hover:bg-amber-900 border-none text-foreground text-[8px] h-4 px-1.5 gap-0.5 rounded-full">
                         <UserCog className="h-2 w-2" />
                         Admin
@@ -84,13 +103,13 @@ export function MessagesSidebar({ conversations, selectedId, onSelect }: Message
 
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-[12px] text-muted-foreground truncate font-light">
-                      {conv.lastMessage}
+                      {lastMessage}
                     </p>
-                    {conv.unreadCount && (
+                    {conv.unreadCount ? (
                       <div className="bg-[#3B82F6] text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full shrink-0">
                         {conv.unreadCount}
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>

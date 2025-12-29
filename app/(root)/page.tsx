@@ -9,7 +9,7 @@ import { WhySection } from "@/components/landing/why-section";
 
 export default function Home() {
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <div className="overflow-x-hidden">
       <HeroSection />
 
       <GsapWrapper>
@@ -35,6 +35,6 @@ export default function Home() {
       <GsapWrapper>
         <FAQSections />
       </GsapWrapper>
-    </main>
+    </div>
   );
 }

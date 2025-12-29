@@ -221,29 +221,29 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
               className="group relative flex flex-col sm:flex-row items-stretch overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-primary/50"
             >
               {/* Left Content Wrapper */}
-              <div className="flex flex-1 items-start md:items-center p-4 md:p-6 gap-3 md:gap-6">
+              <div className="flex flex-1 items-start md:items-center p-4 gap-3 md:gap-4">
                 {/* Logo */}
-                <div className="h-10 w-10 md:h-16 md:w-16 shrink-0 overflow-hidden rounded-full bg-white p-1.5 md:p-2 flex items-center justify-center mt-1 md:mt-0">
+                <div className="h-10 w-10 md:h-12 md:w-12 shrink-0 overflow-hidden rounded-full bg-white p-1.5 md:p-2 flex items-center justify-center mt-1 md:mt-0">
                   <Image
                     src={opp.logo}
-                    width={64}
-                    height={64}
+                    width={48}
+                    height={48}
                     alt={opp.company}
                     className="h-full w-full object-contain"
                   />
                 </div>
 
                 {/* Main Info */}
-                <div className="flex flex-col gap-2 md:gap-3 min-w-0 flex-1">
+                <div className="flex flex-col gap-2 min-w-0 flex-1">
                   <div>
-                    <h3 className="text-lg md:text-2xl font-bold text-foreground mb-1 leading-tight">{opp.title}</h3>
-                    <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 max-w-2xl font-light">
+                    <h3 className="text-base md:text-lg font-bold text-foreground mb-1 leading-tight">{opp.title}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2 max-w-2xl font-light">
                       {opp.description}
                     </p>
                   </div>
 
                   {/* Meta Row */}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2 md:gap-4 text-[10px] md:text-xs text-muted-foreground font-medium">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 md:gap-4 text-[10px] md:text-xs text-muted-foreground font-medium">
                     <div className="flex items-center gap-1.5">
                       <div className="w-3.5 h-3.5 flex items-center justify-center text-primary">
                         <BriefcaseBusiness className="w-full h-full" />
@@ -271,12 +271,12 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
                   </div>
 
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-1.5 md:gap-2 mt-1">
+                  <div className="flex flex-wrap gap-1.5 mt-1">
                     {opp.tags.map((tag) => (
                       <Badge
                         key={tag}
                         variant="secondary"
-                        className="bg-primary/10 text-xs text-primary border-[0.54px] border-primary/20 font-inter text-[8px] font-medium px-2 py-0.5 md:px-3 md:py-1 rounded-full"
+                        className="bg-primary/10 text-xs text-primary border-[0.54px] border-primary/20 font-inter text-[8px] font-medium px-2 py-0.5 rounded-full"
                       >
                         {tag}
                       </Badge>

@@ -1,19 +1,11 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-
-const skills = [
-  "Smart Contracts",
-  "Solidity",
-  "React",
-  "TypeScript",
-  "DeFi",
-  "NFTs",
-  "Web3",
-  "Rust"
-];
+import { useAuth } from "@/lib/store/use-auth";
 
 export function SkillsSection() {
+  const { user } = useAuth();
+  const skills = user?.skills || [];
   return (
     <div className="border-[0.68px] border-primary/20 rounded-xl p-6 mb-6 bg-background">
       <h3 className="text-lg font-bold font-inter mb-4 text-foreground">Skills & Expertise</h3>

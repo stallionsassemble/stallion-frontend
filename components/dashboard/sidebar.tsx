@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import {
   Bell,
@@ -115,7 +115,7 @@ function SidebarContent({ onLinkClick }: SidebarContentProps) {
               href={item.href}
               onClick={onLinkClick}
               className={cn(
-                "group flex items-center justify-between rounded-lg px-3 py-3 text-[20px] leading-[29px] font-normal font-inter transition-colors hover:bg-accent",
+                "group flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium font-inter transition-colors hover:bg-accent",
                 isActive ? "bg-primary/40 text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -171,6 +171,7 @@ export function MobileSidebar() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="p-0 border-r border-border bg-background w-72">
+        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
         <SidebarContent onLinkClick={() => setOpen(false)} />
       </SheetContent>
     </Sheet>

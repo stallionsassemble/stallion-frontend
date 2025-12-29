@@ -10,18 +10,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { authService } from "@/lib/api/auth";
+import { uploadService } from "@/lib/api/upload";
 import { talentOnboardingSchema, TalentOnboardingValues } from "@/lib/schemas/auth";
+import { useAuth } from "@/lib/store/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Github, Globe, Instagram, Linkedin, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export default function TalentOnboardingPage() {
   const router = useRouter();
+  const { user, setUser } = useAuth();
   const [skillsList] = useState(["Frontend", "Backend", "UI/UX Design", "Writing", "Digital Marketing"]);
   const [avatarPreview, setAvatarPreview] = useState<string>("/jane-avatar.png");
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
 
   const form = useForm<TalentOnboardingValues>({
     resolver: zodResolver(talentOnboardingSchema),
@@ -37,21 +43,91 @@ export default function TalentOnboardingPage() {
       discord: "",
       linkedin: "",
       instagram: "",
-      emailSubscription: false,
+      emailNotifications: false,
       termsAccepted: true,
     },
   });
 
-  function onSubmit(data: TalentOnboardingValues) {
-    console.log(data);
-    router.push("/auth/onboarding/success?role=talent");
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+
+  const checkUsername = async (username: string) => {
+    if (username.length < 3) return;
+
+    setIsCheckingUsername(true);
+    try {
+      const { available } = await authService.checkUsername(username);
+      if (!available) {
+        form.setError("username", {
+          type: "manual",
+          message: "Username is already taken",
+        });
+      } else {
+        form.clearErrors("username");
+      }
+    } catch (error) {
+      console.error("Failed to check username", error);
+    } finally {
+      setIsCheckingUsername(false);
+    }
+  };
+
+  async function onSubmit(data: TalentOnboardingValues) {
+    const toastId = toast.loading("Completing your profile...")
+
+    // Final validation before submit
+    if (form.getFieldState("username").invalid) {
+      toast.error("Please fix username errors", { id: toastId });
+      return;
+    }
+
+    // Transform data to backend format
+    const payload = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      username: data.username,
+      location: data.location,
+      skills: data.skills,
+      profilePicture: profilePictureUrl || "https://github.com/shadcn.png",
+      socials: {
+        "twitter": data.twitter ? (data.twitter.startsWith('http') ? data.twitter : `https://twitter.com/${data.twitter}`) : "",
+        "website": data.website || "",
+        "github": data.github ? (data.github.startsWith('http') ? data.github : `https://github.com/${data.github}`) : "",
+        "discord": data.discord || "",
+        "linkedin": data.linkedin ? (data.linkedin.startsWith('http') ? data.linkedin : `https://linkedin.com/in/${data.linkedin}`) : "",
+        "instagram": data.instagram ? (data.instagram.startsWith('http') ? data.instagram : `https://instagram.com/${data.instagram}`) : "",
+      },
+      emailNotifications: data.emailNotifications
+    }
+
+    try {
+      const response = await authService.completeProfileContributor(payload)
+
+      // Update local user state
+      if (user) {
+        setUser({ ...response.user, profileCompleted: true })
+      }
+
+      toast.success("Profile completed successfully!", { id: toastId })
+      router.push("/auth/onboarding/success?role=talent")
+    } catch (error) {
+      toast.error("Failed to complete profile. Please try again.", { id: toastId })
+    }
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
       setAvatarPreview(url);
+
+      const toastId = toast.loading("Uploading avatar...");
+      try {
+        const response = await uploadService.uploadImage(file);
+        setProfilePictureUrl(response.url);
+        toast.success("Avatar uploaded", { id: toastId });
+      } catch (error) {
+        toast.error("Failed to upload avatar", { id: toastId });
+      }
     }
   };
 
@@ -60,8 +136,8 @@ export default function TalentOnboardingPage() {
   return (
     <div className="w-full max-w-2xl space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-medium text-white">Finish Your Profile</h1>
-        <p className="text-gray-400">It takes less than a minute to start earning in global standards.</p>
+        <h1 className="text-2xl md:text-3xl font-medium text-white">Finish Your Profile</h1>
+        <p className="text-gray-400 text-sm md:text-base">It takes less than a minute to start earning in global standards.</p>
       </div>
 
       <div className="flex items-center gap-6">
@@ -102,7 +178,7 @@ export default function TalentOnboardingPage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <FormField
               control={form.control}
               name="firstName"
@@ -110,7 +186,7 @@ export default function TalentOnboardingPage() {
                 <FormItem>
                   <FormLabel className="text-xs font-semibold text-gray-400">First Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="First Name" className="h-12 w-full rounded-lg border border-white/10 bg-[#0E0C1D] px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
+                    <Input placeholder="First Name" className="h-10 md:h-12 w-full rounded-lg border border-white/10 bg-[#0E0C1D] px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -123,7 +199,7 @@ export default function TalentOnboardingPage() {
                 <FormItem>
                   <FormLabel className="text-xs font-semibold text-gray-400">Last Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="Last Name" className="h-12 w-full rounded-lg border border-white/10 bg-[#0E0C1D] px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
+                    <Input placeholder="Last Name" className="h-10 md:h-12 w-full rounded-lg border border-white/10 bg-[#0E0C1D] px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,7 +207,7 @@ export default function TalentOnboardingPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <FormField
               control={form.control}
               name="username"
@@ -141,13 +217,22 @@ export default function TalentOnboardingPage() {
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">@</span>
                     <FormControl>
-                      <Input placeholder="username" className="pl-8 pr-10 bg-[#0E0C1D]" {...field} />
+                      <Input
+                        placeholder="username"
+                        className="pl-8 pr-10 bg-[#0E0C1D]"
+                        {...field}
+                        onBlur={(e) => {
+                          field.onBlur();
+                          checkUsername(e.target.value);
+                        }}
+                      />
                     </FormControl>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500">
-                      {/* Valid icon placeholder - could be conditional based on validation */}
-                      {!form.formState.errors.username && field.value && (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      )}
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                      {isCheckingUsername ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-white" />
+                      ) : !form.formState.errors.username && field.value && field.value.length >= 3 ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      ) : null}
                     </div>
                   </div>
                   <FormMessage />
@@ -162,7 +247,7 @@ export default function TalentOnboardingPage() {
                   <FormLabel className="text-xs font-semibold text-gray-400">Location <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <select
-                      className="h-12 w-full appearance-none rounded-lg border border-white/10 bg-[#0E0C1D] px-4 text-sm text-gray-400 focus:border-blue-500 focus:outline-none"
+                      className="h-10 md:h-12 w-full appearance-none rounded-lg border border-white/10 bg-[#0E0C1D] px-4 text-sm text-gray-400 focus:border-blue-500 focus:outline-none"
                       {...field}
                     >
                       <option value="">Select a Region</option>
@@ -223,7 +308,7 @@ export default function TalentOnboardingPage() {
               <p className="text-[10px] text-gray-500">Fill at least one, but more the merrier</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="twitter"
@@ -333,7 +418,7 @@ export default function TalentOnboardingPage() {
           <div className="space-y-4 pt-4">
             <FormField
               control={form.control}
-              name="emailSubscription"
+              name="emailNotifications"
               render={({ field }) => (
                 <FormItem className="flex items-center gap-3 space-y-0">
                   <FormControl>

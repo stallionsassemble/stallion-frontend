@@ -12,9 +12,11 @@ import { Bell, ChevronDown, DollarSign, PanelLeft, Search, User } from "lucide-r
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/store/use-auth";
 
 export function Header() {
   const pathname = usePathname();
+  const { logout, user } = useAuth();
 
   // Helper to determine page title from pathname
   // This is a simple implementation, can be replaced with a more robust breadcrumb system
@@ -202,15 +204,15 @@ export function Header() {
             <div className="flex items-center gap-3 cursor-pointer group">
               <div className="h-9 w-9 overflow-hidden rounded-full border border-border transition-colors group-hover:border-primary/50">
                 <Image
-                  src="https://avatar.vercel.sh/tunde"
+                  src={user?.profilePicture || `https://avatar.vercel.sh/${user?.firstName}`}
                   width={36}
                   height={36}
-                  alt="User"
+                  alt={user?.firstName || "User"}
                   className="h-full w-full object-cover"
                 />
               </div>
               <span className="hidden md:flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                Tunde
+                {user?.firstName}
                 <ChevronDown className="h-4 w-4" />
               </span>
             </div>
@@ -240,8 +242,8 @@ export function Header() {
                 Get Help
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer py-2">
-              Logout
+            <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer py-2" asChild>
+              <button onClick={logout}>Logout</button>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

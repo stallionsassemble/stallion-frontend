@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { BadgeDollarSign, Crown } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 // Vertical Marquee Component (CSS Animation)
 function VerticalMarquee({
@@ -62,15 +63,15 @@ const recentEarners = [
 
 export function DashboardRightSidebar() {
   return (
-    <div className="space-y-8 w-full">
+    <div className="space-y-6 w-full">
       {/* Top Earners */}
-      <div className="flex flex-col justify-center items-start gap-[10px] relative h-[250px]">
+      <div className="flex flex-col justify-center items-start gap-[10px] relative h-[200px]">
         <div className="flex items-center justify-between w-full">
           <h3 className="text-sm font-medium flex items-center gap-1 text-foreground uppercase tracking-wider">
             <Crown className="h-4 w-4 text-foreground" />
             Top Earners
           </h3>
-          <button className="text-[10px] text-primary hover:underline">Leaderboard &gt;</button>
+          <button className="text-[12px] text-foreground hover:underline"><Link href="/dashboard/leaderboard">Leaderboard &gt;</Link></button>
         </div>
 
         {/* Vertical Marquee Top Earners */}
@@ -105,16 +106,16 @@ export function DashboardRightSidebar() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[2px] bg-linear-to-r from-transparent via-blue-500 to-transparent opacity-50 blur-sm"></div>
 
         {/* Total Balance Header Card */}
-        <div className="flex flex-col items-center justify-center mb-6 relative z-10 w-full bg-primary/5 border-b border-border pt-[14px] pb-[14px] px-5">
+        <div className="flex flex-col items-center justify-center mb-4 relative z-10 w-full bg-primary/5 border-b border-border pt-3 pb-3 px-4">
           {/* Header Icon */}
-          <div className="mb-1 text-muted-foreground text-center">
-            <BadgeDollarSign className="w-5 h-5 mx-auto mb-1 text-foreground" strokeWidth={1.5} />
-            <span className="text-[16px] font-inter font-medium text-foreground">Total Balance</span>
+          <div className="mb-0.5 text-muted-foreground text-center">
+            <BadgeDollarSign className="w-4 h-4 mx-auto mb-0.5 text-foreground" strokeWidth={1.5} />
+            <span className="text-sm font-inter font-medium text-foreground">Total Balance</span>
           </div>
-          <h2 className="text-[32px] font-inter font-bold md:text-[40px] leading-tight text-foreground tracking-tight text-center">$5,590.90</h2>
+          <h2 className="text-2xl font-inter font-bold leading-tight text-foreground tracking-tight text-center">$5,590.90</h2>
         </div>
 
-        <div className="space-y-3 mb-6 px-5">
+        <div className="space-y-2 mb-4 px-4">
           {[
             {
               name: "USGLO",
@@ -135,43 +136,43 @@ export function DashboardRightSidebar() {
               icon: "/assets/icons/xlm.png"
             }
           ].map((currency, index) => (
-            <div key={index} className="flex items-center justify-between p-3.5 rounded-xl bg-primary/10 border border-border">
+            <div key={index} className="flex items-center justify-between p-2.5 rounded-xl bg-primary/10 border border-border">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
                   <img
                     src={currency.icon}
                     alt={currency.name}
-                    className="w-5 h-5 object-contain"
+                    className="w-4 h-4 object-contain"
                   />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-foreground">{currency.name}</span>
-                  <span className="text-[10px] font-inter text-muted-foreground">{currency.amount}</span>
+                  <span className="text-[11px] font-bold text-foreground">{currency.name}</span>
+                  <span className="text-[9px] font-inter text-muted-foreground">{currency.amount}</span>
                 </div>
               </div>
-              <span className="text-[20px] font-space-grotesk leading-[23px] font-bold text-foreground">{currency.value}</span>
+              <span className="text-base font-space-grotesk leading-tight font-bold text-foreground">{currency.value}</span>
             </div>
           ))}
         </div>
 
-        <div className="px-5 pb-5">
-          <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-[46px] rounded-xl font-medium font-inter text-[16px] leading-[23px] transition-all shadow-lg shadow-primary/20">
+        <div className="px-4 pb-4">
+          <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 rounded-xl font-medium font-inter text-sm transition-all shadow-lg shadow-primary/20">
             Withdraw
           </Button>
         </div>
       </div >
 
       {/* Recent Earners */}
-      < div className="space-y-4" >
+      < div className="space-y-3" >
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-foreground flex items-center gap-1 uppercase tracking-wider">
             <BadgeDollarSign className="w-4 h-4 text-primary" />
             Recent Earners</h3>
-          <button className="text-[10px] text-primary hover:underline">Leaderboard &gt;</button>
+          <button className="text-[12px] text-foreground hover:underline"><Link href="/dashboard/leaderboard">Leaderboard &gt;</Link></button>
         </div>
 
         {/* Vertical Marquee Recent Earners */}
-        <VerticalMarquee height="h-[200px]" duration="25s" reverse={true}>
+        <VerticalMarquee height="h-[160px]" duration="25s" reverse={true}>
           {topEarners.map((earner, i) => (
             <div key={i} className="flex items-center justify-between gap-3 p-1 w-full">
               <div className="flex items-center gap-3">

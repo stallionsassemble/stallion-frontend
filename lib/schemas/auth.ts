@@ -7,7 +7,7 @@ export const loginSchema = z.object({
 })
 
 export const registerSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
+  email: z.email({ message: 'Please enter a valid email address' }),
 })
 
 // --- Onboarding Schemas ---
@@ -37,7 +37,7 @@ export const talentOnboardingSchema = z.object({
   linkedin: z.string().optional(),
   instagram: z.string().optional(),
 
-  emailSubscription: z.boolean(),
+  emailNotifications: z.boolean(),
   termsAccepted: z.boolean().refine((val) => val === true, {
     message: 'You must accept the terms and conditions',
   }),
@@ -55,13 +55,18 @@ export const ownerOnboardingSchema = z.object({
       'Username can only contain letters, numbers, and underscores'
     ),
   location: z.string().min(1, 'Please select a location'),
+  profilePicture: z.string().optional(),
 
   // About Company
   companyName: z.string().min(2, 'Company name is required'),
   entityName: z.string().min(2, 'Entity name is required'),
   phoneNumber: z.string().min(5, 'Please enter a valid phone number'), // Basic length check
   industry: z.string().min(1, 'Please select an industry'),
-  bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
+  companyLogo: z.string().optional(),
+  companyBio: z
+    .string()
+    .max(500, 'Bio must be less than 500 characters')
+    .optional(),
 
   // Socials
   twitter: z.string().optional(),
@@ -73,7 +78,7 @@ export const ownerOnboardingSchema = z.object({
   linkedin: z.string().optional(),
   instagram: z.string().optional(),
 
-  emailSubscription: z.boolean(),
+  emailNotifications: z.boolean(),
   termsAccepted: z.boolean().refine((val) => val === true, {
     message: 'You must accept the terms and conditions',
   }),

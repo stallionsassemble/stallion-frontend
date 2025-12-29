@@ -92,8 +92,8 @@ export default function ForumPage() {
         {/* Discussions List */}
         <div className="overflow-hidden">
           {discussions.map((discussion) => (
-            <Link href={`/dashboard/forums/${discussion.id}`}>
-              <ForumDiscussionCard key={discussion.id} {...discussion} />
+            <Link href={`/dashboard/forums/${discussion.id}`} key={discussion.id}>
+              <ForumDiscussionCard {...discussion} />
             </Link>
           ))}
         </div>

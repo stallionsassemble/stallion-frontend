@@ -10,16 +10,21 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { authService } from "@/lib/api/auth";
+import { uploadService } from "@/lib/api/upload";
 import { ownerOnboardingSchema, OwnerOnboardingValues } from "@/lib/schemas/auth";
+import { useAuth } from "@/lib/store/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Globe, Instagram, Linkedin, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 export default function OwnerOnboardingPage() {
   const router = useRouter();
+  const { user, setUser } = useAuth();
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
@@ -30,53 +35,138 @@ export default function OwnerOnboardingPage() {
       lastName: "",
       username: "",
       location: "",
+      profilePicture: "https://github.com/shadcn.png",
       companyName: "",
       entityName: "",
       phoneNumber: "",
       industry: "",
-      bio: "",
+      companyLogo: "https://github.com/shadcn.png",
+      companyBio: "",
       twitter: "",
       website: "",
       linkedin: "",
       instagram: "",
-      emailSubscription: false,
+      emailNotifications: false,
       termsAccepted: true,
     },
   });
 
-  function onSubmit(data: OwnerOnboardingValues) {
-    console.log(data);
-    router.push("/auth/onboarding/success?role=owner");
-  }
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
 
-  const handleProfileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setProfilePreview(URL.createObjectURL(file));
+  const checkUsername = async (username: string) => {
+    if (username.length < 3) return;
+
+    setIsCheckingUsername(true);
+    try {
+      const { available } = await authService.checkUsername(username);
+      if (!available) {
+        form.setError("username", {
+          type: "manual",
+          message: "Username is already taken",
+        });
+      } else {
+        form.clearErrors("username");
+      }
+    } catch (error) {
+      console.error("Failed to check username", error);
+    } finally {
+      setIsCheckingUsername(false);
     }
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  async function onSubmit(data: OwnerOnboardingValues) {
+    const toastId = toast.loading("Completing your profile...")
+
+    // Final validation before submit
+    if (form.getFieldState("username").invalid) {
+      toast.error("Please fix username errors", { id: toastId });
+      return;
+    }
+
+    const payload = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      username: data.username,
+      location: data.location,
+      skills: [],
+      profilePicture: data.profilePicture || "https://github.com/shadcn.png", // Fallback
+      socials: {
+        "linkedin": data.linkedin ? (data.linkedin.startsWith('http') ? data.linkedin : `https://linkedin.com/in/${data.linkedin}`) : "",
+        "twitter": data.twitter ? (data.twitter.startsWith('http') ? data.twitter : `https://twitter.com/${data.twitter}`) : "",
+        "website": data.website || "",
+        "instagram": data.instagram ? (data.instagram.startsWith('http') ? data.instagram : `https://instagram.com/${data.instagram}`) : "",
+      },
+      companyName: data.companyName,
+      entityName: data.entityName,
+      phoneNumber: data.phoneNumber,
+      industry: data.industry,
+      companyBio: data.companyBio,
+      companyLogo: data.companyLogo || "https://github.com/shadcn.png", // Fallback
+      emailNotifications: data.emailNotifications
+    }
+
+    try {
+      await authService.completeProfileOwner(payload)
+
+      // Update local user state
+      if (user) {
+        setUser({ ...user, profileCompleted: true })
+      }
+
+      router.push("/auth/onboarding/success?role=owner");
+      toast.success("Profile completed successfully!", { id: toastId })
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to complete profile", { id: toastId })
+    }
+  }
+
+  const handleProfileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfilePreview(URL.createObjectURL(file));
+
+      const toastId = toast.loading("Uploading profile picture...");
+      try {
+        const response = await uploadService.uploadImage(file);
+        form.setValue("profilePicture", response.url);
+        toast.success("Profile picture uploaded", { id: toastId });
+      } catch (error) {
+        toast.error("Failed to upload profile picture", { id: toastId });
+      }
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setLogoPreview(URL.createObjectURL(file));
+
+      const toastId = toast.loading("Uploading company logo...");
+      try {
+        const response = await uploadService.uploadImage(file);
+        form.setValue("companyLogo", response.url);
+        toast.success("Company logo uploaded", { id: toastId });
+      } catch (error) {
+        toast.error("Failed to upload company logo", { id: toastId });
+      }
     }
   };
 
   return (
     <div className="w-full max-w-2xl space-y-12">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl md:text-5xl font-semibold font-inter tracking-[-0.95px] text-white">Welcome to Stallion</h1>
-        <p className="text-gray-400 font-light md:text-2xl tracking-[-0.95px]">Let&apos;s start with some basic information about your team</p>
+        <h1 className="text-2xl md:text-5xl font-semibold font-inter tracking-[-0.95px] text-white">Welcome to Stallion</h1>
+        <p className="text-gray-400 font-light text-sm md:text-2xl tracking-[-0.95px]">Let&apos;s start with some basic information about your team</p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:space-y-10">
 
           {/* ABOUT YOU SECTION */}
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-white">About You</h2>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <FormField
                 control={form.control}
                 name="firstName"
@@ -84,7 +174,7 @@ export default function OwnerOnboardingPage() {
                   <FormItem>
                     <FormLabel className="font-medium text-white text-sm">First Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="First Name" className="h-12 w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
+                      <Input placeholder="First Name" className="h-10 md:h-12 w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -97,7 +187,7 @@ export default function OwnerOnboardingPage() {
                   <FormItem>
                     <FormLabel className="font-medium text-white text-sm">Last Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="Last Name" className="h-12 w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
+                      <Input placeholder="Last Name" className="h-10 md:h-12 w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -105,7 +195,7 @@ export default function OwnerOnboardingPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <FormField
                 control={form.control}
                 name="username"
@@ -115,12 +205,22 @@ export default function OwnerOnboardingPage() {
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">@</span>
                       <FormControl>
-                        <Input placeholder="Ex: surname" className="pl-8 pr-10 bg-transparent rounded-lg border-[1.19px] border-[#E5E5E5] focus:border-blue-500" {...field} />
+                        <Input
+                          placeholder="Ex: surname"
+                          className="pl-8 pr-10 bg-transparent rounded-lg border-[1.19px] border-[#E5E5E5] focus:border-blue-500"
+                          {...field}
+                          onBlur={(e) => {
+                            field.onBlur();
+                            checkUsername(e.target.value);
+                          }}
+                        />
                       </FormControl>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500">
-                        {!form.formState.errors.username && field.value && (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        )}
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                        {isCheckingUsername ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-white" />
+                        ) : !form.formState.errors.username && field.value && field.value.length >= 3 ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        ) : null}
                       </div>
                     </div>
                     <FormMessage />
@@ -134,7 +234,7 @@ export default function OwnerOnboardingPage() {
                   <FormItem>
                     <FormLabel className="font-medium text-white text-sm">Location <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <select className="h-12 w-full appearance-none rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-gray-400 focus:border-blue-500 focus:outline-none" {...field}>
+                      <select className="h-10 md:h-12 w-full appearance-none rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-gray-400 focus:border-blue-500 focus:outline-none" {...field}>
                         <option value="">Select a Region</option>
                         <option value="Lagos, Nigeria">Lagos, Nigeria</option>
                         <option value="London, UK">London, UK</option>
@@ -189,7 +289,7 @@ export default function OwnerOnboardingPage() {
           {/* ABOUT YOUR COMPANY SECTION */}
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-white">About Your Company</h2>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <FormField
                 control={form.control}
                 name="companyName"
@@ -197,7 +297,7 @@ export default function OwnerOnboardingPage() {
                   <FormItem>
                     <FormLabel className="font-medium text-white text-sm">Company Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="Stallion" className="h-12 w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
+                      <Input placeholder="Stallion" className="h-10 md:h-12 w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -210,14 +310,14 @@ export default function OwnerOnboardingPage() {
                   <FormItem>
                     <FormLabel className="font-medium text-white text-sm">Entity Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="Full Entity Name" className="h-12 w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
+                      <Input placeholder="Full Entity Name" className="h-10 md:h-12 w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <FormField
                 control={form.control}
                 name="phoneNumber"
@@ -225,7 +325,7 @@ export default function OwnerOnboardingPage() {
                   <FormItem>
                     <FormLabel className="font-medium text-white text-sm">Phone Number <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="Phone Number" className="h-12 w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
+                      <Input placeholder="Phone Number" className="h-10 md:h-12 w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -238,7 +338,7 @@ export default function OwnerOnboardingPage() {
                   <FormItem>
                     <FormLabel className="font-medium text-white text-sm">Industry <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <select className="h-12 w-full appearance-none rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-gray-400 focus:border-blue-500 focus:outline-none" {...field}>
+                      <select className="h-10 md:h-12 w-full appearance-none rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-gray-400 focus:border-blue-500 focus:outline-none" {...field}>
                         <option value="">Select an Industry</option>
                         <option value="Crypto">Crypto</option>
                         <option value="Fintech">Fintech</option>
@@ -253,7 +353,7 @@ export default function OwnerOnboardingPage() {
             </div>
             <FormField
               control={form.control}
-              name="bio"
+              name="companyBio"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium text-white text-sm">Company Short Bio <span className="text-red-500">*</span></FormLabel>
@@ -312,7 +412,7 @@ export default function OwnerOnboardingPage() {
             <div className="space-y-1">
               <label className="font-medium text-white text-sm">Socials</label>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="twitter"
@@ -387,7 +487,7 @@ export default function OwnerOnboardingPage() {
           <div className="space-y-4 pt-4">
             <FormField
               control={form.control}
-              name="emailSubscription"
+              name="emailNotifications"
               render={({ field }) => (
                 <FormItem className="flex items-center gap-3 space-y-0">
                   <FormControl>

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -42,9 +43,24 @@ function SuccessContent() {
           Your profile is complete, you are now officially a <span className="text-blue-500 font-bold">Stallite</span> and you have successfully created your Stallion wallet
         </p>
 
-        <Button className="h-10 w-full rounded-lg bg-blue text-white hover:bg-[#0066CC]">
-          Continue
-        </Button>
+        <div className="grid grid-cols-2 gap-4">
+          <Button asChild variant="outline" className="h-10 w-full rounded-lg bg-black text-white hover:bg-gray-800 border-white/10">
+            <Link
+              href="https://x.com/intent/tweet?text=I%20just%20joined%20Stallion!%20%F0%9F%9A%80%20Check%20it%20out%20at%20https://stallion.so"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2"
+            >
+              Share on X
+            </Link>
+          </Button>
+
+          <Button asChild className="h-10 w-full rounded-lg bg-blue text-white hover:bg-[#0066CC]">
+            <Link href={'/dashboard'}>
+              Continue
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

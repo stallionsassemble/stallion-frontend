@@ -3,51 +3,146 @@
 import { AuthRightSection } from "@/components/auth/auth-right-section";
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/store/use-auth";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export default function VerifyPage() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [totp, setTotp] = useState(["", "", "", "", "", ""]);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const totpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { verifyCode, requestVerification, isLoading, login } = useAuth();
+
+  const email = searchParams.get("email");
+  const role = searchParams.get("role") as "talent" | "owner" | null;
+  const type = searchParams.get("type") as "login" | "register" | "";
+  const mfaRequired = searchParams.get("mfa") === "true";
 
   useEffect(() => {
+    if (!email) {
+      toast.error("Email missing. Please register first.");
+      router.push("/auth/register");
+    }
     if (inputRefs.current[0]) {
       inputRefs.current[0].focus();
     }
-  }, []);
+  }, [email, router]);
 
-  const handleChange = (index: number, value: string) => {
+  const handleChange = (index: number, value: string, isTotp = false) => {
     if (isNaN(Number(value))) return;
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
+    const currentOtp = isTotp ? [...totp] : [...otp];
+    currentOtp[index] = value;
+    if (isTotp) setTotp(currentOtp);
+    else setOtp(currentOtp);
 
     // Focus next input
-    if (value !== "" && index < 5 && inputRefs.current[index + 1]) {
-      inputRefs.current[index + 1]?.focus();
+    const refs = isTotp ? totpInputRefs : inputRefs;
+    if (value !== "" && index < 5 && refs.current[index + 1]) {
+      refs.current[index + 1]?.focus();
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0 && inputRefs.current[index - 1]) {
-      inputRefs.current[index - 1]?.focus();
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>, isTotp = false) => {
+    const currentOtp = isTotp ? totp : otp;
+    const refs = isTotp ? totpInputRefs : inputRefs;
+    if (e.key === "Backspace" && !currentOtp[index] && index > 0 && refs.current[index - 1]) {
+      refs.current[index - 1]?.focus();
     }
   };
 
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>, isTotp = false) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text").slice(0, 6).split("");
-    const newOtp = [...otp];
+    const newOtp = isTotp ? [...totp] : [...otp];
     pastedData.forEach((value, index) => {
       if (index < 6 && !isNaN(Number(value))) {
         newOtp[index] = value;
       }
     });
-    setOtp(newOtp);
-    if (inputRefs.current[pastedData.length - 1 < 6 ? pastedData.length : 5]) {
-      inputRefs.current[pastedData.length - 1 < 6 ? pastedData.length : 5]?.focus();
+    if (isTotp) setTotp(newOtp);
+    else setOtp(newOtp);
+
+    const refs = isTotp ? totpInputRefs : inputRefs;
+    const focusIndex = pastedData.length < 6 ? pastedData.length : 5;
+    if (refs.current[focusIndex]) {
+      refs.current[focusIndex]?.focus();
     }
   };
 
+  const handleVerify = async () => {
+    const code = otp.join("");
+    const totpCode = totp.join("");
+
+    if (code.length !== 6) {
+      toast.error("Please enter a complete 6-digit verification code");
+      return;
+    }
+
+    if (mfaRequired && totpCode.length !== 6) {
+      toast.error("Please enter a complete 6-digit authenticator code");
+      return;
+    }
+
+    if (!email) return;
+
+    setIsVerifying(true);
+    const toastId = toast.loading("Verifying...");
+    try {
+      const apiRole = role === "owner" ? "PROJECT_OWNER" : "CONTRIBUTOR";
+
+      const user = await verifyCode({
+        email,
+        code,
+        type,
+        role: apiRole,
+        totpCode: mfaRequired ? totpCode : undefined,
+      });
+
+      toast.success("Verified successfully!", { id: toastId });
+
+      // Smart redirection based on profile status
+      if (user?.profileCompleted) {
+        router.push("/dashboard");
+      } else {
+        // Use returned user role or fallback to URL param
+        const userRole = user?.role || (role === "owner" ? "OWNER" : "CONTRIBUTOR");
+        const onboardingPath = userRole === "OWNER" ? "owner" : "talent";
+        router.push(`/auth/onboarding/${onboardingPath}`);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Verification failed. Please check the code.", { id: toastId });
+      setIsVerifying(false); // Only stop loading on error, on success we redirect
+    }
+  };
+
+  const handleResend = async () => {
+    if (!email) return;
+    setIsResending(true);
+    const toastId = toast.loading("Resending code...");
+    try {
+      if (type === 'register') {
+        await requestVerification({
+          email,
+          role: role === "owner" ? "PROJECT_OWNER" : "CONTRIBUTOR"
+        });
+      } else {
+        await login({
+          email,
+        });
+      }
+      toast.success("Code resent successfully!", { id: toastId });
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to resend code.", { id: toastId });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   return (
     <AuthSplitLayout rightContent={<AuthRightSection variant="bounties" />}>
@@ -56,53 +151,116 @@ export default function VerifyPage() {
           Enter verification code
         </h1>
         <p className="text-muted-foreground">
-          We sent a 6-digit code to your email
+          We sent a 6-digit code to {email}
         </p>
-      </div>
 
-      <div className="space-y-8 pt-4">
-        <div className="flex items-center gap-4">
-          <div className="flex gap-2">
-            {otp.slice(0, 3).map((digit, i) => (
-              <input
-                key={i}
-                ref={(el) => { inputRefs.current[i] = el }}
-                type="text"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                onPaste={handlePaste}
-                className="h-14 w-12 rounded-lg border-[1.79px] bg-transparent text-center text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            ))}
+        <div className="space-y-8 pt-4">
+          <div className="space-y-6">
+            {/* Email OTP */}
+            <div className="flex flex-wrap items-center justify-start gap-2 sm:gap-4">
+              <div className="flex gap-1.5 sm:gap-2">
+                {otp.slice(0, 3).map((digit, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => { inputRefs.current[i] = el }}
+                    type="text"
+                    maxLength={1}
+                    inputMode="numeric"
+                    value={digit}
+                    onChange={(e) => handleChange(i, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(i, e)}
+                    onPaste={(e) => handlePaste(e)}
+                    disabled={isLoading}
+                    className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border-[1.79px] bg-transparent text-center text-xl sm:text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                  />
+                ))}
+              </div>
+              <div className="text-gray-500">-</div>
+              <div className="flex gap-1.5 sm:gap-2">
+                {otp.slice(3, 6).map((digit, i) => (
+                  <input
+                    key={i + 3}
+                    ref={(el) => { inputRefs.current[i + 3] = el }}
+                    type="text"
+                    maxLength={1}
+                    inputMode="numeric"
+                    value={digit}
+                    onChange={(e) => handleChange(i + 3, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(i + 3, e)}
+                    onPaste={(e) => handlePaste(e)}
+                    disabled={isLoading}
+                    className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border-[1.79px] bg-transparent text-center text-xl sm:text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* TOTP Input (MFA) */}
+            {mfaRequired && (
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-sm">
+                  Enter code from authenticator app
+                </p>
+                <div className="flex flex-wrap items-center justify-start gap-2 sm:gap-4">
+                  <div className="flex gap-1.5 sm:gap-2">
+                    {totp.slice(0, 3).map((digit, i) => (
+                      <input
+                        key={`totp-${i}`}
+                        ref={(el) => { totpInputRefs.current[i] = el }}
+                        type="text"
+                        maxLength={1}
+                        inputMode="numeric"
+                        value={digit}
+                        onChange={(e) => handleChange(i, e.target.value, true)}
+                        onKeyDown={(e) => handleKeyDown(i, e, true)}
+                        onPaste={(e) => handlePaste(e, true)}
+                        disabled={isLoading}
+                        className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border-[1.79px] bg-transparent text-center text-xl sm:text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                      />
+                    ))}
+                  </div>
+                  <div className="text-gray-500">-</div>
+                  <div className="flex gap-1.5 sm:gap-2">
+                    {totp.slice(3, 6).map((digit, i) => (
+                      <input
+                        key={`totp-${i + 3}`}
+                        ref={(el) => { totpInputRefs.current[i + 3] = el }}
+                        type="text"
+                        maxLength={1}
+                        inputMode="numeric"
+                        value={digit}
+                        onChange={(e) => handleChange(i + 3, e.target.value, true)}
+                        onKeyDown={(e) => handleKeyDown(i + 3, e, true)}
+                        onPaste={(e) => handlePaste(e, true)}
+                        disabled={isLoading}
+                        className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border-[1.79px] bg-transparent text-center text-xl sm:text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="text-gray-500">-</div>
-          <div className="flex gap-2">
-            {otp.slice(3, 6).map((digit, i) => (
-              <input
-                key={i + 3}
-                ref={(el) => { inputRefs.current[i + 3] = el }}
-                type="text"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleChange(i + 3, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i + 3, e)}
-                onPaste={handlePaste}
-                className="h-14 w-12 rounded-lg border-[1.79px] bg-transparent text-center text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            ))}
+
+          <div className="text-sm text-gray-400">
+            Didn&apos;t receive the code? {" "}
+            <button
+              onClick={handleResend}
+              disabled={isResending || isLoading}
+              className="text-gray-300 underline hover:text-white disabled:opacity-50"
+            >
+              {isResending ? "Sending..." : "Resend"}
+            </button>
           </div>
-        </div>
 
-        <div className="text-sm text-gray-400">
-          Didn&apos;t receive the code? {" "}
-          <button className="text-gray-300 underline hover:text-white">Resend</button>
+          <Button
+            onClick={handleVerify}
+            disabled={isVerifying || isLoading}
+            className="h-12 w-full rounded-lg bg-blue text-white hover:bg-[#0066CC]"
+          >
+            {isVerifying ? "Verifying..." : "Submit"}
+          </Button>
         </div>
-
-        <Button className="h-12 w-full rounded-lg bg-blue text-white hover:bg-[#0066CC]">
-          Submit
-        </Button>
       </div>
     </AuthSplitLayout>
   );
