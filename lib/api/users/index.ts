@@ -1,9 +1,9 @@
 import { api } from '@/lib/api'
-import { User, UserProfile } from '@/lib/types'
+import { User } from '@/lib/types'
 
 export class UserService {
   async getUser(id: string) {
-    const response = await api.get<UserProfile>(`/users/${id}`)
+    const response = await api.get<User>(`/users/${id}`)
     return response.data
   }
 
