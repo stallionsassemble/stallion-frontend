@@ -10,17 +10,33 @@ import {
 } from '@/components/bounties/payment-milestones'
 import { Button } from '@/components/ui/button'
 import {
+  ChevronLeft,
+  ChevronRight,
   Download,
   FileText,
   FileUp,
   Gift,
   Image as ImageIcon,
-  Info,
+  Info
 } from 'lucide-react'
 import { useParams } from 'next/navigation'
+import { useRef } from 'react'
 
 export default function BountyDetailsPage() {
   const params = useParams()
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const { current } = scrollContainerRef
+      const scrollAmount = 400
+      if (direction === 'left') {
+        current.scrollBy({ left: -scrollAmount, behavior: 'smooth' })
+      } else {
+        current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+      }
+    }
+  }
 
   // Mock Similar Bounties
   const similarBounties = [
@@ -62,6 +78,19 @@ export default function BountyDetailsPage() {
       participants: 5,
       dueDate: '14d',
     },
+    {
+      id: 105,
+      title: 'Crypto Wallet Development',
+      description:
+        'Build a secure non-custodial wallet for the Stallion blockchain...',
+      company: 'Stallion Foundation',
+      logo: '/assets/icons/sdollar.png',
+      amount: '$10,000',
+      type: 'USDC' as const,
+      tags: ['Wallet', 'Mobile', 'Security'],
+      participants: 20,
+      dueDate: '12d',
+    },
   ]
 
   const milestones: Milestone[] = [
@@ -101,7 +130,7 @@ export default function BountyDetailsPage() {
         {/* Project Details Content */}
         <div className='space-y-8 pb-20'>
           {/* Header Section */}
-          <section className='rounded-xl border border-primary bg-card/30 p-4 sm:p-6'>
+          <section className='rounded-xl border border-primary bg-card/30 p-4'>
             <DetailsHeader
               type='PROJECT'
               title='Smart Contract Security Audit'
@@ -119,12 +148,12 @@ export default function BountyDetailsPage() {
           <div className='h-px w-full bg-border' />
 
           {/* Description */}
-          <section className='space-y-4 rounded-xl border border-primary bg-card/30 p-4 sm:p-6'>
-            <h3 className='text-lg font-bold text-foreground flex items-center gap-2'>
+          <section className='space-y-3 rounded-xl border border-primary bg-card/30 p-4'>
+            <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
               <Info className='h-4 w-4 text-primary' /> Description
             </h3>
-            <div className='prose prose-invert max-w-none text-muted-foreground text-sm leading-relaxed'>
-              <p className='mb-4'>
+            <div className='prose prose-invert max-w-none text-muted-foreground text-xs leading-relaxed'>
+              <p className='mb-3'>
                 We are looking for an experienced smart contract security
                 auditor to perform a comprehensive security audit of our
                 protocol smart contracts. The protocol is built on custom
@@ -136,27 +165,27 @@ export default function BountyDetailsPage() {
               <ul className='space-y-1 pl-1'>
                 <li className='flex items-center gap-2'>
                   {' '}
-                  <span className='text-primary text-lg'>•</span> Reentrancy
+                  <span className='text-primary text-base'>•</span> Reentrancy
                   attacks
                 </li>
                 <li className='flex items-center gap-2'>
                   {' '}
-                  <span className='text-primary text-lg'>•</span> Oracle
+                  <span className='text-primary text-base'>•</span> Oracle
                   manipulation risks
                 </li>
                 <li className='flex items-center gap-2'>
                   {' '}
-                  <span className='text-primary text-lg'>•</span> Access control
+                  <span className='text-primary text-base'>•</span> Access control
                   vulnerabilities
                 </li>
                 <li className='flex items-center gap-2'>
                   {' '}
-                  <span className='text-primary text-lg'>•</span> Gas
+                  <span className='text-primary text-base'>•</span> Gas
                   optimization
                 </li>
                 <li className='flex items-center gap-2'>
                   {' '}
-                  <span className='text-primary text-lg'>•</span> Logic errors
+                  <span className='text-primary text-base'>•</span> Logic errors
                   and edge cases
                 </li>
               </ul>
@@ -164,11 +193,11 @@ export default function BountyDetailsPage() {
           </section>
 
           {/* Requirements */}
-          <section className='space-y-4 rounded-xl border border-primary bg-card/30 p-4 sm:p-6'>
-            <h3 className='text-lg font-bold text-foreground flex items-center gap-2'>
+          <section className='space-y-3 rounded-xl border border-primary bg-card/30 p-4'>
+            <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
               <FileText className='h-4 w-4 text-primary' /> Requirements
             </h3>
-            <ul className='space-y-2 text-sm text-muted-foreground'>
+            <ul className='space-y-1.5 text-xs text-muted-foreground'>
               {[
                 '3+ years of smart contract auditing experience',
                 'Proven track record with DeFi protocols',
@@ -185,11 +214,11 @@ export default function BountyDetailsPage() {
           </section>
 
           {/* Deliverables */}
-          <section className='space-y-4 rounded-xl border border-primary bg-card/30 p-4 sm:p-6'>
-            <h3 className='text-lg font-bold text-foreground flex items-center gap-2'>
+          <section className='space-y-3 rounded-xl border border-primary bg-card/30 p-4'>
+            <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
               <FileText className='h-4 w-4 text-primary' /> Deliverables
             </h3>
-            <ul className='space-y-2 text-sm text-muted-foreground'>
+            <ul className='space-y-1.5 text-xs text-muted-foreground'>
               {[
                 'Comprehensive security audit report',
                 'Severity classification for each finding',
@@ -211,18 +240,18 @@ export default function BountyDetailsPage() {
           <PaymentMilestones milestones={milestones} />
 
           {/* Attachments */}
-          <section className='space-y-4 p-4 sm:p-6 border border-primary text-foreground'>
-            <h3 className='text-lg font-bold text-foreground flex items-center gap-2'>
-              <FileUp className='h-5 w-5 text-primary' />
+          <section className='space-y-3 p-4 border border-primary text-foreground'>
+            <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
+              <FileUp className='h-4 w-4 text-primary' />
               Attachments
             </h3>
             <div className='flex flex-wrap gap-3'>
-              <div className='flex items-center gap-3 p-3 rounded-lg bg-card border border-primary w-full sm:min-w-[240px] sm:w-auto'>
-                <div className='h-10 w-10 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20'>
-                  <FileText className='h-5 w-5 text-primary' />
+              <div className='flex items-center gap-3 p-2.5 rounded-lg bg-card border border-primary w-full sm:min-w-[200px] sm:w-auto'>
+                <div className='h-8 w-8 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20'>
+                  <FileText className='h-4 w-4 text-primary' />
                 </div>
                 <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-foreground'>
+                  <span className='text-xs font-medium text-foreground'>
                     Contract_Sepc...pdf
                   </span>
                   <span className='text-[10px] text-muted-foreground'>
@@ -232,37 +261,35 @@ export default function BountyDetailsPage() {
                 <Button
                   variant='ghost'
                   size='icon'
-                  className='ml-auto text-primary hover:text-primary hover:bg-transparent'
+                  className='ml-auto h-6 w-6 text-primary hover:text-primary hover:bg-transparent'
                 >
-                  <Download className='h-4 w-4' />
+                  <Download className='h-3.5 w-3.5' />
                 </Button>
               </div>
-              <div className='flex items-center gap-3 p-3 rounded-lg bg-card border border-primary w-full sm:min-w-[240px] sm:w-auto'>
-                <div className='h-10 w-10 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20'>
-                  <ImageIcon className='h-5 w-5 text-primary' />
+              <div className='flex items-center gap-3 p-2.5 rounded-lg bg-card border border-primary w-full sm:min-w-[200px] sm:w-auto'>
+                <div className='h-8 w-8 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20'>
+                  <ImageIcon className='h-4 w-4 text-primary' />
                 </div>
                 <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-foreground'>
+                  <span className='text-xs font-medium text-white'>
                     Architecture_D...png
                   </span>
-                  <span className='text-[10px] text-muted-foreground'>
-                    4.8 MB
-                  </span>
+                  <span className='text-[10px] text-gray-500'>4.8 MB</span>
                 </div>
                 <Button
                   variant='ghost'
                   size='icon'
-                  className='ml-auto text-primary hover:text-primary hover:bg-transparent'
+                  className='ml-auto h-6 w-6 text-primary hover:text-primary hover:bg-transparent'
                 >
-                  <Download className='h-4 w-4' />
+                  <Download className='h-3.5 w-3.5' />
                 </Button>
               </div>
-              <div className='flex items-center gap-3 p-3 rounded-lg bg-card border border-border w-full sm:min-w-[240px] sm:w-auto'>
-                <div className='h-10 w-10 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20'>
-                  <FileText className='h-5 w-5 text-primary' />
+              <div className='flex items-center gap-3 p-2.5 rounded-lg bg-card border border-border w-full sm:min-w-[200px] sm:w-auto'>
+                <div className='h-8 w-8 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20'>
+                  <FileText className='h-4 w-4 text-primary' />
                 </div>
                 <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-foreground'>
+                  <span className='text-xs font-medium text-foreground'>
                     Protocol_Spec...docx
                   </span>
                   <span className='text-[10px] text-muted-foreground'>
@@ -272,9 +299,9 @@ export default function BountyDetailsPage() {
                 <Button
                   variant='ghost'
                   size='icon'
-                  className='ml-auto text-primary hover:text-primary hover:bg-transparent'
+                  className='ml-auto h-6 w-6 text-primary hover:text-primary hover:bg-transparent'
                 >
-                  <Download className='h-4 w-4' />
+                  <Download className='h-3.5 w-3.5' />
                 </Button>
               </div>
             </div>
@@ -282,11 +309,34 @@ export default function BountyDetailsPage() {
 
           {/* Similar Projects */}
           <section className='space-y-6 pt-8 border-t border-border'>
-            <h3 className='text-lg font-bold text-foreground flex items-center gap-2'>
-              <Gift className='h-5 w-5 text-primary' />
-              Similar Projects
-            </h3>
-            <div className='flex overflow-x-auto pb-6 gap-5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pl-1'>
+            <div className='flex items-center justify-between'>
+              <h3 className='text-base font-bold text-foreground flex items-center gap-2'>
+                <Gift className='h-5 w-5 text-primary' />
+                Similar Projects
+              </h3>
+              <div className='flex items-center gap-2'>
+                <Button
+                  size='icon'
+                  variant='outline'
+                  onClick={() => scroll('left')}
+                  className='h-8 w-8 rounded-full bg-card border-primary/20 hover:bg-primary/10 hover:text-primary'
+                >
+                  <ChevronLeft className='h-4 w-4' />
+                </Button>
+                <Button
+                  size='icon'
+                  variant='outline'
+                  onClick={() => scroll('right')}
+                  className='h-8 w-8 rounded-full bg-card border-primary/20 hover:bg-primary/10 hover:text-primary'
+                >
+                  <ChevronRight className='h-4 w-4' />
+                </Button>
+              </div>
+            </div>
+            <div
+              ref={scrollContainerRef}
+              className='flex overflow-x-auto pb-6 gap-5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pl-1 scroll-smooth'
+            >
               {similarBounties.map((bounty) => (
                 <BountyCard key={bounty.id} {...bounty} version='PROJECT' />
               ))}
@@ -296,7 +346,7 @@ export default function BountyDetailsPage() {
       </div>
 
       {/* Right Sidebar Column - Sticky, aligned with project header */}
-      <div className='hidden lg:block lg:w-[380px] xl:w-[454px] shrink-0 self-start sticky top-0 -mt-20 space-y-8'>
+      <div className='hidden lg:block lg:w-[320px] xl:w-[360px] shrink-0 self-start sticky top-0 -mt-20 space-y-8'>
         <BountyDetailsSidebar type='PROJECT' />
       </div>
 

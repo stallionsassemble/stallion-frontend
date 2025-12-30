@@ -8,15 +8,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/lib/store/use-auth";
+import { useUI } from "@/lib/store/use-ui";
 import { Bell, ChevronDown, DollarSign, PanelLeft, Search, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/lib/store/use-auth";
 
 export function Header() {
   const pathname = usePathname();
   const { logout, user } = useAuth();
+  const { toggleSidebar } = useUI();
 
   // Helper to determine page title from pathname
   // This is a simple implementation, can be replaced with a more robust breadcrumb system
@@ -59,7 +61,12 @@ export function Header() {
         </div>
 
         {/* Desktop Sidebar Toggle (PanelLeft) */}
-        <Button variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-foreground">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hidden md:flex text-muted-foreground hover:text-foreground"
+          onClick={toggleSidebar}
+        >
           <PanelLeft className="h-5 w-5" />
         </Button>
 
@@ -217,33 +224,33 @@ export function Header() {
               </span>
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-popover border-border text-popover-foreground font-inter mt-2">
-            <div className="bg-primary -mt-1 -mx-1 p-3 rounded-t-md mb-2">
-              <p className="text-sm font-medium text-primary-foreground">Profile</p>
+          <DropdownMenuContent align="end" className="w-48 bg-popover border-border text-popover-foreground font-inter mt-2">
+            <div className="bg-primary -mt-1 -mx-1 p-2 rounded-t-md mb-1">
+              <p className="text-xs font-medium text-primary-foreground">Profile</p>
             </div>
 
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/profile" className="focus:bg-accent focus:text-accent-foreground cursor-pointer py-2">
+              <Link href="/dashboard/profile" className="text-xs focus:bg-accent focus:text-accent-foreground cursor-pointer py-1.5">
                 Edit Profile
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/settings" className="focus:bg-accent focus:text-accent-foreground cursor-pointer py-2">
+              <Link href="/dashboard/settings" className="text-xs focus:bg-accent focus:text-accent-foreground cursor-pointer py-1.5">
                 Email Preferences
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/bookmarks" className="focus:bg-accent focus:text-accent-foreground cursor-pointer py-2">
+              <Link href="/dashboard/bookmarks" className="text-xs focus:bg-accent focus:text-accent-foreground cursor-pointer py-1.5">
                 Bookmarks
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/help" className="focus:bg-accent focus:text-accent-foreground cursor-pointer py-2">
+              <Link href="/help" className="text-xs focus:bg-accent focus:text-accent-foreground cursor-pointer py-1.5">
                 Get Help
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer py-2" asChild>
-              <button onClick={logout}>Logout</button>
+            <DropdownMenuItem className="text-xs focus:bg-accent focus:text-accent-foreground cursor-pointer py-1.5" onClick={logout}>
+              Logout
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

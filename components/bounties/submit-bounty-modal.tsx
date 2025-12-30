@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Info, Plus, Send, Upload } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 
 interface SubmitModalProps {
   children: React.ReactNode;
@@ -121,7 +122,7 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
           Additional Attachments (Optional) <span className="text-destructive">*</span>
         </Label>
         <p className="-mt-2 text-[12px] text-foreground font-light font-inter">Attach relevant documents, portfolio samples, or certifications (max 5 files)</p>
-        <div className="mt-2 flex h-[98px] items-center gap-4 rounded-lg border border-dashed border-input bg-transparent px-6 transition-colors hover:bg-muted cursor-pointer group">
+        <div className="mt-2 flex h-[98px] items-center gap-4 rounded-lg border border-dashed border-input bg-transparent px-6 transition-colors hover:bg-background/90 cursor-pointer group">
           <div className="h-12 w-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center group-hover:bg-primary/90 shrink-0">
             <Upload className="h-6 w-6" />
           </div>
@@ -152,7 +153,7 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
           Main Project URL <span className="text-destructive">*</span>
         </Label>
         <div className="flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary">
-          <span className="px-3 py-2.5 text-sm text-foreground border-r border-input bg-muted">https://</span>
+          <span className="px-3 py-2.5 text-sm text-foreground border-r border-input bg-background">https://</span>
           <input className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground" placeholder="Submission Link" />
         </div>
       </div>
@@ -161,14 +162,14 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
       <div className="space-y-2">
         <Label className="text-foreground text-sm font-semibold">GitHub Repository <span className="text-destructive">*</span></Label>
         <div className="flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary">
-          <span className="px-3 py-2.5 text-sm text-foreground border-r border-input bg-muted">https://</span>
+          <span className="px-3 py-2.5 text-sm text-foreground border-r border-input bg-background">https://</span>
           <input className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground" placeholder="Repository Link" />
         </div>
       </div>
       {/* Attachments for Bounty */}
       <div className="space-y-2">
         <Label className="text-foreground text-sm font-semibold">Attachments</Label>
-        <div className="mt-2 flex h-24 flex-col items-center justify-center rounded-lg border-dashed border-[1.19px] border-input bg-transparent hover:bg-muted cursor-pointer group">
+        <div className="mt-2 flex h-24 flex-col items-center justify-center rounded-lg border-dashed border-[1.19px] border-input bg-transparent hover:bg-background/80 cursor-pointer group">
           <div className="text-sm text-muted-foreground">Drag & drop files</div>
         </div>
       </div>
@@ -179,7 +180,7 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent className="bg-card border-border sm:max-w-3xl max-h-[90vh] overflow-y-auto block p-0 gap-0">
+        <DialogContent className="bg-card border-border sm:max-w-[550px] max-w-[550px] max-h-[90vh] overflow-y-auto block p-0 gap-0">
           <DialogHeader className="p-6 border-b border-border relative">
             <div className="flex items-center gap-1 mb-2 font-inter">
               <Badge className="bg-primary/50 hover:bg-primary/60 text-foreground rounded-[13.7px] px-2 py-0.5 font-bold text-xs tracking-[-4%]">
@@ -206,7 +207,11 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
             </Button>
           </DialogFooter>
           <div className="px-6 pb-6 text-center text-[10px] text-muted-foreground">
-            By submitting/applying to this listing, you agree to our <span className="underline cursor-pointer hover:text-primary">Terms of Use</span>.
+            By submitting/applying to this listing, you agree to our{" "}
+            <Link href="/terms" className="underline cursor-pointer hover:text-primary">
+              Terms of Use
+            </Link>
+            .
           </div>
         </DialogContent>
       </Dialog>

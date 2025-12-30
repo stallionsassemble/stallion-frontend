@@ -7,8 +7,10 @@ import {
 import { DashboardRightSidebar } from '@/components/dashboard/right-sidebar'
 import { StatsRow } from '@/components/dashboard/stats-row'
 import Image from 'next/image'
+import { useAuth } from '@/lib/store/use-auth'
 
 export default function DashboardPage() {
+  const { user } = useAuth()
   return (
     <div className='flex flex-col lg:flex-row gap-8 h-[calc(100vh-7rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
       {/* Main Column */}
@@ -28,15 +30,15 @@ export default function DashboardPage() {
           <div className='relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6'>
             <div className='h-20 w-20 shrink-0 overflow-hidden rounded-full border-4 border-primary-foreground/20'>
               <Image
-                src='https://avatar.vercel.sh/john'
+                src={user?.profilePicture || `https://avatar.vercel.sh/${user?.firstName || 'John'}`}
                 width={80}
                 height={80}
-                alt='John'
+                alt={`${user?.firstName}`}
                 className='h-full w-full object-cover'
               />
             </div>
             <div className='text-center md:text-left'>
-              <h1 className='text-3xl font-bold mb-2'>Welcome back, John!</h1>
+              <h1 className='text-3xl font-bold mb-2'>Welcome back, {user?.firstName}!</h1>
               <p className='text-primary-foreground/90 text-sm md:text-base font-medium'>
                 Ready to build something amazing today?
               </p>

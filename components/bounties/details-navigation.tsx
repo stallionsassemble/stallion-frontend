@@ -16,7 +16,7 @@ export function DetailsNavigation({ backLink, backText }: DetailsNavigationProps
       {/* Back Button */}
       <Link
         href={backLink}
-        className="inline-flex items-center gap-2 bg-card border-[0.69px] border-primary hover:bg-muted text-foreground text-xs font-medium px-4 py-2 rounded-lg transition-all"
+        className="inline-flex items-center gap-2 bg-card border-[0.69px] border-primary hover:bg-card/90 text-foreground text-xs font-medium px-4 py-2 rounded-lg transition-all"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         {backText}

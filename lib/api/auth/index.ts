@@ -53,20 +53,24 @@ export class AuthService {
     return response.data
   }
 
-  async passkeyRegisterVerify(data: unknown) {
-    const response = await api.post<{ success: boolean }>(
-      '/auth/passkey/register-verify',
-      data
-    )
+  async passkeyRegisterVerify(data: { response: any; name: string }) {
+    const response = await api.post<{
+      verified: boolean
+      passkeyId: string
+      name: string
+      message: string
+    }>('/auth/passkey/register-verify', data)
     return response.data
   }
 
-  async passkeyAuthOptions() {
-    const response = await api.post('/auth/passkey/auth-options')
+  async passkeyAuthOptions(email?: string) {
+    // Sending email in body because server needs to look up the user's credentials
+    // to populate allowCredentials.
+    const response = await api.post('/auth/passkey/auth-options', { email })
     return response.data
   }
 
-  async passkeyAuthVerify(data: unknown) {
+  async passkeyAuthVerify(data: { response: any; email: string }) {
     const response = await api.post<AuthResponse>(
       '/auth/passkey/auth-verify',
       data

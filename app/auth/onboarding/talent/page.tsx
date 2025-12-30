@@ -15,6 +15,7 @@ import { uploadService } from "@/lib/api/upload";
 import { talentOnboardingSchema, TalentOnboardingValues } from "@/lib/schemas/auth";
 import { useAuth } from "@/lib/store/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { countries as countriesData } from "countries-list";
 import { Github, Globe, Instagram, Linkedin, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -22,12 +23,21 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+const countries = Object.values(countriesData)
+  .map((country) => ({
+    label: country.name,
+    value: country.name,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label));
+
 export default function TalentOnboardingPage() {
   const router = useRouter();
   const { user, setUser } = useAuth();
   const [skillsList] = useState(["Frontend", "Backend", "UI/UX Design", "Writing", "Digital Marketing"]);
   const [avatarPreview, setAvatarPreview] = useState<string>("/jane-avatar.png");
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const form = useForm<TalentOnboardingValues>({
     resolver: zodResolver(talentOnboardingSchema),
@@ -243,19 +253,77 @@ export default function TalentOnboardingPage() {
               control={form.control}
               name="location"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="text-xs font-semibold text-gray-400">Location <span className="text-red-500">*</span></FormLabel>
-                  <FormControl>
-                    <select
-                      className="h-10 md:h-12 w-full appearance-none rounded-lg border border-white/10 bg-[#0E0C1D] px-4 text-sm text-gray-400 focus:border-blue-500 focus:outline-none"
-                      {...field}
-                    >
-                      <option value="">Select a Region</option>
-                      <option value="Lagos, Nigeria">Lagos, Nigeria</option>
-                      <option value="London, UK">London, UK</option>
-                      <option value="Remote">Remote</option>
-                    </select>
-                  </FormControl>
+                  <Popover open={locationOpen} onOpenChange={setLocationOpen} modal={true}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "h-10 md:h-12 w-full justify-between rounded-lg border border-white/10 bg-[#0E0C1D] px-4 text-sm text-white hover:bg-[#0E0C1D] hover:text-white font-normal",
+                            !field.value && "text-gray-400"
+                          )}
+                        >
+                          {field.value
+                            ? countries.find(
+                              (country) => country.value === field.value
+                            )?.label || field.value
+                            : "Select Location"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-[#1a1b1e] border-white/10 text-white" onOpenAutoFocus={(e) => e.preventDefault()}>
+                      <div className="p-2 border-b border-white/10">
+                        <Input
+                          placeholder="Search country..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="bg-transparent border-white/10 h-9 text-xs focus-visible:ring-0 focus-visible:ring-offset-0"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-[300px] overflow-y-auto p-1">
+                        {countries
+                          .filter((country) =>
+                            country.label.toLowerCase().includes(searchQuery.toLowerCase())
+                          )
+                          .map((country) => (
+                            <div
+                              key={country.value}
+                              onClick={() => {
+                                form.setValue("location", country.value);
+                                setLocationOpen(false);
+                                setSearchQuery("");
+                              }}
+                              className={cn(
+                                "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-white/10 text-gray-300",
+                                country.value === field.value && "bg-white/10 text-white"
+                              )}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  country.value === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {country.label}
+                            </div>
+                          ))}
+                        {countries.filter((country) =>
+                          country.label.toLowerCase().includes(searchQuery.toLowerCase())
+                        ).length === 0 && (
+                            <div className="py-6 text-center text-sm text-muted-foreground">
+                              No country found.
+                            </div>
+                          )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}

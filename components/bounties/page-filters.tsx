@@ -4,13 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, SlidersHorizontal } from "lucide-react";
 
-interface BountyFiltersProps {
+interface PageFiltersProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  type?: "BOUNTY" | "PROJECT";
+  count?: number;
 }
 
-export function BountyFilters({ activeTab, onTabChange }: BountyFiltersProps) {
+export function PageFilters({ activeTab, onTabChange, type = "BOUNTY", count = 8 }: PageFiltersProps) {
   const categories = ["All", "Design", "Development", "Content", "Marketing", "Research", "Other"];
+  const typeLabel = type === "PROJECT" ? "Projects" : "Bounties";
 
   return (
     <div className="space-y-6">
@@ -20,7 +23,7 @@ export function BountyFilters({ activeTab, onTabChange }: BountyFiltersProps) {
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by title or skill..."
+              placeholder={`Search ${typeLabel.toLowerCase()}...`}
               className="pl-10 bg-card border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
             />
           </div>
@@ -49,7 +52,7 @@ export function BountyFilters({ activeTab, onTabChange }: BountyFiltersProps) {
       </div>
       {/* Sub-header / Sort */}
       <div className="flex items-center justify-between text-xs text-muted-foreground border-b border-border pb-4">
-        <span>Showing 8 Bounties</span>
+        <span>Showing {count} {typeLabel}</span>
         <div className="flex items-center gap-2">
           <span>Sort by:</span>
           <select className="bg-transparent text-foreground font-medium focus:outline-none">

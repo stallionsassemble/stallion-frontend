@@ -25,13 +25,13 @@ export function SettingsTabs() {
               key={tab.name}
               href={tab.href}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-[9px] font-inter text-[14px] md:text-[16px] font-normal transition-colors",
+                "flex items-center gap-2 px-3 py-1.5 rounded-[9px] font-inter text-sm md:text-[16px] font-normal transition-colors",
                 isActive
                   ? "bg-background text-foreground shadow-sm border border-white/5"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <tab.icon className={cn("w-4 h-4", isActive ? "text-[#3B82F6]" : "text-muted-foreground")} />
+              <tab.icon className="w-[15px] h-[15px] text-[#3B82F6]" />
               {tab.name}
             </Link>
           );

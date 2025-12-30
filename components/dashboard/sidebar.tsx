@@ -83,30 +83,41 @@ const sidebarItems = [
   },
 ];
 
+import { useUI } from "@/lib/store/use-ui";
+
+// ... existing imports
+
 interface SidebarContentProps {
   onLinkClick?: () => void;
+  isCollapsed?: boolean;
 }
 
-function SidebarContent({ onLinkClick }: SidebarContentProps) {
+function SidebarContent({ onLinkClick, isCollapsed = false }: SidebarContentProps) {
   const pathname = usePathname();
 
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Logo Area */}
-      <div className="flex h-20 items-center px-6">
+      <div className={cn("flex h-20 items-center", isCollapsed ? "justify-center px-0" : "px-6")}>
         <Link href="/" className="flex items-center gap-2" onClick={onLinkClick}>
-          <Image
-            src="/logo.png"
-            width={120}
-            height={40}
-            alt="Stallion Logo"
-            className="h-auto w-28 object-contain"
-          />
+          {isCollapsed ? (
+            <div className="bg-primary h-8 w-8 rounded-lg flex items-center justify-center font-bold text-primary-foreground">
+              S
+            </div>
+          ) : (
+            <Image
+              src="/logo.png"
+              width={120}
+              height={40}
+              alt="Stallion Logo"
+              className="h-auto w-28 object-contain"
+            />
+          )}
         </Link>
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 space-y-1 px-4 py-4 overflow-y-auto">
+      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
         {sidebarItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -114,21 +125,23 @@ function SidebarContent({ onLinkClick }: SidebarContentProps) {
               key={item.href}
               href={item.href}
               onClick={onLinkClick}
+              title={isCollapsed ? item.title : undefined}
               className={cn(
-                "group flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium font-inter transition-colors hover:bg-accent",
-                isActive ? "bg-primary/40 text-foreground" : "text-muted-foreground hover:text-foreground"
+                "group flex items-center rounded-lg py-2.5 text-sm font-medium font-inter transition-colors hover:bg-accent",
+                isActive ? "bg-primary/40 text-foreground" : "text-muted-foreground hover:text-foreground",
+                isCollapsed ? "justify-center px-0" : "justify-between px-3"
               )}
             >
-              <div className="flex items-center gap-3">
+              <div className={cn("flex items-center gap-3", isCollapsed && "justify-center")}>
                 <item.icon
                   className={cn(
                     "h-5 w-5 shrink-0",
                     isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
                   )}
                 />
-                <span>{item.title}</span>
+                {!isCollapsed && <span>{item.title}</span>}
               </div>
-              {item.badge && (
+              {!isCollapsed && item.badge && (
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
                   {item.badge}
                 </span>
@@ -142,10 +155,14 @@ function SidebarContent({ onLinkClick }: SidebarContentProps) {
         <Link
           href="/help"
           onClick={onLinkClick}
-          className="group flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          title={isCollapsed ? "Get Help" : undefined}
+          className={cn(
+            "group flex items-center rounded-lg py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+            isCollapsed ? "justify-center" : "gap-3 px-3"
+          )}
         >
           <CircleHelp className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
-          <span>Get Help</span>
+          {!isCollapsed && <span>Get Help</span>}
         </Link>
       </div>
     </div>
@@ -153,9 +170,17 @@ function SidebarContent({ onLinkClick }: SidebarContentProps) {
 }
 
 export function Sidebar() {
+  const { isSidebarCollapsed, toggleSidebar } = useUI();
+
   return (
-    <aside className="hidden h-screen w-64 flex-col border-r border-border bg-background md:flex sticky top-0">
-      <SidebarContent />
+    <aside
+      className={cn(
+        "hidden h-screen flex-col border-r border-border bg-background md:flex sticky top-0 transition-all duration-300 ease-in-out group/sidebar",
+        isSidebarCollapsed ? "w-20" : "w-64"
+      )}
+    >
+      <SidebarContent isCollapsed={isSidebarCollapsed} />
+
     </aside>
   );
 }

@@ -1,6 +1,6 @@
 import { authService } from '@/lib/api/auth'
 import { LoginValues } from '@/lib/schemas/auth'
-import { User } from '@/lib/types'
+import { AuthResponse, User } from '@/lib/types'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
@@ -11,6 +11,22 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
   mfaEnabled: boolean
+
+  passkeyRegisterOptions: () => Promise<any>
+  passkeyRegisterVerify: (data: {
+    response: any
+    name: string
+  }) => Promise<{
+    verified: boolean
+    passkeyId: string
+    name: string
+    message: string
+  }>
+  passkeyAuthOptions: (email?: string) => Promise<any>
+  passkeyAuthVerify: (data: {
+    response: any
+    email: string
+  }) => Promise<AuthResponse>
 
   // Actions
   login: (data: LoginValues & { totpCode?: string }) => Promise<boolean>
@@ -38,6 +54,30 @@ export const useAuth = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       mfaEnabled: false,
+
+      passkeyRegisterOptions: async () => {
+        return await authService.passkeyRegisterOptions()
+      },
+
+      passkeyRegisterVerify: async (data) => {
+        return await authService.passkeyRegisterVerify(data)
+      },
+
+      passkeyAuthOptions: async (email) => {
+        return await authService.passkeyAuthOptions(email)
+      },
+
+      passkeyAuthVerify: async (data) => {
+        const response = await authService.passkeyAuthVerify(data)
+        set({
+          user: response.user,
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+          isAuthenticated: true,
+          mfaEnabled: response.mfaEnabled,
+        })
+        return response
+      },
 
       login: async (data) => {
         set({ isLoading: true })

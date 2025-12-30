@@ -1,7 +1,7 @@
 "use client";
 
 import { BountyCard } from "@/components/bounties/bounty-card";
-import { BountyFilters } from "@/components/bounties/bounty-filters";
+import { PageFilters } from "@/components/bounties/page-filters";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
@@ -81,6 +81,30 @@ const bounties = [
     participants: 12,
     dueDate: "5d",
   },
+  {
+    id: 7,
+    title: "Mobile Wallet Development",
+    description: "Develop a secure mobile wallet for iOS and Android. Must support biometric authentication and seed phrase backup...",
+    company: "Stallion Foundation",
+    logo: "/assets/icons/sdollar.png",
+    amount: "$12,000",
+    type: "USDC",
+    tags: ["Mobile", "React Native", "Security"],
+    participants: 18,
+    dueDate: "25d",
+  },
+  {
+    id: 8,
+    title: "Zero-Knowledge Proof Research",
+    description: "Research and implement ZK-proofs for privacy-preserving transactions on Stallion network...",
+    company: "Stallion Foundation",
+    logo: "/assets/icons/sdollar.png",
+    amount: "$15,000",
+    type: "SOL",
+    tags: ["Cryptography", "Research", "ZK"],
+    participants: 5,
+    dueDate: "30d",
+  },
 ];
 
 export default function BountiesPage() {
@@ -111,7 +135,12 @@ export default function BountiesPage() {
         <p className="text-muted-foreground">Browse and manage available projects.</p>
       </div>
 
-      <BountyFilters activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setCurrentPage(1); }} />
+      <PageFilters
+        activeTab={activeTab}
+        onTabChange={(tab) => { setActiveTab(tab); setCurrentPage(1); }}
+        type="PROJECT"
+        count={paginatedBounties.length}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {paginatedBounties.map((bounty) => (

@@ -7,19 +7,35 @@ import { DetailsNavigation } from '@/components/bounties/details-navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
+  ChevronLeft,
+  ChevronRight,
   Download,
   FileText,
   FileUp,
   Gift,
   Image as ImageIcon,
   Info,
-  MessageSquare,
+  MessageSquare
 } from 'lucide-react'
 import Image from 'next/image'
 import { useParams } from 'next/navigation'
+import { useRef } from 'react'
 
 export default function BountyDetailsPage() {
   const params = useParams()
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const { current } = scrollContainerRef
+      const scrollAmount = 400
+      if (direction === 'left') {
+        current.scrollBy({ left: -scrollAmount, behavior: 'smooth' })
+      } else {
+        current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+      }
+    }
+  }
 
   // Mock Similar Bounties (Moved inside simply for brevity in replacement, assume same data)
   const similarBounties = [
@@ -61,6 +77,19 @@ export default function BountyDetailsPage() {
       participants: 5,
       dueDate: '14d',
     },
+    {
+      id: 105,
+      title: 'Hackathon Manager',
+      description:
+        'Organize and manage our upcoming global hackathon event...',
+      company: 'Stallion Foundation',
+      logo: '/assets/icons/sdollar.png',
+      amount: '$4,000',
+      type: 'USDC' as const,
+      tags: ['Events', 'Management', 'Crypto'],
+      participants: 15,
+      dueDate: '3d',
+    },
   ]
 
   return (
@@ -76,7 +105,7 @@ export default function BountyDetailsPage() {
         {/* Bounty Details Content */}
         <div className='space-y-8 pb-20'>
           {/* Header Section */}
-          <section className='rounded-xl border border-primary bg-card/30 p-4 sm:p-6'>
+          <section className='rounded-xl border border-primary bg-card/30 p-4'>
             <DetailsHeader
               type='BOUNTY'
               title='Smart Contract Security Audit'
@@ -94,12 +123,12 @@ export default function BountyDetailsPage() {
           <div className='h-px w-full bg-border' />
 
           {/* Description */}
-          <section className='space-y-4 rounded-xl border border-primary bg-card/30 p-4 sm:p-6'>
-            <h3 className='text-lg font-bold text-foreground flex items-center gap-2'>
+          <section className='space-y-3 rounded-xl border border-primary bg-card/30 p-4'>
+            <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
               <Info className='h-4 w-4 text-primary' /> Description
             </h3>
-            <div className='prose prose-invert max-w-none text-muted-foreground text-sm leading-relaxed'>
-              <p className='mb-4'>
+            <div className='prose prose-invert max-w-none text-muted-foreground text-xs leading-relaxed'>
+              <p className='mb-3'>
                 We are looking for an experienced smart contract security
                 auditor to perform a comprehensive security audit of our
                 protocol smart contracts. The protocol is built on custom
@@ -111,27 +140,27 @@ export default function BountyDetailsPage() {
               <ul className='space-y-1 pl-1'>
                 <li className='flex items-center gap-2'>
                   {' '}
-                  <span className='text-primary text-lg'>•</span> Reentrancy
+                  <span className='text-primary text-base'>•</span> Reentrancy
                   attacks
                 </li>
                 <li className='flex items-center gap-2'>
                   {' '}
-                  <span className='text-primary text-lg'>•</span> Oracle
+                  <span className='text-primary text-base'>•</span> Oracle
                   manipulation risks
                 </li>
                 <li className='flex items-center gap-2'>
                   {' '}
-                  <span className='text-primary text-lg'>•</span> Access control
+                  <span className='text-primary text-base'>•</span> Access control
                   vulnerabilities
                 </li>
                 <li className='flex items-center gap-2'>
                   {' '}
-                  <span className='text-primary text-lg'>•</span> Gas
+                  <span className='text-primary text-base'>•</span> Gas
                   optimization
                 </li>
                 <li className='flex items-center gap-2'>
                   {' '}
-                  <span className='text-primary text-lg'>•</span> Logic errors
+                  <span className='text-primary text-base'>•</span> Logic errors
                   and edge cases
                 </li>
               </ul>
@@ -139,11 +168,11 @@ export default function BountyDetailsPage() {
           </section>
 
           {/* Requirements */}
-          <section className='space-y-4 rounded-xl border border-primary bg-card/30 p-4 sm:p-6'>
-            <h3 className='text-lg font-bold text-foreground flex items-center gap-2'>
+          <section className='space-y-3 rounded-xl border border-primary bg-card/30 p-4'>
+            <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
               <FileText className='h-4 w-4 text-primary' /> Requirements
             </h3>
-            <ul className='space-y-2 text-sm text-muted-foreground'>
+            <ul className='space-y-1.5 text-xs text-muted-foreground'>
               {[
                 '3+ years of smart contract auditing experience',
                 'Proven track record with DeFi protocols',
@@ -160,11 +189,11 @@ export default function BountyDetailsPage() {
           </section>
 
           {/* Deliverables */}
-          <section className='space-y-4 rounded-xl border border-primary bg-card/30 p-4 sm:p-6'>
-            <h3 className='text-lg font-bold text-foreground flex items-center gap-2'>
+          <section className='space-y-3 rounded-xl border border-primary bg-card/30 p-4'>
+            <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
               <FileText className='h-4 w-4 text-primary' /> Deliverables
             </h3>
-            <ul className='space-y-2 text-sm text-muted-foreground'>
+            <ul className='space-y-1.5 text-xs text-muted-foreground'>
               {[
                 'Comprehensive security audit report',
                 'Severity classification for each finding',
@@ -183,8 +212,8 @@ export default function BountyDetailsPage() {
           </section>
 
           {/* Attachments */}
-          <section className='space-y-4 p-4 sm:p-6 border border-primary text-foreground'>
-            <h3 className='text-lg font-bold text-foreground flex items-center gap-2'>
+          <section className='space-y-4 p-4 sm:p-5 border border-primary text-foreground'>
+            <h3 className='text-base font-bold text-foreground flex items-center gap-2'>
               <FileUp className='h-5 w-5 text-primary' />
               Attachments
             </h3>
@@ -257,11 +286,34 @@ export default function BountyDetailsPage() {
 
           {/* Similar Bounties */}
           <section className='space-y-6 pt-8 border-t border-border'>
-            <h3 className='text-lg font-bold text-foreground flex items-center gap-2'>
-              <Gift className='h-5 w-5 text-primary' />
-              Similar Bounties
-            </h3>
-            <div className='flex overflow-x-auto pb-6 gap-5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pl-1'>
+            <div className='flex items-center justify-between'>
+              <h3 className='text-base font-bold text-foreground flex items-center gap-2'>
+                <Gift className='h-5 w-5 text-primary' />
+                Similar Bounties
+              </h3>
+              <div className='flex items-center gap-2'>
+                <Button
+                  size='icon'
+                  variant='outline'
+                  onClick={() => scroll('left')}
+                  className='h-8 w-8 rounded-full bg-card border-primary/20 hover:bg-primary/10 hover:text-primary'
+                >
+                  <ChevronLeft className='h-4 w-4' />
+                </Button>
+                <Button
+                  size='icon'
+                  variant='outline'
+                  onClick={() => scroll('right')}
+                  className='h-8 w-8 rounded-full bg-card border-primary/20 hover:bg-primary/10 hover:text-primary'
+                >
+                  <ChevronRight className='h-4 w-4' />
+                </Button>
+              </div>
+            </div>
+            <div
+              ref={scrollContainerRef}
+              className='flex overflow-x-auto pb-6 gap-5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pl-1 scroll-smooth'
+            >
               {similarBounties.map((bounty) => (
                 <BountyCard key={bounty.id} {...bounty} />
               ))}
@@ -383,7 +435,7 @@ export default function BountyDetailsPage() {
       </div>
 
       {/* Right Sidebar Column - Sticky, aligned with bounty header */}
-      <div className='hidden lg:block lg:w-[380px] xl:w-[454px] shrink-0 self-start sticky top-0 -mt-20 space-y-8'>
+      <div className='hidden lg:block lg:w-[320px] xl:w-[360px] shrink-0 self-start sticky top-0 -mt-20 space-y-8'>
         <BountyDetailsSidebar />
       </div>
     </div>

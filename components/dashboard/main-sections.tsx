@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BriefcaseBusiness, CircleCheck, Gift, ListFilter, Timer, User } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
 // Mock Data
@@ -216,8 +217,9 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
       <div className="grid gap-3">
         {filteredOpportunities.length > 0 ? (
           filteredOpportunities.map((opp) => (
-            <div
+            <Link
               key={opp.id}
+              href={`/dashboard/${opp.type === 'project' ? 'projects' : 'bounties'}/${opp.id}`}
               className="group relative flex flex-col sm:flex-row items-stretch overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-primary/50"
             >
               {/* Left Content Wrapper */}
@@ -297,7 +299,7 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
               <div className="hidden sm:flex absolute right-0 top-0 bottom-0 w-[65px] items-center justify-center cursor-pointer transition-colors bg-primary/70 hover:bg-primary/80">
                 <ArrowRight className="h-8 w-8 text-primary-foreground" />
               </div>
-            </div>
+            </Link>
           ))
         ) : (
           <div className="py-8 text-center text-muted-foreground text-sm border border-border rounded-xl bg-muted/20">

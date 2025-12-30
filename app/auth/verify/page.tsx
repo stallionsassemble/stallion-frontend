@@ -8,7 +8,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+
 function VerifyContent() {
+  const [step, setStep] = useState(1);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [totp, setTotp] = useState(["", "", "", "", "", ""]);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -48,7 +50,7 @@ function VerifyContent() {
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>, isTotp = false) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number, isTotp = false) => {
     const currentOtp = isTotp ? totp : otp;
     const refs = isTotp ? totpInputRefs : inputRefs;
     if (e.key === "Backspace" && !currentOtp[index] && index > 0 && refs.current[index - 1]) {
@@ -73,6 +75,21 @@ function VerifyContent() {
     if (refs.current[focusIndex]) {
       refs.current[focusIndex]?.focus();
     }
+  };
+
+  const handleStepNext = () => {
+    const code = otp.join("");
+    if (code.length !== 6) {
+      toast.error("Please enter a complete 6-digit verification code");
+      return;
+    }
+    setStep(2);
+    // Focus first TOTP input after render
+    setTimeout(() => {
+      if (totpInputRefs.current[0]) {
+        totpInputRefs.current[0].focus();
+      }
+    }, 0);
   };
 
   const handleVerify = async () => {
@@ -117,7 +134,7 @@ function VerifyContent() {
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Verification failed. Please check the code.", { id: toastId });
-      setIsVerifying(false); // Only stop loading on error, on success we redirect
+      setIsVerifying(false);
     }
   };
 
@@ -148,59 +165,61 @@ function VerifyContent() {
     <AuthSplitLayout rightContent={<AuthRightSection variant="bounties" />}>
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold font-inter tracking-tight text-white lg:text-4xl">
-          Enter verification code
+          {step === 1 ? "Enter verification code" : "Enter authenticator code"}
         </h1>
         <p className="text-muted-foreground">
-          We sent a 6-digit code to {email}
+          {step === 1
+            ? `We sent a 6-digit code to ${email}`
+            : "Enter the code from your authenticator app"
+          }
         </p>
 
         <div className="space-y-8 pt-4">
           <div className="space-y-6">
-            {/* Email OTP */}
-            <div className="flex flex-wrap items-center justify-start gap-2 sm:gap-4">
-              <div className="flex gap-1.5 sm:gap-2">
-                {otp.slice(0, 3).map((digit, i) => (
-                  <input
-                    key={i}
-                    ref={(el) => { inputRefs.current[i] = el }}
-                    type="text"
-                    maxLength={1}
-                    inputMode="numeric"
-                    value={digit}
-                    onChange={(e) => handleChange(i, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(i, e)}
-                    onPaste={(e) => handlePaste(e)}
-                    disabled={isLoading}
-                    className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border-[1.79px] bg-transparent text-center text-xl sm:text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
-                  />
-                ))}
+            {/* Step 1: Email OTP */}
+            {step === 1 && (
+              <div className="flex flex-wrap items-center justify-start gap-2 sm:gap-4">
+                <div className="flex gap-1.5 sm:gap-2">
+                  {otp.slice(0, 3).map((digit, i) => (
+                    <input
+                      key={i}
+                      ref={(el) => { inputRefs.current[i] = el }}
+                      type="text"
+                      maxLength={1}
+                      inputMode="numeric"
+                      value={digit}
+                      onChange={(e) => handleChange(i, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, i)}
+                      onPaste={(e) => handlePaste(e)}
+                      disabled={isLoading}
+                      className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border-[1.79px] bg-transparent text-center text-xl sm:text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                    />
+                  ))}
+                </div>
+                <div className="text-gray-500">-</div>
+                <div className="flex gap-1.5 sm:gap-2">
+                  {otp.slice(3, 6).map((digit, i) => (
+                    <input
+                      key={i + 3}
+                      ref={(el) => { inputRefs.current[i + 3] = el }}
+                      type="text"
+                      maxLength={1}
+                      inputMode="numeric"
+                      value={digit}
+                      onChange={(e) => handleChange(i + 3, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(e, i + 3)}
+                      onPaste={(e) => handlePaste(e)}
+                      disabled={isLoading}
+                      className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border-[1.79px] bg-transparent text-center text-xl sm:text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="text-gray-500">-</div>
-              <div className="flex gap-1.5 sm:gap-2">
-                {otp.slice(3, 6).map((digit, i) => (
-                  <input
-                    key={i + 3}
-                    ref={(el) => { inputRefs.current[i + 3] = el }}
-                    type="text"
-                    maxLength={1}
-                    inputMode="numeric"
-                    value={digit}
-                    onChange={(e) => handleChange(i + 3, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(i + 3, e)}
-                    onPaste={(e) => handlePaste(e)}
-                    disabled={isLoading}
-                    className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border-[1.79px] bg-transparent text-center text-xl sm:text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
-                  />
-                ))}
-              </div>
-            </div>
+            )}
 
-            {/* TOTP Input (MFA) */}
-            {mfaRequired && (
-              <div className="space-y-2">
-                <p className="text-muted-foreground text-sm">
-                  Enter code from authenticator app
-                </p>
+            {/* Step 2: TOTP Input (MFA) */}
+            {step === 2 && mfaRequired && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex flex-wrap items-center justify-start gap-2 sm:gap-4">
                   <div className="flex gap-1.5 sm:gap-2">
                     {totp.slice(0, 3).map((digit, i) => (
@@ -212,7 +231,7 @@ function VerifyContent() {
                         inputMode="numeric"
                         value={digit}
                         onChange={(e) => handleChange(i, e.target.value, true)}
-                        onKeyDown={(e) => handleKeyDown(i, e, true)}
+                        onKeyDown={(e) => handleKeyDown(e, i, true)}
                         onPaste={(e) => handlePaste(e, true)}
                         disabled={isLoading}
                         className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border-[1.79px] bg-transparent text-center text-xl sm:text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
@@ -230,7 +249,7 @@ function VerifyContent() {
                         inputMode="numeric"
                         value={digit}
                         onChange={(e) => handleChange(i + 3, e.target.value, true)}
-                        onKeyDown={(e) => handleKeyDown(i + 3, e, true)}
+                        onKeyDown={(e) => handleKeyDown(e, i + 3, true)}
                         onPaste={(e) => handlePaste(e, true)}
                         disabled={isLoading}
                         className="h-12 w-10 sm:h-14 sm:w-12 rounded-lg border-[1.79px] bg-transparent text-center text-xl sm:text-2xl text-white focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
@@ -242,24 +261,42 @@ function VerifyContent() {
             )}
           </div>
 
-          <div className="text-sm text-gray-400">
-            Didn&apos;t receive the code? {" "}
-            <button
-              onClick={handleResend}
-              disabled={isResending || isLoading}
-              className="text-gray-300 underline hover:text-white disabled:opacity-50"
-            >
-              {isResending ? "Sending..." : "Resend"}
-            </button>
-          </div>
+          <div className="flex flex-col gap-4">
+            {/* Resend Link (Only Step 1) */}
+            {step === 1 && (
+              <div className="text-sm text-gray-400">
+                Didn&apos;t receive the code? {" "}
+                <button
+                  onClick={handleResend}
+                  disabled={isResending || isLoading}
+                  className="text-gray-300 underline hover:text-white disabled:opacity-50"
+                >
+                  {isResending ? "Sending..." : "Resend"}
+                </button>
+              </div>
+            )}
 
-          <Button
-            onClick={handleVerify}
-            disabled={isVerifying || isLoading}
-            className="h-12 w-full rounded-lg bg-blue text-white hover:bg-[#0066CC]"
-          >
-            {isVerifying ? "Verifying..." : "Submit"}
-          </Button>
+            <div className="flex gap-3">
+              {step === 2 && (
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  disabled={isVerifying || isLoading}
+                  className="h-12 flex-1 rounded-lg border-white/10 hover:bg-white/5 text-white"
+                >
+                  Back
+                </Button>
+              )}
+
+              <Button
+                onClick={step === 1 && mfaRequired ? handleStepNext : handleVerify}
+                disabled={isVerifying || isLoading}
+                className={`h-12 ${step === 2 ? 'flex-1' : 'w-full'} rounded-lg bg-blue text-white hover:bg-[#0066CC]`}
+              >
+                {isVerifying ? "Verifying..." : (step === 1 && mfaRequired ? "Next" : "Submit")}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </AuthSplitLayout>

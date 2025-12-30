@@ -1,7 +1,7 @@
 "use client";
 
 import { BountyCard } from "@/components/bounties/bounty-card";
-import { BountyFilters } from "@/components/bounties/bounty-filters";
+import { PageFilters } from "@/components/bounties/page-filters";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
@@ -111,7 +111,12 @@ export default function BountiesPage() {
         <p className="text-muted-foreground">Browse and manage available bounties.</p>
       </div>
 
-      <BountyFilters activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setCurrentPage(1); }} />
+      <PageFilters
+        activeTab={activeTab}
+        onTabChange={(tab) => { setActiveTab(tab); setCurrentPage(1); }}
+        type="BOUNTY"
+        count={paginatedBounties.length}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {paginatedBounties.map((bounty) => (

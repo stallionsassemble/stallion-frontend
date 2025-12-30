@@ -6,19 +6,90 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { authService } from "@/lib/api/auth";
+import { settingsService } from "@/lib/api/settings";
 import { useAuth } from "@/lib/store/use-auth";
 import { startRegistration } from "@simplewebauthn/browser";
-import { CheckCircle2, Copy, Download, Key, Loader2, Smartphone } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, Copy, Download, Key, Loader2, MoreVertical, Pencil, Smartphone, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+interface Passkey {
+  id: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt?: string;
+}
 
 export function SecuritySettingsView() {
   const { user, setUser, mfaEnabled, setMfaEnabled } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [passkeys, setPasskeys] = useState<Passkey[]>([]);
+  const [isLoadingPasskeys, setIsLoadingPasskeys] = useState(false);
+  const [editingPasskey, setEditingPasskey] = useState<Passkey | null>(null);
+  const [deletingPasskeyId, setDeletingPasskeyId] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+
+  const fetchPasskeys = async () => {
+    setIsLoadingPasskeys(true);
+    try {
+      const data = await settingsService.getPasskeys();
+      // Ensure data is array, or extract from response structure if needed
+      setPasskeys(Array.isArray(data) ? data : data.passkeys || []);
+    } catch (error) {
+      console.error("Failed to fetch passkeys", error);
+    } finally {
+      setIsLoadingPasskeys(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPasskeys();
+  }, []);
+
+  const handleUpdatePasskey = async () => {
+    if (!editingPasskey || !newName.trim()) return;
+
+    const toastId = toast.loading("Updating passkey...");
+    try {
+      await settingsService.updatePasskey(editingPasskey.id, newName);
+      toast.success("Passkey renamed successfully", { id: toastId });
+      setEditingPasskey(null);
+      fetchPasskeys();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update passkey", { id: toastId });
+    }
+  };
+
+  const handleDeletePasskey = async () => {
+    if (!deletingPasskeyId) return;
+
+    const toastId = toast.loading("Deleting passkey...");
+    try {
+      await settingsService.deletePasskey(deletingPasskeyId);
+      toast.success("Passkey deleted successfully", { id: toastId });
+      setDeletingPasskeyId(null);
+      fetchPasskeys();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete passkey", { id: toastId });
+    }
+  };
+
+  // Update handleConfirmPasskeyName to refresh list
+  // ... inside handleConfirmPasskeyName success block:
+  // fetchPasskeys();
+
+  // ... rest of component
+
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [totpSecret, setTotpSecret] = useState<string | null>(null);
@@ -133,6 +204,13 @@ export function SecuritySettingsView() {
     setOtp(["", "", "", "", "", ""]);
   };
 
+  // Passkey State
+  const [isNameDialogOpen, setIsNameDialogOpen] = useState(false);
+  const [passkeyName, setPasskeyName] = useState("");
+  const [tempAttestationResponse, setTempAttestationResponse] = useState<any>(null);
+
+  // ... (existing code for MFA ...)
+
   const handleAddPasskey = async () => {
     setIsPasskeyLoading(true);
     const toastId = toast.loading("Initializing passkey setup...");
@@ -143,18 +221,49 @@ export function SecuritySettingsView() {
       // 2. Start registration with browser
       const attResp = await startRegistration({ optionsJSON: options });
 
-      // 3. Verify registration with backend
-      await authService.passkeyRegisterVerify(attResp);
-
-      toast.success("Passkey registered successfully!", { id: toastId });
+      // 3. Store response and open name dialog
+      setTempAttestationResponse(attResp);
+      setIsNameDialogOpen(true);
+      toast.dismiss(toastId);
     } catch (error: any) {
       console.error(error);
-      // Handle simplewebauthn errors specifically or generic errors
       if (error.name === 'InvalidStateError') {
         toast.error("This passkey is already registered.", { id: toastId });
       } else {
         toast.error(error.response?.data?.message || error.message || "Failed to register passkey", { id: toastId });
       }
+    } finally {
+      setIsPasskeyLoading(false);
+    }
+  };
+
+  const handleConfirmPasskeyName = async () => {
+    if (!passkeyName.trim()) {
+      toast.error("Please enter a name for your passkey");
+      return;
+    }
+
+    setIsPasskeyLoading(true);
+    const toastId = toast.loading("Verifying passkey...");
+
+    try {
+      // 4. Verify registration with backend including name
+      await authService.passkeyRegisterVerify({
+        response: tempAttestationResponse,
+        name: passkeyName
+      });
+
+      toast.success("Passkey registered successfully!", { id: toastId });
+
+      // Reset state
+      setIsNameDialogOpen(false);
+      setPasskeyName("");
+      setTempAttestationResponse(null);
+
+      // Refresh list
+      fetchPasskeys();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to verified passkey", { id: toastId });
     } finally {
       setIsPasskeyLoading(false);
     }
@@ -202,7 +311,87 @@ export function SecuritySettingsView() {
             Add a Passkey
           </Button>
         </div>
+        {/* Passkeys List */}
+        {passkeys.length > 0 && (
+          <div className="space-y-3">
+            <h5 className="text-sm font-medium text-muted-foreground">Your Passkeys</h5>
+            <div className="grid gap-3">
+              {passkeys.map((passkey) => (
+                <div key={passkey.id} className="flex items-center justify-between p-4 bg-muted/20 border border-white/5 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Key className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm text-foreground">{passkey.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Added on {new Date(passkey.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => {
+                        setEditingPasskey(passkey);
+                        setNewName(passkey.name);
+                      }}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setDeletingPasskeyId(passkey.id)} className="text-destructive focus:text-destructive">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Rename Passkey Modal */}
+      <Dialog open={!!editingPasskey} onOpenChange={(open) => !open && setEditingPasskey(null)}>
+        <DialogContent className="bg-background w-[95%] max-w-sm rounded-xl p-6">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-xl font-bold font-inter text-foreground">Rename Passkey</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Passkey Name"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setEditingPasskey(null)}>Cancel</Button>
+              <Button onClick={handleUpdatePasskey} disabled={!newName.trim()}>Save</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Passkey Confirmation */}
+      <Dialog open={!!deletingPasskeyId} onOpenChange={(open) => !open && setDeletingPasskeyId(null)}>
+        <DialogContent className="bg-background w-[95%] max-w-sm rounded-xl p-6">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-xl font-bold font-inter text-foreground">Delete Passkey?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this passkey? You will no longer be able to use it to sign in.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setDeletingPasskeyId(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeletePasskey}>Delete</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 2FA Modal */}
       <Dialog open={isModalOpen} onOpenChange={(open) => {
@@ -339,6 +528,45 @@ export function SecuritySettingsView() {
               )}
             </div>
           </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Passkey Name Modal */}
+      <Dialog open={isNameDialogOpen} onOpenChange={setIsNameDialogOpen}>
+        <DialogContent className="bg-background w-[95%] max-w-sm rounded-xl p-6">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-xl font-bold font-inter text-foreground">Name your Passkey</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground font-inter">
+              Give this passkey a name so you can identify it later (e.g., "My iPhone", "MacBook Pro").
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Input
+              placeholder="e.g. MacBook Pro"
+              value={passkeyName}
+              onChange={(e) => setPasskeyName(e.target.value)}
+              className="bg-transparent border-input"
+            />
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setIsNameDialogOpen(false)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmPasskeyName}
+                disabled={isPasskeyLoading || !passkeyName.trim()}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                {isPasskeyLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Save Passkey
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -12,20 +12,20 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { authService } from "@/lib/api/auth";
 import { profileSchema, ProfileValues } from "@/lib/schemas/profile";
 import { useAuth } from "@/lib/store/use-auth";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
   Check,
+  ChevronsUpDown,
   Gamepad2,
   Github,
   Globe,
@@ -42,6 +42,15 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { countries as countriesData } from "countries-list";
+
+const countries = Object.values(countriesData)
+  .map((country) => ({
+    label: country.name,
+    value: country.name,
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label));
+
 const socialConfigs = [
   { name: "twitter", label: "X(Formerly Twitter)", icon: Twitter, placeholder: "Enter your X Username" },
   { name: "website", label: "Website", icon: Globe, placeholder: "Enter your website URL" },
@@ -53,11 +62,17 @@ const socialConfigs = [
 
 const suggestedSkills = ["Frontend", "Backend", "UI/UX Design", "Writing", "Digital Marketing"];
 
-export function ProfileSettingsForm() {
+interface ProfileSettingsFormProps {
+  onAfterSave?: () => void;
+}
+
+export function ProfileSettingsForm({ onAfterSave }: ProfileSettingsFormProps) {
   const { user } = useAuth();
   const [avatarPreview, setAvatarPreview] = useState<string>("https://avatar.vercel.sh/johndoe");
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -105,6 +120,7 @@ export function ProfileSettingsForm() {
   const onSubmit = (data: ProfileValues) => {
     console.log("Form Submitted:", data);
     toast.warning("Update endpoint is not yet available.");
+    onAfterSave?.();
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,7 +249,7 @@ export function ProfileSettingsForm() {
                     First Name <span className="text-red-500">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="John" className="bg-transparent border-foreground h-12" {...field} />
+                    <Input placeholder="John" className="bg-transparent border-foreground h-12 text-[14px] font-light" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -248,7 +264,7 @@ export function ProfileSettingsForm() {
                     Last Name <span className="text-red-500">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Doe" className="bg-transparent border-foreground h-12" {...field} />
+                    <Input placeholder="Doe" className="bg-transparent border-foreground h-12 text-[14px] font-light" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -273,7 +289,7 @@ export function ProfileSettingsForm() {
                       </div>
                       <Input
                         placeholder="johndoe"
-                        className={`pl-4 bg-transparent border-foreground rounded-l-none h-12 flex-1 ${usernameAvailable === true ? "border-green-500 focus-visible:ring-green-500" :
+                        className={`pl-4 bg-transparent border-foreground rounded-l-none h-12 flex-1 text-[14px] font-light ${usernameAvailable === true ? "border-green-500 focus-visible:ring-green-500" :
                           usernameAvailable === false ? "border-red-500 focus-visible:ring-red-500" : ""
                           }`}
                         {...field}
@@ -306,23 +322,79 @@ export function ProfileSettingsForm() {
               control={form.control}
               name="location"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="text-sm font-medium text-gray-200">
                     Location <span className="text-red-500">*</span>
                   </FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="bg-transparent border-foreground h-12">
-                        <SelectValue placeholder="Select Location" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="nigeria">Nigeria</SelectItem>
-                      <SelectItem value="ghana">Ghana</SelectItem>
-                      <SelectItem value="usa">USA</SelectItem>
-                      <SelectItem value="uk">UK</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Popover open={locationOpen} onOpenChange={setLocationOpen} modal={true}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full h-12 justify-between bg-transparent border-foreground text-[14px] font-light hover:bg-transparent hover:text-white",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? countries.find(
+                              (country) => country.value === field.value
+                            )?.label || field.value
+                            : "Select Location"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-[#1a1b1e] border-white/10 text-white" onOpenAutoFocus={(e) => e.preventDefault()}>
+                      <div className="p-2 border-b border-white/10">
+                        <Input
+                          placeholder="Search country..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="bg-transparent border-white/10 h-9 text-xs focus-visible:ring-0 focus-visible:ring-offset-0"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-[300px] overflow-y-auto p-1">
+                        {countries
+                          .filter((country) =>
+                            country.label.toLowerCase().includes(searchQuery.toLowerCase())
+                          )
+                          .map((country) => (
+                            <div
+                              key={country.value}
+                              onClick={() => {
+                                form.setValue("location", country.value);
+                                setLocationOpen(false);
+                                setSearchQuery("");
+                              }}
+                              className={cn(
+                                "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-white/10 text-gray-300",
+                                country.value === field.value && "bg-white/10 text-white"
+                              )}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  country.value === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {country.label}
+                            </div>
+                          ))}
+                        {countries.filter((country) =>
+                          country.label.toLowerCase().includes(searchQuery.toLowerCase())
+                        ).length === 0 && (
+                            <div className="py-6 text-center text-sm text-muted-foreground">
+                              No country found.
+                            </div>
+                          )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -339,7 +411,7 @@ export function ProfileSettingsForm() {
                 <FormControl>
                   <Textarea
                     placeholder="Write a short bio"
-                    className="min-h-[100px] bg-transparent border-foreground resize-none rounded-lg"
+                    className="min-h-[100px] bg-transparent border-foreground resize-none rounded-lg text-[14px] font-light"
                     {...field}
                   />
                 </FormControl>
@@ -362,7 +434,7 @@ export function ProfileSettingsForm() {
                   <div className="space-y-3">
                     <Input
                       placeholder="Type a skill and press Enter"
-                      className="bg-transparent border-foreground h-12"
+                      className="bg-transparent border-foreground h-12 text-[14px] font-light"
                       onKeyDown={handleSkillInputKeyDown}
                     />
 
@@ -433,7 +505,7 @@ export function ProfileSettingsForm() {
                           </div>
                           <Input
                             placeholder={social.placeholder}
-                            className="pl-3 font-inter font-normal text-[16px] bg-transparent border-foreground rounded-l-none h-12 flex-1"
+                            className="pl-4 font-inter font-light text-[14px] bg-transparent border-foreground border-l-0 rounded-l-none h-12 flex-1 focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-foreground"
                             {...field}
                             value={field.value?.toString() || ""}
                           />

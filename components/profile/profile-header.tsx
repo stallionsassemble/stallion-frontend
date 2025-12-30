@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/store/use-auth";
 import { Edit, UserStar } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { useState } from "react";
+import { EditProfileDialog } from "./edit-profile-dialog";
 
 export function ProfileHeader() {
   const { user } = useAuth();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const fullName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : "User";
   const username = user?.username ? `@${user.username}` : "";
   console.log("User", user)
@@ -25,8 +27,17 @@ export function ProfileHeader() {
         {/* Blue gradient overlay if needed, or stick to solid color pattern */}
       </div>
 
-      {/* Profile Info Section */}
       <div className="px-6 relative">
+        {/* Mobile Edit Profile Button */}
+        <Button
+          variant="outline"
+          onClick={() => setIsEditDialogOpen(true)}
+          className="md:hidden absolute right-6 top-20 flex gap-2 border-white/20 hover:bg-white/10 text-white hover:text-white bg-transparent h-9 px-4 text-xs font-medium transition-colors z-10"
+        >
+          <Edit className="w-3 h-3" />
+          Edit Profile
+        </Button>
+
         <div className="flex flex-col md:flex-row items-start -mt-16 md:-mt-[100px] mb-4 gap-6">
           {/* Avatar */}
           <div className="relative h-32 w-32 md:h-[200px] md:w-[200px] rounded-full bg-background shrink-0 border-4 border-background">
@@ -57,12 +68,14 @@ export function ProfileHeader() {
 
               {/* Edit Profile Button (Desktop) */}
               <div className="flex md:flex-col md:items-end justify-start md:justify-start mt-4 md:mt-0">
-                <Link href="/dashboard/settings?tab=profile">
-                  <Button variant="outline" className="hidden md:flex gap-2 border-white/20 hover:bg-white/10 text-white hover:text-white bg-transparent h-9 px-4 text-xs font-medium transition-colors">
-                    <Edit className="w-3 h-3" />
-                    Edit Profile
-                  </Button>
-                </Link>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(true)}
+                  className="hidden md:flex gap-2 border-white/20 hover:bg-white/10 text-white hover:text-white bg-transparent h-9 px-4 text-xs font-medium transition-colors"
+                >
+                  <Edit className="w-3 h-3" />
+                  Edit Profile
+                </Button>
               </div>
             </div>
           </div>
@@ -97,6 +110,14 @@ export function ProfileHeader() {
           </div>
         </div>
       </div>
+
+      {user && (
+        <EditProfileDialog
+          user={user}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+        />
+      )}
     </div>
   );
 }

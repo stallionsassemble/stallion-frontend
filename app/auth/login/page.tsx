@@ -16,6 +16,8 @@ import { Input } from '@/components/ui/input'
 import { loginSchema, LoginValues } from '@/lib/schemas/auth'
 import { useAuth } from '@/lib/store/use-auth'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { startAuthentication } from '@simplewebauthn/browser'
+import { Key } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -25,7 +27,7 @@ import { toast } from 'sonner'
 export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
-  const { login } = useAuth()
+  const { login, passkeyAuthOptions, passkeyAuthVerify, setUser } = useAuth()
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -34,8 +36,48 @@ export default function LoginPage() {
     },
   })
 
+  async function handlePasskeyLogin() {
+    const email = form.getValues("email")
+    if (!email) {
+      toast.error("Please enter your email address to sign in with a passkey.")
+      return
+    }
+
+    setIsSubmitting(true)
+    const toastId = toast.loading("Starting passkey authentication...")
+
+    try {
+      // 1. Get auth options
+      const options = await passkeyAuthOptions(email)
+
+      // 2. Authenticate with browser
+      const authResponse = await startAuthentication(options)
+
+      // 3. Verify with backend
+      const response = await passkeyAuthVerify({
+        response: authResponse,
+        email
+      })
+
+      toast.success("Logged in successfully!", { id: toastId })
+
+      // Update User State & Redirect
+      if (response.user) {
+        setUser(response.user)
+      }
+
+      router.push("/dashboard")
+    } catch (error: any) {
+      console.error(error)
+      toast.error(error.response?.data?.message || "Passkey authentication failed", { id: toastId })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   async function onSubmit(data: LoginValues) {
     setIsSubmitting(true)
+    // ... (rest of onSubmit)
     const toastId = toast.loading("Logging in..")
     try {
       const mfaEnabled = await login(data)
@@ -113,6 +155,21 @@ export default function LoginPage() {
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Please wait' : 'Continue with Email'}
+            </Button>
+
+            <div className="relative flex items-center justify-center text-xs uppercase tracking-widest text-muted-foreground my-4">
+              <span className="bg-[#090715] px-2">OR</span>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 w-full rounded-lg border-white/10 bg-white/5 hover:bg-white/10 text-white gap-2"
+              onClick={handlePasskeyLogin}
+              disabled={isSubmitting || !form.watch('email')} // Disable if submitting or email is empty
+            >
+              <Key className="w-4 h-4" />
+              Sign in with Passkey
             </Button>
           </form>
         </Form>
