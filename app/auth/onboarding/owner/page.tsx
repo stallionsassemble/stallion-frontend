@@ -10,13 +10,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { authService } from "@/lib/api/auth";
 import { uploadService } from "@/lib/api/upload";
 import { ownerOnboardingSchema, OwnerOnboardingValues } from "@/lib/schemas/auth";
 import { useAuth } from "@/lib/store/use-auth";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { countries as countriesData } from "countries-list";
-import { Globe, Instagram, Linkedin, Upload, X } from "lucide-react";
+import { Check, ChevronsUpDown, Globe, Instagram, Linkedin, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
