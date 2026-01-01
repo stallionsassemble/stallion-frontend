@@ -5,7 +5,7 @@ import { Clock, Eye, MessageCircle, PinIcon, ThumbsUp, User } from "lucide-react
 import Image from "next/image";
 
 interface DiscussionCardProps {
-  id: number
+  id: string | number;
   title: string;
   description: string;
   author: string;

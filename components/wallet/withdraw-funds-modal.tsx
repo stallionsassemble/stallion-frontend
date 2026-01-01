@@ -1,5 +1,4 @@
-"use client";
-
+import { MfaRequiredDialog } from "@/components/common/mfa-required-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,31 +15,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useGetPayoutMethods, useWithdrawFunds } from "@/lib/api/wallet/queries";
+import { useAuth } from "@/lib/store/use-auth";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DollarSign, Send, Wallet } from "lucide-react"; // Icons
-import { useState } from "react";
+import { DollarSign, Loader2, Send, Wallet } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-// Mock payout methods for selection
-const payoutMethods = [
-  {
-    id: "1",
-    name: "Crypto Wallet",
-    value: "0x742d35Cc6634C0532925a3b844Bc9e7595f2bD38",
-    type: "wallet",
-  },
-  {
-    id: "2",
-    name: "Crypto Wallet",
-    value: "0x742d35Cc6634C0532925a3b844Bc9e7595f2bD38", 2: "wallet", // Typo in original mock data? value usually same
-    type: "wallet",
-  },
-];
-
 const withdrawSchema = z.object({
-  amount: z.string().min(1, "Amount is required"), // String for better control over inputs, parse to number later
+  amount: z.string().min(1, "Amount is required"),
   methodId: z.string().min(1, "Please select a payment method"),
 });
 
@@ -48,24 +33,54 @@ interface WithdrawFundsModalProps {
   isOpen: boolean;
   onClose: () => void;
   availableBalance?: number;
+  currency?: string;
 }
 
-export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 22960.00 }: WithdrawFundsModalProps) {
+export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 0, currency = "USDC" }: WithdrawFundsModalProps) {
   const [step, setStep] = useState<"form" | "success">("form");
   const [withdrawnAmount, setWithdrawnAmount] = useState<string>("0");
+  const { user } = useAuth();
+
+  const { data: payoutMethods = [], isLoading: isLoadingMethods } = useGetPayoutMethods();
+  const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawFunds();
 
   const form = useForm<z.infer<typeof withdrawSchema>>({
     resolver: zodResolver(withdrawSchema),
     defaultValues: {
       amount: "",
-      methodId: "1", // Default to first
+      methodId: "",
     },
   });
 
+  useEffect(() => {
+    if (payoutMethods.length > 0 && !form.getValues("methodId")) {
+      const defaultMethod = payoutMethods.find((m: any) => m.isDefault);
+      if (defaultMethod) {
+        form.setValue("methodId", defaultMethod.id);
+      }
+    }
+  }, [payoutMethods, form]);
+
+  if (isOpen && user && !user.mfaEnabled) {
+    return (
+      <MfaRequiredDialog
+        open={isOpen}
+        onOpenChange={(open) => !open && onClose()}
+      />
+    );
+  }
+
   function onSubmit(values: z.infer<typeof withdrawSchema>) {
-    console.log("Withdraw:", values);
-    setWithdrawnAmount(values.amount);
-    setStep("success");
+    withdraw({
+      amount: Number(values.amount),
+      currency: currency,
+      payoutMethodId: values.methodId
+    }, {
+      onSuccess: () => {
+        setWithdrawnAmount(values.amount);
+        setStep("success");
+      }
+    });
   }
 
   const handleClose = () => {
@@ -77,7 +92,7 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 22960.0
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className={cn(
-        "bg-background sm:max-w-xl p-0 gap-0 border-none",
+        "bg-background p-0 gap-0 border-none",
         step === "success" && "flex flex-col sm:h-[500px]" // Fixed height only on desktop
       )}>
         {/* Header is always visible based on design */}
@@ -127,45 +142,54 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 22960.0
                   )}
                 />
 
-                {/* Payment Method Selection */}
                 <FormField
                   control={form.control}
                   name="methodId"
                   render={({ field }) => (
                     <FormItem className="space-y-3">
-                      <FormMessage /> {/* Show error if any */}
-                      <div className="space-y-3">
-                        {payoutMethods.map((method) => {
-                          const isSelected = field.value === method.id;
-                          return (
-                            <div
-                              key={method.id}
-                              onClick={() => field.onChange(method.id)}
-                              className={cn(
-                                "flex items-center justify-between p-3 sm:p-4 rounded-xl cursor-pointer transition-all",
-                                isSelected
-                                  ? "bg-primary/10 border border-primary"
-                                  : "bg-primary/5"
-                              )}
-                            >
-                              <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0 border border-primary/30">
-                                  <Wallet className="w-5 h-5 text-primary" />
+                      <FormMessage />
+                      <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1">
+                        {isLoadingMethods ? (
+                          <div className="flex flex-col gap-2">
+                            <div className="h-16 w-full bg-muted animate-pulse rounded-xl" />
+                            <div className="h-16 w-full bg-muted animate-pulse rounded-xl" />
+                          </div>
+                        ) : payoutMethods.length === 0 ? (
+                          <div className="text-center p-4 border border-dashed rounded-xl text-muted-foreground text-sm">
+                            No payout methods found. Add one in the Payout tab.
+                          </div>
+                        ) : (
+                          payoutMethods.map((method) => {
+                            const isSelected = field.value === method.id;
+                            return (
+                              <div
+                                key={method.id}
+                                onClick={() => field.onChange(method.id)}
+                                className={cn(
+                                  "flex items-center justify-between p-3 sm:p-4 rounded-xl cursor-pointer transition-all",
+                                  isSelected
+                                    ? "bg-primary/10 border border-primary"
+                                    : "bg-primary/5"
+                                )}
+                              >
+                                <div className="flex items-center gap-4 min-w-0">
+                                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0 border border-primary/30">
+                                    <Wallet className="w-5 h-5 text-primary" />
+                                  </div>
+                                  <div className="text-left overflow-hidden min-w-0">
+                                    <h4 className="text-foreground font-bold font-inter text-base truncate">{method.name}</h4>
+                                    <p className="text-sm font-inter text-muted-foreground truncate max-w-[150px] sm:max-w-xs">{method.publicKey}</p>
+                                  </div>
                                 </div>
-                                <div className="text-left overflow-hidden min-w-0">
-                                  <h4 className="text-foreground font-bold font-inter text-base truncate">{method.name}</h4>
-                                  <p className="text-sm font-inter text-muted-foreground truncate max-w-[180px] sm:max-w-md">{method.value}</p>
+                                <div className={cn(
+                                  "w-5 h-5 rounded-full border-4 flex items-center justify-center bg-background shrink-0",
+                                  isSelected ? "border-foreground bg-transparent" : "border-muted-foreground bg-background"
+                                )}>
+                                  {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                                 </div>
                               </div>
-                              <div className={cn(
-                                "w-5 h-5 rounded-full border-4 flex items-center justify-center bg-background",
-                                isSelected ? "border-foreground bg-transparent" : "border-muted-foreground bg-background"
-                              )}>
-                                {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          }))}
                       </div>
                     </FormItem>
                   )}
@@ -173,9 +197,11 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 22960.0
 
                 <Button
                   type="submit"
+                  disabled={isWithdrawing || payoutMethods.length === 0}
                   className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold text-medium rounded-lg mt-4 gap-2 font-inter"
                 >
-                  <Send className="w-4 h-4" /> Withdraw
+                  {isWithdrawing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  <span>Withdraw</span>
                 </Button>
               </form>
             </Form>

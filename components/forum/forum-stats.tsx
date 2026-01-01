@@ -1,14 +1,17 @@
 "use client";
 
 import { KpiCard } from "@/components/ui/kpi-card";
-import { MessageSquare, Users, MessageSquareText } from "lucide-react";
+import { useGetForumStats } from "@/lib/api/forum/queries";
+import { MessageSquare, MessageSquareText, Users } from "lucide-react";
 
 export function ForumStats() {
+  const { data: stats, isLoading } = useGetForumStats();
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <KpiCard
         label="Total Discussions"
-        value="1,234"
+        value={isLoading ? "..." : (stats?.totalDiscussions || 0).toLocaleString()}
         icon={MessageSquare}
         layout="row"
         iconStyle="standard"
@@ -16,7 +19,7 @@ export function ForumStats() {
       />
       <KpiCard
         label="Active Members"
-        value="600"
+        value={isLoading ? "..." : (stats?.activeMembers || 0).toLocaleString()}
         icon={Users}
         layout="row"
         iconStyle="standard"
@@ -24,7 +27,7 @@ export function ForumStats() {
       />
       <KpiCard
         label="Posts Today"
-        value="45"
+        value={isLoading ? "..." : (stats?.postsToday || 0).toLocaleString()}
         icon={MessageSquareText}
         layout="row"
         iconStyle="standard"
@@ -32,7 +35,7 @@ export function ForumStats() {
       />
       <KpiCard
         label="Online Now"
-        value="89"
+        value={isLoading ? "..." : (stats?.onlineUsers || 0).toLocaleString()}
         icon={Users}
         layout="row"
         iconStyle="standard"
@@ -41,4 +44,3 @@ export function ForumStats() {
     </div>
   );
 }
-

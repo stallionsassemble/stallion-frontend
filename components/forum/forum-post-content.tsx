@@ -2,7 +2,9 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Eye, Heart, MessageCircle, Share2, ThumbsUp, UserCog } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { useUpdateThread } from "@/lib/api/forum/queries";
+import { Clock, Eye, Heart, Loader2, MessageCircle, Share2, ThumbsUp, UserCog } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -10,37 +12,71 @@ interface ForumPostContentProps {
   title: string;
   category: string;
   author: string;
+  authorId?: string;
+  threadId?: string;
+  currentUserId?: string;
   timeAgo: string;
   views: number;
   likes: number;
   replies: number;
-  content: React.ReactNode;
+  content: string;
+  isAdmin?: boolean;
+  isEditing: boolean;
+  setIsEditing: (value: boolean) => void;
 }
 
 export function ForumPostContent({
   title,
   category,
   author,
+  authorId,
+  threadId,
+  currentUserId,
   timeAgo,
   views,
   likes,
   replies,
   content,
+  isAdmin,
+  isEditing,
+  setIsEditing,
 }: ForumPostContentProps) {
   const [isLiked, setIsLiked] = useState(false);
+  // const [isEditing, setIsEditing] = useState(false); // Managed by parent
+  const [editContent, setEditContent] = useState(content);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { mutate: updateThread, isPending: isUpdating } = useUpdateThread();
+
+  const handleUpdate = () => {
+    if (!threadId) return;
+    updateThread({
+      id: threadId,
+      payload: { content: editContent }
+    }, {
+      onSuccess: () => setIsEditing(false)
+    });
+  };
+
+  const isOwner = currentUserId === authorId;
 
   return (
     <div className="space-y-6">
       {/* Header Info */}
       <div className="space-y-4">
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary" className="bg-amber-900 border-[1.19px] text-foreground font-inter text-[10px]">
-            <UserCog className="h-3 w-3" />
-            Admin
-          </Badge>
-          <Badge variant="secondary" className="bg-primary/40 border-[1.19px] text-foreground font-inter text-[10px]">
-            {category}
-          </Badge>
+        <div className="flex flex-wrap gap-2 justify-between">
+          <div className="flex gap-2">
+            {isAdmin && (
+              <Badge variant="secondary" className="bg-amber-900 border-[1.19px] text-foreground font-inter text-[10px]">
+                <UserCog className="h-3 w-3" />
+                Admin
+              </Badge>
+            )}
+            <Badge variant="secondary" className="bg-primary/40 border-[1.19px] text-foreground font-inter text-[10px]">
+              {category}
+            </Badge>
+          </div>
+
+          {/* Internal Actions removed - moved to Page Header */}
         </div>
 
         <h1 className="text-2xl md:text-[32px] font-bold text-foreground leading-tight -tracking-[4%] font-inter">
@@ -58,10 +94,12 @@ export function ForumPostContent({
             {/* Row 1: Username & Badge */}
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-foreground font-bold font-inter">@{author}</span>
-              <Badge className="h-5 px-2 bg-amber-900 border-none text-foreground hover:bg-[#5A3318]/40 gap-1 rounded-full">
-                <UserCog className="h-3 w-3" />
-                <span className="text-[10px] font-medium font-inter">Admin</span>
-              </Badge>
+              {isAdmin && (
+                <Badge className="h-5 px-2 bg-amber-900 border-none text-foreground hover:bg-[#5A3318]/40 gap-1 rounded-full">
+                  <UserCog className="h-3 w-3" />
+                  <span className="text-[10px] font-medium font-inter">Admin</span>
+                </Badge>
+              )}
             </div>
 
             {/* Row 2: Stats */}
@@ -89,34 +127,82 @@ export function ForumPostContent({
 
       {/* Post Content & Actions Container */}
       <div className="border-[0.68px] border-primary/50 rounded-[10px] overflow-hidden bg-card/30">
-        <div className="prose prose-invert max-w-none p-4 md:p-8 font-inter text-muted-foreground font-light text-[14px] leading-relaxed">
-          {content}
-        </div>
+
+        {isEditing ? (
+          <div className="p-4 md:p-8 space-y-4">
+            <Textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="bg-muted/50 min-h-[200px]"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleUpdate} disabled={isUpdating}>
+                {isUpdating && <Loader2 className="h-3 w-3 animate-spin mr-2" />}
+                Save
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 md:p-8 font-inter text-muted-foreground font-light text-[14px] leading-relaxed whitespace-pre-wrap">
+            <div className="prose prose-invert max-w-none">
+              {isExpanded ? content : (
+                content.length > 180 ? (
+                  <>
+                    {content.substring(0, 180)}...
+                    <Button
+                      variant="link"
+                      className="px-1 h-auto font-normal text-primary"
+                      onClick={() => setIsExpanded(true)}
+                    >
+                      Read more
+                    </Button>
+                  </>
+                ) : content
+              )}
+            </div>
+            {isExpanded && content.length > 180 && (
+              <Button
+                variant="link"
+                className="px-0 h-auto font-normal text-primary mt-2"
+                onClick={() => setIsExpanded(false)}
+              >
+                Show less
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Top Divider (Not Full Width) */}
-        <div className="px-4 md:px-8">
-          <div className="h-[0.68px] bg-primary/50 w-full" />
-        </div>
+        {!isEditing && (
+          <>
+            <div className="px-4 md:px-8">
+              <div className="h-[0.68px] bg-primary/50 w-full" />
+            </div>
 
-        {/* Actions */}
-        <div className="flex items-center py-3 px-4 md:px-8">
-          <Button
-            variant="ghost"
-            onClick={() => setIsLiked(!isLiked)}
-            className={`hover:bg-transparent! gap-1 h-9 px-3 transition-colors ${isLiked ? "text-red-500 hover:text-red-500" : "text-muted-foreground hover:text-muted-foreground"}`}
-          >
-            <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
-            <span>{likes + (isLiked ? 1 : 0)}</span>
-          </Button>
-          <Button variant="ghost" className="text-muted-foreground hover:bg-transparent! hover:text-muted-foreground gap-1 h-9 px-3">
-            <MessageCircle className="h-4 w-4" />
-            <span>{replies}</span>
-          </Button>
-          <Button variant="ghost" className="text-muted-foreground hover:bg-transparent! hover:text-muted-foreground gap-1 h-9 px-3">
-            <Share2 className="h-4 w-4" />
-            <span>Share</span>
-          </Button>
-        </div>
+            {/* Actions */}
+            <div className="flex items-center py-3 px-4 md:px-8">
+              <Button
+                variant="ghost"
+                onClick={() => setIsLiked(!isLiked)}
+                className={`hover:bg-transparent! gap-1 h-9 px-3 transition-colors ${isLiked ? "text-red-500 hover:text-red-500" : "text-muted-foreground hover:text-muted-foreground"}`}
+              >
+                <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+                <span>{likes + (isLiked ? 1 : 0)}</span>
+              </Button>
+              <Button variant="ghost" className="text-muted-foreground hover:bg-transparent! hover:text-muted-foreground gap-1 h-9 px-3">
+                <MessageCircle className="h-4 w-4" />
+                <span>{replies}</span>
+              </Button>
+              <Button variant="ghost" className="text-muted-foreground hover:bg-transparent! hover:text-muted-foreground gap-1 h-9 px-3">
+                <Share2 className="h-4 w-4" />
+                <span>Share</span>
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

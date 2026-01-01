@@ -11,7 +11,6 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -20,23 +19,120 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Info, Plus, Send, Upload } from "lucide-react";
-import { useState } from "react";
+import { useApplyProject } from "@/lib/api/projects/queries";
+import { Info, Loader2, Plus, Send, Upload } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 interface SubmitModalProps {
   children: React.ReactNode;
   type?: "BOUNTY" | "PROJECT";
+  projectId: string; // Required now
+  projectTitle: string;
+  reward: string;
+  currency: string;
 }
 
-export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProps) {
+import { uploadService } from "@/lib/api/upload";
+import { Attachment } from "@/lib/types/project";
+import { X } from "lucide-react";
+import { useRef } from "react";
+
+// ... existing imports ...
+
+export function SubmitBountyModal({
+  children,
+  type = "BOUNTY",
+  projectId,
+  projectTitle,
+  reward,
+  currency
+}: SubmitModalProps) {
   const [open, setOpen] = useState(false);
   const [showCongrats, setShowCongrats] = useState(false);
   const isProject = type === "PROJECT";
 
+  // Form State
+  const [coverLetter, setCoverLetter] = useState("");
+  const [estimateTime, setEstimateTime] = useState("");
+  const [estimateUnit, setEstimateUnit] = useState("days");
+  const [portfolioLink, setPortfolioLink] = useState("");
+  const [portfolioLinks, setPortfolioLinks] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { mutate: applyProject, isPending } = useApplyProject();
+
+  const handleAddLink = () => {
+    if (portfolioLink.trim()) {
+      setPortfolioLinks([...portfolioLinks, portfolioLink.trim()]);
+      setPortfolioLink("");
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setIsUploading(true);
+      try {
+        const files = Array.from(e.target.files);
+        // Upload documents
+        const response = await uploadService.uploadDocuments(files);
+
+        const newAttachments: Attachment[] = response.documents.map(doc => ({
+          filename: doc.originalName,
+          url: doc.url,
+          size: doc.size
+        }));
+
+        setAttachments(prev => [...prev, ...newAttachments]);
+      } catch (error) {
+        console.error("Upload failed", error);
+        // Could add toast here
+      } finally {
+        setIsUploading(false);
+        // Reset input
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = () => {
-    setOpen(false);
-    setShowCongrats(true);
+    if (isProject) {
+      const estimatedDays = parseInt(estimateTime) * (estimateUnit === 'weeks' ? 7 : estimateUnit === 'months' ? 30 : 1);
+
+      applyProject({
+        id: projectId,
+        payload: {
+          coverLetter,
+          estimatedCompletionTime: estimatedDays || 0,
+          portfolioLinks,
+          attachments: attachments
+        }
+      }, {
+        onSuccess: () => {
+          setOpen(false);
+          setShowCongrats(true);
+          // Reset form
+          setCoverLetter("");
+          setEstimateTime("");
+          setPortfolioLinks([]);
+          setAttachments([]);
+        },
+        onError: (err) => {
+          console.error("Failed to apply", err);
+        }
+      });
+    } else {
+      // Logic for Bounty Submission
+      setOpen(false);
+      setShowCongrats(true);
+    }
   };
 
   const renderProjectForm = () => (
@@ -49,12 +145,14 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
           </Label>
         </div>
         <textarea
+          value={coverLetter}
+          onChange={(e) => setCoverLetter(e.target.value)}
           className="flex min-h-[140px] w-full rounded-lg border-[1.19px] border-input bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 font-inter font-normal"
           placeholder="Introduce yourself and explain why you're the best fit for this project. Include relevant experience, approach to the problem and what makes you stand out..."
         />
         <div className="flex justify-between text-[12px] font-inter text-foreground font-light">
           <span>Be specific about your experience and approach</span>
-          <span>180 characters left</span>
+          <span>{coverLetter.length} chars</span>
         </div>
       </div>
 
@@ -70,17 +168,13 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
             </div>
             <input
               type="number"
+              value={estimateTime}
+              onChange={(e) => setEstimateTime(e.target.value)}
               className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground appearance-none"
               placeholder="Enter time"
             />
-            <div className="px-3 py-2.5 flex items-center justify-center text-gray-500">
-              <div className="flex flex-col gap-0.5">
-                <div className="h-1 w-2 bg-gray-600 rounded-full" />
-                <div className="h-1 w-2 bg-gray-600 rounded-full" />
-              </div>
-            </div>
           </div>
-          <Select defaultValue="days">
+          <Select value={estimateUnit} onValueChange={setEstimateUnit}>
             <SelectTrigger className="w-[110px] bg-transparent border-[1.19px] border-input text-foreground h-[42px]">
               <SelectValue placeholder="Unit" />
             </SelectTrigger>
@@ -98,43 +192,89 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
         <Label className="text-foreground text-[16px] font-medium font-inter">
           Portfolio Links <span className="text-destructive">*</span>
         </Label>
-        <p className="-mt-2 text-[12px] text-foreground font-light font-inter">Attach relevant documents, portfolio samples, or certifications (max 5 files)</p>
         <div className="flex gap-3 items-center">
-          <Input
-            className="bg-transparent border-[1.19px] border-input text-foreground placeholder:text-muted-foreground h-[42px] flex-1"
-            placeholder="Link title"
-          />
           <div className="flex-1 flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary h-[42px]">
             <input
+              value={portfolioLink}
+              onChange={(e) => setPortfolioLink(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddLink()}
               className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground"
               placeholder="https://"
             />
           </div>
-          <Button variant="secondary" className="h-[42px] w-[42px] p-0 bg-secondary hover:bg-secondary/90">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleAddLink}
+            className="h-[42px] w-[42px] p-0 bg-secondary hover:bg-secondary/90"
+          >
             <Plus className="h-4 w-4 text-muted-foreground" />
           </Button>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {portfolioLinks.map((link, i) => (
+            <div key={i} className="bg-primary/10 text-primary text-xs px-2 py-1 rounded flex items-center gap-1">
+              <span className="truncate max-w-[200px]">{link}</span>
+              <button
+                onClick={() => setPortfolioLinks(links => links.filter((_, idx) => idx !== i))}
+                className="hover:text-red-500"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Additional Attachments */}
       <div className="space-y-1">
         <Label className="text-foreground text-[16px] font-medium">
-          Additional Attachments (Optional) <span className="text-destructive">*</span>
+          Additional Attachments (Optional)
         </Label>
-        <p className="-mt-2 text-[12px] text-foreground font-light font-inter">Attach relevant documents, portfolio samples, or certifications (max 5 files)</p>
-        <div className="mt-2 flex h-[98px] items-center gap-4 rounded-lg border border-dashed border-input bg-transparent px-6 transition-colors hover:bg-background/90 cursor-pointer group">
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="mt-2 flex h-[98px] items-center gap-4 rounded-lg border border-dashed border-input bg-transparent px-6 transition-colors hover:bg-background/90 cursor-pointer group"
+        >
           <div className="h-12 w-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center group-hover:bg-primary/90 shrink-0">
-            <Upload className="h-6 w-6" />
+            {isUploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Upload className="h-6 w-6" />}
           </div>
           <div className="flex flex-col gap-1">
             <div className="text-[14px] text-foreground font-medium font-inter">
-              Choose or drag and drop media
+              {isUploading ? "Uploading..." : "Choose or drag and drop media"}
             </div>
             <div className="text-[12px] text-muted-foreground font-inter font-light">
               Maximum size 5 MB
             </div>
           </div>
+          <input
+            type="file"
+            multiple
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileSelect}
+            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+          />
         </div>
+
+        {/* Uploaded Files List */}
+        {attachments.length > 0 && (
+          <div className="space-y-2 mt-4">
+            {attachments.map((file, i) => (
+              <div key={i} className="flex items-center justify-between p-2 rounded bg-muted/30 border border-border">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className="bg-primary/10 p-1.5 rounded">
+                    <Upload className="h-3 w-3 text-primary" />
+                  </div>
+                  <span className="text-sm truncate max-w-[200px]">{file.filename}</span>
+                  <span className="text-xs text-muted-foreground">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                </div>
+                <button onClick={() => removeAttachment(i)} className="text-muted-foreground hover:text-destructive p-1">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -143,9 +283,6 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
     <div className="p-6 space-y-5">
       {/* Bounty specific fields... for brevity keeping similar structure or just mocking standard ones if needed, 
           but to respect existing functionality I'll paste the previous 'generic' ones or cleaned up versions.
-          Since I'm overwriting, I should ideally preserve the 'Bounty' form if it was valuable.
-          The previous file had many fields. I'll include a concise version or the same fields if I have them in context.
-          I have them in the context above (Step 2168).
       */}
       {/* Main Project URL */}
       <div className="space-y-2">
@@ -166,13 +303,6 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
           <input className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground" placeholder="Repository Link" />
         </div>
       </div>
-      {/* Attachments for Bounty */}
-      <div className="space-y-2">
-        <Label className="text-foreground text-sm font-semibold">Attachments</Label>
-        <div className="mt-2 flex h-24 flex-col items-center justify-center rounded-lg border-dashed border-[1.19px] border-input bg-transparent hover:bg-background/80 cursor-pointer group">
-          <div className="text-sm text-muted-foreground">Drag & drop files</div>
-        </div>
-      </div>
     </div>
   );
 
@@ -184,15 +314,15 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
           <DialogHeader className="p-6 border-b border-border relative">
             <div className="flex items-center gap-1 mb-2 font-inter">
               <Badge className="bg-primary/50 hover:bg-primary/60 text-foreground rounded-[13.7px] px-2 py-0.5 font-bold text-xs tracking-[-4%]">
-                $3,500
-                <span className="text-[8px] font-medium opacity-80 bg-primary text-center rounded-[3422.21px] ml-1 px-1">USDC</span>
+                {reward}
+                <span className="text-[8px] font-medium opacity-80 bg-primary text-center rounded-[3422.21px] ml-1 px-1">{currency}</span>
               </Badge>
             </div>
             <DialogTitle className="text-2xl font-bold text-foreground">
               {isProject ? "Apply for Project" : "Bounty Submission"}
             </DialogTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {isProject ? "Submit your application for" : "Submit your work for"} <span className="text-foreground font-medium">React Dashboard UI Design</span>
+              {isProject ? "Submit your application for" : "Submit your work for"} <span className="text-foreground font-medium">{projectTitle}</span>
             </p>
           </DialogHeader>
 
@@ -202,8 +332,10 @@ export function SubmitBountyModal({ children, type = "BOUNTY" }: SubmitModalProp
             <Button
               className="w-full bg-primary hover:bg-primary/90 font-bold h-12 text-base rounded-lg flex items-center justify-center gap-2 text-primary-foreground"
               onClick={handleSubmit}
+              disabled={isProject && isPending}
             >
-              <Send className="h-5 w-5" /> {isProject ? "Submit Application" : "Submit Bounty"}
+              {isProject && isPending ? <Loader2 className="animate-spin h-5 w-5" /> : <Send className="h-5 w-5" />}
+              {isProject ? (isPending ? "Applying..." : "Submit Application") : "Submit Bounty"}
             </Button>
           </DialogFooter>
           <div className="px-6 pb-6 text-center text-[10px] text-muted-foreground">

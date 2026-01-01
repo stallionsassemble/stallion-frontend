@@ -1,18 +1,20 @@
 "use client";
 
-import { LeaderboardUser } from "@/app/dashboard/leaderboard/types";
+import { LeaderboardEntry } from "@/lib/types/reputation";
 import { LeaderboardRow } from "./leaderboard-row";
 
 interface LeaderboardListProps {
-  users: LeaderboardUser[];
+  users: LeaderboardEntry[];
 }
 
 export function LeaderboardList({ users }: LeaderboardListProps) {
   return (
-    <div className="flex flex-col gap-3">
-      {users.map((user) => (
-        <LeaderboardRow key={user.rank} user={user} />
-      ))}
+    <div className="overflow-x-auto pb-4">
+      <div className="min-w-[800px] flex flex-col gap-3">
+        {users.map((user) => (
+          <LeaderboardRow key={user.rank} user={user} />
+        ))}
+      </div>
     </div>
   );
 }

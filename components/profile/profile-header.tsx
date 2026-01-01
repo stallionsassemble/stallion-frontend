@@ -1,17 +1,53 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { chatService } from "@/lib/api/chat";
+import { useMyReputation } from "@/lib/api/reputation/queries";
 import { useAuth } from "@/lib/store/use-auth";
-import { Edit, UserStar } from "lucide-react";
+import { User } from "@/lib/types";
+import { Reputation } from "@/lib/types/reputation";
+import { Edit, MessageSquare, UserStar } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { EditProfileDialog } from "./edit-profile-dialog";
 
-export function ProfileHeader() {
-  const { user } = useAuth();
+interface ProfileHeaderProps {
+  userData?: User;
+  reputationData?: Reputation;
+}
+
+export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) {
+  const { user: authUser } = useAuth();
+  const { data: myReputation } = useMyReputation();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const router = useRouter();
+
+  const user = userData || authUser;
+  const reputation = reputationData || myReputation;
+  const isOwnProfile = !userData || (authUser && userData.id === authUser.id);
+
   const fullName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : "User";
   const username = user?.username ? `@${user.username}` : "";
-  console.log("User", user)
+
+  const handleMessage = async () => {
+    if (!user || !authUser) return;
+    try {
+      // Create or get conversation
+      const conversation = await chatService.createConversation({
+        type: 'GROUP', // API seems to require GROUP even for DM based on types? Or maybe defaults handle it. 
+        // Checking types, it asks for 'GROUP', participantIds, name. 
+        // A DM creation usually just needs participantIds.
+        // Let's assume standard behavior: single participant ID for DM or array.
+        participantIds: [user.id],
+        name: `${fullName}`,
+      });
+      router.push(`/dashboard/chat?id=${conversation.id}`);
+    } catch (error) {
+      console.error("Failed to start conversation", error);
+      toast.error("Failed to start conversation");
+    }
+  };
 
   return (
     <div className="relative w-full mb-8">
@@ -24,19 +60,31 @@ export function ProfileHeader() {
             backgroundSize: "24px 24px"
           }}
         />
-        {/* Blue gradient overlay if needed, or stick to solid color pattern */}
       </div>
 
       <div className="px-6 relative">
-        {/* Mobile Edit Profile Button */}
-        <Button
-          variant="outline"
-          onClick={() => setIsEditDialogOpen(true)}
-          className="md:hidden absolute right-6 top-20 flex gap-2 border-white/20 hover:bg-white/10 text-white hover:text-white bg-transparent h-9 px-4 text-xs font-medium transition-colors z-10"
-        >
-          <Edit className="w-3 h-3" />
-          Edit Profile
-        </Button>
+        {/* Mobile Actions */}
+        <div className="md:hidden absolute right-6 top-20 flex gap-2 z-10">
+          {isOwnProfile ? (
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(true)}
+              className="flex gap-2 border-white/20 hover:bg-white/10 text-white hover:text-white bg-transparent h-9 px-4 text-xs font-medium transition-colors"
+            >
+              <Edit className="w-3 h-3" />
+              Edit Profile
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={handleMessage}
+              className="flex gap-2 border-white/20 hover:bg-white/10 text-white hover:text-white bg-transparent h-9 px-4 text-xs font-medium transition-colors"
+            >
+              <MessageSquare className="w-3 h-3" />
+              Message
+            </Button>
+          )}
+        </div>
 
         <div className="flex flex-col md:flex-row items-start -mt-16 md:-mt-[100px] mb-4 gap-6">
           {/* Avatar */}
@@ -66,39 +114,56 @@ export function ProfileHeader() {
                 </p>
               </div>
 
-              {/* Edit Profile Button (Desktop) */}
+              {/* Desktop Actions */}
               <div className="flex md:flex-col md:items-end justify-start md:justify-start mt-4 md:mt-0">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditDialogOpen(true)}
-                  className="hidden md:flex gap-2 border-white/20 hover:bg-white/10 text-white hover:text-white bg-transparent h-9 px-4 text-xs font-medium transition-colors"
-                >
-                  <Edit className="w-3 h-3" />
-                  Edit Profile
-                </Button>
+                {isOwnProfile ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsEditDialogOpen(true)}
+                    className="hidden md:flex gap-2 border-white/20 hover:bg-white/10 text-white hover:text-white bg-transparent h-9 px-4 text-xs font-medium transition-colors"
+                  >
+                    <Edit className="w-3 h-3" />
+                    Edit Profile
+                  </Button>
+                ) : (
+                  <Button
+                    variant="default"
+                    onClick={handleMessage}
+                    className="hidden md:flex gap-2 h-9 px-6 text-xs font-medium transition-colors"
+                  >
+                    <MessageSquare className="w-3 h-3" />
+                    Message
+                  </Button>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Stats Row - Underneath Info - Mocked for now as requested */}
+        {/* Stats Row */}
         <div className="flex flex-wrap items-center justify-between md:justify-start gap-4 md:gap-20 mt-4 md:pl-[224px]">
-          {/* Bounties */}
+          {/* Bounty Score */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-lg font-bold font-inter text-foreground leading-none tracking-[-0.57px] text-center">24</span>
-            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Bounties</span>
+            <span className="text-lg font-bold font-inter text-foreground leading-none tracking-[-0.57px] text-center">
+              {reputation?.bountyScore || 0}
+            </span>
+            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Bounty Score</span>
           </div>
 
-          {/* Earned */}
+          {/* Reputation */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-lg font-bold font-inter text-[#0066FF] leading-none tracking-[-0.57px] text-center">$45,800</span>
-            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Earned</span>
+            <span className="text-lg font-bold font-inter text-[#0066FF] leading-none tracking-[-0.57px] text-center">
+              {reputation?.score || 0}
+            </span>
+            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Reputation</span>
           </div>
 
-          {/* Rating */}
+          {/* Level */}
           <div className="flex flex-col items-center gap-1">
-            <span className="text-lg font-bold font-inter text-foreground leading-none tracking-[-0.57px] text-center">4.9</span>
-            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Rating</span>
+            <span className="text-lg font-bold font-inter text-foreground leading-none tracking-[-0.57px] text-center">
+              {reputation?.level || 0}
+            </span>
+            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Level</span>
           </div>
 
           {/* Member Since */}
@@ -111,7 +176,7 @@ export function ProfileHeader() {
         </div>
       </div>
 
-      {user && (
+      {isOwnProfile && user && (
         <EditProfileDialog
           user={user}
           open={isEditDialogOpen}

@@ -15,13 +15,32 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useNotifications, useUnreadNotificationsCount } from "@/lib/api/notifications/queries";
+import { Notification } from "@/lib/types/notifications";
+import { formatDistanceToNow } from "date-fns";
+import { Loader2 } from "lucide-react";
+
+// Helper for icon (duplicated locally for simplicity or could be extracted)
+const getNotificationIcon = (type: string) => {
+  switch (type) {
+    case 'PAYMENT_RECEIVED':
+      return <DollarSign className="h-4 w-4" />;
+    case 'BOUNTY_MATCH':
+      return <User className="h-4 w-4" />;
+    default:
+      return <Bell className="h-4 w-4" />;
+  }
+};
+
 export function Header() {
   const pathname = usePathname();
   const { logout, user } = useAuth();
   const { toggleSidebar } = useUI();
 
-  // Helper to determine page title from pathname
-  // This is a simple implementation, can be replaced with a more robust breadcrumb system
+  const { data: unreadCount = 0 } = useUnreadNotificationsCount();
+  const { data: notifications = [], isLoading: isLoadingNotifications } = useNotifications();
+
+  // Helper to determine page title from pathname...
   const getPageTitle = (path: string) => {
     switch (path) {
       case "/dashboard":
@@ -50,6 +69,9 @@ export function Header() {
   };
 
   const pageTitle = getPageTitle(pathname);
+
+  // Filter for top 5 recent notifications for the dropdown
+  const recentNotifications = notifications.slice(0, 5);
 
   return (
     <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-border bg-background/80 backdrop-blur-md px-4 md:px-8">
@@ -84,114 +106,61 @@ export function Header() {
           <Search className="h-4 w-4" />
         </Button>
 
-        {/* Wallet Address Button - Hidden as per design */}
-        {/* <button className="hidden md:flex items-center gap-3 rounded-full border border-background bg-transparent px-4 py-2 transition-colors hover:bg-muted/50">
-          <div className="h-2 w-2 rounded-full bg-background"></div>
-          <span className="text-sm font-medium text-muted-foreground">Wallet Address</span>
-          <span className="text-sm font-medium text-muted-foreground/50">G...X4KL</span>
-        </button> */}
-
-        {/* Theme Toggle - Hidden as per design */}
-        {/* <ThemeToggle /> */}
-
         {/* Notification Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative text-foreground hover:text-foreground">
               <Bell className="h-5 w-5" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#0066FF] border border-background"></span>
+              {unreadCount > 0 && (
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#0066FF] border border-background"></span>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[320px] bg-popover border-border text-popover-foreground p-0 shadow-2xl flex flex-col rounded-xl overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/[0.08]">
               <span className="font-bold text-base">Notifications</span>
-              <span className="text-xs bg-secondary text-secondary-foreground px-3 py-1 rounded-full border border-border">2 News</span>
+              {unreadCount > 0 && (
+                <span className="text-xs bg-secondary text-secondary-foreground px-3 py-1 rounded-full border border-border">{unreadCount} New</span>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto max-h-[400px] py-2 flex flex-col gap-2">
-              {/* Payment Received Notification - Blue Highlight */}
-              <div className="w-[290px] h-[60px] mx-auto px-3 rounded-lg bg-primary text-primary-foreground flex gap-3 items-center relative group cursor-pointer transition-transform active:scale-[0.98] shrink-0">
-                {/* Icon */}
-                <div className="h-8 w-8 rounded-full border border-primary-foreground/30 flex items-center justify-center shrink-0">
-                  <DollarSign className="h-4 w-4" />
+              {isLoadingNotifications ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <div className="flex justify-between items-center w-full">
-                    <h5 className="text-[12px] font-bold leading-none truncate pr-2">Payment Received</h5>
-                    <span className="text-[9px] opacity-80 shrink-0">2h ago</span>
-                  </div>
-                  <p className="text-[10px] opacity-90 font-light truncate leading-tight mt-1">You received 500 USDC for Summer...</p>
+              ) : recentNotifications.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                  <Bell className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                  <p className="text-sm text-muted-foreground">No notifications yet</p>
                 </div>
+              ) : (
+                recentNotifications.map((notification: Notification) => (
+                  <Link href="/dashboard/notifications" key={notification.id} className="block">
+                    <div className={`w-[290px] h-[60px] mx-auto px-3 rounded-lg flex gap-3 items-center relative group cursor-pointer shrink-0 transition-colors ${!notification.isRead ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-muted/50'}`}>
+                      {/* Icon */}
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${notification.type === 'PAYMENT_RECEIVED' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
+                        {getNotificationIcon(notification.type)}
+                      </div>
 
-                {/* Dot */}
-                <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground shrink-0" />
-              </div>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <div className="flex justify-between items-center w-full">
+                          <h5 className="text-[12px] font-bold leading-none truncate pr-2 text-foreground">{notification.title}</h5>
+                          <span className="text-[9px] text-muted-foreground shrink-0">{formatDistanceToNow(new Date(notification.createdAt), { addSuffix: false }).replace('about ', '')}</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground font-light truncate leading-tight mt-1">{notification.message}</p>
+                      </div>
 
-              {/* Generic Notification 1 */}
-              <div className="w-[290px] h-[60px] mx-auto px-3 rounded-lg hover:bg-muted/50 transition-colors flex gap-3 items-center relative group cursor-pointer shrink-0">
-                {/* Icon */}
-                <div className="h-8 w-8 relative shrink-0 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                  <div className="absolute -bottom-0.5 -right-0.5 text-[8px]">⭐</div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <div className="flex justify-between items-center w-full">
-                    <h5 className="text-[12px] font-bold text-foreground leading-none truncate pr-2">New bounty matches your...</h5>
-                    <span className="text-[9px] text-muted-foreground shrink-0">1d ago</span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground font-light truncate leading-tight mt-1">Techbrands - Design of new company...</p>
-                </div>
-
-                {/* Dot */}
-                <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-              </div>
-
-              {/* Generic Notification 2 */}
-              <div className="w-[290px] h-[60px] mx-auto px-3 rounded-lg hover:bg-muted/50 transition-colors flex gap-3 items-center relative group cursor-pointer shrink-0">
-                {/* Icon */}
-                <div className="h-8 w-8 relative shrink-0 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                  <div className="absolute -bottom-0.5 -right-0.5 text-[8px]">⭐</div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <div className="flex justify-between items-center w-full">
-                    <h5 className="text-[12px] font-bold text-foreground leading-none truncate pr-2">New bounty matches your...</h5>
-                    <span className="text-[9px] text-muted-foreground shrink-0">1d ago</span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground font-light truncate leading-tight mt-1">Techbrands - Design of new company...</p>
-                </div>
-
-                {/* Dot */}
-                <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-              </div>
-
-              {/* Generic Notification 3 */}
-              <div className="w-[290px] h-[60px] mx-auto px-3 rounded-lg hover:bg-muted/50 transition-colors flex gap-3 items-center relative group cursor-pointer shrink-0">
-                {/* Icon */}
-                <div className="h-8 w-8 relative shrink-0 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                  <div className="absolute -bottom-0.5 -right-0.5 text-[8px]">⭐</div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <div className="flex justify-between items-center w-full">
-                    <h5 className="text-[12px] font-bold text-foreground leading-none truncate pr-2">New bounty matches your...</h5>
-                    <span className="text-[9px] text-muted-foreground shrink-0">1d ago</span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground font-light truncate leading-tight mt-1">Techbrands - Design of new company...</p>
-                </div>
-
-                {/* Dot */}
-                <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-              </div>
+                      {/* Dot */}
+                      {!notification.isRead && (
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                      )}
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
 
             {/* Footer */}

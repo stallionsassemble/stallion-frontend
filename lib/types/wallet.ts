@@ -41,8 +41,37 @@ export interface WalletTransaction {
 
 export type WalletTransactions = WalletTransaction[]
 
+export interface SyncWalletResponse {
+  synced: boolean
+  activated: boolean
+  transactionsSynced: boolean
+}
+
+export interface WalletTrustlineResponse {
+  success: boolean
+  txHash: string
+  message: string
+}
+
 export interface WithdrawFundPayload {
   amount: number
   currency: string
-  destination: string
+  payoutMethodId: string
 }
+
+export interface PayoutMethodPayload {
+  name: string
+  publicKey: string
+  isDefault: boolean
+}
+
+export interface PayoutMethod {
+  id: string
+  name: string
+  publicKey: string
+  isDefault: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type PayoutMethods = PayoutMethod[]

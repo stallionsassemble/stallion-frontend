@@ -1,6 +1,6 @@
 'use client'
 
-import { CreateMessagePayload } from '@/lib/types'
+import { SendMessagePayload } from '@/lib/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { chatService } from './index'
 
@@ -35,7 +35,7 @@ export function useSendMessage() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: CreateMessagePayload) => chatService.sendMessage(data),
+    mutationFn: (data: SendMessagePayload) => chatService.sendMessage(data),
     onSuccess: (newMessage, variables) => {
       // Invalidate messages for this conversation
       queryClient.invalidateQueries({
@@ -46,5 +46,47 @@ export function useSendMessage() {
         queryKey: chatKeys.conversations(),
       })
     },
+  })
+}
+
+export function useMarkAsRead() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (conversationId: string) =>
+      chatService.markAsRead(conversationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: chatKeys.conversations() })
+    },
+  })
+}
+
+export function useUpdateMessage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, content }: { id: string; content: string }) =>
+      chatService.updateMessage(id, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'messages'] })
+    },
+  })
+}
+
+export function useDeleteMessage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => chatService.deleteMessage(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'messages'] })
+      queryClient.invalidateQueries({ queryKey: chatKeys.conversations() })
+    },
+  })
+}
+
+// Search
+export function useSearchMessages(conversationId: string, query: string) {
+  return useQuery({
+    queryKey: [...chatKeys.messages(conversationId), 'search', query],
+    queryFn: () => chatService.searchMessages(conversationId, query),
+    enabled: !!conversationId && !!query,
   })
 }

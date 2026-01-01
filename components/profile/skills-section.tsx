@@ -3,9 +3,13 @@
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/store/use-auth";
 
-export function SkillsSection() {
+interface SkillsSectionProps {
+  skills?: string[];
+}
+
+export function SkillsSection({ skills: propSkills }: SkillsSectionProps) {
   const { user } = useAuth();
-  const skills = user?.skills || [];
+  const skills = propSkills || user?.skills || [];
   return (
     <div className="border-[0.68px] border-primary/20 rounded-xl p-6 mb-6 bg-background">
       <h3 className="text-lg font-bold font-inter mb-4 text-foreground">Skills & Expertise</h3>

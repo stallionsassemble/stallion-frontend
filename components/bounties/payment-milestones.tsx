@@ -3,11 +3,11 @@
 import { Flag } from "lucide-react";
 
 export interface Milestone {
-  id: number;
+  id: number | string;
   title: string;
   dueDate: string;
   amount: string;
-  status: "completed" | "pending" | "locked";
+  status: string;
 }
 
 interface PaymentMilestonesProps {

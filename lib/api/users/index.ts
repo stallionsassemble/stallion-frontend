@@ -7,8 +7,24 @@ export class UserService {
     return response.data
   }
 
-  async updateUser(id: string, data: Partial<User>) {
-    const response = await api.patch<User>(`/users/${id}`, data)
+  async getUserByUsername(username: string) {
+    const response = await api.get<User>(`/users/${username}`)
+    return response.data
+  }
+
+  async updateContributorProfile(data: Partial<User>) {
+    const response = await api.patch<{ message: string }>(
+      `/settings/profile/contributor`,
+      data
+    )
+    return response.data
+  }
+
+  async updateOwnerProfile(data: Partial<User>) {
+    const response = await api.patch<{ message: string }>(
+      `/settings/profile/project-owner`,
+      data
+    )
     return response.data
   }
 

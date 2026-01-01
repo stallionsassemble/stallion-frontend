@@ -4,12 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/store/use-auth";
-import { Conversation } from "@/lib/types";
+import { ConversationSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Search, SearchX, UserCog } from "lucide-react";
 
 interface MessagesSidebarProps {
-  conversations: Conversation[];
+  conversations: ConversationSummary[];
   selectedId: string;
   onSelect: (id: string) => void;
 }
@@ -17,9 +17,9 @@ interface MessagesSidebarProps {
 export function MessagesSidebar({ conversations, selectedId, onSelect }: MessagesSidebarProps) {
   const { user: currentUser } = useAuth();
 
-  const getPartner = (participants: Conversation['participants']) => {
+  const getPartner = (participants: ConversationSummary['participants']) => {
     if (!currentUser) return participants[0]?.user;
-    const partner = participants.find((p) => p.user.id !== currentUser.id);
+    const partner = participants.find((p) => p.userId !== currentUser.id);
     return partner ? partner.user : participants[0]?.user;
   };
 
@@ -52,7 +52,7 @@ export function MessagesSidebar({ conversations, selectedId, onSelect }: Message
             // TODO: Fallback if partner is missing?
             if (!partner) return null;
 
-            const lastMessage = conv.messages?.[0]?.content || "No messages yet";
+            const lastMessage = conv.lastMessage?.content || "No messages yet";
             const isAdmin = false; // TODO: Check if user is admin from their role?
 
             return (
@@ -67,17 +67,9 @@ export function MessagesSidebar({ conversations, selectedId, onSelect }: Message
                 {/* Avatar */}
                 <div className="relative shrink-0">
                   <div className="h-12 w-12 rounded-full overflow-hidden border border-primary/20 bg-muted">
-                    {partner.profilePicture ? (
-                      <img
-                        src={partner.profilePicture}
-                        className="w-full h-full object-cover"
-                        alt={partner.username}
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center w-full h-full bg-primary/20 text-primary font-bold">
-                        {partner.firstName?.[0] || partner.username?.[0] || "?"}
-                      </div>
-                    )}
+                    <div className="flex items-center justify-center w-full h-full bg-primary/20 text-primary font-bold">
+                      {partner.firstName?.[0] || partner.username?.[0] || "?"}
+                    </div>
                   </div>
                 </div>
 

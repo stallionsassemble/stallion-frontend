@@ -76,51 +76,6 @@ export interface PagedResponse<T> {
   }
 }
 
-// --- Chat Types ---
-export interface Conversation {
-  id: string
-  createdAt: string
-  updatedAt: string
-  participants: {
-    user: {
-      id: string
-      username: string
-      firstName: string | null
-      lastName: string | null
-      profilePicture: string | null
-    }
-  }[]
-  messages: Message[]
-  unreadCount?: number
-  lastReadAt?: string | null
-}
-
-export interface Message {
-  id: string
-  content: string
-  createdAt: string
-  sender: {
-    id: string
-    username: string
-    firstName: string | null
-    lastName: string | null
-  }
-}
-
-export interface CreateConversationPayload {
-  participantIds: string[]
-  initialMessage?: string
-}
-
-export interface CreateMessagePayload {
-  conversationId: string
-  content: string
-}
-
-export interface UpdateMessagePayload {
-  content: string
-}
-
 // --- Forum Types ---
 export interface Category {
   id: string
@@ -195,3 +150,5 @@ export interface CreatePostPayload {
 export interface UpdatePostPayload {
   content: string
 }
+
+export * from './chat'

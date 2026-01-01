@@ -83,6 +83,8 @@ const sidebarItems = [
   },
 ];
 
+import { useConversations } from "@/lib/api/chat/queries";
+import { useUnreadNotificationsCount } from "@/lib/api/notifications/queries";
 import { useUI } from "@/lib/store/use-ui";
 
 // ... existing imports
@@ -94,6 +96,10 @@ interface SidebarContentProps {
 
 function SidebarContent({ onLinkClick, isCollapsed = false }: SidebarContentProps) {
   const pathname = usePathname();
+  const { data: unreadNotificationsCount = 0 } = useUnreadNotificationsCount();
+  const { data: conversations = [] } = useConversations();
+
+  const unreadMessagesCount = conversations.reduce((acc, curr) => acc + (curr.unreadCount || 0), 0);
 
   return (
     <div className="flex h-full flex-col bg-background">
@@ -120,6 +126,18 @@ function SidebarContent({ onLinkClick, isCollapsed = false }: SidebarContentProp
       <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
         {sidebarItems.map((item) => {
           const isActive = pathname === item.href;
+          // Dynamic badge logic
+          let currentBadge = item.badge;
+          if (item.title === "Notification" && unreadNotificationsCount > 0) {
+            currentBadge = unreadNotificationsCount;
+          } else if (item.title === "Notification") {
+            currentBadge = undefined;
+          } else if (item.title === "Messages" && unreadMessagesCount > 0) {
+            currentBadge = unreadMessagesCount;
+          } else if (item.title === "Messages") {
+            currentBadge = undefined;
+          }
+
           return (
             <Link
               key={item.href}
@@ -141,9 +159,9 @@ function SidebarContent({ onLinkClick, isCollapsed = false }: SidebarContentProp
                 />
                 {!isCollapsed && <span>{item.title}</span>}
               </div>
-              {!isCollapsed && item.badge && (
+              {!isCollapsed && currentBadge && (
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                  {item.badge}
+                  {currentBadge}
                 </span>
               )}
             </Link>

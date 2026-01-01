@@ -1,5 +1,6 @@
 "use client";
 
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,8 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { authService } from "@/lib/api/auth";
+import { uploadService } from "@/lib/api/upload";
+import { useUpdateContributorProfile, useUpdateOwnerProfile } from "@/lib/api/users/queries";
 import { profileSchema, ProfileValues } from "@/lib/schemas/profile";
 import { useAuth } from "@/lib/store/use-auth";
 import { cn } from "@/lib/utils";
@@ -67,7 +70,10 @@ interface ProfileSettingsFormProps {
 }
 
 export function ProfileSettingsForm({ onAfterSave }: ProfileSettingsFormProps) {
-  const { user } = useAuth();
+  const { user, checkAuth } = useAuth();
+  const updateContributor = useUpdateContributorProfile();
+  const updateOwner = useUpdateOwnerProfile();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>("https://avatar.vercel.sh/johndoe");
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -117,17 +123,72 @@ export function ProfileSettingsForm({ onAfterSave }: ProfileSettingsFormProps) {
     }
   }, [user, form]);
 
-  const onSubmit = (data: ProfileValues) => {
-    console.log("Form Submitted:", data);
-    toast.warning("Update endpoint is not yet available.");
-    onAfterSave?.();
-  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       const url = URL.createObjectURL(file);
       setAvatarPreview(url);
+    }
+  };
+
+  const onSubmit = async (data: ProfileValues) => {
+    try {
+      let profilePicture = user?.profilePicture;
+
+      // 1. Upload Image if selected
+      if (selectedFile) {
+        try {
+          const uploadRes = await uploadService.uploadImage(selectedFile);
+          profilePicture = uploadRes.url;
+          // toast.success("Image uploaded"); // Optional, maybe too noisy
+        } catch (error) {
+          console.error("Image upload failed", error);
+          toast.error("Failed to upload profile picture");
+          return; // Stop submission
+        }
+      }
+
+      const socialLinks = {
+        twitter: data.twitter,
+        website: data.website,
+        github: data.github,
+        discord: data.discord,
+        linkedin: data.linkedin,
+        instagram: data.instagram,
+      };
+
+      // Common fields from form
+      const commonPayload = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        username: data.username,
+        location: data.location,
+        skills: data.skills,
+        profilePicture,
+        socials: socialLinks,
+      };
+
+      if (user?.role === 'OWNER') {
+        const ownerPayload = {
+          ...commonPayload,
+          companyBio: data.bio, // Map bio to companyBio for Owner
+        };
+        await updateOwner.mutateAsync(ownerPayload);
+      } else {
+        // Contributor
+        const contributorPayload = {
+          ...commonPayload,
+          bio: data.bio, // Include bio for Contributor 
+        };
+        await updateContributor.mutateAsync(contributorPayload);
+      }
+
+      onAfterSave?.();
+    } catch (error) {
+      console.error("Form submission error", error);
+      // Toast handled by mutation onError
     }
   };
 
@@ -520,8 +581,20 @@ export function ProfileSettingsForm({ onAfterSave }: ProfileSettingsFormProps) {
           </div>
 
           <div className="pt-6">
-            <Button type="submit" variant={'stallion'} className="w-full h-[43px] font-medium text-[16px] leading-[24px] rounded-[10px]">
-              Save Changes
+            <Button
+              type="submit"
+              variant={'stallion'}
+              className="w-full h-[43px] font-medium text-[16px] leading-[24px] rounded-[10px]"
+              disabled={form.formState.isSubmitting || updateContributor.isPending || updateOwner.isPending}
+            >
+              {(updateContributor.isPending || updateOwner.isPending) ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
           </div>
         </div>

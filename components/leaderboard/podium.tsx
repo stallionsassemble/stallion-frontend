@@ -1,11 +1,11 @@
 "use client";
 
-import { LeaderboardUser } from "@/app/dashboard/leaderboard/types";
+import { LeaderboardEntry } from "@/lib/types/reputation";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 interface PodiumProps {
-  topUsers: LeaderboardUser[];
+  topUsers: LeaderboardEntry[];
 }
 
 export function Podium({ topUsers }: PodiumProps) {
@@ -15,8 +15,9 @@ export function Podium({ topUsers }: PodiumProps) {
   const second = sorted.find(u => u.rank === 2);
   const third = sorted.find(u => u.rank === 3);
 
-  const PodiumCard = ({ user, position }: { user: LeaderboardUser; position: number }) => {
+  const PodiumCard = ({ user, position }: { user: LeaderboardEntry; position: number }) => {
     const isFirst = position === 1;
+    const fullName = user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.username;
 
     // Config based on position
     const cardBg = isFirst ? "bg-[#3B82F6]" : "bg-primary/21";
@@ -60,20 +61,22 @@ export function Podium({ topUsers }: PodiumProps) {
             avatarSize
           )}>
             <Image
-              src={`https://avatar.vercel.sh/${user.avatar}`}
-              alt={user.name}
+              src={user.profilePicture && user.profilePicture.startsWith("http")
+                ? user.profilePicture
+                : `https://avatar.vercel.sh/${user.username}`}
+              alt={fullName}
               fill
               className="object-cover"
             />
           </div>
 
           {/* Info */}
-          <h3 className="text-white font-inter font-bold text-[13px] leading-tight truncate w-full px-1">{user.name}</h3>
-          <p className="text-white/60 text-[11px] mb-1 truncate w-full px-1">@{user.handle}</p>
+          <h3 className="text-white font-inter font-bold text-[13px] leading-tight truncate w-full px-1">{fullName}</h3>
+          <p className="text-white/60 text-[11px] mb-1 truncate w-full px-1">@{user.username}</p>
 
           {/* Amount */}
           <div className="text-[25px] font-inter font-bold text-white tracking-tight leading-none">
-            ${user.earnedAmount.toLocaleString()}
+            ${user.score.toLocaleString()}
           </div>
         </div>
       </div>

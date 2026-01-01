@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { Currencies } from '@/lib/types/bounties'
 
 class BountyService {
   async getSupportedCurrencies() {

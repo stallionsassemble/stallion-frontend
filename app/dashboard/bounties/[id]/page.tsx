@@ -281,7 +281,13 @@ export default function BountyDetailsPage() {
 
           {/* Mobile Footer Sidebar */}
           <div className='lg:hidden block mt-8 mb-8'>
-            <BountyDetailsSidebar />
+            <BountyDetailsSidebar
+              type='BOUNTY'
+              projectId='101'
+              projectTitle='Smart Contract Security Audit'
+              reward='$5,000'
+              currency='USDC'
+            />
           </div>
 
           {/* Similar Bounties */}
@@ -436,7 +442,13 @@ export default function BountyDetailsPage() {
 
       {/* Right Sidebar Column - Sticky, aligned with bounty header */}
       <div className='hidden lg:block lg:w-[320px] xl:w-[360px] shrink-0 self-start sticky top-0 -mt-20 space-y-8'>
-        <BountyDetailsSidebar />
+        <BountyDetailsSidebar
+          type='BOUNTY'
+          projectId='101'
+          projectTitle='Smart Contract Security Audit'
+          reward='$5,000'
+          currency='USDC'
+        />
       </div>
     </div>
   )

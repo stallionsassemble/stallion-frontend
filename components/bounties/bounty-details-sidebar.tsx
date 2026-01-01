@@ -1,20 +1,47 @@
 "use client";
 
 import { SubmitBountyModal } from "@/components/bounties/submit-bounty-modal";
+import { MfaRequiredDialog } from "@/components/common/mfa-required-dialog";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/store/use-auth";
 import { ArrowRight, BadgeDollarSign, Calendar, Gift, InfoIcon, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 interface BountyDetailsSidebarProps {
   type?: "BOUNTY" | "PROJECT";
+  projectId: string;
+  projectTitle: string;
+  reward: string;
+  currency: string;
+  totalContributors?: number;
+  totalPaid?: string;
 }
 
-export function BountyDetailsSidebar({ type = "BOUNTY" }: BountyDetailsSidebarProps) {
+export function BountyDetailsSidebar({
+  type = "BOUNTY",
+  projectId,
+  projectTitle,
+  reward,
+  currency,
+  totalContributors = 15, // Mock default or pass actual
+  totalPaid = "$45,000" // Mock default
+}: BountyDetailsSidebarProps) {
   const isProject = type === "PROJECT";
+  const { user } = useAuth();
+  const [showMfaDialog, setShowMfaDialog] = useState(false);
+
+  // If user is not authenticated or loading, we might want to disable or redirect to login.
+  // Assuming page is protected or we just let them click -> unrelated to MFA.
+  // We strictly check MFA here.
+
+  const isMfaEnabled = user?.mfaEnabled;
 
   return (
     <div className="space-y-6 w-full">
+      <MfaRequiredDialog open={showMfaDialog} onOpenChange={setShowMfaDialog} />
+
       {/* Prize/Budget Card */}
       <div className="rounded-xl border-[0.69px] border-primary bg-card overflow-hidden font-inter">
         <div className="p-6 text-center border-b border-[1.16px] border-primary/30 bg-primary/10">
@@ -22,18 +49,17 @@ export function BountyDetailsSidebar({ type = "BOUNTY" }: BountyDetailsSidebarPr
             <BadgeDollarSign className="h-5 w-5 text-foreground" />
           </div>
           <p className="text-sm text-muted-foreground mb-1">{isProject ? "Project Budget" : "Total Prizes"}</p>
-          <h2 className="text-4xl font-bold text-foreground">$10,000</h2>
+          <h2 className="text-4xl font-bold text-foreground">{reward} <span className="text-lg text-primary">{currency}</span></h2>
         </div>
 
         <div className="p-4 space-y-3">
           {isProject ? (
-            // Project specific content or simply nothing if just budget
-            // Maybe a simplified text or just skip the breakdown
             <div className="p-2 text-center text-sm text-muted-foreground">
               Fixed price project
             </div>
           ) : (
             <>
+              {/* Keep original bounty breakdown if needed, or leave dynamic if required */}
               <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10">
                 <div className="flex items-center gap-3">
                   <span className="text-xl">🥇</span>
@@ -60,11 +86,26 @@ export function BountyDetailsSidebar({ type = "BOUNTY" }: BountyDetailsSidebarPr
         </div>
 
         <div className="p-4 pt-0">
-          <SubmitBountyModal type={type}>
-            <Button className="w-full bg-primary hover:bg-[#007AFF/95] text-white font-bold h-11">
+          {isMfaEnabled ? (
+            <SubmitBountyModal
+              type={type}
+              projectId={projectId}
+              projectTitle={projectTitle}
+              reward={reward}
+              currency={currency}
+            >
+              <Button className="w-full bg-primary hover:bg-[#007AFF/95] text-white font-bold h-11">
+                {isProject ? "Apply for Project" : "Submit Bounty"}
+              </Button>
+            </SubmitBountyModal>
+          ) : (
+            <Button
+              onClick={() => setShowMfaDialog(true)}
+              className="w-full bg-primary hover:bg-[#007AFF/95] text-white font-bold h-11"
+            >
               {isProject ? "Apply for Project" : "Submit Bounty"}
             </Button>
-          </SubmitBountyModal>
+          )}
 
           <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground py-4 rounded-lg border-[1.16px] border-primary/50">
             <InfoIcon className="h-5 w-5 text-muted-foreground" />
@@ -89,7 +130,7 @@ export function BountyDetailsSidebar({ type = "BOUNTY" }: BountyDetailsSidebarPr
         </div>
 
         <p className="font-light text-[11px] text-gray-400 leading-relaxed">
-          A leading project in the Web3 ecosystem focused on building innovative solutions for creators. A leading project in the Web3 ecosystem focused on building innovative solutions for creators.
+          A leading project in the Web3 ecosystem focused on building innovative solutions for creators.
         </p>
 
         <div className="space-y-3 font-inter">
@@ -98,14 +139,14 @@ export function BountyDetailsSidebar({ type = "BOUNTY" }: BountyDetailsSidebarPr
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-400 font-normal text-[12px] tracking-[-2%]">Total Bounties</span>
               <span className="font-extralight text-[12px] tracking-[-2%] text-center">:</span>
-              <span className="text-white font-bold text-[12px] tracking-[-2%]">15</span>
+              <span className="text-white font-bold text-[12px] tracking-[-2%]">{totalContributors}</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <BadgeDollarSign className="h-5 w-5 text-primary" />
             <div className="flex items-center gap-2 text-sm">
               <span className="text-gray-400 font-normal text-[12px] tracking-[-2%]">Total Paid</span>
-              <span className="text-white font-bold text-[12px] tracking-[-2%]">$45,000</span>
+              <span className="text-white font-bold text-[12px] tracking-[-2%]">{totalPaid}</span>
             </div>
           </div>
           <div className="flex items-center gap-3">

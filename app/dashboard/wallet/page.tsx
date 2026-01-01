@@ -9,10 +9,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddPaymentMethodModal } from "@/components/wallet/add-payment-method-modal";
 import { WithdrawFundsModal } from "@/components/wallet/withdraw-funds-modal";
 import { walletService } from "@/lib/api/wallet";
+import { useDeletePayoutMethod, useGetPayoutMethods } from "@/lib/api/wallet/queries";
 import { useDebounce } from "@/lib/hooks/use-debounce";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { endOfDay, isWithinInterval, startOfDay } from "date-fns";
-import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, ChevronLeft, ChevronRight, Clock, Coins, DollarSign, History, Pencil, Plus, Search, Send, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, ChevronLeft, ChevronRight, Clock, Coins, DollarSign, History, Loader2, Plus, Search, Send, Trash2, Wallet } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
@@ -57,7 +58,7 @@ function WalletStats({ balances }: { balances: any }) { // Type this properly
       <div className="grid gap-4 md:grid-cols-3">
         <KpiCard
           label="Total Balance"
-          value={formatCurrency(balances.availableBalance, balances.currency)}
+          value={formatCurrency(balances?.availableBalance || 0, balances?.currency || "USD")}
           status="Available to withdraw"
           statusColor="text-primary font-medium text-sm"
           icon={DollarSign}
@@ -67,7 +68,7 @@ function WalletStats({ balances }: { balances: any }) { // Type this properly
         />
         <KpiCard
           label="Pending"
-          value={formatCurrency(pendingAmount, balances.currency)}
+          value={formatCurrency(pendingAmount, balances?.currency || "USD")}
           status="Awaiting release"
           statusColor="text-[#FF9500] font-medium text-sm"
           icon={Clock}
@@ -77,7 +78,7 @@ function WalletStats({ balances }: { balances: any }) { // Type this properly
         />
         <KpiCard
           label="Estimated Value"
-          value={formatCurrency(balances.balance, balances.currency)}
+          value={formatCurrency(balances?.balance || 0, balances?.currency || "USD")}
           status="Total account value"
           statusColor="text-green-500 font-medium text-sm"
           icon={DollarSign}
@@ -302,29 +303,58 @@ function WalletStatsSkelton() {
 }
 
 function PayoutsContent({ setShowAddMethodModal }: { setShowAddMethodModal: (val: boolean) => void }) {
+  const { data: methods = [], isLoading } = useGetPayoutMethods();
+  const { mutate: deleteMethod, isPending: isDeleting } = useDeletePayoutMethod();
+
+  const handleDelete = (id: string) => {
+    deleteMethod(id);
+  };
+
   return (
     <div className="space-y-6 min-h-[400px]">
       <h3 className="text-foreground font-bold font-inter text-lg">Payout Methods</h3>
 
-      <div className="space-y-3">
-        {payoutMethods.map((method) => <div key={method.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl bg-primary/10 gap-4">
-          <div className="flex items-start sm:items-center gap-4 w-full min-w-0">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <Wallet className="w-5 h-5 text-foreground" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h4 className="text-foreground font-bold font-inter truncate">{method.name}</h4>
-              <p className="text-xs font-inter text-ring break-all leading-relaxed">{method.value}</p>
-            </div>
-          </div>
-
-          <button className="flex items-center gap-2 text-sm text-foreground hover:text-foreground/80 transition-colors ml-14 sm:ml-0">
-            <Pencil className="w-4 h-4" />
-            <span>Edit</span>
-          </button>
+      {isLoading ? (
+        <div className="flex h-40 items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
-        )}
-      </div>
+      ) : methods.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-8 bg-primary/5 rounded-xl border border-dashed border-primary/20">
+          <Wallet className="h-10 w-10 text-primary/40 mb-3" />
+          <p className="text-muted-foreground text-sm">No payout methods added yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {methods.map((method) => (
+            <div key={method.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl bg-primary/10 gap-4 group">
+              <div className="flex items-start sm:items-center gap-4 w-full min-w-0">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <Wallet className="w-5 h-5 text-foreground" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-foreground font-bold font-inter truncate">{method.name}</h4>
+                    {method.isDefault && <Badge variant="secondary" className="text-[10px] h-5 px-1.5">Default</Badge>}
+                  </div>
+                  <p className="text-xs font-inter text-ring break-all leading-relaxed">{method.publicKey}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 ml-14 sm:ml-0">
+                {/* Edit button could open a modal, skipping for now unless user asks, focusing on delete which is clearer action */}
+                <button
+                  onClick={() => handleDelete(method.id)}
+                  className="flex items-center gap-2 text-sm text-destructive hover:text-destructive/80 transition-colors p-2 rounded-md hover:bg-destructive/10"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  <span className="sr-only sm:not-sr-only">Remove</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <Button
         variant="stallion-outline"
@@ -332,14 +362,14 @@ function PayoutsContent({ setShowAddMethodModal }: { setShowAddMethodModal: (val
         onClick={() => setShowAddMethodModal(true)}
       >
         <Plus className="w-5 h-5" />
-        Add Payment Method
+        Add Payout Method
       </Button>
     </div>
   );
 }
 
-function BalancesConsumerModal({ isOpen, onClose, availableBalance }: { isOpen: boolean; onClose: () => void, availableBalance: number }) {
-  return <WithdrawFundsModal isOpen={isOpen} onClose={onClose} availableBalance={availableBalance} />;
+function BalancesConsumerModal({ isOpen, onClose, availableBalance, currency }: { isOpen: boolean; onClose: () => void, availableBalance: number, currency: string }) {
+  return <WithdrawFundsModal isOpen={isOpen} onClose={onClose} availableBalance={availableBalance} currency={currency} />;
 }
 
 export default function WalletPage() {
@@ -348,15 +378,47 @@ export default function WalletPage() {
   const [showWithdrawFundsModal, setShowWithdrawFundsModal] = useState(false);
 
   // Fetch all data upfront to avoid suspense during tab switching and ensure instant access
-  const { data: balances } = useSuspenseQuery({
+  const { data: balances, isLoading: isBalancesLoading } = useQuery({
     queryKey: ['wallet-balances'],
-    queryFn: () => walletService.getWalletBalances(),
+    queryFn: async () => {
+      try {
+        return await walletService.getWalletBalances();
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          return {
+            balance: 0,
+            availableBalance: 0,
+            currency: 'USD',
+          };
+        }
+        throw error;
+      }
+    },
   });
 
-  const { data: transactions } = useSuspenseQuery({
+  const { data: transactions, isLoading: isTransactionsLoading } = useQuery({
     queryKey: ['wallet-transactions'],
-    queryFn: () => walletService.getTransactions(),
+    queryFn: async () => {
+      try {
+        return await walletService.getTransactions();
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          return [];
+        }
+        throw error;
+      }
+    },
   });
+
+  const isLoading = isBalancesLoading || isTransactionsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
 
   return (
@@ -405,11 +467,16 @@ export default function WalletPage() {
       */}
 
       {activeTab === "Assets" && (
-        <WalletAssetList balances={balances} />
+        balances && balances.balance > 0 ? <WalletAssetList balances={balances} /> : (
+          <div className="flex flex-col items-center justify-center p-8 bg-primary/5 rounded-xl border border-dashed border-primary/20 min-h-[400px]">
+            <Coins className="h-10 w-10 text-primary/40 mb-3" />
+            <p className="text-muted-foreground text-sm">No assets found.</p>
+          </div>
+        )
       )}
 
       {activeTab === "Transactions" && (
-        <WalletTransactions transactions={transactions} />
+        <WalletTransactions transactions={transactions || []} />
       )}
 
       {activeTab === "Payouts" && (
@@ -419,8 +486,10 @@ export default function WalletPage() {
       <AddPaymentMethodModal isOpen={showAddMethodModal} onClose={() => setShowAddMethodModal(false)} />
 
       {showWithdrawFundsModal && (
-        <BalancesConsumerModal isOpen={showWithdrawFundsModal} onClose={() => setShowWithdrawFundsModal(false)} availableBalance={balances.availableBalance} />
+        <BalancesConsumerModal isOpen={showWithdrawFundsModal} onClose={() => setShowWithdrawFundsModal(false)} availableBalance={balances?.availableBalance || 0} currency={balances?.currency || "USD"} />
       )}
     </div>
   );
 }
+
+
