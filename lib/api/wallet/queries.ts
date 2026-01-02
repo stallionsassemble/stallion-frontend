@@ -12,9 +12,13 @@ export function useGetWalletBalances() {
       } catch (error: any) {
         if (error.response?.status === 404) {
           return {
-            balance: 0,
-            availableBalance: 0,
-            currency: 'USD',
+            balances: [
+              {
+                balance: 0,
+                availableBalance: 0,
+                currency: 'USD',
+              },
+            ],
           }
         }
         throw error

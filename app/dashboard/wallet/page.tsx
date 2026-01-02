@@ -555,7 +555,12 @@ export default function WalletPage() {
       <AddPaymentMethodModal isOpen={showAddMethodModal} onClose={() => setShowAddMethodModal(false)} />
 
       {showWithdrawFundsModal && (
-        <BalancesConsumerModal isOpen={showWithdrawFundsModal} onClose={() => setShowWithdrawFundsModal(false)} availableBalance={balances?.availableBalance || 0} currency={balances?.currency || "USD"} />
+        <BalancesConsumerModal
+          isOpen={showWithdrawFundsModal}
+          onClose={() => setShowWithdrawFundsModal(false)}
+          availableBalance={balances?.balances?.[0]?.availableBalance || 0}
+          currency={balances?.balances?.[0]?.currency || "USD"}
+        />
       )}
 
       {/* Modals */}

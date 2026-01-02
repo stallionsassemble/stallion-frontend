@@ -65,6 +65,10 @@ export function SubmitBountyModal({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Bounty specific state
+  const [bountyMainUrl, setBountyMainUrl] = useState("");
+  const [bountyRepoUrl, setBountyRepoUrl] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutate: applyProject, isPending } = useApplyProject();
@@ -171,8 +175,31 @@ export function SubmitBountyModal({
       });
     } else {
       // Logic for Bounty Submission
-      setOpen(false);
-      setShowCongrats(true);
+      const links = [];
+      if (bountyMainUrl) links.push(bountyMainUrl);
+      if (bountyRepoUrl) links.push(bountyRepoUrl);
+
+      applyProject({
+        id: projectId,
+        payload: {
+          coverLetter: "Bounty Submission", // Default cover letter for bounties
+          estimatedCompletionTime: 0, // Not applicable for finished bounties
+          portfolioLinks: links,
+          attachments: [] // Bounties form currently doesn't show attachment upload
+        }
+      }, {
+        onSuccess: () => {
+          setOpen(false);
+          setShowCongrats(true);
+          // Reset form
+          setBountyMainUrl("");
+          setBountyRepoUrl("");
+        },
+        onError: (err) => {
+          console.error("Failed to submit bounty", err);
+          // show toast
+        }
+      });
     }
   };
 
@@ -322,9 +349,6 @@ export function SubmitBountyModal({
 
   const renderBountyForm = () => (
     <div className="p-6 space-y-5">
-      {/* Bounty specific fields... for brevity keeping similar structure or just mocking standard ones if needed, 
-          but to respect existing functionality I'll paste the previous 'generic' ones or cleaned up versions.
-      */}
       {/* Main Project URL */}
       <div className="space-y-2">
         <Label className="text-foreground text-sm font-semibold">
@@ -332,16 +356,25 @@ export function SubmitBountyModal({
         </Label>
         <div className="flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary">
           <span className="px-3 py-2.5 text-sm text-foreground border-r border-input bg-background">https://</span>
-          <input className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground" placeholder="Submission Link" />
+          <input
+            value={bountyMainUrl.replace('https://', '')}
+            onChange={(e) => setBountyMainUrl('https://' + e.target.value.replace('https://', ''))}
+            className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground"
+            placeholder="Submission Link"
+          />
         </div>
       </div>
-      {/* Other fields simplified for this implementation, focusing on Project form as requested */}
       {/* GitHub */}
       <div className="space-y-2">
         <Label className="text-foreground text-sm font-semibold">GitHub Repository <span className="text-destructive">*</span></Label>
         <div className="flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary">
           <span className="px-3 py-2.5 text-sm text-foreground border-r border-input bg-background">https://</span>
-          <input className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground" placeholder="Repository Link" />
+          <input
+            value={bountyRepoUrl.replace('https://', '')}
+            onChange={(e) => setBountyRepoUrl('https://' + e.target.value.replace('https://', ''))}
+            className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground"
+            placeholder="Repository Link"
+          />
         </div>
       </div>
     </div>
@@ -373,10 +406,10 @@ export function SubmitBountyModal({
             <Button
               className="w-full bg-primary hover:bg-primary/90 font-bold h-12 text-base rounded-lg flex items-center justify-center gap-2 text-primary-foreground"
               onClick={handleSubmit}
-              disabled={isProject && isPending}
+              disabled={isPending}
             >
-              {isProject && isPending ? <Loader2 className="animate-spin h-5 w-5" /> : <Send className="h-5 w-5" />}
-              {isProject ? (isPending ? "Applying..." : "Submit Application") : "Submit Bounty"}
+              {isPending ? <Loader2 className="animate-spin h-5 w-5" /> : <Send className="h-5 w-5" />}
+              {isProject ? (isPending ? "Applying..." : "Submit Application") : (isPending ? "Submitting..." : "Submit Bounty")}
             </Button>
           </DialogFooter>
           <div className="px-6 pb-6 text-center text-[10px] text-muted-foreground">

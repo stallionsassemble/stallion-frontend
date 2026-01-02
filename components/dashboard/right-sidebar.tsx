@@ -58,8 +58,8 @@ const topEarners = [
 export function DashboardRightSidebar() {
   const { data: walletData, isLoading: isLoadingWallet } = useGetWalletBalances();
 
-  const balance = walletData?.availableBalance || 0;
-  const currency = walletData?.currency || 'USDC';
+  const balance = walletData?.balances?.[0]?.availableBalance || 0;
+  const currency = walletData?.balances?.[0]?.currency || 'USDC';
 
   const { data: price = 1 } = useCryptoPrice(currency);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
