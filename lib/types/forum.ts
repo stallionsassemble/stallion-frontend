@@ -155,8 +155,14 @@ export interface Post {
     profilePicture?: string
   }
   reactions: {
-    type: string
-    count: number
+    id: string
+    emoji: string
+    userId: string
+    user: {
+      id: string
+      username: string
+    }
+    createdAt: string
   }[]
   isAdmin?: boolean
 }
@@ -179,6 +185,9 @@ export interface GetThread {
     firstName: string
     lastName: string
     profilePicture?: string
+    posts: number
+    likes: number
+    replies: number
   }
   posts: Post[]
   tags: {

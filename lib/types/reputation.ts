@@ -28,14 +28,31 @@ export interface LeaderboardEntry {
   lastName: string
   profilePicture: string
   score: number
-  level: number
+  level: string
   bountyScore: number
   hackathonScore: number
   communityScore: number
+  category: string
+  isVerified: boolean
+  earnedAmount: number
+  completedTask: number
+  successRate: number
   badges: Pick<Badge, 'id' | 'name' | 'icon'>[]
 }
 
-export type Leaderboard = LeaderboardEntry[]
+export interface PaginationMeta {
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  pagination: PaginationMeta
+}
+
+export type Leaderboard = PaginatedResponse<LeaderboardEntry>
 
 export interface ReputationHistoryEntry {
   id: string

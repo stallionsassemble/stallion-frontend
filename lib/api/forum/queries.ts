@@ -108,6 +108,7 @@ export function useUpdateThread() {
   })
 }
 
+// ... existing code ...
 export function useDeleteThread() {
   const queryClient = useQueryClient()
 
@@ -119,6 +120,31 @@ export function useDeleteThread() {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to delete thread')
+    },
+  })
+}
+
+export function useMyPinnedThreads() {
+  return useQuery({
+    queryKey: ['forum', 'threads', 'pinned'],
+    queryFn: () => forumService.getMyPinnedThreads(),
+  })
+}
+
+export function useTogglePinThread() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => forumService.togglePinThread(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['forum', 'threads', 'pinned'],
+      })
+      queryClient.invalidateQueries({ queryKey: ['forum', 'threads'] })
+      toast.success('Thread pin status updated')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update pin status')
     },
   })
 }
@@ -247,6 +273,22 @@ export function useAddOrRemoveReaction() {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update reaction')
+    },
+  })
+}
+
+export function useAddOrRemoveThreadReaction() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ threadId, emoji }: { threadId: string; emoji: string }) =>
+      forumService.addOrRemoveThreadReaction({ threadId, emoji }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['forum', 'thread'] })
+      queryClient.invalidateQueries({ queryKey: ['forum', 'threads'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update thread reaction')
     },
   })
 }

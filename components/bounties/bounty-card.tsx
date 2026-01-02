@@ -112,8 +112,7 @@ export function BountyCard({
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-3 w-3 text-primary" />
-              <span>Due in {dueDate.replace('d', '')}d</span>
-              {/* ensuring '10d' format */}
+              <span>Due in {dueDate.replace('d', '')}</span>
             </div>
           </div>
         </div>

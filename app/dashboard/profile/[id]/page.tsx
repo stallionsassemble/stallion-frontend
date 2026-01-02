@@ -61,8 +61,8 @@ function PublicProfileContent({ username }: { username: string }) {
           {/* Only show Skills if available (likely empty for now) */}
           {/* <SkillsSection skills={userData?.skills} /> */}
 
-          <RecentActivity userId={userId} />
-          <Achievements userId={userId} />
+          <RecentActivity userId={userId} publicMode />
+          <Achievements userId={userId} publicMode />
 
           {/* Portfolio is harder without direct user object with portfolio items. Omit for public view for now unless API supports it. */}
         </div>

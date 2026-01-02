@@ -38,7 +38,7 @@ export default function BountyDetailsPage() {
   const { data: projectMilestones, isLoading: isMilestonesLoading } = useGetProjectMilestones(id!)
 
   // 3. Fetch Similar Projects (Just fetch open gigs for now as "similar")
-  const { data: allProjects } = useGetProjects({ status: 'OPEN', type: 'GIG', ownerId: '' } as any)
+  const { data: allProjects } = useGetProjects({ status: 'OPEN', type: 'GIG' })
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -73,15 +73,16 @@ export default function BountyDetailsPage() {
     .filter(p => p.id !== project.id)
     .slice(0, 5)
 
-  // Map API milestones to component props
-  // Handle case where projectMilestones might be undefined
-  const milestones: Milestone[] = (projectMilestones || []).map(m => ({
-    id: m.id,
+
+  const draftMilestones = (project.milestones || []).map((m, index) => ({
+    id: `planned-${index}`,
     title: m.title,
     dueDate: m.dueDate ? new Date(m.dueDate).toLocaleDateString() : 'TBD',
-    amount: m.amount, // assuming API returns formatted amount or just number
-    status: m.status,
+    amount: m.amount,
+    status: 'PLANNED',
   }))
+
+  const milestones: Milestone[] = draftMilestones
 
   const attachments = project.attachments || []
 
@@ -268,17 +269,31 @@ export default function BountyDetailsPage() {
           projectTitle={project.title}
           reward={project.reward}
           currency={project.currency}
+          owner={project.owner}
+          createdAt={project.createdAt}
+          deadline={project.deadline}
+          applied={project.applied}
+          applicationId={project.applicationId}
+          winnerAnnouncement={project.winnerAnnouncement}
         />
       </div>
 
       {/* Mobile Footer */}
-      <div className='lg:hidden block mt-8'>
+      <div className='lg:hidden block mt-8 w-full'>
         <BountyDetailsSidebar
           type='PROJECT'
           projectId={project.id}
           projectTitle={project.title}
           reward={project.reward}
+          totalPaid={project.owner.totalPaid}
+          totalContributors={project.owner.totalBounties}
           currency={project.currency}
+          owner={project.owner}
+          createdAt={project.createdAt}
+          deadline={project.deadline}
+          applied={project.applied}
+          applicationId={project.applicationId}
+          winnerAnnouncement={project.winnerAnnouncement}
         />
       </div>
     </div>

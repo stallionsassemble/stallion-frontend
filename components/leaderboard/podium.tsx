@@ -18,6 +18,7 @@ export function Podium({ topUsers }: PodiumProps) {
   const PodiumCard = ({ user, position }: { user: LeaderboardEntry; position: number }) => {
     const isFirst = position === 1;
     const fullName = user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.username;
+    const earnedAmount = user.earnedAmount || 0.00
 
     // Config based on position
     const cardBg = isFirst ? "bg-[#3B82F6]" : "bg-primary/21";
@@ -76,7 +77,7 @@ export function Podium({ topUsers }: PodiumProps) {
 
           {/* Amount */}
           <div className="text-[25px] font-inter font-bold text-white tracking-tight leading-none">
-            ${user.score.toLocaleString()}
+            ${earnedAmount.toLocaleString()}
           </div>
         </div>
       </div>

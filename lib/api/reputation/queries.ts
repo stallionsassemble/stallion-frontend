@@ -28,10 +28,14 @@ export function useUserReputation(userId: string) {
   })
 }
 
-export function useLeaderboard() {
+export function useLeaderboard(params?: {
+  page?: number
+  limit?: number
+  category?: string
+}) {
   return useQuery({
-    queryKey: reputationKeys.leaderboard(),
-    queryFn: () => reputationService.getLeaderboard(),
+    queryKey: [...reputationKeys.leaderboard(), params],
+    queryFn: () => reputationService.getLeaderboard(params),
   })
 }
 

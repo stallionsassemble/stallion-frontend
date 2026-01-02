@@ -31,9 +31,11 @@ interface SubmitModalProps {
   projectTitle: string;
   reward: string;
   currency: string;
+  sponsorLogo?: string;
 }
 
 import { uploadService } from "@/lib/api/upload";
+import { useAuth } from "@/lib/store/use-auth";
 import { Attachment } from "@/lib/types/project";
 import { X } from "lucide-react";
 import { useRef } from "react";
@@ -46,11 +48,13 @@ export function SubmitBountyModal({
   projectId,
   projectTitle,
   reward,
-  currency
+  currency,
+  sponsorLogo
 }: SubmitModalProps) {
   const [open, setOpen] = useState(false);
   const [showCongrats, setShowCongrats] = useState(false);
   const isProject = type === "PROJECT";
+  const { user } = useAuth();
 
   // Form State
   const [coverLetter, setCoverLetter] = useState("");
@@ -77,14 +81,51 @@ export function SubmitBountyModal({
       setIsUploading(true);
       try {
         const files = Array.from(e.target.files);
-        // Upload documents
-        const response = await uploadService.uploadDocuments(files);
+        const imageFiles = files.filter(f => f.type.startsWith('image/'));
+        const docFiles = files.filter(f => !f.type.startsWith('image/'));
 
-        const newAttachments: Attachment[] = response.documents.map(doc => ({
-          filename: doc.originalName,
-          url: doc.url,
-          size: doc.size
-        }));
+        const uploadPromises = [];
+
+        // Handle Images
+        if (imageFiles.length === 1) {
+          uploadPromises.push(uploadService.uploadImage(imageFiles[0]).then(img =>
+            [{
+              filename: img.originalName,
+              url: img.url,
+              size: img.size
+            }]
+          ));
+        } else if (imageFiles.length > 1) {
+          uploadPromises.push(uploadService.uploadImages(imageFiles).then(res =>
+            (res.images || (Array.isArray(res) ? res : [])).map((img: any) => ({
+              filename: img.originalName,
+              url: img.url,
+              size: img.size
+            }))
+          ));
+        }
+
+        // Handle Documents
+        if (docFiles.length === 1) {
+          uploadPromises.push(uploadService.uploadDocument(docFiles[0]).then(doc =>
+            [{
+              filename: doc.originalName,
+              url: doc.url,
+              size: doc.size
+            }]
+          ));
+        } else if (docFiles.length > 1) {
+          uploadPromises.push(uploadService.uploadDocuments(docFiles).then(res =>
+            (res.documents || (Array.isArray(res) ? res : [])).map((doc: any) => ({
+              filename: doc.originalName,
+              url: doc.url,
+              size: doc.size
+            }))
+          ));
+        }
+
+        const results = await Promise.all(uploadPromises);
+        const newAttachments = results.flat();
 
         setAttachments(prev => [...prev, ...newAttachments]);
       } catch (error) {
@@ -348,7 +389,12 @@ export function SubmitBountyModal({
         </DialogContent>
       </Dialog>
 
-      <CongratulationsModal isOpen={showCongrats} onClose={() => setShowCongrats(false)} />
+      <CongratulationsModal
+        isOpen={showCongrats}
+        onClose={() => setShowCongrats(false)}
+        userLogo={user?.profilePicture}
+        sponsorLogo={sponsorLogo}
+      />
     </>
   );
 }

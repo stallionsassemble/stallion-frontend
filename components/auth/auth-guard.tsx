@@ -27,11 +27,17 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       if (!isAuthenticated) {
         router.push("/auth/login")
       } else if (user && !user.profileCompleted) {
-        // Redirect to appropriate onboarding based on role
-        if (user.role === 'OWNER') { // "PROJECT_OWNER" is usually mapped to "OWNER" in frontend types, checking definition
-          router.push("/auth/onboarding/owner")
-        } else {
-          router.push("/auth/onboarding/talent")
+        const path = window.location.pathname;
+        const isOwnerOnboarding = path.includes("/auth/onboarding/owner");
+        const isTalentOnboarding = path.includes("/auth/onboarding/talent");
+
+        // Only redirect if NOT already on an onboarding page
+        if (!isOwnerOnboarding && !isTalentOnboarding) {
+          if (user.role === 'OWNER') {
+            router.push("/auth/onboarding/owner")
+          } else {
+            router.push("/auth/onboarding/talent")
+          }
         }
       }
     }

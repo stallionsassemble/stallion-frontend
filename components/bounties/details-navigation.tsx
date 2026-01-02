@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Bookmark, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface DetailsNavigationProps {
   backLink: string;
@@ -38,7 +39,14 @@ export function DetailsNavigation({ backLink, backText }: DetailsNavigationProps
           Bookmark
         </Button>
 
-        <Button variant="outline" className="bg-card border border-border hover:bg-muted text-foreground text-sm h-10 px-4 rounded-xl gap-2">
+        <Button
+          variant="outline"
+          className="bg-card border border-border hover:bg-muted text-foreground text-sm h-10 px-4 rounded-xl gap-2 active:scale-95 transition-transform"
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            toast.success("Link copied to clipboard");
+          }}
+        >
           <Share2 className="h-4 w-4" />
           Share
         </Button>

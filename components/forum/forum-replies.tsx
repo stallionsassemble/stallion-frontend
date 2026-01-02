@@ -1,11 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useCreatePost } from "@/lib/api/forum/queries";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { MarkdownEditor } from "../shared/markdown-editor";
 import { ForumPost } from "./forum-post";
 
 interface ForumRepliesProps {
@@ -40,11 +40,12 @@ export function ForumReplies({ posts, threadId, currentUserId }: ForumRepliesPro
           <Image src="https://avatar.vercel.sh/user" width={40} height={40} alt="Current User" />
         </div>
         <div className="flex-1 space-y-3">
-          <Textarea
+          <MarkdownEditor
             placeholder="Join the discussion"
-            className="min-h-[120px] bg-card border-[1.19px] border-foreground focus-visible:ring-0 resize-none p-2 text-sm placeholder:text-muted-foreground"
+            className="w-full"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(val) => setContent(val)}
+            minHeight="min-h-[120px]"
           />
           <div className="flex justify-start">
             <Button

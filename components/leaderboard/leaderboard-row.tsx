@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useGetUserByUsername } from "@/lib/api/users/queries";
 import { LeaderboardEntry } from "@/lib/types/reputation";
 import { cn } from "@/lib/utils";
 import { ArrowRight, CheckCircle2, Crown, DollarSign, Star, UserStar } from "lucide-react";
@@ -14,13 +15,13 @@ interface LeaderboardRowProps {
 
 export function LeaderboardRow({ user }: LeaderboardRowProps) {
   const fullName = user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.username;
-  // Mock/Proxy data mapping to match desired UI
-  const isVerified = user.badges && user.badges.length > 0; // Proxy verification based on having badges
-  const category = user.badges[0]?.name || "Developer";
-  const rating = 5.0; // Mock
-  const completedTasks = user.bountyScore; // Proxy
-  const earnedAmount = user.score; // Proxy
-  const successRate = user.rank <= 3 ? 99 : 98; // Mock
+  const isVerified = user.isVerified
+  const category = user.category || "Developer";
+  const level = user.level || 1
+  const completedTasks = user.completedTask || 0
+  const earnedAmount = user.earnedAmount || 0.00
+  const successRate = user.successRate || 0.00
+  const { data: userData } = useGetUserByUsername(user.username)
 
   return (
     <div className="group relative flex items-center gap-2 p-4 bg-primary/14 border-b border-primary">
@@ -48,7 +49,7 @@ export function LeaderboardRow({ user }: LeaderboardRowProps) {
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <span className="font-bold text-foreground font-inter">{fullName}</span>
-            {isVerified && (
+            {userData?.role === 'CONTRIBUTOR' && (
               <Badge className="bg-yellow-300 text-background hover:bg-amber-400/20 border-amber-500/20 px-1.5 py-0 h-4 text-[10px] gap-0.5 pointer-events-none">
                 <UserStar className="w-3 h-3" />
                 Verified Builder
@@ -68,9 +69,9 @@ export function LeaderboardRow({ user }: LeaderboardRowProps) {
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-1.5 text-blue-500">
             <Star className="fill-current w-4 h-4" />
-            <span className="font-bold text-foreground font-inter">{rating.toFixed(2)}</span>
+            <span className="font-bold text-foreground font-inter">{level}</span>
           </div>
-          <span className="text-[12px] text-muted-foreground font-light font-inter">Rating</span>
+          <span className="text-[12px] text-muted-foreground font-light font-inter">Level</span>
         </div>
 
         {/* Completed */}

@@ -8,13 +8,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Textarea } from "@/components/ui/textarea";
 import { useAddOrRemoveReaction, useDeletePost, useGetPostComments, useUpdatePost } from "@/lib/api/forum/queries";
 import { Post } from "@/lib/types/forum";
 import { formatDistanceToNow } from "date-fns";
 import { Edit, Heart, Loader2, MessageCircle, MoreHorizontal, Share2, Trash2 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
+import { MarkdownEditor } from "../shared/markdown-editor";
+import { MarkdownRenderer } from "../shared/markdown-renderer";
 import { ForumCommentSection } from "./forum-comment-section";
 
 interface ForumPostProps {
@@ -49,26 +51,32 @@ export function ForumPost({ post, currentUserId }: ForumPostProps) {
     toggleReaction({ postId: post.id, emoji: 'heart' }); // Default to heart for now
   };
 
-  // Simplified reaction check for UI (assuming data structure supports it)
-  // const isLiked = post.reactions?.some(r => r.users.some(u => u.id === currentUserId));
-  // For now simple toggle state if we don't have full auth/reaction data sync perfectly yet
-  const [localLiked, setLocalLiked] = useState(false);
+  // Determine if the user has already liked the post from server data
+  // The API returns a flat list of reactions where each entry represents a user's reaction
+  const isLiked = post.reactions?.some(r => r.userId === currentUserId);
+
+  // Count is simply the length of the reactions array
+  const likeCount = post.reactions?.length || 0;
 
   return (
     <div className="w-full border border-primary/40 bg-card rounded-[12px] p-5 space-y-4 transition-all hover:border-primary/60">
       <div className="flex gap-3 md:gap-4">
-        <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-primary/20 mt-1">
+        {/* ... (Author Avatar Link) ... */}
+        <Link href={`/dashboard/profile/${post.authorId}`} className="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-primary/20 mt-1 hover:opacity-80 transition-opacity">
           <Image
             src={post.author.profilePicture || `https://avatar.vercel.sh/${post.author.username}`}
             width={40}
             height={40}
             alt={post.author.username}
           />
-        </div>
+        </Link>
         <div className="flex-1 space-y-2">
+          {/* ... (Header content) ... */}
           <div className="flex items-center justify-between font-inter">
             <div className="flex items-center gap-2">
-              <span className="text-[16px] font-bold text-foreground">{post.author.username}</span>
+              <Link href={`/dashboard/profile/${post.authorId}`} className="text-[16px] font-bold text-foreground hover:underline decoration-primary">
+                {post.author.username}
+              </Link>
               {/* Admin Badge */}
               {post.isAdmin && <Badge variant="default" className="ml-2 h-5 text-[10px] px-1.5">Admin</Badge>}
               <span className="text-[12px] text-muted-foreground font-light">
@@ -103,10 +111,11 @@ export function ForumPost({ post, currentUserId }: ForumPostProps) {
 
           {isEditing ? (
             <div className="space-y-2">
-              <Textarea
+              <MarkdownEditor
                 value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                className="bg-muted/50"
+                onChange={(val) => setEditContent(val)}
+                className="w-full"
+                minHeight="min-h-[100px]"
               />
               <div className="flex gap-2 justify-end">
                 <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
@@ -119,13 +128,18 @@ export function ForumPost({ post, currentUserId }: ForumPostProps) {
               </div>
             </div>
           ) : (
-            <div className="space-y-1">
-              <p className="text-[14px] text-muted-foreground leading-relaxed font-inter font-light">
-                {isExpanded || post.content.length <= 180 ? post.content : `${post.content.substring(0, 180)}...`}
-              </p>
-              {!isExpanded && post.content.length > 180 && (
+            <div className="space-y-1 font-inter text-sm text-[14px]">
+              <div className={`overflow-hidden transition-all duration-300 ${!isExpanded && post.content.length > 300 ? 'max-h-[150px] mask-gradient-to-b' : ''}`}>
+                <MarkdownRenderer content={post.content} />
+              </div>
+              {!isExpanded && post.content.length > 300 && (
                 <Button variant="link" onClick={() => setIsExpanded(true)} className="p-0 h-auto font-normal text-xs text-primary">
                   Read more
+                </Button>
+              )}
+              {isExpanded && post.content.length > 300 && (
+                <Button variant="link" onClick={() => setIsExpanded(false)} className="p-0 h-auto font-normal text-xs text-primary">
+                  Show less
                 </Button>
               )}
             </div>
@@ -134,18 +148,17 @@ export function ForumPost({ post, currentUserId }: ForumPostProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-4 ml-14">
+      <div className="flex items-center justify-between md:justify-start gap-2 md:gap-4 md:ml-14 mt-2 md:mt-0">
         <Button
           variant="ghost"
-          onClick={() => {
-            setLocalLiked(!localLiked);
-            handleReaction();
-          }}
+          onClick={handleReaction}
           disabled={isReacting}
-          className={`hover:bg-transparent! gap-2 h-8 px-0 transition-colors ${localLiked ? "text-red-500" : "text-muted-foreground hover:text-foreground"}`}
+          className={`hover:bg-transparent! gap-2 h-8 px-0 transition-colors ${isLiked ? "text-red-500" : "text-muted-foreground hover:text-foreground"}`}
         >
-          <Heart className={`h-4 w-4 ${localLiked ? "fill-current" : ""}`} />
-          <span className="text-xs font-semibold">{post.reactions?.reduce((acc, r) => acc + r.count, 0) || 0}</span>
+          <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+          <span className="text-xs font-semibold">
+            {likeCount}
+          </span>
         </Button>
 
         <Button
@@ -154,12 +167,12 @@ export function ForumPost({ post, currentUserId }: ForumPostProps) {
           onClick={() => setShowComments(!showComments)}
         >
           <MessageCircle className="h-4 w-4" />
-          <span className="text-xs font-semibold">{comments.length} Comments</span>
+          <span className="text-xs font-semibold">{comments.length} <span className="hidden sm:inline">Comments</span></span>
         </Button>
 
         <Button variant="ghost" className="text-muted-foreground hover:bg-transparent! hover:text-foreground gap-2 h-8 px-0">
           <Share2 className="h-4 w-4" />
-          <span className="text-xs font-semibold">Share</span>
+          <span className="text-xs font-semibold hidden sm:inline">Share</span>
         </Button>
       </div>
 

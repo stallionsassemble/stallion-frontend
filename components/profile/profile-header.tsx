@@ -110,7 +110,7 @@ export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) 
                 </div>
                 <p className="text-muted-foreground font-inter mb-4">{username}</p>
                 <p className="text-sm text-foreground/80 max-w-2xl font-inter leading-relaxed">
-                  {user?.companyBio || "No bio added yet."}
+                  {user?.bio || user?.companyBio || "No bio added yet."}
                 </p>
               </div>
 

@@ -3,29 +3,28 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { KpiCard } from "@/components/ui/kpi-card";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AddPaymentMethodModal } from "@/components/wallet/add-payment-method-modal";
 import { WithdrawFundsModal } from "@/components/wallet/withdraw-funds-modal";
+import { useGetSupportedCurrencies } from "@/lib/api/bounties/queries";
+import { toast } from "sonner";
+
+import { useGetPrices } from "@/lib/api/prices/queries";
 import { walletService } from "@/lib/api/wallet";
-import { useDeletePayoutMethod, useGetPayoutMethods } from "@/lib/api/wallet/queries";
+import { useDeletePayoutMethod, useGetDepositAddress, useGetPayoutMethods, useSetTrustline, useSyncWallet } from "@/lib/api/wallet/queries";
 import { useDebounce } from "@/lib/hooks/use-debounce";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay, isWithinInterval, startOfDay } from "date-fns";
-import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, ChevronLeft, ChevronRight, Clock, Coins, DollarSign, History, Loader2, Plus, Search, Send, Trash2, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, CheckCircle2, ChevronLeft, ChevronRight, Clock, Coins, Copy, DollarSign, History, Info, Loader2, Plus, RefreshCcw, Search, Send, Trash2, Wallet } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
-
-const payoutMethods = [
-  {
-    id: 1,
-    name: "Crypto Wallet",
-    value: "0x742d35Cc6634C0532925a3b844Bc9e7595f2bD38",
-    type: "wallet",
-  },
-];
 
 const getCurrencyIcon = (currency: string) => {
   const code = currency.toLowerCase();
@@ -36,30 +35,59 @@ const getCurrencyIcon = (currency: string) => {
       return '/assets/icons/usglo.png';
     case 'xlm':
       return '/assets/icons/xlm.png';
+    case 'eurc':
+      return '/assets/icons/euro.png';
+    case 'ngn':
+      return '/assets/icons/naira.png';
     default:
       return '/assets/icons/dollar.png'; // Fallback
   }
 };
 
-// ... imports
 
-function WalletStats({ balances }: { balances: any }) { // Type this properly
+
+
+function WalletStats({ balances }: { balances: any }) {
+  // balances is now { balances: [], totalAssets: number }
+  const assets = balances?.balances || [];
+
+  // Extract currency codes to fetch prices for
+  const currencies = assets.map((a: any) => a.currency);
+  const { data: prices = {} } = useGetPrices(currencies);
+
+  // Calculate Total Value
+  const totalValue = assets.reduce((sum: number, asset: any) => {
+    // If USD/USDC, price is 1 (or close to it via API). If API fails, default to 0 for volatile, 1 for stable if known.
+    // Our service defaults to 1 for 'usd'.
+    const price = prices[asset.currency] || (['usdc', 'usd'].includes(asset.currency.toLowerCase()) ? 1 : 0);
+    return sum + (asset.balance * price);
+  }, 0);
+
+  // Calculate Pending Value (using same logic)
+  const pendingValue = assets.reduce((sum: number, asset: any) => {
+    const price = prices[asset.currency] || (['usdc', 'usd'].includes(asset.currency.toLowerCase()) ? 1 : 0);
+    const pending = asset.balance - asset.availableBalance;
+    return sum + (pending * price);
+  }, 0);
+
   const formatCurrency = (amount: number, currency: string = "USD") => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount);
+    try {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: currency,
+      }).format(amount);
+    } catch (e) {
+      return `${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)} ${currency}`;
+    }
   };
-
-  const pendingAmount = balances ? balances.balance - balances.availableBalance : 0;
 
   return (
     <>
       <div className="grid gap-4 md:grid-cols-3">
         <KpiCard
           label="Total Balance"
-          value={formatCurrency(balances?.availableBalance || 0, balances?.currency || "USD")}
-          status="Available to withdraw"
+          value={formatCurrency(totalValue, "USD")}
+          status={`${assets.length} Assets Held`}
           statusColor="text-primary font-medium text-sm"
           icon={DollarSign}
           valueClassName="text-4xl text-white"
@@ -68,7 +96,7 @@ function WalletStats({ balances }: { balances: any }) { // Type this properly
         />
         <KpiCard
           label="Pending"
-          value={formatCurrency(pendingAmount, balances?.currency || "USD")}
+          value={formatCurrency(pendingValue, "USD")}
           status="Awaiting release"
           statusColor="text-[#FF9500] font-medium text-sm"
           icon={Clock}
@@ -77,8 +105,8 @@ function WalletStats({ balances }: { balances: any }) { // Type this properly
           layout="row"
         />
         <KpiCard
-          label="Estimated Value"
-          value={formatCurrency(balances?.balance || 0, balances?.currency || "USD")}
+          label="This month"
+          value={formatCurrency(totalValue, "USD")} // Placeholder: Real monthly gain needs history API
           status="Total account value"
           statusColor="text-green-500 font-medium text-sm"
           icon={DollarSign}
@@ -91,44 +119,58 @@ function WalletStats({ balances }: { balances: any }) { // Type this properly
       <WithdrawFundsModal
         isOpen={false}
         onClose={() => { }}
-        availableBalance={balances.availableBalance}
+        availableBalance={totalValue} // Allow withdraw check against total USD value? Or specific asset?
+      // Note: Withdraw modal usually needs specific asset. For now, this prop might be unused or just indicative.
       />
     </>
   );
 }
 
 function WalletAssetList({ balances }: { balances: any }) {
+  // balances is { balances: [...], ... }
+  const assets = balances?.balances || [];
+
   const formatCurrency = (amount: number, currency: string = "USD") => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-    }).format(amount);
+    try {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: currency,
+      }).format(amount);
+    } catch (e) {
+      return `${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)} ${currency}`;
+    }
   };
 
   return (
     <div className="space-y-3 min-h-[400px]">
-      <div
-        className="flex items-center justify-between p-4 rounded-xl bg-primary/10 hover:bg-primary/15 transition-colors"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 flex items-center justify-center shrink-0">
-            <Image
-              src={getCurrencyIcon(balances.currency)}
-              alt={balances.currency}
-              width={32}
-              height={32}
-              className="w-8 h-8 object-contain"
-            />
+      {assets.map((asset: any, i: number) => (
+        <div
+          key={asset.currency + i}
+          className="flex items-center justify-between p-4 rounded-xl bg-primary/10 hover:bg-primary/15 transition-colors"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 flex items-center justify-center shrink-0">
+              <Image
+                src={getCurrencyIcon(asset.currency)}
+                alt={asset.currency}
+                width={32}
+                height={32}
+                className="w-8 h-8 object-contain"
+              />
+            </div>
+            <div>
+              <h4 className="text-foreground font-bold font-inter">{asset.currency}</h4>
+              <p className="text-sm font-inter text-muted-foreground">{asset.asset_type === 'native' ? 'Native Token' : 'Asset'}</p>
+            </div>
           </div>
-          <div>
-            <h4 className="text-foreground font-bold font-inter">{balances.currency}</h4>
-            <p className="text-sm font-inter text-muted-foreground">Available</p>
+          <div className="text-right">
+            <span className="text-foreground font-bold font-space-grotesk block">{formatCurrency(asset.availableBalance, asset.currency)}</span>
+            {asset.balance !== asset.availableBalance && (
+              <span className="text-xs text-muted-foreground">Total: {formatCurrency(asset.balance, asset.currency)}</span>
+            )}
           </div>
         </div>
-        <div className="text-right">
-          <span className="text-foreground font-bold font-space-grotesk block">{formatCurrency(balances.availableBalance, balances.currency)}</span>
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
@@ -222,7 +264,7 @@ function WalletTransactions({ transactions }: { transactions: any[] }) {
           <div className="p-8 text-center text-muted-foreground">No transactions found</div>
         ) : (
           paginatedTransactions.map((tx, i) => (
-            <div key={tx.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 ${i !== paginatedTransactions.length - 1 ? 'border-b border-border' : ''} hover:bg-muted/50 transition-colors gap-4`}>
+            <div key={tx.id} className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 ${i !== paginatedTransactions.length - 1 ? 'border-b border-border' : ''} gap-4`}>
               <div className="flex items-start sm:items-center gap-4 w-full">
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary-foreground shrink-0 mt-1 sm:mt-0">
                   {tx.type.toLowerCase().includes('withdraw') ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownLeft className="w-5 h-5" />}
@@ -376,6 +418,9 @@ export default function WalletPage() {
   const [activeTab, setActiveTab] = useState("Assets");
   const [showAddMethodModal, setShowAddMethodModal] = useState(false);
   const [showWithdrawFundsModal, setShowWithdrawFundsModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showTrustlineModal, setShowTrustlineModal] = useState(false);
+  const { mutate: syncWallet, isPending: isSyncing } = useSyncWallet();
 
   // Fetch all data upfront to avoid suspense during tab switching and ensure instant access
   const { data: balances, isLoading: isBalancesLoading } = useQuery({
@@ -386,9 +431,7 @@ export default function WalletPage() {
       } catch (error: any) {
         if (error.response?.status === 404) {
           return {
-            balance: 0,
-            availableBalance: 0,
-            currency: 'USD',
+            balances: []
           };
         }
         throw error;
@@ -420,18 +463,15 @@ export default function WalletPage() {
     );
   }
 
-
   return (
     <div className="space-y-8">
-      {/* 
-          Stats are always visible.
-          We now pass balances props.
-      */}
+      {/* ... (Stats) */}
       <WalletStats balances={balances} />
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="flex items-center gap-1 p-1 bg-zinc-900 rounded-[12px] overflow-x-auto no-scrollbar max-w-full">
+          {/* ... (Tabs) */}
           {["Assets", "Transactions", "Payouts"].map((tab) => (
             <button
               key={tab}
@@ -451,26 +491,55 @@ export default function WalletPage() {
           ))}
         </div>
 
-        <Button
-          className="bg-primary hover:bg-primary/90 text-sm sm:text-[16px] text-primary-foreground font-medium font-inter rounded-lg px-6 gap-2 w-full sm:w-auto h-11 sm:h-12"
-          onClick={() => setShowWithdrawFundsModal(true)}
-        >
-          <Send className="w-4 h-4" /> Withdraw Fund
-        </Button>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          {activeTab === "Assets" && (
+            <Button
+              variant="outline"
+              className="border-border bg-card text-foreground hover:bg-muted h-11 sm:h-12 w-full sm:w-auto gap-2"
+              onClick={() => setShowTrustlineModal(true)}
+            >
+              <Plus className="w-4 h-4" />
+              Add Asset
+            </Button>
+          )}
+
+          <Button
+            variant="outline"
+            className="border-border bg-card text-foreground hover:bg-muted h-11 sm:h-12 w-full sm:w-auto gap-2"
+            onClick={() => syncWallet()}
+            disabled={isSyncing}
+          >
+            <RefreshCcw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} />
+            Sync
+          </Button>
+
+          <Button
+            variant="outline"
+            className="border-border bg-card text-foreground hover:bg-muted h-11 sm:h-12 w-full sm:w-auto gap-2"
+            onClick={() => setShowDepositModal(true)}
+          >
+            <ArrowDownLeft className="w-4 h-4" />
+            Deposit
+          </Button>
+
+          <Button
+            className="bg-primary hover:bg-primary/90 text-sm sm:text-[16px] text-primary-foreground font-medium font-inter rounded-lg px-6 gap-2 w-full sm:w-auto h-11 sm:h-12"
+            onClick={() => setShowWithdrawFundsModal(true)}
+          >
+            <Send className="w-4 h-4" /> Withdraw
+          </Button>
+        </div>
       </div>
 
-      {/* Tab Content Areas */}
-      {/* 
-          Directly rendering components.
-          Since data is already fetched in Page (and suspended there via loading.tsx), 
-          switching tabs is now instant and sync.
-      */}
-
+      {/* ... (Tab Content) */}
       {activeTab === "Assets" && (
-        balances && balances.balance > 0 ? <WalletAssetList balances={balances} /> : (
+        balances && balances.balances && balances.balances.length > 0 ? <WalletAssetList balances={balances} /> : (
           <div className="flex flex-col items-center justify-center p-8 bg-primary/5 rounded-xl border border-dashed border-primary/20 min-h-[400px]">
             <Coins className="h-10 w-10 text-primary/40 mb-3" />
             <p className="text-muted-foreground text-sm">No assets found.</p>
+            <Button variant="link" onClick={() => setShowTrustlineModal(true)} className="mt-2 text-primary">
+              Add your first asset (Trustline)
+            </Button>
           </div>
         )
       )}
@@ -488,7 +557,159 @@ export default function WalletPage() {
       {showWithdrawFundsModal && (
         <BalancesConsumerModal isOpen={showWithdrawFundsModal} onClose={() => setShowWithdrawFundsModal(false)} availableBalance={balances?.availableBalance || 0} currency={balances?.currency || "USD"} />
       )}
+
+      {/* Modals */}
+      <DepositModal isOpen={showDepositModal} onClose={() => setShowDepositModal(false)} />
+      <SetTrustlineModal isOpen={showTrustlineModal} onClose={() => setShowTrustlineModal(false)} />
     </div>
+  );
+}
+
+// ... New Modal Components (Add these above WalletPage or in separate files, I will inline for now as requested by 'implement it')
+
+
+function DepositModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { data: addressData, isLoading } = useGetDepositAddress();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (addressData?.address) {
+      navigator.clipboard.writeText(addressData.address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success("Address copied to clipboard");
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className={cn("bg-background p-0 gap-0 border-none sm:max-w-[500px]")}>
+        <DialogHeader className="p-4 sm:p-6 flex flex-col items-start justify-center w-full shrink-0">
+          <div>
+            <DialogTitle className="text-[24px] sm:text-[32px] font-inter font-bold text-foreground tracking-[4%] text-left flex items-center gap-2">
+              Deposit Funds
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-5 w-5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>Send Stellar-based assets (USDC, XLM) to this address. Ensure you include a Memo if required by your exchange, though for this non-custodial wallet it's usually direct.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </DialogTitle>
+            <p className="text-muted-foreground font-inter font-medium text-[12px] mt-1 text-left">
+              Transfer funds to your Stellar wallet
+            </p>
+          </div>
+        </DialogHeader>
+
+        <div className="p-4 sm:p-6 space-y-6 pt-0">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <Label className="text-foreground font-bold text-base">Wallet Address (Stellar)</Label>
+            </div>
+            <div className="flex items-center justify-between gap-2 pl-4 pr-1 py-1 rounded-lg border border-border bg-background h-12">
+              <div className="flex-1 min-w-0 font-mono text-sm text-foreground truncate select-all">
+                {isLoading ? "Loading..." : addressData?.address || "Address not available"}
+              </div>
+              <Button size="icon" variant="ghost" className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0" onClick={handleCopy}>
+                {copied ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-xl bg-blue-500/10 p-4 text-xs text-blue-200 border border-blue-500/20 flex gap-3 items-start">
+            <Info className="h-5 w-5 shrink-0 text-blue-400 mt-0.5" />
+            <span className="leading-relaxed text-muted-foreground">Only send Stellar network assets (XLM, USDC on Stellar). Sending other assets may result in permanent loss.</span>
+          </div>
+
+          <Button
+            onClick={onClose}
+            className="w-full h-12 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-sm font-bold text-medium rounded-lg font-inter"
+          >
+            Close
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SetTrustlineModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { data: currencies = [], isLoading } = useGetSupportedCurrencies();
+  const { mutate: setTrustline, isPending } = useSetTrustline();
+  const [selectedCurrency, setSelectedCurrency] = useState("");
+
+  const handleSubmit = () => {
+    if (!selectedCurrency) return;
+    setTrustline(selectedCurrency, {
+      onSuccess: () => {
+        onClose();
+        setSelectedCurrency("");
+      }
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className={cn("bg-background p-0 gap-0 border-none sm:max-w-[500px]")}>
+        <DialogHeader className="p-4 sm:p-6 flex flex-col items-start justify-center w-full shrink-0">
+          <div>
+            <DialogTitle className="text-[24px] sm:text-[32px] font-inter font-bold text-foreground tracking-[4%] text-left flex items-center gap-2">
+              Add Asset
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-5 w-5 text-muted-foreground cursor-pointer hover:text-foreground transition-colors" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>On Stellar, you must establish a "Trustline" to hold a specific asset (like USDC). This requires a small reserve of XLM.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </DialogTitle>
+            <p className="text-muted-foreground font-inter font-medium text-[12px] mt-1 text-left">
+              Enable a new asset for your wallet
+            </p>
+          </div>
+        </DialogHeader>
+
+        <div className="p-4 sm:p-6 space-y-6 pt-0">
+          <div className="space-y-2">
+            <Label className="text-foreground font-bold text-base">Select Asset</Label>
+            <div className="relative">
+              <select
+                className="w-full h-12 rounded-lg border border-border bg-background px-3 py-2 text-foreground text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer appearance-none"
+                value={selectedCurrency}
+                onChange={(e) => setSelectedCurrency(e.target.value)}
+                style={{ backgroundImage: 'none' }}
+              >
+                <option value="" disabled>Select currency...</option>
+                {currencies.map((c: any) => (
+                  <option key={c.code} value={c.code}>{c.code} ({c.name})</option>
+                ))}
+              </select>
+            </div>
+            <p className="text-[12px] text-muted-foreground pt-1">
+              Adding an asset (Trustline) requires a small XLM reserve.
+            </p>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <Button
+              onClick={handleSubmit}
+              disabled={!selectedCurrency || isPending}
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold text-medium rounded-lg font-inter gap-2"
+            >
+              {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Add Asset
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

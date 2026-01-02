@@ -7,7 +7,7 @@ import { ReputationHistoryEntry } from "@/lib/types/reputation";
 import { formatDistanceToNow } from "date-fns";
 import { History } from "lucide-react";
 
-export function RecentActivity({ userId }: { userId?: string }) {
+export function RecentActivity({ userId, publicMode = false }: { userId?: string, publicMode?: boolean }) {
   const { data: myHistory } = useMyHistory();
   const { data: userHistory } = useUserHistory(userId || "");
 
@@ -31,12 +31,12 @@ export function RecentActivity({ userId }: { userId?: string }) {
         <EmptyState
           icon={History}
           title="No Recent Activity"
-          description="Your reputation history will appear here once you start contributing."
+          description={publicMode ? "This user has not earned any badges yet." : "Your reputation history will appear here once you start contributing."}
           className="min-h-[200px] border-0"
         />
       ) : (
         <div>
-          {history.map((item) => (
+          {history.slice(0, 10).map((item) => (
             <div key={item.id} className="flex items-start justify-between py-4 border-b border-primary bg-primary/14 p-3 last:border-0 last:mb-0">
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-normal font-inter text-muted-foreground/80">

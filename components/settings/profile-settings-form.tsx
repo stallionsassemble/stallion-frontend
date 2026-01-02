@@ -108,7 +108,7 @@ export function ProfileSettingsForm({ onAfterSave }: ProfileSettingsFormProps) {
         lastName: user.lastName || "",
         username: user.username || "",
         location: user.location || "",
-        bio: user.companyBio || "",
+        bio: user.bio || "",
         skills: user.skills ? (Array.isArray(user.skills) ? user.skills : []) : [],
         twitter: user.socials?.twitter || "",
         website: user.socials?.website || "",

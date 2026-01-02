@@ -127,8 +127,12 @@ function VerifyContent() {
       if (user?.profileCompleted) {
         router.push("/dashboard");
       } else {
-        // Use returned user role or fallback to URL param
-        const userRole = user?.role || (role === "owner" ? "OWNER" : "CONTRIBUTOR");
+        // Use returned user role or fallback to URL param.
+        // Priority: If URL param says "owner", redirect to owner onboarding to match user intent.
+        const intendedRole = role === "owner" ? "OWNER" : "CONTRIBUTOR";
+        // Only rely on user.role if it's explicitly OWNER, otherwise default to intended role from URL
+        const userRole = user?.role === "OWNER" ? "OWNER" : intendedRole;
+
         const onboardingPath = userRole === "OWNER" ? "owner" : "talent";
         router.push(`/auth/onboarding/${onboardingPath}`);
       }

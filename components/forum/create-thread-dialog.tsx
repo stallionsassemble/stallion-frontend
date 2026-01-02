@@ -31,7 +31,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
 import { useCreateThread, useGetCategories } from "@/lib/api/forum/queries";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,6 +39,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { MarkdownEditor } from "../shared/markdown-editor";
 
 const createThreadSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -225,10 +225,12 @@ export function CreateThreadDialog({ open, onOpenChange }: CreateThreadDialogPro
                 <FormItem>
                   <FormLabel>Content</FormLabel>
                   <FormControl>
-                    <Textarea
+                    <MarkdownEditor
+                      value={field.value}
+                      onChange={(val) => field.onChange(val)}
+                      className="w-full"
+                      minHeight="min-h-[200px]"
                       placeholder="Write your discussion content here..."
-                      className="min-h-[200px] resize-none"
-                      {...field}
                     />
                   </FormControl>
                   <FormMessage />

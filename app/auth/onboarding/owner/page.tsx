@@ -437,7 +437,9 @@ export default function OwnerOnboardingPage() {
                       {...field}
                     />
                   </FormControl>
-                  <div className="text-right text-[10px] text-gray-500">500 characters left</div>
+                  <div className="text-right text-[10px] text-gray-500">
+                    {500 - (field.value?.length || 0)} characters left
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}

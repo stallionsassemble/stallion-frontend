@@ -61,10 +61,30 @@ export function Header() {
         return "Profile";
       case "/dashboard/settings":
         return "Settings";
+      case "/dashboard/forums":
+        return "Community Forum";
+      case "/dashboard/leaderboard":
+        return "Leaderboard";
       default:
-        // Capitalize first letter of the last segment if unknown
-        const segment = path.split("/").pop();
-        return segment ? segment.charAt(0).toUpperCase() + segment.slice(1) : "Dashboard";
+        // Handle dynamic routes (wildcard logic)
+        // Expected pattern: /dashboard/<section>/<id>
+        const segments = path.split("/").filter(Boolean); // ['dashboard', 'projects', '123']
+
+        if (segments.length >= 3 && segments[0] === 'dashboard') {
+          const section = segments[1];
+
+          switch (section) {
+            case 'projects': return 'Project Details';
+            case 'bounties': return 'Bounty Details';
+            case 'forums': return 'Forum Discussion';
+            case 'profile': return 'User Profile';
+            case 'submissions': return 'Submission Details';
+          }
+        }
+
+        // Fallback: Capitalize first letter of the last segment
+        const lastSegment = segments[segments.length - 1];
+        return lastSegment ? lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1) : "Dashboard";
     }
   };
 

@@ -3,7 +3,7 @@ import { useMyReputation, useUserReputation } from "@/lib/api/reputation/queries
 import { cn } from "@/lib/utils";
 import { Award } from "lucide-react";
 
-export function Achievements({ userId }: { userId?: string }) {
+export function Achievements({ userId, publicMode = false }: { userId?: string, publicMode?: boolean }) {
   const { data: myReputation } = useMyReputation();
   const { data: userReputation } = useUserReputation(userId || "");
 
@@ -18,7 +18,7 @@ export function Achievements({ userId }: { userId?: string }) {
         <EmptyState
           icon={Award}
           title="No Achievements Yet"
-          description="Complete bounties and projects to earn badges and climb the leaderboard."
+          description={publicMode ? "This user has not earned any badges yet." : "Complete bounties and projects to earn badges and climb the leaderboard."}
           className="min-h-[200px] border-0"
         />
       ) : (

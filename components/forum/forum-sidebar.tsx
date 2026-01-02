@@ -11,11 +11,25 @@ import Link from "next/link";
 interface ForumSidebarProps {
   categoryId?: string;
   currentThreadId?: string;
+  author?: {
+    username: string;
+    firstName: string;
+    lastName: string;
+    profilePicture?: string | null;
+    role?: string;
+    posts: number | 0;
+    likes: number | 0;
+    replies: number | 0;
+  };
 }
 
-export function ForumSidebar({ categoryId, currentThreadId }: ForumSidebarProps) {
-  const { user } = useAuth();
+export function ForumSidebar({ categoryId, currentThreadId, author }: ForumSidebarProps) {
+  const { user: currentUser } = useAuth();
   const { data: tags = [] } = useGetTags();
+
+  // Use passed author if available (for thread view), otherwise fallback to current user (for list view)
+  const displayUser = author || currentUser;
+
   // Fetch related threads if categoryId is provided, otherwise fetch recent threads (empty search)
   const { data: relatedThreadsResponse, isLoading: isRelatedLoading } = useSearchThreads("", categoryId);
 
@@ -31,25 +45,26 @@ export function ForumSidebar({ categoryId, currentThreadId }: ForumSidebarProps)
   return (
     <div className="space-y-6 w-full lg:w-[471px] shrink-0 font-inter">
       {/* User Card */}
-      {user && (
+      {displayUser && (
         <Card className="bg-card border-primary/50 py-[12.85px] border-[0.68px] px-[19.77px] rounded-[10px] w-full h-[177.81px] flex flex-col justify-between shadow-sm">
           <div className="flex flex-col items-start space-y-2">
             <div className="h-[52px] w-[52px] rounded-full overflow-hidden border-2 border-primary/20 bg-primary/20">
               <Image
-                src={user.profilePicture || `https://avatar.vercel.sh/${user.username || 'user'}`}
+                src={displayUser.profilePicture || `https://avatar.vercel.sh/${displayUser.username || 'user'}`}
                 width={52}
                 height={52}
-                alt={user.username || "User"}
+                alt={displayUser.username || "User"}
                 className="object-cover"
               />
             </div>
             <div className="space-y-0.5">
               <h3 className="text-[16px] font-bold text-foreground leading-tight">
-                {user.firstName} {user.lastName}
+                {displayUser.firstName} {displayUser.lastName}
               </h3>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-muted-foreground">@{user.username}</span>
-                {user.role === 'OWNER' && (
+                <span className="text-[10px] text-muted-foreground">@{displayUser.username}</span>
+                {/* Only show Admin badge if we have role info (usually only available for current user or if added to author type) */}
+                {(displayUser as any).role === 'OWNER' && (
                   <Badge variant="outline" className="text-[6px] h-4 px-2 bg-orange-700/30 text-foreground border-none flex items-center gap-1 rounded-full capitalize">
                     <Users className="h-2.5 w-2.5" />
                     Admin
@@ -61,15 +76,15 @@ export function ForumSidebar({ categoryId, currentThreadId }: ForumSidebarProps)
 
           <div className="grid grid-cols-3 gap-2 -mt-[15px]">
             <div className="bg-primary/20 p-[10px] rounded-[10px] text-center space-y-0.5 w-full h-[50px]">
-              <p className="text-[16px] font-extrabold text-foreground font-inter">0</p>
+              <p className="text-[16px] font-extrabold text-foreground font-inter">{author?.posts || 0}</p>
               <p className="text-[8px] text-muted-foreground font-light tracking-tight">Posts</p>
             </div>
             <div className="bg-primary/20 p-[10px] rounded-[10px] text-center w-full h-[50px]">
-              <p className="text-[16px] font-extrabold text-foreground font-inter">0</p>
+              <p className="text-[16px] font-extrabold text-foreground font-inter">{author?.replies || 0}</p>
               <p className="text-[8px] text-muted-foreground font-light tracking-tight -mt-1">Replies</p>
             </div>
             <div className="bg-primary/20 p-[10px] rounded-[10px] text-center space-y-0.5 w-full h-[50px]">
-              <p className="text-[16px] font-extrabold text-foreground font-inter">0</p>
+              <p className="text-[16px] font-extrabold text-foreground font-inter">{author?.likes || 0}</p>
               <p className="text-[8px] text-muted-foreground font-light tracking-tight -mt-1">Likes</p>
             </div>
           </div>
@@ -78,10 +93,10 @@ export function ForumSidebar({ categoryId, currentThreadId }: ForumSidebarProps)
 
       {/* Related Discussions */}
       <Card className="bg-card border-primary/50 border-[0.68px] py-[12.85px] px-[10px] rounded-[12px] space-y-0">
-        <h4 className="text-[16px] font-medium text-foreground font-inter leading-none mb-3">
+        <h4 className="text-[16px] font-medium text-foreground font-inter leading-none">
           {categoryId ? "Related Discussions" : "Recent Discussions"}
         </h4>
-        <div className="space-y-[3px]">
+        <div className="space-y-[3px] -mt-2">
           {isRelatedLoading ? (
             <div className="flex justify-center py-4">
               <Loader2 className="w-6 h-6 animate-spin text-primary/50" />
@@ -113,12 +128,14 @@ export function ForumSidebar({ categoryId, currentThreadId }: ForumSidebarProps)
 
       {/* Popular Tags */}
       <Card className="bg-card border-primary/50 border-[0.68px] py-[12.85px] px-[10px] rounded-[10px]">
-        <h4 className="text-[16px] font-medium text-foreground font-inter mb-3">Popular Tags</h4>
-        <div className="flex flex-wrap gap-[4px]">
+        <h4 className="text-[16px] font-medium text-foreground font-inter">Popular Tags</h4>
+        <div className="flex flex-wrap gap-[4px] -mt-3">
           {tags.length > 0 ? tags.slice(0, 10).map((tag: any, idx: number) => (
-            <Badge key={idx} variant="secondary" className="bg-primary/20 border-none text-foreground font-inter text-[10px] h-6 px-4 font-medium rounded-full cursor-pointer hover:bg-primary/30 transition-colors">
-              {tag.name}
-            </Badge>
+            <Link key={idx} href={`/dashboard/forums?tag=${tag.slug || tag.name}`}>
+              <Badge variant="secondary" className="bg-primary/20 border-none text-foreground font-inter text-[10px] h-6 px-4 font-medium rounded-full cursor-pointer hover:bg-primary/30 transition-colors">
+                {tag.name}
+              </Badge>
+            </Link>
           )) : (
             <span className="text-xs text-muted-foreground px-2">No tags available</span>
           )}

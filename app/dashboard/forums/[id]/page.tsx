@@ -130,7 +130,11 @@ const ForumDetailPage = () => {
         </div>
 
         {/* Sidebar Column */}
-        <ForumSidebar categoryId={thread?.categoryId} currentThreadId={thread?.id} />
+        <ForumSidebar
+          categoryId={thread?.categoryId}
+          currentThreadId={thread?.id}
+          author={thread?.author}
+        />
       </div>
     </div>
   );

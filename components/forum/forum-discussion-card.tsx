@@ -1,8 +1,10 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Clock, Eye, MessageCircle, PinIcon, ThumbsUp, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Clock, Eye, MessageCircle, Pin, ThumbsUp, User } from "lucide-react";
 import Image from "next/image";
+import { MouseEvent } from "react";
 
 interface DiscussionCardProps {
   id: string | number;
@@ -15,6 +17,7 @@ interface DiscussionCardProps {
   likes: number;
   category: string;
   isPinned?: boolean;
+  onPin?: (id: string | number) => void;
 }
 
 export function ForumDiscussionCard({
@@ -27,13 +30,34 @@ export function ForumDiscussionCard({
   views,
   likes,
   category,
-  isPinned
+  isPinned,
+  onPin
 }: DiscussionCardProps) {
+
+  const handlePin = (e: MouseEvent) => {
+    e.preventDefault(); // Prevent link navigation
+    e.stopPropagation();
+    onPin?.(id);
+  };
+
   return (
-    <div className="group border-b border-[0.68px] border-primary/50 bg-card p-5 transition-all hover:border-primary/50 hover:bg-primary/10"
-    // style={{ borderTop: "9.89px", borderTopColor: "purple" }}
-    >
-      <div className="flex gap-3 md:gap-4">
+    <div className="group relative border-b border-[0.68px] border-primary/50 bg-card p-5 transition-all hover:border-primary/50 hover:bg-primary/10">
+
+      {/* Pin Action - Absolute positioned for easy access */}
+      {onPin && (
+        <button
+          onClick={handlePin}
+          className={cn(
+            "absolute top-5 right-5 p-2 rounded-full transition-colors hover:bg-primary/20",
+            isPinned ? "text-primary bg-primary/10" : "text-muted-foreground/30 hover:text-primary"
+          )}
+          title={isPinned ? "Unpin thread" : "Pin thread"}
+        >
+          <Pin className={cn("h-4 w-4", isPinned && "fill-current")} />
+        </button>
+      )}
+
+      <div className="flex gap-3 md:gap-4 pr-8">
         {/* Avatar Placeholder/User Icon */}
         <div className="h-[60px] w-[60px] md:h-[91px] md:w-[91px] shrink-0 overflow-hidden rounded-[8000.41px] bg-primary/20 flex items-center justify-center mt-6.5">
           <Image
@@ -50,7 +74,7 @@ export function ForumDiscussionCard({
           <div className="flex flex-wrap items-center gap-2 font-inter">
             {isPinned && (
               <Badge variant="outline" className="text-foreground border-primary text-[10px] h-5 px-2 font-medium">
-                <PinIcon />
+                <Pin className="h-3 w-3 mr-1" />
                 Pinned
               </Badge>
             )}

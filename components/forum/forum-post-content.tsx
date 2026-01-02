@@ -1,12 +1,15 @@
+
 "use client";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useUpdateThread } from "@/lib/api/forum/queries";
+import { useAddOrRemoveThreadReaction, useUpdateThread } from "@/lib/api/forum/queries";
 import { Clock, Eye, Heart, Loader2, MessageCircle, Share2, ThumbsUp, UserCog } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
+import { MarkdownEditor } from "../shared/markdown-editor";
+import { MarkdownRenderer } from "../shared/markdown-renderer";
 
 interface ForumPostContentProps {
   title: string;
@@ -46,6 +49,7 @@ export function ForumPostContent({
   const [editContent, setEditContent] = useState(content);
   const [isExpanded, setIsExpanded] = useState(false);
   const { mutate: updateThread, isPending: isUpdating } = useUpdateThread();
+  const { mutate: toggleThreadLike, isPending: isLiking } = useAddOrRemoveThreadReaction();
 
   const handleUpdate = () => {
     if (!threadId) return;
@@ -57,7 +61,29 @@ export function ForumPostContent({
     });
   };
 
-  const isOwner = currentUserId === authorId;
+  const handleThreadLike = () => {
+    if (!threadId) return;
+
+    // Optimistic toggle
+    // Note: Since we don't have the full "reactions" array on the thread object yet (as noted in BACKEND_REQUIREMENTS),
+    // we are relying on a simple "likes" count. 
+    // Ideally we'd have `thread.reactions` array similar to posts to know if *current user* liked it.
+    // For now, we'll toggle based on local state `isLiked` (which should be initialized from props ideally if available).
+    // As "local state" is the best we can do until the read-model is updated.
+
+    // Actually, looking at ForumPostContentProps, we receive `likes` count but not `isLiked` status.
+    // We will maintain a local optimisitic loop assuming success.
+
+    const newIsLiked = !isLiked;
+    setIsLiked(newIsLiked);
+
+    toggleThreadLike({ threadId, emoji: 'heart' }, {
+      onError: () => {
+        // Revert on error
+        setIsLiked(!newIsLiked);
+      }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -85,15 +111,17 @@ export function ForumPostContent({
 
         <div className="flex items-center gap-3 mt-2">
           {/* Avatar */}
-          <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-primary/20">
+          <Link href={`/dashboard/profile/${authorId}`} className="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-primary/20 hover:opacity-80 transition-opacity">
             <Image src={`https://avatar.vercel.sh/${author}`} width={40} height={40} alt={author} />
-          </div>
+          </Link>
 
           {/* User Info & Stats Column */}
           <div className="flex flex-col gap-0.5">
             {/* Row 1: Username & Badge */}
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-foreground font-bold font-inter">@{author}</span>
+              <Link href={`/dashboard/profile/${authorId}`} className="text-[12px] text-foreground font-bold font-inter hover:underline decoration-primary">
+                @{author}
+              </Link>
               {isAdmin && (
                 <Badge className="h-5 px-2 bg-amber-900 border-none text-foreground hover:bg-[#5A3318]/40 gap-1 rounded-full">
                   <UserCog className="h-3 w-3" />
@@ -130,10 +158,11 @@ export function ForumPostContent({
 
         {isEditing ? (
           <div className="p-4 md:p-8 space-y-4">
-            <Textarea
+            <MarkdownEditor
               value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              className="bg-muted/50 min-h-[200px]"
+              onChange={(val) => setEditContent(val)}
+              className="w-full"
+              minHeight="min-h-[200px]"
             />
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
@@ -146,31 +175,31 @@ export function ForumPostContent({
             </div>
           </div>
         ) : (
-          <div className="p-4 md:p-8 font-inter text-muted-foreground font-light text-[14px] leading-relaxed whitespace-pre-wrap">
-            <div className="prose prose-invert max-w-none">
-              {isExpanded ? content : (
-                content.length > 180 ? (
-                  <>
-                    {content.substring(0, 180)}...
-                    <Button
-                      variant="link"
-                      className="px-1 h-auto font-normal text-primary"
-                      onClick={() => setIsExpanded(true)}
-                    >
-                      Read more
-                    </Button>
-                  </>
-                ) : content
-              )}
+          <div className="p-4 md:p-8 font-inter text-muted-foreground font-light text-[14px] leading-relaxed">
+            <div className={`overflow-hidden transition-all duration-300 ${!isExpanded && content.length > 500 ? 'max-h-[300px] mask-gradient-to-b' : ''}`}>
+              <MarkdownRenderer content={content} />
             </div>
-            {isExpanded && content.length > 180 && (
-              <Button
-                variant="link"
-                className="px-0 h-auto font-normal text-primary mt-2"
-                onClick={() => setIsExpanded(false)}
-              >
-                Show less
-              </Button>
+            {!isExpanded && content.length > 500 && (
+              <div className="flex justify-center mt-2">
+                <Button
+                  variant="link"
+                  className="px-1 h-auto font-normal text-primary"
+                  onClick={() => setIsExpanded(true)}
+                >
+                  Read more
+                </Button>
+              </div>
+            )}
+            {isExpanded && content.length > 500 && (
+              <div className="flex justify-center mt-2">
+                <Button
+                  variant="link"
+                  className="px-0 h-auto font-normal text-primary"
+                  onClick={() => setIsExpanded(false)}
+                >
+                  Show less
+                </Button>
+              </div>
             )}
           </div>
         )}
@@ -186,8 +215,9 @@ export function ForumPostContent({
             <div className="flex items-center py-3 px-4 md:px-8">
               <Button
                 variant="ghost"
-                onClick={() => setIsLiked(!isLiked)}
-                className={`hover:bg-transparent! gap-1 h-9 px-3 transition-colors ${isLiked ? "text-red-500 hover:text-red-500" : "text-muted-foreground hover:text-muted-foreground"}`}
+                onClick={handleThreadLike}
+                disabled={isLiking}
+                className={`gap-1 h-9 px-3 transition-colors ${isLiked ? "text-red-500 hover:text-red-600 hover:bg-transparent!" : "text-muted-foreground hover:bg-transparent! hover:text-foreground"}`}
               >
                 <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
                 <span>{likes + (isLiked ? 1 : 0)}</span>

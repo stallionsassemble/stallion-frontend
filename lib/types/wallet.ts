@@ -8,12 +8,16 @@ export interface Wallet {
   updatedAt: string
 }
 
-export interface WalletBalances {
+export interface WalletBalanceItem {
   balance: number
   availableBalance: number
   currency: string
+  asset_type?: string
 }
-;[]
+
+export interface WalletBalances {
+  balances: WalletBalanceItem[]
+}
 
 export interface DepositAddress {
   address: string

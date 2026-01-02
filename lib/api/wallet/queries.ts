@@ -103,3 +103,25 @@ export function useWithdrawFunds() {
     },
   })
 }
+export function useSetTrustline() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (currencyCode: string) =>
+      walletService.setTrustline(currencyCode),
+    onSuccess: () => {
+      toast.success('Trustline set successfully')
+      queryClient.invalidateQueries({ queryKey: ['wallet-balances'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to set trustline')
+    },
+  })
+}
+
+export function useGetDepositAddress() {
+  return useQuery({
+    queryKey: ['wallet-deposit-address'],
+    queryFn: () => walletService.getDepositAddress(),
+  })
+}

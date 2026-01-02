@@ -8,7 +8,7 @@ import {
 
 class ReputationService {
   async getMyReputation() {
-    const response = await api.get<Reputation>('/reputation/me')
+    const response = await api.get<Reputation>('/reputation')
     return response.data
   }
 
@@ -17,8 +17,14 @@ class ReputationService {
     return response.data
   }
 
-  async getLeaderboard() {
-    const response = await api.get<Leaderboard>('/reputation/leaderboard')
+  async getLeaderboard(params?: {
+    page?: number
+    limit?: number
+    category?: string
+  }) {
+    const response = await api.get<Leaderboard>('/reputation/leaderboard', {
+      params,
+    })
     return response.data
   }
 

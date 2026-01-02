@@ -138,11 +138,32 @@ class ForumService {
   }
 
   async addOrRemoveReaction(payload: AddReaction) {
-    const response = await api.post<ReactionResponse>(
-      `/forum/posts/${payload.postId}/reactions`,
-      { emoji: payload.emoji }
+    const response = await api.patch<ReactionResponse>(`/forum/reactions`, {
+      postId: payload.postId,
+      emoji: payload.emoji,
+    })
+    return response.data
+  }
+
+  async addOrRemoveThreadReaction(payload: {
+    threadId: string
+    emoji: string
+  }) {
+    // START_MOCK_IMPLEMENTATION
+    // Since the endpoint doesn't exist yet, we'll assume it follows the same pattern as post reactions
+    // but targeted at threads.
+    // For now, if we want to test "optimistic" UI without errors, we might need a mock or try a path.
+    // User asked to "create a form of endpoint" which implies telling backend to make it.
+    // We will define the call here.
+    const response = await api.patch<ReactionResponse>(
+      `/forum/threads/reactions`,
+      {
+        threadId: payload.threadId,
+        emoji: payload.emoji,
+      }
     )
     return response.data
+    // END_MOCK_IMPLEMENTATION
   }
 
   // Tags

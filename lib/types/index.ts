@@ -20,6 +20,7 @@ export interface User {
   entityName?: string | null
   phoneNumber?: string | null
   industry?: string | null
+  bio?: string | null
   companyBio?: string | null
   companyLogo?: string | null
   emailNotifications?: boolean

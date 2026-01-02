@@ -10,69 +10,46 @@ import { formatDistanceToNow } from "date-fns";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FolderOpen, Loader2, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
-export default function BountiesPage() {
-  const [activeTab, setActiveTab] = useState("All");
+import { ProjectStatus, ProjectType } from "@/lib/types/project";
 
+export default function BountiesPage() {
   // Pagination Logic
   const [rowsPerPage, setRowsPerPage] = useState("10");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch Projects
-  const { data: projects, isLoading, isError } = useGetProjects({
-    // We can add filters here later based on activeTab if needed,
-    // for now fetch all and filter client side to match previous behavior
-    // or better yet, just fetch all open projects.
-    status: 'OPEN',
-    type: 'GIG', // Defaulting to GIG for now or should we fetch both? 
-    // The previous mock data had mixed types implies mixed.
-    // However the payload type requires a specific type. 
-    // Let's assume for this page we might want to fetch based on user selection or just default to GIG for now.
-    // If we want both, we might need two queries or a backend change.
-    // I will stick to 'GIG' as default 'Project' type in this context usually means Gigs/Projects
-    ownerId: '', // Fetch all
-  } as any); // Type cast as any because payload might be optional in backend but strict in frontend type definition? 
-  // Wait, I checked existing types. GetProjectsPayload has specific strict types. 
-  // Let's check if we can pass partial or if we need to adjust the hook usage.
-  // Actually, checking standard patterns, often "All" tabs show everything.
-  // If the API strictly requires type and status, I might be limited.
-  // Let's assume we want 'GIG' and 'OPEN' for the default view.
-
-  // Actually, let's fix the query usage to be safe.
-  // Ideally we should probably have a more flexible endpoint.
-  // But for now let's try to map the data we get.
-
   // State for search and sort
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("newest")
-  const [filterType, setFilterType] = useState("ALL") // Added filterType state
+  const [filterType, setFilterType] = useState("GIG") // Default to GIG as per requirements
+  const [filterStatus, setFilterStatus] = useState("OPEN")
 
-  // Filter and Sort Logic
+  // Fetch Projects with Filters
+  const { data: projects, isLoading, isError } = useGetProjects({
+    status: filterStatus === "ALL" ? undefined : filterStatus as ProjectStatus,
+    type: filterType === "ALL" ? undefined : filterType as ProjectType,
+    ownerId: undefined,
+  });
+
+  // Filter and Sort Logic (Client-side Search & Sort)
   const filteredProjects = useMemo(() => {
     let result = projects || []
-
-    // 0. Filter by type (GIG, JOB, ALL)
-    if (filterType !== "ALL") {
-      result = result.filter(project => project.type === filterType)
-    }
 
     // 1. Search Filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
-      result = result.filter(project =>
+      result = result.filter((project: any) =>
         project.title.toLowerCase().includes(query) ||
         project.description?.toLowerCase().includes(query) ||
-        project.requirements?.some(r => r.toLowerCase().includes(query))
+        project.requirements?.some((r: any) => r.toLowerCase().includes(query))
       )
     }
 
     // 2. Sorting
-    /* Note: API sorting isn't available, so we sort the full list on client */
-    result = [...result].sort((a, b) => {
+    result = [...result].sort((a: any, b: any) => {
       switch (sortBy) {
         case "oldest":
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         case "reward-high":
-          // Simple parsing for reward string if needed, assuming generic number comparisons valid for now
           return (parseFloat(b.reward) || 0) - (parseFloat(a.reward) || 0)
         case "reward-low":
           return (parseFloat(a.reward) || 0) - (parseFloat(b.reward) || 0)
@@ -83,7 +60,7 @@ export default function BountiesPage() {
     })
 
     return result
-  }, [projects, searchQuery, sortBy, filterType]) // Added filterType to dependencies
+  }, [projects, searchQuery, sortBy])
 
   // Pagination
   const totalPages = Math.ceil(filteredProjects.length / Number(rowsPerPage))
@@ -133,19 +110,32 @@ export default function BountiesPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex gap-3 w-full md:w-auto text-muted">
+        <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-3 w-full md:w-auto text-muted justify-end">
+          <Select value={filterStatus} onValueChange={(val: any) => setFilterStatus(val)}>
+            <SelectTrigger className="w-full sm:w-[140px] bg-background/50 border-border text-muted">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Status</SelectItem>
+              <SelectItem value="OPEN">Open</SelectItem>
+              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+
           <Select value={filterType} onValueChange={(val: any) => setFilterType(val)}>
-            <SelectTrigger className="w-[150px] bg-background/50 border-border text-muted">
+            <SelectTrigger className="w-full sm:w-[140px] bg-background/50 border-border text-muted">
               <SelectValue placeholder="All Projects" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Projects</SelectItem>
+              <SelectItem value="ALL">All Types</SelectItem>
               <SelectItem value="GIG">Gigs</SelectItem>
               <SelectItem value="JOB">Jobs</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px] bg-background/50 border-border text-muted">
+            <SelectTrigger className="w-full sm:w-[150px] bg-background/50 border-border text-muted">
               <SelectValue placeholder="Sort By" />
             </SelectTrigger>
             <SelectContent>
@@ -179,7 +169,7 @@ export default function BountiesPage() {
               type={project.currency as any}
               tags={project.skills}
               participants={project.acceptedCount || 0}
-              dueDate={`${formatDistanceToNow(new Date(project.deadline))} left`}
+              dueDate={`${formatDistanceToNow(new Date(project.deadline))}`}
               className="w-full min-w-0 md:w-full md:min-w-0"
               version="PROJECT"
             />

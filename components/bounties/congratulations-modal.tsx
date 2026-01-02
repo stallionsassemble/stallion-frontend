@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -9,9 +9,11 @@ import { useRouter } from "next/navigation";
 interface CongratulationsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  userLogo?: string;
+  sponsorLogo?: string;
 }
 
-export function CongratulationsModal({ isOpen, onClose }: CongratulationsModalProps) {
+export function CongratulationsModal({ isOpen, onClose, userLogo, sponsorLogo }: CongratulationsModalProps) {
   const router = useRouter();
 
   return (
@@ -25,26 +27,28 @@ export function CongratulationsModal({ isOpen, onClose }: CongratulationsModalPr
           <span className="sr-only">Close</span>
         </button>
 
+        <DialogTitle className="sr-only">Success</DialogTitle>
+
         <div className="pt-12 pb-10 px-6 flex flex-col items-center w-full">
           {/* Logo Cluster */}
           <div className="relative mb-8 flex items-center justify-center">
             {/* User Avatar (Front/Left) */}
             <div className="h-20 w-20 rounded-full overflow-hidden border-[3px] border-background relative z-20 -mr-4">
               <Image
-                src="https://avatar.vercel.sh/john"
+                src={userLogo || "https://avatar.vercel.sh/user"}
                 width={80}
                 height={80}
                 alt="User"
                 className="h-full w-full object-cover"
               />
             </div>
-            {/* Stallion Logo (Back/Right) */}
+            {/* Sponsor Logo (Back/Right) */}
             <div className="h-20 w-20 rounded-full overflow-hidden border-[3px] border-background bg-card relative z-10 flex items-center justify-center">
               <Image
-                src="https://avatar.vercel.sh/shadcn"
+                src={sponsorLogo || "https://avatar.vercel.sh/sponsor"}
                 width={80}
                 height={80}
-                alt="Stallion"
+                alt="Sponsor"
                 className="h-full w-full object-cover"
               />
             </div>

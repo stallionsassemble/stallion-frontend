@@ -13,10 +13,7 @@ interface AuthState {
   mfaEnabled: boolean
 
   passkeyRegisterOptions: () => Promise<any>
-  passkeyRegisterVerify: (data: {
-    response: any
-    name: string
-  }) => Promise<{
+  passkeyRegisterVerify: (data: { response: any; name: string }) => Promise<{
     verified: boolean
     passkeyId: string
     name: string
@@ -128,7 +125,8 @@ export const useAuth = create<AuthState>()(
               totpCode: payload.totpCode,
             })
           } else {
-            response = await authService.verifySignupCode(payload)
+            const { role, ...signupPayload } = payload
+            response = await authService.verifySignupCode(signupPayload)
           }
           set({
             user: {

@@ -45,9 +45,9 @@ export interface CreateProjectPayload {
  * Payload for getting projects with filters
  */
 export interface GetProjectsPayload {
-  type: ProjectType
-  status: ProjectStatus
-  ownerId: string
+  type?: ProjectType
+  status?: ProjectStatus
+  ownerId?: string
 }
 
 /**
@@ -74,7 +74,24 @@ export interface Project {
   createdAt: string
   updatedAt: string
   ownerId: string
-  owner: User
+  winnerAnnouncement: string
+  milestones?: MilestoneDraft[]
+  applied: boolean
+  applicationId?: string
+  owner: {
+    id: string
+    username: string
+    firstName: string
+    lastName: string
+    companyName: string
+    profilePicture: string
+    companyLogo?: string
+    createdAt: string
+    totalPaid: string
+    totalBounties: number
+    bio: string
+    rating: string
+  }
 }
 
 /**
