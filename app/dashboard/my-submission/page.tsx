@@ -7,87 +7,61 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-// Mock Data
-const submissions = [
-  {
-    id: 1,
-    project: "Stallion Foundation",
-    title: "React Dashboard UI Design",
-    description: "The high-performance blockchain for mass adoption. Building the fastest layer-1 network. The high-performance blockchain for mass adoption...",
-    logo: "/assets/icons/sdollar.png",
-    amount: "$3,500",
-    type: "USDC",
-    status: "Approved",
-    submittedAt: "2024-01-15",
-    lastUpdated: "2024-01-18",
-  },
-  {
-    id: 2,
-    project: "Stallion Foundation",
-    title: "React Dashboard UI Design",
-    description: "The high-performance blockchain for mass adoption. Building the fastest layer-1 network. The high-performance blockchain for mass adoption...",
-    logo: "/assets/icons/sdollar.png",
-    amount: "$3,500",
-    type: "USDC",
-    status: "Pending Review",
-    submittedAt: "2024-01-15",
-    lastUpdated: "2024-01-18",
-  },
-  {
-    id: 3,
-    project: "Stallion Foundation",
-    title: "React Dashboard UI Design",
-    description: "The high-performance blockchain for mass adoption. Building the fastest layer-1 network. The high-performance blockchain for mass adoption...",
-    logo: "/assets/icons/sdollar.png",
-    amount: "$3,500",
-    type: "USDC",
-    status: "Revision Requested",
-    submittedAt: "2024-01-15",
-    lastUpdated: "2024-01-18",
-  },
-  {
-    id: 4,
-    project: "Stallion Foundation",
-    title: "React Dashboard UI Design",
-    description: "The high-performance blockchain for mass adoption. Building the fastest layer-1 network. The high-performance blockchain for mass adoption...",
-    logo: "/assets/icons/sdollar.png",
-    amount: "$3,500",
-    type: "USDC",
-    status: "Rejected",
-    submittedAt: "2024-01-15",
-    lastUpdated: "2024-01-18",
-  },
-  {
-    id: 5,
-    project: "Stallion Foundation",
-    title: "React Dashboard UI Design",
-    description: "The high-performance blockchain for mass adoption. Building the fastest layer-1 network. The high-performance blockchain for mass adoption...",
-    logo: "/assets/icons/sdollar.png",
-    amount: "$3,500",
-    type: "USDC",
-    status: "Approved",
-    submittedAt: "2024-01-15",
-    lastUpdated: "2024-01-18",
-  },
-] as const;
+import { useGetMyApplications } from "@/lib/api/projects/queries";
+import { formatDistanceToNow } from "date-fns";
+import { Loader2 } from "lucide-react";
 
 export default function MySubmissionsPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const categories = ["All", "Design", "Development", "Content", "Marketing", "Research", "Other"];
 
+  // Fetch Data
+  const { data: projectApps, isLoading: isLoadingProjects } = useGetMyApplications();
+
+  const allSubmissions = useMemo(() => {
+    const projects = (projectApps || []).map((app: any) => ({
+      ...app,
+      details: {
+        id: app.id,
+        source: 'PROJECT',
+        title: app.project?.title || "Untitled Project",
+        description: app.project?.shortDescription,
+        orgName: app.project?.owner?.companyName || app.project?.owner?.username || "Unknown",
+        logo: app.project?.owner?.companyLogo || app.project?.owner?.profilePicture || "/assets/icons/sdollar.png",
+        amount: app.project?.reward,
+        currency: app.project?.currency,
+        status: app.status,
+        date: app.createdAt,
+        updated: app.updatedAt,
+        skills: app.project?.skills || []
+      }
+    }));
+
+    return projects.sort((a: any, b: any) =>
+      new Date(b.details.date).getTime() - new Date(a.details.date).getTime()
+    );
+  }, [projectApps]);
+
   // Pagination Logic
   const [rowsPerPage, setRowsPerPage] = useState("10");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredSubmissions = activeTab === "All"
-    ? submissions
-    : submissions.filter(s => s.title.includes(activeTab) || s.description.includes(activeTab) || s.status.includes(activeTab)); // Mock filtering
+  const filteredSubmissions = useMemo(() => {
+    if (activeTab === "All") return allSubmissions;
+    return allSubmissions.filter(s =>
+      s.details.title?.toLowerCase().includes(activeTab.toLowerCase()) ||
+      s.details.skills?.some((k: string) => k.toLowerCase().includes(activeTab.toLowerCase())) ||
+      s.details.status.toLowerCase().includes(activeTab.toLowerCase())
+    );
+  }, [allSubmissions, activeTab]);
 
-  const totalPages = Math.ceil(filteredSubmissions.length / Number(rowsPerPage));
+  const totalPages = Math.ceil(filteredSubmissions.length / Number(rowsPerPage)) || 1;
   const paginatedSubmissions = filteredSubmissions.slice((currentPage - 1) * Number(rowsPerPage), currentPage * Number(rowsPerPage));
+
+  const isLoading = isLoadingProjects;
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -149,16 +123,39 @@ export default function MySubmissionsPage() {
         </div>
 
         {/* List */}
-        <div className="space-y-4">
-          {paginatedSubmissions.map((sub) => (
-            <div key={sub.id} onClick={() => setSelectedSubmission(sub)} className="cursor-pointer">
-              <SubmissionCard
-                {...sub}
-                type={sub.type as any}
-              />
-            </div>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {paginatedSubmissions.map((sub: any) => (
+              <div key={sub.details.id} onClick={() => setSelectedSubmission(sub)} className="cursor-pointer">
+                <SubmissionCard
+                  id={sub.details.id}
+                  project={sub.details.orgName}
+                  title={sub.details.title}
+                  description={sub.details.description || ""}
+                  logo={sub.details.logo}
+                  amount={sub.details.amount || "0"}
+                  type={sub.details.currency as any}
+                  status={
+                    sub.details.status === "PENDING" ? "Pending Review" :
+                      sub.details.status === "ACCEPTED" ? "Approved" :
+                        sub.details.status === "REJECTED" ? "Rejected" : sub.details.status as any
+                  }
+                  submittedAt={sub.details.date ? new Date(sub.details.date).toLocaleDateString() : ""}
+                  lastUpdated={sub.details.updated ? formatDistanceToNow(new Date(sub.details.updated), { addSuffix: true }) : ""}
+                />
+              </div>
+            ))}
+            {!isLoading && paginatedSubmissions.length === 0 && (
+              <div className="text-center py-20 text-muted-foreground">
+                No submissions found.
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Pagination Footer */}
         <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-6 gap-y-4 pt-4 border-t border-border">

@@ -7,96 +7,62 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useState } from "react";
 
-// Mock Data
-const bounties = [
-  {
-    id: 1,
-    title: "React Dashboard UI Design",
-    description: "The high-performance blockchain for mass adoption. Building the fastest layer-1 network. React Dashboard UI Design. The high-performance blockchain for mass adoption...",
-    company: "Stallion Foundation",
-    logo: "/assets/icons/sdollar.png",
-    amount: "$3,500",
-    type: "USDC",
-    tags: ["React", "TypeScript", "UI/UX"],
-    participants: 236,
-    dueDate: "10d",
-  },
-  {
-    id: 2,
-    title: "Smart Contract Security Audit",
-    description: "Audit and fix vulnerabilities in the staking contract. Ensure comprehensive test coverage and documentation...",
-    company: "Stallion Foundation",
-    logo: "/assets/icons/sdollar.png",
-    amount: "$5,000",
-    type: "USDC",
-    tags: ["Solidity", "Security", "Audit"],
-    participants: 12,
-    dueDate: "5d",
-  },
-  {
-    id: 3,
-    title: "Marketing Campaign Manager",
-    description: "Lead the marketing campaign for the Q4 product launch. Develop strategy and manage social media channels...",
-    company: "Stallion Foundation",
-    logo: "/assets/icons/sdollar.png",
-    amount: "$2,000",
-    type: "USDC",
-    tags: ["Marketing", "Strategy", "Social"],
-    participants: 45,
-    dueDate: "20d",
-  },
-  {
-    id: 4,
-    title: "Rust Backend Developer",
-    description: "Build high-performance backend services using Rust. Integrate with Solana blockchain and optimize for minimal latency...",
-    company: "Stallion Foundation",
-    logo: "/assets/icons/sdollar.png",
-    amount: "$8,000",
-    type: "SOL",
-    tags: ["Rust", "Backend", "Solana"],
-    participants: 8,
-    dueDate: "15d",
-  },
-  {
-    id: 5,
-    title: "React Dashboard UI Design",
-    description: "The high-performance blockchain for mass adoption. Building the fastest layer-1 network. React Dashboard UI Design. The high-performance blockchain for mass adoption...",
-    company: "Stallion Foundation",
-    logo: "/assets/icons/sdollar.png",
-    amount: "$3,500",
-    type: "USDC",
-    tags: ["React", "TypeScript", "UI/UX"],
-    participants: 236,
-    dueDate: "10d",
-  },
-  {
-    id: 6,
-    title: "Smart Contract Security Audit",
-    description: "Audit and fix vulnerabilities in the staking contract. Ensure comprehensive test coverage and documentation...",
-    company: "Stallion Foundation",
-    logo: "/assets/icons/sdollar.png",
-    amount: "$5,000",
-    type: "USDC",
-    tags: ["Solidity", "Security", "Audit"],
-    participants: 12,
-    dueDate: "5d",
-  },
-];
+import { useGetAllBounties } from "@/lib/api/bounties/queries";
+import { useDebounce } from "@/lib/hooks/use-debounce";
+import { useAuth } from "@/lib/store/use-auth";
+import { formatDistanceToNow } from "date-fns";
+import { Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function BountiesPage() {
   const [activeTab, setActiveTab] = useState("All");
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // URL Params
+  const urlOwnerId = searchParams.get('ownerId');
+
+  // Filter & Sort State
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 500);
+  const [activeSort, setActiveSort] = useState("newest");
+  const [activeStatus, setActiveStatus] = useState<string>("ACTIVE");
 
   // Pagination Logic
   const [rowsPerPage, setRowsPerPage] = useState("10");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Filter first
-  const filteredList = activeTab === "All"
-    ? bounties
-    : bounties.filter(b => b.tags.some(tag => tag.includes(activeTab) || tag === activeTab) || b.title.includes(activeTab) || b.description.includes(activeTab));
+  // Derive sort params
+  let sortBy: 'createdAt' | 'reward' | 'submissionDeadline' | undefined = 'createdAt';
+  let sortOrder: 'asc' | 'desc' | undefined = 'desc';
 
-  const totalPages = Math.ceil(filteredList.length / Number(rowsPerPage));
-  const paginatedBounties = filteredList.slice((currentPage - 1) * Number(rowsPerPage), currentPage * Number(rowsPerPage));
+  if (activeSort === 'reward_desc') {
+    sortBy = 'reward';
+    sortOrder = 'desc';
+  } else if (activeSort === 'ending_soon') {
+    sortBy = 'submissionDeadline';
+    sortOrder = 'asc';
+  }
+
+  // Determine effective ownerId filter:
+  // Only use URL ownerId parameter if present
+  const filterOwnerId = urlOwnerId || undefined;
+
+  const { data, isLoading } = useGetAllBounties({
+    page: currentPage,
+    limit: Number(rowsPerPage),
+    skills: activeTab !== "All" ? [activeTab.toLowerCase()] : undefined,
+    search: debouncedSearch,
+    sortBy,
+    sortOrder,
+    status: activeStatus !== "ALL" ? activeStatus as any : undefined,
+    ownerId: filterOwnerId,
+  });
+
+  const bounties = data?.data || [];
+  const meta = data?.meta;
+  const totalPages = meta?.totalPages || 1;
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -106,29 +72,64 @@ export default function BountiesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex-1 items-center justify-between">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Browse Bounties</h1>
-        <p className="text-muted-foreground">Browse and manage available bounties.</p>
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Browse Bounties</h1>
+          <p className="text-muted-foreground">Browse and manage available bounties.</p>
+        </div>
+        {filterOwnerId && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push('/dashboard/bounties')}
+            className="text-xs h-8"
+          >
+            Clear Owner Filter
+          </Button>
+        )}
       </div>
 
       <PageFilters
         activeTab={activeTab}
         onTabChange={(tab) => { setActiveTab(tab); setCurrentPage(1); }}
+        onSearch={(term) => { setSearchQuery(term); setCurrentPage(1); }}
+        onSortChange={(sort) => { setActiveSort(sort); setCurrentPage(1); }}
+        onStatusChange={(status) => { setActiveStatus(status); setCurrentPage(1); }}
         type="BOUNTY"
-        count={paginatedBounties.length}
+        count={meta?.total || 0}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {paginatedBounties.map((bounty) => (
-          <BountyCard
-            key={bounty.id}
-            {...bounty}
-            className="w-full min-w-0 md:w-full md:min-w-0"
-            // fix type mismatch if any, mock data aligns with interface
-            type={bounty.type as any}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {bounties.map((bounty) => (
+            <BountyCard
+              key={bounty.id}
+              id={bounty.id}
+              title={bounty.title}
+              description={bounty.shortDescription}
+              company={bounty.owner?.companyName || bounty.owner?.username || "Stallion User"}
+              logo={bounty.owner?.companyLogo || bounty.owner?.profilePicture || "/assets/icons/sdollar.png"}
+              amount={bounty.reward.toString()}
+              type={bounty.rewardCurrency as any}
+              tags={bounty.skills || []}
+              participants={bounty.applicationCount || 0}
+              dueDate={bounty.submissionDeadline ? formatDistanceToNow(new Date(bounty.submissionDeadline), { addSuffix: true }) : "No deadline"}
+              className="w-full min-w-0 md:w-full md:min-w-0"
+              version="BOUNTY"
+            />
+          ))}
+          {!isLoading && bounties.length === 0 && (
+            <div className="col-span-full text-center py-20 text-muted-foreground">
+              No bounties found.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Pagination */}
       <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-6 gap-y-4 pt-4 border-t border-border">

@@ -6,6 +6,9 @@ import { DetailsHeader } from '@/components/bounties/details-header'
 import { DetailsNavigation } from '@/components/bounties/details-navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useGetAllBounties, useGetBounty } from '@/lib/api/bounties/queries'
+import { useGetMyApplications } from '@/lib/api/projects/queries'
+import { formatDistanceToNow } from 'date-fns'
 import {
   ChevronLeft,
   ChevronRight,
@@ -13,8 +16,8 @@ import {
   FileText,
   FileUp,
   Gift,
-  Image as ImageIcon,
   Info,
+  Loader2,
   MessageSquare
 } from 'lucide-react'
 import Image from 'next/image'
@@ -23,7 +26,37 @@ import { useRef } from 'react'
 
 export default function BountyDetailsPage() {
   const params = useParams()
+  const id = params.id as string
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  const { data: bounty, isLoading: isLoadingBounty } = useGetBounty(id)
+  console.log("Bounty", bounty)
+  const { data: myApplications } = useGetMyApplications()
+
+  const tags = bounty?.skills || []
+
+  // Fetch similar bounties
+  const { data: similarData, isLoading: isLoadingSimilar } = useGetAllBounties({
+    limit: 5,
+    skills: tags.length > 0 ? tags : undefined
+  });
+
+  // Fetch recent/all bounties as fallback to ensure list isn't empty
+  const { data: allData, isLoading: isLoadingAll } = useGetAllBounties({
+    limit: 10,
+    sortOrder: 'desc',
+    sortBy: 'createdAt'
+  });
+
+  // Filter out current bounty from similar
+  const filteredSimilar = (similarData?.data || []).filter(b => b.id !== id);
+
+  // Filter out current bounty and already included similar ones from allData
+  const similarIds = new Set(filteredSimilar.map(b => b.id));
+  const filteredRecent = (allData?.data || []).filter(b => b.id !== id && !similarIds.has(b.id));
+
+  // Merge: Similar first, then Recent, up to 10 total (or 5? let's do 10 to allow scrolling)
+  const similarBounties = [...filteredSimilar, ...filteredRecent].slice(0, 10);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -37,60 +70,29 @@ export default function BountyDetailsPage() {
     }
   }
 
-  // Mock Similar Bounties (Moved inside simply for brevity in replacement, assume same data)
-  const similarBounties = [
-    {
-      id: 101,
-      title: 'Solana Smart Contract Audit',
-      description: 'Ensure the security of our Solana-based DeFi protocol...',
-      company: 'Stallion Foundation',
-      logo: '/assets/icons/sdollar.png',
-      amount: '$5,000',
-      type: 'USDC' as const,
-      tags: ['Rust', 'Solana', 'Audit'],
-      participants: 12,
-      dueDate: '5d',
-    },
-    {
-      id: 102,
-      title: 'DeFi Protocol Security Review',
-      description:
-        'Looking for experts to review our yield farming mechanics...',
-      company: 'Stallion Foundation',
-      logo: '/assets/icons/sdollar.png',
-      amount: '$3,500',
-      type: 'USDC' as const,
-      tags: ['Solidity', 'Security', 'DeFi'],
-      participants: 8,
-      dueDate: '10d',
-    },
-    {
-      id: 103,
-      title: 'NFT Marketplace Vulnerability Assessment',
-      description:
-        'Comprehensive penetration testing for our new NFT platform...',
-      company: 'Stallion Foundation',
-      logo: '/assets/icons/sdollar.png',
-      amount: '$2,000',
-      type: 'USDC' as const,
-      tags: ['Security', 'PenTest', 'NFT'],
-      participants: 5,
-      dueDate: '14d',
-    },
-    {
-      id: 105,
-      title: 'Hackathon Manager',
-      description:
-        'Organize and manage our upcoming global hackathon event...',
-      company: 'Stallion Foundation',
-      logo: '/assets/icons/sdollar.png',
-      amount: '$4,000',
-      type: 'USDC' as const,
-      tags: ['Events', 'Management', 'Crypto'],
-      participants: 15,
-      dueDate: '3d',
-    },
-  ]
+  // extensive check if I applied to this bounty (assuming applications return projectId which matches bounty id)
+  const myApplication = myApplications?.find((app: any) => app.projectId === id || app.bountyId === id)
+  const isApplied = !!myApplication
+
+  if (isLoadingBounty) {
+    return (
+      <div className="flex h-[50vh] w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!bounty) {
+    return (
+      <div className="flex h-[50vh] w-full items-center justify-center text-muted-foreground">
+        Bounty not found.
+      </div>
+    )
+  }
+
+  const requirements = bounty.requirements || []
+  const deliverables = bounty.deliverables || []
+  const attachments = bounty.attachments || []
 
   return (
     <div className='flex flex-col lg:flex-row gap-4 lg:gap-8 relative items-start w-full max-w-full lg:h-[calc(100vh-7rem)] overflow-x-hidden lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
@@ -108,14 +110,14 @@ export default function BountyDetailsPage() {
           <section className='rounded-xl border border-primary bg-card/30 p-4'>
             <DetailsHeader
               type='BOUNTY'
-              title='Smart Contract Security Audit'
-              company='Stallion Foundation'
-              logo='/assets/icons/sdollar.png'
-              participants={12}
-              dueDate='5d'
-              tags={['Solidity', 'Smart Contract', 'Audit', 'DeFi']}
-              status='Submission Open'
-              commentsCount={2}
+              title={bounty.title}
+              company={bounty.owner?.companyName || bounty.owner?.username || "Stallion User"}
+              logo={bounty.owner?.companyLogo || bounty.owner?.profilePicture || "/assets/icons/sdollar.png"}
+              participants={bounty.applicationCount || 0}
+              dueDate={bounty.submissionDeadline ? formatDistanceToNow(new Date(bounty.submissionDeadline), { addSuffix: true }) : "No deadline"}
+              tags={tags}
+              status={bounty.status === 'ACTIVE' ? 'Submission Open' : bounty.status}
+              commentsCount={0} // No comments data yet
             />
           </section>
 
@@ -127,154 +129,212 @@ export default function BountyDetailsPage() {
             <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
               <Info className='h-4 w-4 text-primary' /> Description
             </h3>
-            <div className='prose prose-invert max-w-none text-muted-foreground text-xs leading-relaxed'>
-              <p className='mb-3'>
-                We are looking for an experienced smart contract security
-                auditor to perform a comprehensive security audit of our
-                protocol smart contracts. The protocol is built on custom
-                Solidity contracts with heavy dependency on 3rd party oracles.
-              </p>
-              <p className='mb-2 font-medium text-white'>
-                The audit should cover:
-              </p>
-              <ul className='space-y-1 pl-1'>
-                <li className='flex items-center gap-2'>
-                  {' '}
-                  <span className='text-primary text-base'>•</span> Reentrancy
-                  attacks
-                </li>
-                <li className='flex items-center gap-2'>
-                  {' '}
-                  <span className='text-primary text-base'>•</span> Oracle
-                  manipulation risks
-                </li>
-                <li className='flex items-center gap-2'>
-                  {' '}
-                  <span className='text-primary text-base'>•</span> Access control
-                  vulnerabilities
-                </li>
-                <li className='flex items-center gap-2'>
-                  {' '}
-                  <span className='text-primary text-base'>•</span> Gas
-                  optimization
-                </li>
-                <li className='flex items-center gap-2'>
-                  {' '}
-                  <span className='text-primary text-base'>•</span> Logic errors
-                  and edge cases
-                </li>
-              </ul>
+            <div className='prose prose-invert max-w-none text-muted-foreground text-xs leading-relaxed whitespace-pre-wrap'>
+              {bounty.description}
             </div>
           </section>
 
           {/* Requirements */}
-          <section className='space-y-3 rounded-xl border border-primary bg-card/30 p-4'>
-            <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
-              <FileText className='h-4 w-4 text-primary' /> Requirements
-            </h3>
-            <ul className='space-y-1.5 text-xs text-muted-foreground'>
-              {[
-                '3+ years of smart contract auditing experience',
-                'Proven track record with DeFi protocols',
-                'Familiarity with common attack vectors',
-                'Experience with Foundry or Hardhat testing',
-                'Ability to write detailed technical reports',
-              ].map((req, i) => (
-                <li key={i} className='flex items-start gap-2'>
-                  <span className='text-primary mt-0.5'>•</span>
-                  {req}
-                </li>
-              ))}
-            </ul>
-          </section>
+          {requirements.length > 0 && (
+            <section className='space-y-3 rounded-xl border border-primary bg-card/30 p-4'>
+              <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
+                <FileText className='h-4 w-4 text-primary' /> Requirements
+              </h3>
+              <ul className='space-y-1.5 text-xs text-muted-foreground'>
+                {requirements.map((req, i) => (
+                  <li key={i} className='flex items-start gap-2'>
+                    <span className='text-primary mt-0.5'>•</span>
+                    {req}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* Deliverables */}
-          <section className='space-y-3 rounded-xl border border-primary bg-card/30 p-4'>
-            <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
-              <FileText className='h-4 w-4 text-primary' /> Deliverables
-            </h3>
-            <ul className='space-y-1.5 text-xs text-muted-foreground'>
-              {[
-                'Comprehensive security audit report',
-                'Severity classification for each finding',
-                'Recommended fixes and code suggestions',
-                'Executive summary for non-technical stakeholders',
-                'Follow-up review after fixes are implemented',
-              ].map((item, i) => (
-                <li key={i} className='flex items-start gap-2'>
-                  <div className='mt-0.5 bg-blue-500/10 p-0.5 rounded px-1'>
-                    <span className='text-primary text-[10px]'>✓</span>
-                  </div>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </section>
+          {deliverables.length > 0 && (
+            <section className='space-y-3 rounded-xl border border-primary bg-card/30 p-4'>
+              <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
+                <FileText className='h-4 w-4 text-primary' /> Deliverables
+              </h3>
+              <ul className='space-y-1.5 text-xs text-muted-foreground'>
+                {deliverables.map((item, i) => (
+                  <li key={i} className='flex items-start gap-2'>
+                    <div className='mt-0.5 bg-blue-500/10 p-0.5 rounded px-1'>
+                      <span className='text-primary text-[10px]'>✓</span>
+                    </div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* Attachments */}
-          <section className='space-y-4 p-4 sm:p-5 border border-primary text-foreground'>
-            <h3 className='text-base font-bold text-foreground flex items-center gap-2'>
-              <FileUp className='h-5 w-5 text-primary' />
-              Attachments
+          {attachments.length > 0 && (
+            <section className='space-y-4 p-4 sm:p-5 border border-primary text-foreground'>
+              <h3 className='text-base font-bold text-foreground flex items-center gap-2'>
+                <FileUp className='h-5 w-5 text-primary' />
+                Attachments
+              </h3>
+              <div className='flex flex-wrap gap-3'>
+                {attachments.map((file, i) => (
+                  <div key={i} className='flex items-center gap-3 p-3 rounded-lg bg-card border border-primary w-full sm:min-w-[240px] sm:w-auto'>
+                    <div className='h-10 w-10 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20'>
+                      {file.mimetype?.includes('image') ? (
+                        <Info className='h-5 w-5 text-primary' /> // Or ImageIcon if imported
+                      ) : (
+                        <FileText className='h-5 w-5 text-primary' />
+                      )}
+                    </div>
+                    <div className='flex flex-col'>
+                      <span className='text-sm font-medium text-foreground truncate max-w-[150px]'>
+                        {file.filename}
+                      </span>
+                      <span className='text-[10px] text-muted-foreground'>
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </span>
+                    </div>
+                    <a
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-auto"
+                    >
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className='text-primary hover:text-primary hover:bg-transparent'
+                      >
+                        <Download className='h-4 w-4' />
+                      </Button>
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Similar Bounties */}
+          {similarBounties.length > 0 && (
+            <section className='space-y-6 pt-8 border-t border-border'>
+              <div className='flex items-center justify-between'>
+                <h3 className='text-base font-bold text-foreground flex items-center gap-2'>
+                  <Gift className='h-5 w-5 text-primary' />
+                  Similar & Recent Bounties
+                </h3>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    size='icon'
+                    variant='outline'
+                    onClick={() => scroll('left')}
+                    className='h-8 w-8 rounded-full bg-card border-primary/20 hover:bg-primary/10 hover:text-primary'
+                  >
+                    <ChevronLeft className='h-4 w-4' />
+                  </Button>
+                  <Button
+                    size='icon'
+                    variant='outline'
+                    onClick={() => scroll('right')}
+                    className='h-8 w-8 rounded-full bg-card border-primary/20 hover:bg-primary/10 hover:text-primary'
+                  >
+                    <ChevronRight className='h-4 w-4' />
+                  </Button>
+                </div>
+              </div>
+              <div
+                ref={scrollContainerRef}
+                className='flex overflow-x-auto pb-6 gap-5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pl-1 scroll-smooth'
+              >
+                {similarBounties.slice(0, 4).map((bounty) => (
+                  <BountyCard
+                    key={bounty.id}
+                    id={bounty.id}
+                    title={bounty.title}
+                    description={bounty.shortDescription}
+                    company={bounty.owner?.companyName || bounty.owner?.username || "Stallion User"}
+                    logo={bounty.owner?.companyLogo || bounty.owner?.profilePicture || "/assets/icons/sdollar.png"}
+                    amount={bounty.reward.toString()}
+                    type={bounty.rewardCurrency as any}
+                    tags={bounty.skills || []}
+                    participants={bounty.applicationCount || 0}
+                    dueDate={bounty.submissionDeadline ? formatDistanceToNow(new Date(bounty.submissionDeadline), { addSuffix: true }) : "No deadline"}
+                    version="BOUNTY"
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Discussion Section */}
+          <section className='space-y-4 rounded-xl border border-primary bg-card/30 p-4 mt-8'>
+            <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
+              <MessageSquare className='h-4 w-4 text-primary' /> Discussion
             </h3>
-            <div className='flex flex-wrap gap-3'>
-              <div className='flex items-center gap-3 p-3 rounded-lg bg-card border border-primary w-full sm:min-w-[240px] sm:w-auto'>
-                <div className='h-10 w-10 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20'>
-                  <FileText className='h-5 w-5 text-primary' />
+
+            <div className="relative">
+              <div className="absolute top-3 left-4 z-10">
+                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                  <span className="text-xs font-bold text-primary">ME</span>
                 </div>
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-foreground'>
-                    Contract_Sepc...pdf
-                  </span>
-                  <span className='text-[10px] text-muted-foreground'>
-                    2.4 MB
-                  </span>
-                </div>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='ml-auto text-primary hover:text-primary hover:bg-transparent'
-                >
-                  <Download className='h-4 w-4' />
-                </Button>
               </div>
-              <div className='flex items-center gap-3 p-3 rounded-lg bg-card border border-primary w-full sm:min-w-[240px] sm:w-auto'>
-                <div className='h-10 w-10 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20'>
-                  <ImageIcon className='h-5 w-5 text-primary' />
+              <textarea
+                className="w-full bg-card border border-primary rounded-xl p-4 pl-16 min-h-[120px] text-sm text-foreground focus:outline-none focus:border-primary resize-none placeholder:text-muted-foreground"
+                placeholder="Ask a question or leave a comment..."
+              />
+              <Button className="absolute bottom-3 right-3 bg-primary hover:bg-primary/90 h-8 text-xs font-medium px-4">Post Comment</Button>
+            </div>
+
+            {/* Comment List */}
+            <div className="space-y-8">
+              {/* Comment 1 */}
+              <div className="group">
+                <div className="flex gap-4">
+                  <div className="h-10 w-10 rounded-full bg-red-500 overflow-hidden shrink-0">
+                    <Image src="https://avatar.vercel.sh/alex" width={40} height={40} alt="User" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-foreground">Alex Chen</span>
+                      <span className="text-xs text-muted-foreground">2 days ago</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Is there any specific testing framework you prefer we use for the audit? I typically work with Foundry but can adapt to Hardhat if needed.
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
+                      <button className="hover:text-foreground flex items-center gap-1 transition-colors"><span className="text-red-500">❤️</span> 42</button>
+                      <button className="hover:text-foreground flex items-center gap-1 transition-colors">💬 Reply</button>
+                    </div>
+                  </div>
                 </div>
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-white'>
-                    Architecture_D...png
-                  </span>
-                  <span className='text-[10px] text-gray-500'>4.8 MB</span>
-                </div>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='ml-auto text-primary hover:text-primary hover:bg-transparent'
-                >
-                  <Download className='h-4 w-4' />
-                </Button>
               </div>
-              <div className='flex items-center gap-3 p-3 rounded-lg bg-card border border-border w-full sm:min-w-[240px] sm:w-auto'>
-                <div className='h-10 w-10 bg-primary/10 flex items-center justify-center rounded-lg border border-primary/20'>
-                  <FileText className='h-5 w-5 text-primary' />
+
+              {/* Comment 2 (Reply) */}
+              <div className="group pl-14 relative">
+                {/* Thread Line */}
+                <div className="absolute left-[27px] -top-8 bottom-8 w-px bg-border -z-10 rounded-full"></div>
+
+                <div className="flex gap-4">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 overflow-hidden shrink-0 p-1 flex items-center justify-center">
+                    <Image src="/assets/icons/sdollar.png" width={32} height={32} alt="Stallion" className="object-contain" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-foreground">Solana Foundation</span>
+                        <Badge className="bg-primary/30 text-foreground border-0 text-[10px] px-1.5 h-4 hover:bg-primary/40">Author</Badge>
+                      </div>
+                      <span className="text-xs text-muted-foreground">1 day ago</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      We prefer Foundry for this project, but Hardhat is acceptable if coverage is comprehensive.
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
+                      <button className="hover:text-foreground flex items-center gap-1 transition-colors"><span className="text-red-500">❤️</span> 12</button>
+                      <button className="hover:text-foreground flex items-center gap-1 transition-colors">💬 Reply</button>
+                    </div>
+                  </div>
                 </div>
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-foreground'>
-                    Protocol_Spec...docx
-                  </span>
-                  <span className='text-[10px] text-muted-foreground'>
-                    1.2 MB
-                  </span>
-                </div>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='ml-auto text-primary hover:text-primary hover:bg-transparent'
-                >
-                  <Download className='h-4 w-4' />
-                </Button>
               </div>
             </div>
           </section>
@@ -283,160 +343,21 @@ export default function BountyDetailsPage() {
           <div className='lg:hidden block mt-8 mb-8'>
             <BountyDetailsSidebar
               type='BOUNTY'
-              projectId='101'
-              projectTitle='Smart Contract Security Audit'
-              reward='$5,000'
-              currency='USDC'
+              projectId={bounty.id}
+              projectTitle={bounty.title}
+              reward={bounty.reward.toString()}
+              currency={bounty.rewardCurrency}
+              totalContributors={(bounty.owner as any)?.totalBounties || 0}
+              totalPaid={(bounty.owner as any)?.totalPaid || "0"}
+              owner={bounty.owner as any}
+              createdAt={bounty.createdAt}
+              deadline={bounty.submissionDeadline}
+              applied={isApplied}
+              applicationId={myApplication?.id}
+              distribution={bounty.distribution || bounty.rewardDistribution}
+              submissionFields={bounty.submissionFields}
             />
           </div>
-
-          {/* Similar Bounties */}
-          <section className='space-y-6 pt-8 border-t border-border'>
-            <div className='flex items-center justify-between'>
-              <h3 className='text-base font-bold text-foreground flex items-center gap-2'>
-                <Gift className='h-5 w-5 text-primary' />
-                Similar Bounties
-              </h3>
-              <div className='flex items-center gap-2'>
-                <Button
-                  size='icon'
-                  variant='outline'
-                  onClick={() => scroll('left')}
-                  className='h-8 w-8 rounded-full bg-card border-primary/20 hover:bg-primary/10 hover:text-primary'
-                >
-                  <ChevronLeft className='h-4 w-4' />
-                </Button>
-                <Button
-                  size='icon'
-                  variant='outline'
-                  onClick={() => scroll('right')}
-                  className='h-8 w-8 rounded-full bg-card border-primary/20 hover:bg-primary/10 hover:text-primary'
-                >
-                  <ChevronRight className='h-4 w-4' />
-                </Button>
-              </div>
-            </div>
-            <div
-              ref={scrollContainerRef}
-              className='flex overflow-x-auto pb-6 gap-5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pl-1 scroll-smooth'
-            >
-              {similarBounties.map((bounty) => (
-                <BountyCard key={bounty.id} {...bounty} />
-              ))}
-            </div>
-          </section>
-
-          {/* Discussion */}
-          <section className='space-y-6 rounded-xl border border-primary bg-card/30 p-4 sm:p-6'>
-            <h3 className='text-lg font-bold text-foreground flex items-center gap-2'>
-              <MessageSquare className='h-5 w-5 text-primary' /> Discussion{' '}
-              <span className='text-xs text-muted-foreground ml-2'>
-                2 comments
-              </span>
-            </h3>
-
-            {/* Comment Input */}
-            <div className='relative'>
-              {/* Avatar Decoration */}
-              <div className='h-10 w-10 absolute left-3 top-3 rounded-full bg-linear-to-r from-purple-500 to-pink-500 p-px'>
-                <div className='h-full w-full rounded-full bg-background flex items-center justify-center'>
-                  <span className='text-xs text-foreground'>You</span>
-                </div>
-              </div>
-              <textarea
-                className='w-full bg-card border border-primary rounded-xl p-4 pl-16 min-h-[120px] text-sm text-foreground focus:outline-none focus:border-primary resize-none'
-                placeholder='Ask a question or leave a comment...'
-              />
-              <Button className='absolute bottom-3 right-3 bg-primary hover:bg-primary/90 h-8 text-xs font-medium px-4'>
-                Post Comment
-              </Button>
-            </div>
-
-            {/* Comment List */}
-            <div className='space-y-8'>
-              {/* Comment 1 */}
-              <div className='group'>
-                <div className='flex gap-4'>
-                  <div className='h-10 w-10 rounded-full bg-red-500 overflow-hidden shrink-0'>
-                    <Image
-                      src='https://avatar.vercel.sh/alex'
-                      width={40}
-                      height={40}
-                      alt='User'
-                    />
-                  </div>
-                  <div className='flex-1 space-y-1'>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-sm font-bold text-foreground'>
-                        Alex Chen
-                      </span>
-                      <span className='text-xs text-muted-foreground'>
-                        2 days ago
-                      </span>
-                    </div>
-                    <p className='text-sm text-muted-foreground leading-relaxed'>
-                      Is there any specific testing framework you prefer we use
-                      for the audit? I typically work with Foundry but can adapt
-                      to Hardhat if needed.
-                    </p>
-                    <div className='flex items-center gap-4 text-xs text-muted-foreground pt-2'>
-                      <button className='hover:text-foreground flex items-center gap-1 transition-colors'>
-                        <span className='text-red-500'>❤️</span> 42
-                      </button>
-                      <button className='hover:text-foreground flex items-center gap-1 transition-colors'>
-                        💬 Reply
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Comment 2 (Reply) */}
-              <div className='group pl-14 relative'>
-                {/* Thread Line */}
-                <div className='absolute left-[27px] -top-8 bottom-8 w-px bg-border -z-10 rounded-full'></div>
-
-                <div className='flex gap-4'>
-                  <div className='h-8 w-8 rounded-full bg-primary/10 overflow-hidden shrink-0 p-1 flex items-center justify-center'>
-                    <Image
-                      src='/assets/icons/sdollar.png'
-                      width={32}
-                      height={32}
-                      alt='Stallion'
-                      className='object-contain'
-                    />
-                  </div>
-                  <div className='flex-1 space-y-1'>
-                    <div className='flex items-center justify-between'>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-sm font-bold text-foreground'>
-                          Solana Foundation
-                        </span>
-                        <Badge className='bg-primary/30 text-foreground border-0 text-[10px] px-1.5 h-4'>
-                          Author
-                        </Badge>
-                      </div>
-                      <span className='text-xs text-muted-foreground'>
-                        1 day ago
-                      </span>
-                    </div>
-                    <p className='text-sm text-muted-foreground leading-relaxed'>
-                      We prefer Foundry for this project, but Hardhat is
-                      acceptable if coverage is comprehensive.
-                    </p>
-                    <div className='flex items-center gap-4 text-xs text-muted-foreground pt-2'>
-                      <button className='hover:text-foreground flex items-center gap-1 transition-colors'>
-                        <span className='text-red-500'>❤️</span> 12
-                      </button>
-                      <button className='hover:text-foreground flex items-center gap-1 transition-colors'>
-                        💬 Reply
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
         </div>
       </div>
 
@@ -444,10 +365,19 @@ export default function BountyDetailsPage() {
       <div className='hidden lg:block lg:w-[320px] xl:w-[360px] shrink-0 self-start sticky top-0 -mt-20 space-y-8'>
         <BountyDetailsSidebar
           type='BOUNTY'
-          projectId='101'
-          projectTitle='Smart Contract Security Audit'
-          reward='$5,000'
-          currency='USDC'
+          projectId={bounty.id}
+          projectTitle={bounty.title}
+          reward={bounty.reward.toString()}
+          currency={bounty.rewardCurrency}
+          totalContributors={(bounty.owner as any)?.totalBounties || 0}
+          totalPaid={(bounty.owner as any)?.totalPaid || "0"}
+          owner={bounty.owner as any}
+          createdAt={bounty.createdAt}
+          deadline={bounty.submissionDeadline}
+          applied={isApplied}
+          applicationId={myApplication?.id}
+          distribution={bounty.rewardDistribution}
+          submissionFields={bounty.submissionFields}
         />
       </div>
     </div>

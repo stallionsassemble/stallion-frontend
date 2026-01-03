@@ -58,7 +58,7 @@ const sidebarItems = [
     title: "Forums",
     href: "/dashboard/forums",
     icon: Users,
-    badge: 2,
+    badge: undefined,
   },
   {
     title: "Wallet",

@@ -15,7 +15,6 @@ interface LeaderboardRowProps {
 
 export function LeaderboardRow({ user }: LeaderboardRowProps) {
   const fullName = user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.username;
-  const isVerified = user.isVerified
   const category = user.category || "Developer";
   const level = user.level || 1
   const completedTasks = user.completedTask || 0
@@ -49,7 +48,7 @@ export function LeaderboardRow({ user }: LeaderboardRowProps) {
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <span className="font-bold text-foreground font-inter">{fullName}</span>
-            {userData?.role === 'CONTRIBUTOR' && (
+            {user.isVerified && (
               <Badge className="bg-yellow-300 text-background hover:bg-amber-400/20 border-amber-500/20 px-1.5 py-0 h-4 text-[10px] gap-0.5 pointer-events-none">
                 <UserStar className="w-3 h-3" />
                 Verified Builder
@@ -57,9 +56,13 @@ export function LeaderboardRow({ user }: LeaderboardRowProps) {
             )}
           </div>
           <span className="text-xs text-muted-foreground font-light font-inter">@{user.username}</span>
-          <Badge variant="secondary" className="mt-1 w-fit h-[16px] flex items-center justify-center gap-[4px] px-[6px] rounded-full border-[0.5px] border-primary/20 text-[9px] font-normal bg-primary/20 text-foreground hover:bg-primary/30 pointer-events-none">
-            {category}
-          </Badge>
+          <div className="flex items-center gap-2 mt-1">
+            {userData?.skills?.map((skill) => (
+              <Badge variant="secondary" className="w-fit h-[16px] flex items-center justify-center gap-[4px] px-[6px] rounded-full border-[0.5px] border-primary/20 text-[9px] font-normal bg-primary/20 text-foreground hover:bg-primary/30 pointer-events-none">
+                {skill}
+              </Badge>
+            ))}
+          </div>
         </div>
       </div>
 

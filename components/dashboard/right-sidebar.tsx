@@ -4,59 +4,20 @@ import { Button } from "@/components/ui/button";
 import { WithdrawFundsModal } from "@/components/wallet/withdraw-funds-modal";
 import { useCryptoPrice } from "@/lib/api/pricing/queries";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
-import { BadgeDollarSign, Crown } from "lucide-react";
+import { BadgeDollarSign, Crown, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-
-// Vertical Marquee Component (CSS Animation)
-function VerticalMarquee({
-  children,
-  height = "h-[200px]",
-  duration = "30s",
-  reverse = false,
-}: {
-  children: React.ReactNode;
-  height?: string;
-  duration?: string;
-  reverse?: boolean;
-}) {
-  return (
-    <div className={`relative w-full overflow-hidden ${height}`}>
-      {/* Gradient Masks */}
-      <div className="absolute top-0 left-0 right-0 h-8 bg-linear-to-b from-background to-transparent z-10 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 h-8 bg-linear-to-t from-background to-transparent z-10 pointer-events-none" />
-
-      <div
-        className="flex flex-col gap-3 w-full hover:paused"
-        style={{
-          animation: `verticalMarquee ${duration} linear infinite ${reverse ? 'reverse' : 'normal'}`
-        }}
-      >
-        {children}
-        {children} {/* Duplicate content for seamless loop */}
-      </div>
-      <style jsx>{`
-        @keyframes verticalMarquee {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(-50%); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-const topEarners = [
-  { name: "Emmanuel Malik", role: "FC2 Front-end Engineer", amount: "$200,800", avatar: "https://avatar.vercel.sh/emmanuel" },
-  { name: "Sarah Jenkins", role: "UI Designer", amount: "$180,500", avatar: "https://avatar.vercel.sh/sarah" },
-  { name: "David Chen", role: "Smart Contract Dev", amount: "$150,000", avatar: "https://avatar.vercel.sh/david" },
-  { name: "Maria Garcia", role: "Product Manager", amount: "$120,800", avatar: "https://avatar.vercel.sh/maria" },
-  { name: "James Smith", role: "Backend Engineer", amount: "$110,000", avatar: "https://avatar.vercel.sh/james" },
-  { name: "Linda Kim", role: "Full Stack Dev", amount: "$95,000", avatar: "https://avatar.vercel.sh/linda" },
-];
+import { VerticalMarquee } from "./vertical-marquee";
+import { useLeaderboard } from "@/lib/api/reputation/queries";
+import { getCurrencyIcon } from "@/lib/wallet";
+import { Skeleton } from "../ui/skeleton";
+import { useGetActivities } from "@/lib/api/activities/queries";
 
 export function DashboardRightSidebar() {
   const { data: walletData, isLoading: isLoadingWallet } = useGetWalletBalances();
+  const { data: leaderboard, isLoading: isLoadingLeaderboard } = useLeaderboard({ limit: 10 });
+  const { data: bountyWinners, isLoading: isLoadingBountyWinners } = useGetActivities({ page: '1', limit: '10', type: 'BOUNTY_WON' });
 
   const balance = walletData?.balances?.[0]?.availableBalance || 0;
   const currency = walletData?.balances?.[0]?.currency || 'USDC';
@@ -69,15 +30,6 @@ export function DashboardRightSidebar() {
   }, [balance, price]);
 
   const formattedTotal = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalUsd);
-
-  // Helper to choose icon based on currency
-  const getCurrencyIcon = (curr: string) => {
-    switch (curr.toUpperCase()) {
-      case 'XLM': return "/assets/icons/xlm.png";
-      case 'USGLO': return "/assets/icons/usglo.png";
-      default: return "/assets/icons/usdc.png";
-    }
-  };
 
   return (
     <div className="space-y-6 w-full">
@@ -100,26 +52,31 @@ export function DashboardRightSidebar() {
 
         {/* Vertical Marquee Top Earners */}
         <VerticalMarquee height="h-full" duration="40s">
-          {topEarners.map((earner, i) => (
-            <div key={i} className="flex items-center justify-between gap-3 p-1 w-full">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
-                  <Image src={earner.avatar} width={32} height={32} alt={earner.name} className="h-full w-full object-cover" />
+          {isLoadingLeaderboard ? (
+            Array.from({ length: 10 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full rounded" />
+            ))
+          ) : (
+            leaderboard?.data.map((earner, i) => (
+              <div key={i} className="flex items-center justify-between gap-3 p-1 w-full">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
+                    <Image src={earner.profilePicture} width={32} height={32} alt={earner.firstName} className="h-full w-full object-cover" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">{earner.firstName + ' ' + earner.lastName}</p>
+                    <p className="text-[10px] text-muted-foreground">{earner.level}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-foreground">{earner.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{earner.role}</p>
+                <div className="flex flex-col items-end gap-0.5">
+                  <div className="flex items-center justify-end gap-2">
+                    <p className="text-xs font-extrabold text-foreground">{earner.earnedAmount || 0}</p>
+                    <div className="w-[36px] h-[26px] rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium font-inter">USDC</div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-right">#{i + 1}</p>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-0.5">
-                <div className="flex items-center justify-end gap-2">
-                  <p className="text-xs font-extrabold text-foreground">{earner.amount}</p>
-                  <div className="w-[36px] h-[26px] rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium font-inter">USDC</div>
-                </div>
-                <p className="text-[10px] text-muted-foreground text-right">#{i + 1}</p>
-              </div>
-            </div>
-          ))}
+            )))}
         </VerticalMarquee>
       </div>
 
@@ -135,11 +92,11 @@ export function DashboardRightSidebar() {
             <span className="text-sm font-inter font-medium text-foreground">Total Balance</span>
           </div>
           {isLoadingWallet ? (
-            <div className="h-8 w-32 bg-muted animate-pulse rounded" />
+            <Skeleton className="h-8 w-32" />
           ) : (
             <h2 className="text-2xl font-inter font-bold leading-tight text-foreground tracking-tight text-center">
               {formattedTotal}
-              {!['USD', 'USDC', 'USGLO'].includes(currency) && (
+              {!['USD', 'USDC', 'USGLO', 'XLM'].includes(currency) && (
                 <span className="text-xs text-muted-foreground ml-2 font-normal">
                   (~{balance} {currency})
                 </span>
@@ -192,21 +149,25 @@ export function DashboardRightSidebar() {
 
         {/* Vertical Marquee Recent Earners */}
         <VerticalMarquee height="h-[160px]" duration="25s" reverse={true}>
-          {topEarners.map((earner, i) => (
+          {isLoadingBountyWinners ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full rounded-lg" />
+            ))
+          ) : bountyWinners?.data.map((earner, i) => (
             <div key={i} className="flex items-center justify-between gap-3 p-1 w-full">
               <div className="flex items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
-                  <Image src={earner.avatar} width={32} height={32} alt={earner.name} className="h-full w-full object-cover" />
+                  <Image src={earner.user.profilePicture} width={32} height={32} alt={earner.user.username} className="h-full w-full object-cover" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-foreground">{earner.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{earner.role}</p>
+                  <p className="text-xs font-semibold text-foreground">{earner.user.username}</p>
+                  <p className="text-[10px] text-muted-foreground">{earner.bounty.title}</p>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-0.5">
                 <div className="flex items-center justify-end gap-2">
-                  <p className="text-xs font-extrabold text-foreground">{earner.amount}</p>
-                  <div className="w-[36px] h-[26px] rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium font-inter">USDC</div>
+                  <p className="text-xs font-extrabold text-foreground">{earner.metadata.reward}</p>
+                  <div className="w-[36px] h-[26px] rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium font-inter">{earner.metadata.currency}</div>
                 </div>
               </div>
             </div>

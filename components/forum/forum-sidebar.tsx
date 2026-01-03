@@ -17,9 +17,9 @@ interface ForumSidebarProps {
     lastName: string;
     profilePicture?: string | null;
     role?: string;
-    posts: number | 0;
-    likes: number | 0;
-    replies: number | 0;
+    postCount: number | 0;
+    reactionCount: number | 0;
+    replyCount: number | 0;
   };
 }
 
@@ -76,15 +76,15 @@ export function ForumSidebar({ categoryId, currentThreadId, author }: ForumSideb
 
           <div className="grid grid-cols-3 gap-2 -mt-[15px]">
             <div className="bg-primary/20 p-[10px] rounded-[10px] text-center space-y-0.5 w-full h-[50px]">
-              <p className="text-[16px] font-extrabold text-foreground font-inter">{author?.posts || 0}</p>
+              <p className="text-[16px] font-extrabold text-foreground font-inter">{author?.postCount || 0}</p>
               <p className="text-[8px] text-muted-foreground font-light tracking-tight">Posts</p>
             </div>
             <div className="bg-primary/20 p-[10px] rounded-[10px] text-center w-full h-[50px]">
-              <p className="text-[16px] font-extrabold text-foreground font-inter">{author?.replies || 0}</p>
+              <p className="text-[16px] font-extrabold text-foreground font-inter">{author?.replyCount || 0}</p>
               <p className="text-[8px] text-muted-foreground font-light tracking-tight -mt-1">Replies</p>
             </div>
             <div className="bg-primary/20 p-[10px] rounded-[10px] text-center space-y-0.5 w-full h-[50px]">
-              <p className="text-[16px] font-extrabold text-foreground font-inter">{author?.likes || 0}</p>
+              <p className="text-[16px] font-extrabold text-foreground font-inter">{author?.reactionCount || 0}</p>
               <p className="text-[8px] text-muted-foreground font-light tracking-tight -mt-1">Likes</p>
             </div>
           </div>

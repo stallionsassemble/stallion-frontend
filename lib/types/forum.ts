@@ -185,9 +185,10 @@ export interface GetThread {
     firstName: string
     lastName: string
     profilePicture?: string
-    posts: number
-    likes: number
-    replies: number
+    role: string
+    postCount: number
+    reactionCount: number
+    replyCount: number
   }
   posts: Post[]
   tags: {

@@ -63,17 +63,6 @@ export function ForumPostContent({
 
   const handleThreadLike = () => {
     if (!threadId) return;
-
-    // Optimistic toggle
-    // Note: Since we don't have the full "reactions" array on the thread object yet (as noted in BACKEND_REQUIREMENTS),
-    // we are relying on a simple "likes" count. 
-    // Ideally we'd have `thread.reactions` array similar to posts to know if *current user* liked it.
-    // For now, we'll toggle based on local state `isLiked` (which should be initialized from props ideally if available).
-    // As "local state" is the best we can do until the read-model is updated.
-
-    // Actually, looking at ForumPostContentProps, we receive `likes` count but not `isLiked` status.
-    // We will maintain a local optimisitic loop assuming success.
-
     const newIsLiked = !isLiked;
     setIsLiked(newIsLiked);
 

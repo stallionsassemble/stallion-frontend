@@ -27,6 +27,8 @@ interface SidebarOwner {
 // ... imports
 import { useWithdrawApplication } from "@/lib/api/projects/queries";
 
+import { BountyDistribution } from "@/lib/types/bounties";
+
 interface BountyDetailsSidebarProps {
   type?: "BOUNTY" | "PROJECT";
   projectId: string;
@@ -40,7 +42,9 @@ interface BountyDetailsSidebarProps {
   deadline?: string;
   winnerAnnouncement?: string;
   applied?: boolean;
-  applicationId?: string; // New prop
+  applicationId?: string;
+  distribution?: BountyDistribution[]; // New prop
+  submissionFields?: any[]; // New prop passed to modal
 }
 
 export function BountyDetailsSidebar({
@@ -56,10 +60,12 @@ export function BountyDetailsSidebar({
   deadline,
   winnerAnnouncement,
   applied = false,
-  applicationId, // New prop
+  applicationId,
+  distribution,
+  submissionFields,
 }: BountyDetailsSidebarProps) {
 
-  // Calculate remaining time
+  // ... existing time calc logic ...
   const getRemainingTime = () => {
     if (!deadline) return "No deadline set";
     const diff = new Date(deadline).getTime() - Date.now();
@@ -82,9 +88,25 @@ export function BountyDetailsSidebar({
   };
 
   const isMfaEnabled = user?.mfaEnabled;
-
-  // Check if deadline has passed
   const isExpired = deadline ? new Date(deadline).getTime() < Date.now() : false;
+
+  // Helper to calculate amount from percentage
+  const getAmount = (percentage: number) => {
+    if (!reward) return 0;
+    // Remove all non-numeric characters except dot
+    const numericString = reward.toString().replace(/[^0-9.]/g, '');
+    const total = parseFloat(numericString);
+    if (isNaN(total)) return 0;
+    if (isNaN(percentage)) return 0;
+    return (total * percentage) / 100;
+  };
+
+  // Format ordinal (1st, 2nd, 3rd)
+  const getOrdinal = (n: number) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
 
   return (
     <div className="space-y-6 w-full">
@@ -105,30 +127,40 @@ export function BountyDetailsSidebar({
             <div className="p-2 text-center text-sm text-muted-foreground">
               Fixed price project
             </div>
+          ) : distribution && distribution.length > 0 ? (
+            distribution.map((dist, idx) => {
+              // Handle case where percentage is [rank, percentage] tuple
+              const actualPercentage = Array.isArray(dist.percentage) ? dist.percentage[1] : dist.percentage;
+              const rawRank = Array.isArray(dist.percentage) ? dist.percentage[0] : dist.rank;
+              // If rawRank is 0 (some APIs), treat as 1 (winner). If 1, treat as 1. 
+              // Based on user data: [1, 60] -> rank 1.
+              const actualRank = rawRank;
+
+              return (
+                <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-primary/10">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">
+                      {actualRank === 1 ? "🥇" : actualRank === 2 ? "🥈" : actualRank === 3 ? "🥉" : "🏅"}
+                    </span>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {actualRank === 1 ? "Winner" : actualRank === 2 ? "1st Runner up" : actualRank === 3 ? "2nd Runner up" : `${getOrdinal(actualRank)} Place`}
+                    </span>
+                  </div>
+                  <span className="font-bold text-foreground">
+                    {new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(getAmount(actualPercentage))} {currency}
+                  </span>
+                </div>
+              );
+            })
           ) : (
-            <>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">🥇</span>
-                  <span className="text-sm font-medium text-muted-foreground">Winner</span>
-                </div>
-                <span className="font-bold text-foreground">$5,000</span>
+            // Fallback for bounties without explicit distribution
+            <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🏆</span>
+                <span className="text-sm font-medium text-muted-foreground">Winner Takes All</span>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">🥈</span>
-                  <span className="text-sm font-medium text-muted-foreground">1st Runner up</span>
-                </div>
-                <span className="font-bold text-foreground">$3,000</span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-primary/10">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">🥉</span>
-                  <span className="text-sm font-medium text-muted-foreground">Second Runner up</span>
-                </div>
-                <span className="font-bold text-foreground">$1,000</span>
-              </div>
-            </>
+              <span className="font-bold text-foreground">{reward}</span>
+            </div>
           )}
         </div>
 
@@ -159,6 +191,7 @@ export function BountyDetailsSidebar({
               reward={reward}
               currency={currency}
               sponsorLogo={owner?.companyLogo || owner?.profilePicture}
+              submissionFields={submissionFields} // Pass fields
             >
               <Button className="w-full bg-primary hover:bg-[#007AFF/95] text-white font-bold h-11">
                 {isProject ? "Apply for Project" : "Submit Bounty"}
@@ -232,8 +265,11 @@ export function BountyDetailsSidebar({
           </div>
         </div>
 
-        <div className="pt-2 flex justify-center">
-          <Link href="#" className="flex items-center gap-2 text-primary text-[12px] font-semibold transition-all">
+        <div className="pt-2 flex justify-center gap-4">
+          <Link href={`/dashboard/bounties?ownerId=${owner?.id}`} className="flex items-center gap-2 text-primary text-[12px] font-semibold transition-all">
+            View Bounties <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link href={`/dashboard/profile/${owner?.id}`} className="flex items-center gap-2 text-primary text-[12px] font-semibold transition-all">
             View Profile <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

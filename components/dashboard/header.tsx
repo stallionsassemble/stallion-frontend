@@ -49,7 +49,7 @@ export function Header() {
         return "Browse Bounties";
       case "/dashboard/projects":
         return "Browse Projects";
-      case "/dashboard/submissions":
+      case "/dashboard/my-submission":
         return "My Submission";
       case "/dashboard/messages":
         return "Messages";

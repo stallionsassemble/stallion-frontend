@@ -1,100 +1,165 @@
 import { api } from '@/lib/api'
-import { Currencies } from '@/lib/types/bounties'
+import {
+  ApplyToBountyDto,
+  ApplyToBountyResponseDto,
+  Bounty,
+  BountySubmission,
+  BountyWinnersResponseDto,
+  CloseBountyResponseDto,
+  ContractStatsResponseDto,
+  CreateBountyDto,
+  CreateBountyResponseDto,
+  Currencies,
+  EmergencyWithdrawDto,
+  GetAllBountiesPayload,
+  PaginatedBountiesResponseDto,
+  SelectWinnersDto,
+  SelectWinnersResponseDto,
+  TransactionHashResponseDto,
+  UpdateAdminDto,
+  UpdateBountyDto,
+  UpdateBountyResponseDto,
+  UpdateFeeAccountDto,
+  UpdateSubmissionDto,
+  UpdateSubmissionResponseDto,
+} from '@/lib/types/bounties'
 
 class BountyService {
   async getSupportedCurrencies() {
-    const response = await api.get('/bounties/supported-currencies')
+    const response = await api.get<Currencies>('/bounties/supported-currencies')
     return response.data
   }
 
-  async getAllBounties() {
-    const response = await api.get('/bounties/all')
+  async getAllBounties(params?: GetAllBountiesPayload) {
+    const response = await api.get<PaginatedBountiesResponseDto>(
+      '/bounties/all',
+      { params }
+    )
     return response.data
   }
 
   async getMyBounties() {
-    const response = await api.get('/bounties')
+    const response = await api.get<Bounty[]>('/bounties')
     return response.data
   }
 
-  async createBounty(payload: any) {
-    const response = await api.post('/bounties', payload)
+  async createBounty(payload: CreateBountyDto) {
+    const response = await api.post<CreateBountyResponseDto>(
+      '/bounties',
+      payload
+    )
     return response.data
   }
 
   async getActiveBounties() {
-    const response = await api.get('/bounties/active')
+    const response = await api.get<Bounty[]>('/bounties/active')
     return response.data
   }
 
   async getBounty(id: string) {
-    const response = await api.get(`/bounties/id/${id}`)
+    const response = await api.get<Bounty>(`/bounties/id/${id}`)
     return response.data
   }
 
-  async updateBounty(id: string, payload: any) {
-    const response = await api.patch(`/bounties/${id}`, payload)
+  async updateBounty(id: string, payload: UpdateBountyDto) {
+    const response = await api.patch<UpdateBountyResponseDto>(
+      `/bounties/${id}`,
+      payload
+    )
     return response.data
   }
 
   async deleteBounty(id: string) {
-    const response = await api.delete(`/bounties/${id}`)
+    const response = await api.delete<{ message: string }>(`/bounties/${id}`)
     return response.data
   }
 
   async closeBounty(id: string) {
-    const response = await api.post(`/bounties/${id}/close`)
+    const response = await api.post<CloseBountyResponseDto>(
+      `/bounties/${id}/close`
+    )
     return response.data
   }
 
-  async applyToBounty(id: string, payload: any) {
-    const response = await api.post(`/bounties/${id}/apply`, payload)
+  async applyToBounty(id: string, payload: ApplyToBountyDto) {
+    const response = await api.post<ApplyToBountyResponseDto>(
+      `/bounties/${id}/apply`,
+      payload
+    )
     return response.data
   }
 
-  async updateSubmission(id: string, payload: any) {
-    const response = await api.patch(`/bounties/${id}/submission`, payload)
+  async updateSubmission(id: string, payload: UpdateSubmissionDto) {
+    const response = await api.patch<UpdateSubmissionResponseDto>(
+      `/bounties/${id}/submission`,
+      payload
+    )
     return response.data
   }
 
-  async selectWinners(id: string, payload: any) {
-    const response = await api.post(`/bounties/${id}/winners`, payload)
+  async selectWinners(id: string, payload: SelectWinnersDto) {
+    const response = await api.post<SelectWinnersResponseDto>(
+      `/bounties/${id}/winners`,
+      payload
+    )
     return response.data
   }
 
   async getWinners(id: string) {
-    const response = await api.get(`/bounties/${id}/winners`)
+    const response = await api.get<BountyWinnersResponseDto>(
+      `/bounties/${id}/winners`
+    )
     return response.data
   }
 
   async getSubmissions(id: string) {
-    const response = await api.get(`/bounties/${id}/submissions`)
+    const response = await api.get<BountySubmission[]>(
+      `/bounties/${id}/submissions`
+    )
     return response.data
   }
 
   async getDetailedSubmissions(id: string) {
-    const response = await api.get(`/bounties/${id}/submissions/detailed`)
+    const response = await api.get<BountySubmission[]>(
+      `/bounties/${id}/submissions/detailed`
+    )
     return response.data
   }
 
   async getApplicants(id: string) {
+    // Keeping generic or updating if needed, but keeping as existing for now
     const response = await api.get(`/bounties/${id}/applicants`)
     return response.data
   }
 
+  async getBountiesByUser(userId: string) {
+    const response = await api.get<Bounty[]>(`/bounties/user/${userId}`)
+    return response.data
+  }
+
+  async getMySubmissions() {
+    const response = await api.get<BountySubmission[]>(
+      '/bounties/submissions/my'
+    )
+    return response.data
+  }
+
   async getBountyStatus(id: string) {
-    const response = await api.get(`/bounties/${id}/status`)
+    const response = await api.get<{ status: string }>(`/bounties/${id}/status`)
     return response.data
   }
 
   // Admin endpoints
-  async updateContractAdmin(payload: any) {
-    const response = await api.post('/bounties/admin/update-admin', payload)
+  async updateContractAdmin(payload: UpdateAdminDto) {
+    const response = await api.post<TransactionHashResponseDto>(
+      '/bounties/admin/update-admin',
+      payload
+    )
     return response.data
   }
 
-  async updateFeeAccount(payload: any) {
-    const response = await api.post(
+  async updateFeeAccount(payload: UpdateFeeAccountDto) {
+    const response = await api.post<TransactionHashResponseDto>(
       '/bounties/admin/update-fee-account',
       payload
     )
@@ -102,12 +167,14 @@ class BountyService {
   }
 
   async getContractStats() {
-    const response = await api.get('/bounties/admin/stats')
+    const response = await api.get<ContractStatsResponseDto>(
+      '/bounties/admin/stats'
+    )
     return response.data
   }
 
-  async emergencyWithdraw(payload: any) {
-    const response = await api.post(
+  async emergencyWithdraw(payload: EmergencyWithdrawDto) {
+    const response = await api.post<TransactionHashResponseDto>(
       '/bounties/admin/emergency-withdraw',
       payload
     )
@@ -115,7 +182,9 @@ class BountyService {
   }
 
   async checkJudgingDeadline(id: string) {
-    const response = await api.post(`/bounties/admin/check-judging/${id}`)
+    const response = await api.post<TransactionHashResponseDto>(
+      `/bounties/admin/check-judging/${id}`
+    )
     return response.data
   }
 }

@@ -7,11 +7,22 @@ import { Search, SlidersHorizontal } from "lucide-react";
 interface PageFiltersProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onSearch?: (term: string) => void;
+  onSortChange?: (sort: string) => void;
+  onStatusChange?: (status: string) => void;
   type?: "BOUNTY" | "PROJECT";
   count?: number;
 }
 
-export function PageFilters({ activeTab, onTabChange, type = "BOUNTY", count = 8 }: PageFiltersProps) {
+export function PageFilters({
+  activeTab,
+  onTabChange,
+  onSearch,
+  onSortChange,
+  onStatusChange,
+  type = "BOUNTY",
+  count = 8
+}: PageFiltersProps) {
   const categories = ["All", "Design", "Development", "Content", "Marketing", "Research", "Other"];
   const typeLabel = type === "PROJECT" ? "Projects" : "Bounties";
 
@@ -25,6 +36,7 @@ export function PageFilters({ activeTab, onTabChange, type = "BOUNTY", count = 8
             <Input
               placeholder={`Search ${typeLabel.toLowerCase()}...`}
               className="pl-10 bg-card border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
+              onChange={(e) => onSearch?.(e.target.value)}
             />
           </div>
 
@@ -53,13 +65,36 @@ export function PageFilters({ activeTab, onTabChange, type = "BOUNTY", count = 8
       {/* Sub-header / Sort */}
       <div className="flex items-center justify-between text-xs text-muted-foreground border-b border-border pb-4">
         <span>Showing {count} {typeLabel}</span>
-        <div className="flex items-center gap-2">
-          <span>Sort by:</span>
-          <select className="bg-transparent text-foreground font-medium focus:outline-none">
-            <option>Newest First</option>
-            <option>Highest Price</option>
-            <option>Ending Soon</option>
-          </select>
+
+        <div className="flex items-center gap-4">
+          {/* Status Filter */}
+          <div className="flex items-center gap-2">
+            <span>Status:</span>
+            <select
+              className="bg-transparent text-foreground font-medium focus:outline-none cursor-pointer"
+              onChange={(e) => onStatusChange?.(e.target.value)}
+              defaultValue="ACTIVE"
+            >
+              <option value="ALL" className="bg-card">All</option>
+              <option value="ACTIVE" className="bg-card">Active</option>
+              <option value="COMPLETED" className="bg-card">Completed</option>
+              <option value="CLOSED" className="bg-card">Closed</option>
+            </select>
+          </div>
+
+          {/* Sort */}
+          <div className="flex items-center gap-2">
+            <span>Sort by:</span>
+            <select
+              className="bg-transparent text-foreground font-medium focus:outline-none cursor-pointer"
+              onChange={(e) => onSortChange?.(e.target.value)}
+              defaultValue="newest"
+            >
+              <option value="newest" className="bg-card">Newest First</option>
+              <option value="reward_desc" className="bg-card">Highest Price</option>
+              <option value="ending_soon" className="bg-card">Ending Soon</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>

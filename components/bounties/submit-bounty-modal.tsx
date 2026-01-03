@@ -19,10 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useApplyToBounty } from "@/lib/api/bounties/queries";
 import { useApplyProject } from "@/lib/api/projects/queries";
-import { Info, Loader2, Plus, Send, Upload } from "lucide-react";
+import { uploadService } from "@/lib/api/upload";
+import { Info, Loader2, Plus, Send, Upload, X } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
+
+// ... existing imports
+import { useAuth } from "@/lib/store/use-auth";
+import { BountySubmissionField } from "@/lib/types/bounties";
+import { Attachment } from "@/lib/types/project";
 
 interface SubmitModalProps {
   children: React.ReactNode;
@@ -32,15 +39,8 @@ interface SubmitModalProps {
   reward: string;
   currency: string;
   sponsorLogo?: string;
+  submissionFields?: BountySubmissionField[];
 }
-
-import { uploadService } from "@/lib/api/upload";
-import { useAuth } from "@/lib/store/use-auth";
-import { Attachment } from "@/lib/types/project";
-import { X } from "lucide-react";
-import { useRef } from "react";
-
-// ... existing imports ...
 
 export function SubmitBountyModal({
   children,
@@ -49,7 +49,8 @@ export function SubmitBountyModal({
   projectTitle,
   reward,
   currency,
-  sponsorLogo
+  sponsorLogo,
+  submissionFields
 }: SubmitModalProps) {
   const [open, setOpen] = useState(false);
   const [showCongrats, setShowCongrats] = useState(false);
@@ -65,14 +66,17 @@ export function SubmitBountyModal({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Bounty specific state
-  const [bountyMainUrl, setBountyMainUrl] = useState("");
-  const [bountyRepoUrl, setBountyRepoUrl] = useState("");
+  // Bounty dynamic state
+  const [submissionValues, setSubmissionValues] = useState<Record<string, string>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { mutate: applyProject, isPending } = useApplyProject();
+  const { mutate: applyProject, isPending: isProjectPending } = useApplyProject();
+  const { mutate: applyBounty, isPending: isBountyPending } = useApplyToBounty();
 
+  const isPending = isProjectPending || isBountyPending;
+
+  // ... helper functions (handleAddLink, handleFileSelect, removeAttachment) remain the same ...
   const handleAddLink = () => {
     if (portfolioLink.trim()) {
       setPortfolioLinks([...portfolioLinks, portfolioLink.trim()]);
@@ -174,35 +178,40 @@ export function SubmitBountyModal({
         }
       });
     } else {
-      // Logic for Bounty Submission
-      const links = [];
-      if (bountyMainUrl) links.push(bountyMainUrl);
-      if (bountyRepoUrl) links.push(bountyRepoUrl);
+      // Extract submissionLink - prioritize explicit field, then githubRepo
+      let submissionLink = submissionValues['submissionLink'] || submissionValues['githubRepo'] || "";
 
-      applyProject({
+      // If still empty and we have fields, maybe one is a URL? 
+      // User requirement implies submissionLink is "main", so we should ensure we grab it.
+      // If explicit 'submissionLink' field exists in submissionFields, we used that above.
+
+      // Create separate submissionData object excluding the main link if it was one of the keys
+      const { submissionLink: _l, githubRepo: _g, ...otherData } = submissionValues;
+
+      // If we didn't find a primary link yet, and we have to fallback to *something*, 
+      // we might just have to send an empty string or error if required. 
+      // But assuming the form validation (HTML required attribute) handles the presence.
+
+      applyBounty({
         id: projectId,
         payload: {
-          coverLetter: "Bounty Submission", // Default cover letter for bounties
-          estimatedCompletionTime: 0, // Not applicable for finished bounties
-          portfolioLinks: links,
-          attachments: [] // Bounties form currently doesn't show attachment upload
+          submissionLink: submissionLink,
+          submissionData: otherData
         }
       }, {
         onSuccess: () => {
           setOpen(false);
           setShowCongrats(true);
-          // Reset form
-          setBountyMainUrl("");
-          setBountyRepoUrl("");
+          setSubmissionValues({});
         },
         onError: (err) => {
           console.error("Failed to submit bounty", err);
-          // show toast
         }
       });
     }
   };
 
+  // ... renderProjectForm same ...
   const renderProjectForm = () => (
     <div className="p-6 space-y-6">
       {/* Cover Letter */}
@@ -347,38 +356,53 @@ export function SubmitBountyModal({
     </div>
   );
 
-  const renderBountyForm = () => (
-    <div className="p-6 space-y-5">
-      {/* Main Project URL */}
-      <div className="space-y-2">
-        <Label className="text-foreground text-sm font-semibold">
-          Main Project URL <span className="text-destructive">*</span>
-        </Label>
-        <div className="flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary">
-          <span className="px-3 py-2.5 text-sm text-foreground border-r border-input bg-background">https://</span>
-          <input
-            value={bountyMainUrl.replace('https://', '')}
-            onChange={(e) => setBountyMainUrl('https://' + e.target.value.replace('https://', ''))}
-            className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground"
-            placeholder="Submission Link"
-          />
-        </div>
+  const renderBountyForm = () => {
+    // If no fields defined, show default fallback fields or empty state?
+    // Let's show a default "Submission URL" if fields are empty to be safe
+    const fields = submissionFields && submissionFields.length > 0 ? submissionFields : [
+      { name: 'submissionLink', label: 'Submission Link', type: 'url', required: true },
+      { name: 'comments', label: 'Comments', type: 'text', required: false }
+    ];
+
+    return (
+      <div className="p-6 space-y-5">
+        {fields.map((field) => (
+          <div key={field.name} className="space-y-2">
+            <Label className="text-foreground text-sm font-semibold">
+              {field.label} {field.required && <span className="text-destructive">*</span>}
+            </Label>
+            {field.type === 'url' ? (
+              <div className="flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary">
+                <span className="px-3 py-2.5 text-sm text-foreground border-r border-input bg-background">https://</span>
+                <input
+                  value={(submissionValues[field.name] || '').replace('https://', '')}
+                  onChange={(e) => setSubmissionValues(prev => ({ ...prev, [field.name]: 'https://' + e.target.value.replace('https://', '') }))}
+                  className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground"
+                  placeholder={field.label}
+                />
+              </div>
+            ) : field.type === 'text' ? ( // assuming 'text' can be long text
+              <textarea
+                value={submissionValues[field.name] || ''}
+                onChange={(e) => setSubmissionValues(prev => ({ ...prev, [field.name]: e.target.value }))}
+                className="flex min-h-[100px] w-full rounded-lg border-[1.19px] border-input bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                placeholder={field.label}
+              />
+            ) : (
+              // default input
+              <input
+                type={field.type === 'number' ? 'number' : 'text'}
+                value={submissionValues[field.name] || ''}
+                onChange={(e) => setSubmissionValues(prev => ({ ...prev, [field.name]: e.target.value }))}
+                className="w-full rounded-lg border-[1.19px] border-input bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+                placeholder={field.label}
+              />
+            )}
+          </div>
+        ))}
       </div>
-      {/* GitHub */}
-      <div className="space-y-2">
-        <Label className="text-foreground text-sm font-semibold">GitHub Repository <span className="text-destructive">*</span></Label>
-        <div className="flex rounded-lg border-[1.19px] border-input bg-transparent overflow-hidden focus-within:border-primary">
-          <span className="px-3 py-2.5 text-sm text-foreground border-r border-input bg-background">https://</span>
-          <input
-            value={bountyRepoUrl.replace('https://', '')}
-            onChange={(e) => setBountyRepoUrl('https://' + e.target.value.replace('https://', ''))}
-            className="flex-1 bg-transparent px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground"
-            placeholder="Repository Link"
-          />
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <>

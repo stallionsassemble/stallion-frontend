@@ -16,7 +16,7 @@ export function useGetWalletBalances() {
               {
                 balance: 0,
                 availableBalance: 0,
-                currency: 'USD',
+                currency: 'USDC',
               },
             ],
           }

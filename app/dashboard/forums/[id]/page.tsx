@@ -40,8 +40,6 @@ const ForumDetailPage = () => {
 
   const categoryName = categories.find(c => c.id === thread?.categoryId)?.name || "General";
 
-  console.log("Thread Response:", thread);
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -113,7 +111,7 @@ const ForumDetailPage = () => {
             authorId={thread.authorId}
             threadId={thread.id}
             currentUserId={user?.id}
-            isAdmin={thread.isAdmin}
+            isAdmin={thread.author?.role === 'Admin'}
             timeAgo={new Date(thread.createdAt).toLocaleDateString()}
             views={thread.viewCount}
             likes={thread.likeCount ?? 0}
