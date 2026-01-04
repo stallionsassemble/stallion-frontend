@@ -15,6 +15,7 @@ interface ForumPostContentProps {
   title: string;
   category: string;
   author: string;
+  authorProfile?: string | null;
   authorId?: string;
   threadId?: string;
   currentUserId?: string;
@@ -22,6 +23,7 @@ interface ForumPostContentProps {
   views: number;
   likes: number;
   replies: number;
+  hasReacted: boolean;
   content: string;
   isAdmin?: boolean;
   isEditing: boolean;
@@ -32,6 +34,7 @@ export function ForumPostContent({
   title,
   category,
   author,
+  authorProfile,
   authorId,
   threadId,
   currentUserId,
@@ -39,12 +42,12 @@ export function ForumPostContent({
   views,
   likes,
   replies,
+  hasReacted,
   content,
   isAdmin,
   isEditing,
   setIsEditing,
 }: ForumPostContentProps) {
-  const [isLiked, setIsLiked] = useState(false);
   // const [isEditing, setIsEditing] = useState(false); // Managed by parent
   const [editContent, setEditContent] = useState(content);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -63,13 +66,8 @@ export function ForumPostContent({
 
   const handleThreadLike = () => {
     if (!threadId) return;
-    const newIsLiked = !isLiked;
-    setIsLiked(newIsLiked);
-
     toggleThreadLike({ threadId, emoji: 'heart' }, {
       onError: () => {
-        // Revert on error
-        setIsLiked(!newIsLiked);
       }
     });
   };
@@ -101,7 +99,7 @@ export function ForumPostContent({
         <div className="flex items-center gap-3 mt-2">
           {/* Avatar */}
           <Link href={`/dashboard/profile/${authorId}`} className="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-primary/20 hover:opacity-80 transition-opacity">
-            <Image src={`https://avatar.vercel.sh/${author}`} width={40} height={40} alt={author} />
+            <Image src={authorProfile || `https://avatar.vercel.sh/${author}`} width={40} height={40} alt={author} />
           </Link>
 
           {/* User Info & Stats Column */}
@@ -206,10 +204,10 @@ export function ForumPostContent({
                 variant="ghost"
                 onClick={handleThreadLike}
                 disabled={isLiking}
-                className={`gap-1 h-9 px-3 transition-colors ${isLiked ? "text-red-500 hover:text-red-600 hover:bg-transparent!" : "text-muted-foreground hover:bg-transparent! hover:text-foreground"}`}
+                className={`gap-1 h-9 px-3 transition-colors ${hasReacted ? "text-red-500 hover:text-red-600 hover:bg-transparent!" : "text-muted-foreground hover:bg-transparent! hover:text-foreground"}`}
               >
-                <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
-                <span>{likes + (isLiked ? 1 : 0)}</span>
+                <Heart className={`h-4 w-4 ${hasReacted ? "fill-current" : ""}`} />
+                <span>{likes}</span>
               </Button>
               <Button variant="ghost" className="text-muted-foreground hover:bg-transparent! hover:text-muted-foreground gap-1 h-9 px-3">
                 <MessageCircle className="h-4 w-4" />

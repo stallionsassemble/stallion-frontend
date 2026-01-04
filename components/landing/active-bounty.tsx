@@ -97,9 +97,8 @@ const ActiveBounties = () => {
         {bounties.map((bounty, index) => (
           <div
             key={bounty.id}
-            className={`bg-[#050505] border rounded-[20px] p-6 md:p-8 flex flex-col items-center text-center border-primary/50 transition-colors duration-300 ${
-              index === currentIndex ? 'flex' : 'hidden md:flex'
-            }`}
+            className={`bg-[#050505] border rounded-[20px] p-6 md:p-8 flex flex-col items-center text-center border-primary/50 transition-colors duration-300 ${index === currentIndex ? 'flex' : 'hidden md:flex'
+              }`}
           >
             {/* Header */}
             <div className='flex flex-row items-center mb-6'>
@@ -177,9 +176,8 @@ const ActiveBounties = () => {
             <button
               key={idx}
               onClick={() => setCurrentIndex(idx)}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                idx === currentIndex ? 'bg-primary' : 'bg-white/20'
-              }`}
+              className={`w-2 h-2 rounded-full transition-colors ${idx === currentIndex ? 'bg-primary' : 'bg-white/20'
+                }`}
             />
           ))}
         </div>
@@ -189,22 +187,20 @@ const ActiveBounties = () => {
           <button
             onClick={handlePrev}
             disabled={currentIndex === 0}
-            className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${
-              currentIndex === 0
+            className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${currentIndex === 0
                 ? 'border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed'
                 : 'border-primary text-primary hover:bg-primary hover:text-white'
-            }`}
+              }`}
           >
             <ChevronLeft className='w-3 h-3' strokeWidth={2.5} />
           </button>
           <button
             onClick={handleNext}
             disabled={currentIndex === bounties.length - 1}
-            className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${
-              currentIndex === bounties.length - 1
+            className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${currentIndex === bounties.length - 1
                 ? 'border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed'
                 : 'border-primary text-primary hover:bg-primary hover:text-white'
-            }`}
+              }`}
           >
             <ChevronRight className='w-3 h-3' strokeWidth={2.5} />
           </button>

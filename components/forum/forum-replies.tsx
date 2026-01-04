@@ -11,10 +11,13 @@ import { ForumPost } from "./forum-post";
 interface ForumRepliesProps {
   posts: any[];
   threadId: string;
-  currentUserId?: string;
+  currentUser?: {
+    id?: string
+    profilePicture?: string | null
+  };
 }
 
-export function ForumReplies({ posts, threadId, currentUserId }: ForumRepliesProps) {
+export function ForumReplies({ posts, threadId, currentUser }: ForumRepliesProps) {
   const [content, setContent] = useState("");
   const { mutate: createPost, isPending } = useCreatePost();
 
@@ -37,7 +40,7 @@ export function ForumReplies({ posts, threadId, currentUserId }: ForumRepliesPro
       {/* Input Box */}
       <div className="flex gap-3 md:gap-4 bg-card rounded-[12px]">
         <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-primary/20">
-          <Image src="https://avatar.vercel.sh/user" width={40} height={40} alt="Current User" />
+          <Image src={currentUser?.profilePicture || 'https://avatar.vercel.sh/user'} width={40} height={40} alt="User" />
         </div>
         <div className="flex-1 space-y-3">
           <MarkdownEditor
@@ -67,7 +70,7 @@ export function ForumReplies({ posts, threadId, currentUserId }: ForumRepliesPro
           <ForumPost
             key={post.id}
             post={post}
-            currentUserId={currentUserId}
+            currentUserId={currentUser?.id}
           />
         ))}
       </div>

@@ -168,7 +168,7 @@ export default function BountiesPage() {
               amount={project.reward}
               type={project.currency as any}
               tags={project.skills}
-              participants={project.acceptedCount || 0}
+              participants={project.applications?.length || 0}
               dueDate={`${formatDistanceToNow(new Date(project.deadline))}`}
               className="w-full min-w-0 md:w-full md:min-w-0"
               version="PROJECT"

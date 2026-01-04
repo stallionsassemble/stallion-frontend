@@ -3,7 +3,7 @@ import { LucideIcon } from "lucide-react";
 
 interface KpiCardProps {
   label: string;
-  value: string | number;
+  value: string | number | React.ReactNode;
   valuePrefix?: React.ReactNode;
   valueSuffix?: React.ReactNode;
   icon?: LucideIcon;

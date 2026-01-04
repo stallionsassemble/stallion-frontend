@@ -2,6 +2,7 @@
 
 import { SubmitBountyModal } from "@/components/bounties/submit-bounty-modal";
 import { MfaRequiredDialog } from "@/components/common/mfa-required-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/store/use-auth";
 import { ArrowRight, BadgeDollarSign, Calendar, Gift, InfoIcon, Star } from "lucide-react";
@@ -24,7 +25,6 @@ interface SidebarOwner {
   rating: string
 }
 
-// ... imports
 import { useWithdrawApplication } from "@/lib/api/projects/queries";
 
 import { BountyDistribution } from "@/lib/types/bounties";
@@ -119,7 +119,12 @@ export function BountyDetailsSidebar({
             <BadgeDollarSign className="h-5 w-5 text-foreground" />
           </div>
           <p className="text-sm text-muted-foreground mb-1">{isProject ? "Project Budget" : "Total Prizes"}</p>
-          <h2 className="text-4xl font-bold text-foreground">{reward} <span className="text-lg text-primary">{currency}</span></h2>
+          <div className="flex items-center justify-center gap-2">
+            <h2 className="text-4xl font-bold text-foreground">{reward}</h2>
+            <Badge className="bg-primary/10 hover:bg-primary/20 text-primary border-primary/20 rounded-full px-3 py-1 text-sm font-medium self-center mt-1">
+              {currency}
+            </Badge>
+          </div>
         </div>
 
         <div className="p-4 space-y-3">

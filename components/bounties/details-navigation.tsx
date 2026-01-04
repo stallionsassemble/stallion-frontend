@@ -9,9 +9,10 @@ import { toast } from "sonner";
 interface DetailsNavigationProps {
   backLink: string;
   backText: string;
+  appliedUser?: string[]
 }
 
-export function DetailsNavigation({ backLink, backText }: DetailsNavigationProps) {
+export function DetailsNavigation({ backLink, backText, appliedUser = [] }: DetailsNavigationProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
       {/* Back Button */}
@@ -26,13 +27,15 @@ export function DetailsNavigation({ backLink, backText }: DetailsNavigationProps
       {/* Right Actions */}
       <div className="flex items-center gap-3">
         {/* Avatar Stack */}
-        <div className="flex -space-x-3 mr-2">
-          <div className="h-9 w-9 rounded-full border-2 border-background bg-linear-to-br from-green-400 to-blue-500 overflow-hidden relative z-30" />
-          <div className="h-9 w-9 rounded-full border-2 border-background bg-linear-to-br from-yellow-400 to-orange-500 overflow-hidden relative z-20" />
-          <div className="h-9 w-9 rounded-full border-2 border-background bg-white flex items-center justify-center relative z-10">
-            <Image src="/assets/icons/sdollar.png" width={20} height={20} alt="Stallion" className="object-contain" />
+        {appliedUser && appliedUser.length > 0 && (
+          <div className="flex -space-x-3 mr-2">
+            {appliedUser.map((user, index) => (
+              <div key={`${user}-${index}`} className="h-9 w-9 rounded-full border-2 border-background bg-white flex items-center justify-center relative z-10 overflow-hidden">
+                <Image src={user || '/assets/icons/sdollar.png'} width={36} height={36} alt="Applicant" className="object-cover h-full w-full" />
+              </div>
+            ))}
           </div>
-        </div>
+        )}
 
         <Button variant="outline" className="bg-card border border-border hover:bg-muted text-foreground text-sm h-10 px-4 rounded-xl gap-2">
           <Bookmark className="h-4 w-4" />

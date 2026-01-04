@@ -14,7 +14,7 @@ export interface BountyCardProps {
   company: string;
   logo: string;
   amount: string;
-  type: "USDC" | "SOL" | "USD";
+  type: "USDC" | "XLM" | "EURC";
   tags: string[];
   participants: number;
   dueDate: string;

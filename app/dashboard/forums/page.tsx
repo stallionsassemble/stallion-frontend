@@ -1,6 +1,5 @@
 "use client";
 
-import { CreateCategoryDialog } from "@/components/forum/create-category-dialog";
 import { CreateThreadDialog } from "@/components/forum/create-thread-dialog";
 import { ForumDiscussionCard } from "@/components/forum/forum-discussion-card";
 import { ForumFilters } from "@/components/forum/forum-filters";
@@ -14,7 +13,7 @@ import {
   useSearchThreads,
   useTogglePinThread
 } from "@/lib/api/forum/queries";
-import { ChevronLeft, ChevronRight, Loader2, Pin, Plus, Send } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Pin, Send } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -27,7 +26,6 @@ export default function ForumPage() {
   const initialTag = searchParams.get("tag");
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [activeCategoryId, setActiveCategoryId] = useState('all');
   const [activeTag, setActiveTag] = useState<string | undefined>(initialTag || undefined);
   const [searchQuery, setSearchQuery] = useState('');
@@ -144,10 +142,6 @@ export default function ForumPage() {
           <p className="text-foreground font-medium font-inter text-[14px]">Discuss, share, and learn with the community</p>
         </div>
         <div className="flex gap-3">
-          <Button variant={'outline'} onClick={() => setIsCategoryDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Category
-          </Button>
           <Button variant={'stallion'} onClick={() => setIsDialogOpen(true)}>
             <Send className="h-4 w-4 rotate-0 mr-2" />
             New Discussion
@@ -266,10 +260,6 @@ export default function ForumPage() {
       <CreateThreadDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-      />
-      <CreateCategoryDialog
-        open={isCategoryDialogOpen}
-        onOpenChange={setIsCategoryDialogOpen}
       />
     </div>
   );

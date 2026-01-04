@@ -2,42 +2,46 @@
 
 import { Button } from "@/components/ui/button";
 import { WithdrawFundsModal } from "@/components/wallet/withdraw-funds-modal";
-import { useCryptoPrice } from "@/lib/api/pricing/queries";
+import { useGetActivities } from "@/lib/api/activities/queries";
+import { useGetPrices } from "@/lib/api/prices/queries";
+import { useLeaderboard } from "@/lib/api/reputation/queries";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
-import { BadgeDollarSign, Crown, Loader2 } from "lucide-react";
+import { getCurrencyIcon } from "@/lib/utils";
+import { BadgeDollarSign, Crown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { VerticalMarquee } from "./vertical-marquee";
-import { useLeaderboard } from "@/lib/api/reputation/queries";
-import { getCurrencyIcon } from "@/lib/wallet";
+import { useState } from "react";
 import { Skeleton } from "../ui/skeleton";
-import { useGetActivities } from "@/lib/api/activities/queries";
+import { VerticalMarquee } from "./vertical-marquee";
 
 export function DashboardRightSidebar() {
   const { data: walletData, isLoading: isLoadingWallet } = useGetWalletBalances();
   const { data: leaderboard, isLoading: isLoadingLeaderboard } = useLeaderboard({ limit: 10 });
   const { data: bountyWinners, isLoading: isLoadingBountyWinners } = useGetActivities({ page: '1', limit: '10', type: 'BOUNTY_WON' });
 
-  const balance = walletData?.balances?.[0]?.availableBalance || 0;
-  const currency = walletData?.balances?.[0]?.currency || 'USDC';
-
-  const { data: price = 1 } = useCryptoPrice(currency);
+  const assets = walletData?.balances || [];
+  const topAssets = assets.slice(0, 3);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
 
-  const totalUsd = useMemo(() => {
-    return balance * price;
-  }, [balance, price]);
+  // Extract currency codes to fetch prices for
+  const currencies = assets.map((a: any) => a.currency);
+  const { data: prices = {} } = useGetPrices(currencies);
 
-  const formattedTotal = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalUsd);
+  const totalBalance = assets.reduce((sum: number, asset: any) => {
+    // If USD/USDC, price is 1 (or close to it via API). If API fails, default to 0 for volatile, 1 for stable if known.
+    const price = prices[asset.currency] || (['usdc', 'usd'].includes(asset.currency.toLowerCase()) ? 1 : 0);
+    return sum + (asset.availableBalance * price);
+  }, 0);
+
+  const formattedTotal = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalBalance);
 
   return (
     <div className="space-y-6 w-full">
       <WithdrawFundsModal
         isOpen={isWithdrawOpen}
         onClose={() => setIsWithdrawOpen(false)}
-        availableBalance={balance}
-        currency={currency}
+        availableBalance={assets[0]?.availableBalance || 0}
+        currency={assets[0]?.currency || 'USDC'}
       />
 
       {/* Top Earners */}
@@ -96,35 +100,39 @@ export function DashboardRightSidebar() {
           ) : (
             <h2 className="text-2xl font-inter font-bold leading-tight text-foreground tracking-tight text-center">
               {formattedTotal}
-              {!['USD', 'USDC', 'USGLO', 'XLM'].includes(currency) && (
-                <span className="text-xs text-muted-foreground ml-2 font-normal">
-                  (~{balance} {currency})
-                </span>
-              )}
             </h2>
           )}
         </div>
 
         <div className="space-y-2 mb-4 px-4">
-          {/* Only showing the actual held asset since API doesn't give breakdown */}
-          {!isLoadingWallet && (
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-primary/10 border border-border">
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
-                  <img
-                    src={getCurrencyIcon(currency)}
-                    alt={currency}
-                    className="w-4 h-4 object-contain"
-                    onError={(e) => e.currentTarget.src = "/assets/icons/usdc.png"}
-                  />
+          {!isLoadingWallet && topAssets.map((asset: any, idx: number) => {
+            const price = prices[asset.currency] || (['usdc', 'usd'].includes(asset.currency.toLowerCase()) ? 1 : 0);
+            const usdValue = (asset.availableBalance || 0) * price;
+
+            return (
+              <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-primary/10 border border-border">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
+                    <img
+                      src={getCurrencyIcon(asset.currency)}
+                      width={16}
+                      height={16}
+                      onError={(e) => e.currentTarget.src = "/assets/icons/usdc.png"}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-bold text-foreground">{asset.currency}</span>
+                    <span className="text-[9px] font-inter text-muted-foreground">{asset.availableBalance} {asset.currency}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[11px] font-bold text-foreground">{currency}</span>
-                  <span className="text-[9px] font-inter text-muted-foreground">{balance} {currency}</span>
-                </div>
+                <span className="text-sm font-space-grotesk leading-tight font-bold text-foreground">
+                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(usdValue)}
+                </span>
               </div>
-              <span className="text-base font-space-grotesk leading-tight font-bold text-foreground">{formattedTotal}</span>
-            </div>
+            );
+          })}
+          {!isLoadingWallet && topAssets.length === 0 && (
+            <p className="text-center text-xs text-muted-foreground">No assets found</p>
           )}
         </div>
 

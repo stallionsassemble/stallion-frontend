@@ -26,7 +26,6 @@ const ForumDetailPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const { mutate: deleteThread, isPending: isDeleting } = useDeleteThread();
   const router = useRouter();
-
   const isOwner = user?.id === thread?.authorId;
 
   const handleDelete = () => {
@@ -108,13 +107,15 @@ const ForumDetailPage = () => {
             title={thread.title}
             category={categoryName}
             author={thread.author?.username}
+            authorProfile={thread.author.profilePicture}
             authorId={thread.authorId}
             threadId={thread.id}
             currentUserId={user?.id}
             isAdmin={thread.author?.role === 'Admin'}
             timeAgo={new Date(thread.createdAt).toLocaleDateString()}
             views={thread.viewCount}
-            likes={thread.likeCount ?? 0}
+            likes={thread.reactions[0]?.count || 0}
+            hasReacted={thread.reactions[0]?.hasReacted || false}
             replies={filteredPosts.length}
             content={mainContent}
             isEditing={isEditing}
@@ -123,7 +124,7 @@ const ForumDetailPage = () => {
           <ForumReplies
             posts={filteredPosts}
             threadId={thread.id}
-            currentUserId={user?.id}
+            currentUser={{ id: user?.id, profilePicture: user?.profilePicture }}
           />
         </div>
 

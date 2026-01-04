@@ -29,7 +29,7 @@ export default function DashboardPage() {
 
           <div className='relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6'>
             <div className='h-20 w-20 shrink-0 overflow-hidden rounded-full border-4 border-primary-foreground/20'>
-              <Image
+              <img
                 src={user?.profilePicture || `https://avatar.vercel.sh/${user?.firstName || 'John'}`}
                 width={80}
                 height={80}

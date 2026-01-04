@@ -10,6 +10,7 @@ import {
 } from '@/components/bounties/payment-milestones'
 import { Button } from '@/components/ui/button'
 import { useGetProject, useGetProjectMilestones, useGetProjects } from '@/lib/api/projects/queries'
+import { useAuth } from '@/lib/store/use-auth'
 import { formatDistanceToNow } from 'date-fns'
 import {
   ChevronLeft,
@@ -33,12 +34,16 @@ export default function BountyDetailsPage() {
 
   // 1. Fetch Project Details
   const { data: project, isLoading: isProjectLoading, isError } = useGetProject(id!)
+  console.log("Project Details", project)
 
   // 2. Fetch Milestones
   const { data: projectMilestones, isLoading: isMilestonesLoading } = useGetProjectMilestones(id!)
 
   // 3. Fetch Similar Projects (Just fetch open gigs for now as "similar")
   const { data: allProjects } = useGetProjects({ status: 'OPEN', type: 'GIG' })
+
+  // 4. Fetch User Details 
+  const { user } = useAuth()
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -85,6 +90,11 @@ export default function BountyDetailsPage() {
   const milestones: Milestone[] = draftMilestones
 
   const attachments = project.attachments || []
+  const application = project.applications.filter((a) => a.userId === user?.id)[0]
+  const appliedUser = project.applications
+    .filter((a) => a.userId !== user?.id && a.user)
+    .map((a) => a.user.profilePicture || '/assets/icons/sdollar.png')
+  console.log("Applied", appliedUser)
 
   return (
     <div className='flex flex-col lg:flex-row gap-4 lg:gap-8 relative items-start w-full max-w-full lg:h-[calc(100vh-7rem)] overflow-x-hidden lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
@@ -94,6 +104,7 @@ export default function BountyDetailsPage() {
         <DetailsNavigation
           backLink='/dashboard/projects'
           backText='Back to Projects'
+          appliedUser={appliedUser}
         />
 
         {/* Project Details Content */}
@@ -105,7 +116,7 @@ export default function BountyDetailsPage() {
               title={project.title}
               company={project.owner?.companyName || project.owner?.username || 'Stallion User'}
               logo={project.owner?.companyLogo || project.owner?.profilePicture || '/assets/icons/sdollar.png'}
-              participants={project.acceptedCount || 0}
+              participants={project.applications.length || 0}
               dueDate={`${formatDistanceToNow(new Date(project.deadline))} left`}
               tags={project.skills}
               status={project.status}
@@ -273,7 +284,7 @@ export default function BountyDetailsPage() {
           createdAt={project.createdAt}
           deadline={project.deadline}
           applied={project.applied}
-          applicationId={project.applicationId}
+          applicationId={application.id}
           winnerAnnouncement={project.winnerAnnouncement}
         />
       </div>
@@ -292,7 +303,7 @@ export default function BountyDetailsPage() {
           createdAt={project.createdAt}
           deadline={project.deadline}
           applied={project.applied}
-          applicationId={project.applicationId}
+          applicationId={application.id}
           winnerAnnouncement={project.winnerAnnouncement}
         />
       </div>

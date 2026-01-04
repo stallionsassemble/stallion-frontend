@@ -77,7 +77,7 @@ export interface Project {
   winnerAnnouncement: string
   milestones?: MilestoneDraft[]
   applied: boolean
-  applicationId?: string
+  applications: ApplyProjectResponse[]
   owner: {
     id: string
     username: string

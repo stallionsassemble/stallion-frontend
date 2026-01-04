@@ -115,7 +115,7 @@ export class ProjectService {
    */
   async withdrawApplication(id: string) {
     const response = await api.delete<{ message: string }>(
-      `/projects/applications/${id}/withdraw`
+      `/projects/applications/${id}`
     )
     return response.data
   }

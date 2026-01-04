@@ -5,55 +5,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, BriefcaseBusiness, CircleCheck, Gift, ListFilter, Timer, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-// Mock Data
-const opportunities = [
-  {
-    id: 1,
-    title: "React Dashboard UI Design",
-    description: "Design a professional dashboard UI for a fintech platform...",
-    tags: ["React", "Typescript", "UI/UX"],
-    price: "$3,500",
-    company: "Stallion Foundation",
-    category: "Design",
-    type: "bounty",
-    logo: "/assets/icons/sdollar.png", // placeholder
-  },
-  {
-    id: 2,
-    title: "Smart Contract Audit Fix",
-    description: "Audit and fix vulnerabilities in the staking contract...",
-    tags: ["Solidity", "Security", "Audit"],
-    price: "$5,000",
-    company: "Stallion Foundation",
-    category: "Development",
-    type: "bounty",
-    logo: "/assets/icons/sdollar.png",
-  },
-  {
-    id: 3,
-    title: "Marketing Campaign Manager",
-    description: "Lead the marketing campaign for the Q4 product launch...",
-    tags: ["Marketing", "Strategy", "Social"],
-    price: "$2,000",
-    company: "Stallion Foundation",
-    category: "Marketing",
-    type: "project",
-    logo: "/assets/icons/sdollar.png",
-  },
-  {
-    id: 4,
-    title: "DeFi Protocol Research",
-    description: "Research and analysis of current DeFi yield aggregation strategies...",
-    tags: ["DeFi", "Research", "Finance"],
-    price: "$1,500",
-    company: "Stallion Foundation",
-    category: "Research",
-    type: "project",
-    logo: "/assets/icons/sdollar.png",
-  },
-];
+import { useGetAllBounties } from "@/lib/api/bounties/queries";
+import { useGetProjects } from "@/lib/api/projects/queries";
+import { formatDistanceToNow } from "date-fns";
 
 // Activities Data
 const activities = [
@@ -109,10 +65,43 @@ const activities = [
   },
 ];
 
-export function OpportunityList({ title = "Browse Opportunities", type = "bounties" }: { title?: string, type?: "bounties" | "grants" }) {
+// Mock Grants Data (as requested to remain)
+const mockGrants = [
+  {
+    id: 1,
+    title: "Open Source Grant 2024",
+    description: "Funding for innovative open source projects in the ecosystem...",
+    tags: ["Open Source", "Grant", "Funding"],
+    price: "$10,000",
+    currency: "USDC",
+    company: "Stallion Foundation",
+    logo: "/assets/icons/sdollar.png",
+    type: "grant",
+    applicants: 50,
+    dueDate: new Date(Date.now() + 86400000 * 30).toISOString(), // 30 days
+  },
+  {
+    id: 2,
+    title: "DeFi Innovation Fund",
+    description: "Support for new DeFi protocols building on our chain...",
+    tags: ["DeFi", "Grant", "Innovation"],
+    price: "$25,000",
+    currency: "USDC",
+    company: "Stallion Foundation",
+    logo: "/assets/icons/sdollar.png",
+    type: "grant",
+    applicants: 12,
+    dueDate: new Date(Date.now() + 86400000 * 60).toISOString(),
+  }
+];
+
+export function OpportunityList({ title = "Browse Opportunities", type = "bounties" }: { title?: string, type?: "bounties" | "projects" | "grants" }) {
   const [activeTabs, setActiveTabs] = useState(["All"]);
-  const [activeView, setActiveView] = useState("For you"); // "For you" | "Projects" | "Bounties"
-  const categories = ["All", "Design", "Development", "Content", "Marketing", "Research", "Other"];
+  const [activeView, setActiveView] = useState(type === 'grants' ? "Grants" : "For you"); // "For you" | "Projects" | "Bounties" | "Grants"
+
+  // Fetch Data
+  const { data: bountiesData, isLoading: isLoadingBounties } = useGetAllBounties({});
+  const { data: projectsData, isLoading: isLoadingProjects } = useGetProjects({});
 
   const toggleCategory = (cat: string) => {
     if (cat === "All") {
@@ -134,22 +123,86 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
     });
   };
 
-  const filteredOpportunities = opportunities.filter(opp => {
-    // 1. Filter by View (Tab)
-    if (activeView === "Projects" && opp.type !== "project") return false;
-    if (activeView === "Bounties" && opp.type !== "bounty") return false;
-    // "For you" shows all for now
+  // Combine and Normalize Data
+  const realOpportunities = [
+    ...(bountiesData?.data || []).map((b: any) => ({
+      id: b.id,
+      title: b.title,
+      description: b.shortDescription,
+      tags: b.skills || [],
+      price: b.reward,
+      currency: b.rewardCurrency || 'USDC',
+      company: b.owner?.username || 'Stallion', // Fallback if owner not populated
+      logo: b.owner?.profilePicture || '/assets/icons/sdollar.png',
+      type: 'bounty',
+      createdAt: b.createdAt,
+      dueDate: b.submissionDeadline,
+      applicants: b.applicationCount || 0
+    })),
+    ...(projectsData?.map((p: any) => ({
+      id: p.id,
+      title: p.title,
+      description: p.shortDescription,
+      tags: p.skills || [],
+      price: p.reward,
+      currency: p.currency || 'USDC',
+      company: p.owner?.companyName || p.owner?.username || 'Stallion',
+      logo: p.owner?.companyLogo || p.owner?.profilePicture || '/assets/icons/sdollar.png',
+      type: 'project',
+      createdAt: p.createdAt,
+      dueDate: p.deadline,
+      applicants: p.applications?.length || 0
+    })) || [])
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    // 2. Filter by Category
-    // If "All" is active, show everything. Otherwise, checking if the opp's category is in the active list.
-    if (!activeTabs.includes("All") && !activeTabs.includes(opp.category)) return false;
+  // Determine source based on prop type or active view
+  const isGrantsSection = type === 'grants';
+  const opportunities = isGrantsSection ? mockGrants : realOpportunities;
+
+  // Derive categories from opportunities tags (Dynamic Skills)
+  const categories = useMemo(() => {
+    const allTags = opportunities.flatMap(opp => opp.tags);
+    const uniqueTags = Array.from(new Set(allTags.map(tag => tag.trim()))).filter(Boolean).sort();
+    // Optional: Filter out tags that are too rare? For now show all unique ones up to a limit? 
+    // Let's just show top 10 appearing items maybe? 
+    // Or just all. Horizontal scroll handles it.
+    return ["All", ...uniqueTags];
+  }, [opportunities]);
+
+  const filteredOpportunities = opportunities.filter((opp) => {
+    // 1. Filter by View
+    if (!isGrantsSection) {
+      if (activeView === "Projects" && opp.type !== "project") return false;
+      if (activeView === "Bounties" && opp.type !== "bounty") return false;
+    }
+
+    // 2. Filter by Category (Active Tabs match Tags)
+    if (!activeTabs.includes("All")) {
+      // Check if ANY selected category matches ANY of the opportunity's tags
+      const hasCategory = activeTabs.some(cat =>
+        opp.tags.some((tag: string) => tag.toLowerCase() === cat.toLowerCase())
+      );
+      if (!hasCategory) return false;
+    }
 
     return true;
   });
 
+  const isLoading = !isGrantsSection && (isLoadingBounties || isLoadingProjects);
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-muted-foreground">Loading opportunities...</div>;
+  }
+
+  const handleViewAll = () => {
+    if (activeView === 'Projects') return '/dashboard/projects';
+    if (activeView === 'Bounties') return '/dashboard/bounties';
+    if (activeView === 'Grants') return '/dashboard/grants';
+    return '/dashboard/bounties';
+  };
+
   return (
     <div className="space-y-4">
-      {/* Header Section */}
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
@@ -163,22 +216,26 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
             </Button>
           </div>
 
-          <div className="hidden sm:block h-4 w-px bg-border"></div>
+          {!isGrantsSection && (
+            <>
+              <div className="hidden sm:block h-4 w-px bg-border"></div>
 
-          <ul className="flex flex-row gap-4 text-sm font-medium text-muted-foreground overflow-x-auto no-scrollbar pb-1 w-full sm:w-auto">
-            {["For you", "Projects", "Bounties"].map((view) => (
-              <li
-                key={view}
-                onClick={() => setActiveView(view)}
-                className={`cursor-pointer transition-all pb-1 border-b-2 whitespace-nowrap ${activeView === view
-                  ? "text-foreground border-primary"
-                  : "border-transparent hover:text-foreground hover:border-primary"
-                  }`}
-              >
-                {view}
-              </li>
-            ))}
-          </ul>
+              <ul className="flex flex-row gap-4 text-sm font-medium text-muted-foreground overflow-x-auto no-scrollbar pb-1 w-full sm:w-auto">
+                {["For you", "Projects", "Bounties"].map((view) => (
+                  <li
+                    key={view}
+                    onClick={() => setActiveView(view)}
+                    className={`cursor-pointer transition-all pb-1 border-b-2 whitespace-nowrap ${activeView === view
+                      ? "text-foreground border-primary"
+                      : "border-transparent hover:text-foreground hover:border-primary"
+                      }`}
+                  >
+                    {view}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
 
         {/* Desktop Filter Button */}
@@ -188,7 +245,6 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
       </div>
 
       {/* Categories Section */}
-      {/* {type === "bounties" && ( */}
       <div className="relative w-full group">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-2 no-scrollbar w-full mask-linear-fade max-w-full">
           {categories.map((cat) => {
@@ -216,22 +272,22 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
 
       <div className="grid gap-3">
         {filteredOpportunities.length > 0 ? (
-          filteredOpportunities.map((opp) => (
+          filteredOpportunities.slice(0, 5).map((opp) => (
             <Link
-              key={opp.id}
+              key={`${opp.type}-${opp.id}`}
               href={`/dashboard/${opp.type === 'project' ? 'projects' : 'bounties'}/${opp.id}`}
               className="group relative flex flex-col sm:flex-row items-stretch overflow-hidden rounded-2xl border border-border bg-card transition-all hover:border-primary/50"
             >
               {/* Left Content Wrapper */}
               <div className="flex flex-1 items-start md:items-center p-4 gap-3 md:gap-4">
                 {/* Logo */}
-                <div className="h-10 w-10 md:h-12 md:w-12 shrink-0 overflow-hidden rounded-full bg-white p-1.5 md:p-2 flex items-center justify-center mt-1 md:mt-0">
+                <div className="h-10 w-10 md:h-12 md:w-12 shrink-0 overflow-hidden rounded-full bg-white p-0 flex items-center justify-center mt-1 md:mt-0">
                   <Image
                     src={opp.logo}
                     width={48}
                     height={48}
                     alt={opp.company}
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-cover rounded-full"
                   />
                 </div>
 
@@ -256,25 +312,27 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
                       <div className="w-3.5 h-3.5 text-primary">
                         <User className="w-3.5 h-3.5" />
                       </div>
-                      <span>200</span>
+                      <span>{opp.applicants}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-3.5 h-3.5 text-primary">
                         <Timer className="w-3.5 h-3.5" />
                       </div>
-                      <span>Due in 10d</span>
+                      <span className="truncate">
+                        {opp.dueDate ? `Due in ${formatDistanceToNow(new Date(opp.dueDate))}` : 'No deadline'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-3.5 h-3.5 text-primary">
                         <Gift className="w-3.5 h-3.5" />
                       </div>
-                      <span className="capitalize">{opp.type || "Bounty"}</span>
+                      <span className="capitalize">{opp.type}</span>
                     </div>
                   </div>
 
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1.5 mt-1">
-                    {opp.tags.map((tag) => (
+                    {opp.tags.slice(0, 3).map((tag: string) => (
                       <Badge
                         key={tag}
                         variant="secondary"
@@ -283,15 +341,23 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
                         {tag}
                       </Badge>
                     ))}
+                    {opp.tags.length > 3 && (
+                      <Badge variant="secondary" className="bg-primary/10 text-xs text-primary border-[0.54px] border-primary/20 font-inter text-[8px] font-medium px-2 py-0.5 rounded-full">
+                        +{opp.tags.length - 3}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Right Side Info (Price) */}
               <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-center p-4 md:p-6 sm:pr-24 lg:pr-6 gap-2 border-t sm:border-t-0 border-border bg-card sm:bg-transparent md:mr-[68px]">
-                <span className="text-xl md:text-3xl font-bold text-foreground tracking-tight">{opp.price}</span>
+                <span className="text-xl md:text-3xl font-bold text-foreground tracking-tight whitespace-nowrap">
+                  {/* Handle range or string price? Assuming number or string. Format if number. */}
+                  {isNaN(Number(opp.price)) ? opp.price : Number(opp.price).toLocaleString()}
+                </span>
                 <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground border-0 rounded-full px-4 py-0.5 text-xs font-semibold">
-                  USDC
+                  {opp.currency || 'USDC'}
                 </Badge>
               </div>
 
@@ -307,9 +373,11 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
           </div>
         )}
       </div>
-      <Button className="w-full bg-primary/10 hover:bg-primary/20 text-primary text-xs h-9 rounded-lg mt-2 border border-primary/20">
-        View All
-      </Button>
+      <Link href={handleViewAll()} passHref className="w-full">
+        <Button className="w-full bg-primary/10 hover:bg-primary/20 text-primary text-xs h-9 rounded-lg mt-2 border border-primary/20">
+          View All
+        </Button>
+      </Link>
     </div>
   );
 }

@@ -177,7 +177,19 @@ export interface GetThread {
   isPinned: boolean
   isLocked: boolean
   viewCount: number
-  likeCount?: number
+  reactions: {
+    emoji: string
+    count: number
+    userIds: string[]
+    users: {
+      id: string
+      username: string
+      firstName: string
+      lastName: string
+      profilePicture: string
+    }[]
+    hasReacted: true
+  }[]
   isAdmin?: boolean
   createdAt: string
   author: {

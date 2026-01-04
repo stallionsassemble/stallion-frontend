@@ -103,9 +103,11 @@ export interface AddParticipantResponse {
 }
 
 export interface SendMessagePayload {
-  conversationId: string
+  recipientId: string
   content: string
-  type: string
+  type?: 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
+  identifier?: string
+  replyToMessageId?: string
   attachments?: {
     url: string
     type: string

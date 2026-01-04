@@ -18,31 +18,13 @@ import { useGetPrices } from "@/lib/api/prices/queries";
 import { walletService } from "@/lib/api/wallet";
 import { useDeletePayoutMethod, useGetDepositAddress, useGetPayoutMethods, useSetTrustline, useSyncWallet } from "@/lib/api/wallet/queries";
 import { useDebounce } from "@/lib/hooks/use-debounce";
-import { cn } from "@/lib/utils";
+import { cn, getCurrencyIcon } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay, isWithinInterval, startOfDay } from "date-fns";
 import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, CheckCircle2, ChevronLeft, ChevronRight, Clock, Coins, Copy, DollarSign, History, Info, Loader2, Plus, RefreshCcw, Search, Send, Trash2, Wallet } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
-
-const getCurrencyIcon = (currency: string) => {
-  const code = currency.toLowerCase();
-  switch (code) {
-    case 'usdc':
-      return '/assets/icons/usdc.png';
-    case 'usglo':
-      return '/assets/icons/usglo.png';
-    case 'xlm':
-      return '/assets/icons/xlm.png';
-    case 'eurc':
-      return '/assets/icons/euro.png';
-    case 'ngn':
-      return '/assets/icons/naira.png';
-    default:
-      return '/assets/icons/dollar.png'; // Fallback
-  }
-};
 
 
 

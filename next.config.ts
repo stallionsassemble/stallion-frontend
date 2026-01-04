@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'stallion.so',
       },
+      {
+        protocol: 'https',
+        hostname: 'api.stallion.so',
+      },
     ],
   },
 }
