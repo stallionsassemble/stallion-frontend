@@ -4,17 +4,21 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/store/use-auth";
-import { ConversationSummary } from "@/lib/types";
+import { Conversation, ConversationSummary } from '@/lib/types';
 import { cn } from "@/lib/utils";
 import { Search, SearchX, UserCog } from "lucide-react";
 
 interface MessagesSidebarProps {
-  conversations: ConversationSummary[];
+  conversations: Conversation[];
   selectedId: string;
   onSelect: (id: string) => void;
 }
 
-export function MessagesSidebar({ conversations, selectedId, onSelect }: MessagesSidebarProps) {
+export function MessagesSidebar({
+  conversations,
+  selectedId,
+  onSelect,
+}: MessagesSidebarProps) {
   const { user: currentUser } = useAuth();
 
   const getPartner = (participants: ConversationSummary['participants']) => {
@@ -52,23 +56,25 @@ export function MessagesSidebar({ conversations, selectedId, onSelect }: Message
             // TODO: Fallback if partner is missing?
             if (!partner) return null;
 
-            const lastMessage = conv.lastMessage?.content || "No messages yet";
-            const isAdmin = false; // TODO: Check if user is admin from their role?
+            const lastMessage =
+              conv.messages[conv.messages.length - 1]?.content ||
+              'No messages yet';
+            const isAdmin = partner.role === 'ADMIN'; // TODO: Check if user is admin from their role?
 
             return (
               <div
                 key={conv.id}
                 onClick={() => onSelect(conv.id)}
                 className={cn(
-                  "flex items-center gap-3 p-4 cursor-pointer transition-colors border-b border-[0.68px] border-primary/50",
-                  isSelected ? "bg-primary/10" : "hover:bg-primary/5"
+                  'flex items-center gap-3 p-4 cursor-pointer transition-colors border-b border-[0.68px] border-primary/50',
+                  isSelected ? 'bg-primary/10' : 'hover:bg-primary/5'
                 )}
               >
                 {/* Avatar */}
                 <div className="relative shrink-0">
                   <div className="h-12 w-12 rounded-full overflow-hidden border border-primary/20 bg-muted">
                     <div className="flex items-center justify-center w-full h-full bg-primary/20 text-primary font-bold">
-                      {partner.firstName?.[0] || partner.username?.[0] || "?"}
+                      {partner.firstName?.[0] || partner.username?.[0] || '?'}
                     </div>
                   </div>
                 </div>
@@ -78,13 +84,17 @@ export function MessagesSidebar({ conversations, selectedId, onSelect }: Message
                   <div className="flex items-center justify-between mb-0.5">
                     <div className="flex items-center gap-2">
                       <span className="text-[16px] font-medium text-foreground truncate font-inter">
-                        {partner.firstName ? `${partner.firstName} ${partner.lastName || ''}` : partner.username}
+                        {partner.firstName
+                          ? `${partner.firstName} ${partner.lastName || ''}`
+                          : partner.username}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] text-muted-foreground font-light font-inter">@{partner.username}</span>
+                    <span className="text-[10px] text-muted-foreground font-light font-inter">
+                      @{partner.username}
+                    </span>
                     {isAdmin && (
                       <Badge className="bg-amber-900/80 hover:bg-amber-900 border-none text-foreground text-[8px] h-4 px-1.5 gap-0.5 rounded-full">
                         <UserCog className="h-2 w-2" />

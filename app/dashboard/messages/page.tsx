@@ -3,8 +3,7 @@
 import { ChatWindow } from "@/components/messages/chat-window";
 import { MessagesSidebar } from "@/components/messages/messages-sidebar";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useConversations } from "@/lib/api/chat/queries";
-import { ConversationSummary } from "@/lib/types";
+import { useConversations } from '@/lib/api/chat/queries';
 import { MessageSquare } from "lucide-react";
 import { useState } from "react";
 
@@ -14,7 +13,7 @@ export default function MessagesPage() {
 
   const { data: conversations = [], isLoading } = useConversations();
 
-  const selectedConversation = conversations.find((c: ConversationSummary) => c.id === selectedId);
+  const selectedConversation = conversations.find((c) => c.id === selectedId);
 
   return (
     <div className="flex h-full w-full bg-background p-4 md:p-0 overflow-hidden animate-in fade-in duration-500">

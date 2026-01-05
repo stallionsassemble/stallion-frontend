@@ -1,64 +1,73 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  useDeleteMessage,
-  useMarkAsRead,
-  useMessages,
-  useSearchMessages,
-  useSendMessage,
-  useUpdateMessage,
-} from "@/lib/api/chat/queries";
-import { useAuth } from "@/lib/store/use-auth";
-import { ConversationSummary, Message } from "@/lib/types";
-import {
-  ChevronLeft,
-  Loader2,
-  Paperclip,
-  Search,
-  Send,
-  Smile,
-  X,
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { MessageBubble } from "./message-bubble";
+import { EmojiPicker } from '@/components/ui/emoji-picker';
+import { Input } from '@/components/ui/input';
+import { useMessages, useSearchMessages } from '@/lib/api/chat/queries';
+import { useChatSocket } from '@/lib/hooks/use-chat-socket';
+import { useAuth } from '@/lib/store/use-auth';
+import { Conversation, ConversationSummary, Message } from '@/lib/types';
+import { ChevronLeft, Loader2, Paperclip, Search, Send, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { MessageBubble } from './message-bubble';
 
 interface ChatWindowProps {
-  conversation: ConversationSummary;
+  conversation: Conversation;
   onBack?: () => void;
 }
 
 export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user: currentUser } = useAuth();
 
-  // Data Hooks
   const { data: messages = [], isLoading } = useMessages(conversation.id);
+  const {
+    sendMessage: socketSendMessage,
+    updateMessage: socketUpdateMessage,
+    deleteMessage: socketDeleteMessage,
+    markAsRead: socketMarkAsRead,
+    sendTyping,
+    getOnlineStatus,
+    isConnected,
+    typingUsers,
+    userStatuses,
+  } = useChatSocket(conversation.id);
 
-  // Mutation Hooks
-  const { mutate: sendMessage, isPending: isSending } = useSendMessage();
-  const { mutate: updateMessage, isPending: isUpdating } = useUpdateMessage();
-  const { mutate: deleteMessage } = useDeleteMessage();
-  const { mutate: markAsRead } = useMarkAsRead();
-
-  // State
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Ref for file input
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Search Query Hook
-  const { data: searchResults } = useSearchMessages(conversation.id, searchQuery);
+  const { data: searchResults } = useSearchMessages(
+    conversation.id,
+    searchQuery
+  );
 
-  // Mark as Read on Mount/Change
   useEffect(() => {
-    if (conversation.id && conversation.unreadCount && conversation.unreadCount > 0) {
-      markAsRead(conversation.id);
+    if (
+      conversation.id &&
+      conversation.unreadCount &&
+      conversation.unreadCount > 0
+    ) {
+      socketMarkAsRead({ conversationId: conversation.id });
     }
-  }, [conversation.id, conversation.unreadCount, markAsRead]);
+  }, [conversation.id, conversation.unreadCount, socketMarkAsRead]);
+
+  useEffect(() => {
+    if (!currentUser || !isConnected) return;
+
+    const recipientParticipant = conversation.participants.find(
+      (p) => p.userId !== currentUser.id
+    );
+
+    if (recipientParticipant) {
+      getOnlineStatus({ userIds: [recipientParticipant.userId] });
+    }
+  }, [conversation.participants, currentUser, isConnected, getOnlineStatus]);
 
   // Partner Logic
   const getPartner = (participants: ConversationSummary['participants']) => {
@@ -68,33 +77,64 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   };
 
   const partner = getPartner(conversation.participants);
+  const partnerParticipant = conversation.participants.find(
+    (p) => p.userId !== currentUser?.id
+  );
+  const partnerStatus = partnerParticipant
+    ? userStatuses[partnerParticipant.userId]
+    : undefined;
 
-  // Handlers
+  const formatLastSeen = (lastSeen: string | null) => {
+    if (!lastSeen) return 'Last seen recently';
+
+    const lastSeenDate = new Date(lastSeen);
+    const now = new Date();
+    const diffMs = now.getTime() - lastSeenDate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Last seen just now';
+    if (diffMins < 60) return `Last seen ${diffMins}m ago`;
+    if (diffHours < 24) return `Last seen ${diffHours}h ago`;
+    if (diffDays === 1) return 'Last seen yesterday';
+    if (diffDays < 7) return `Last seen ${diffDays}d ago`;
+    return `Last seen ${lastSeenDate.toLocaleDateString()}`;
+  };
+
   const handleSend = () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || !isConnected) return;
 
     if (editingMessageId) {
-      updateMessage(
-        { id: editingMessageId, content: inputValue },
-        {
-          onSuccess: () => {
-            setInputValue("");
+      setIsUpdating(true);
+      socketUpdateMessage(
+        { messageId: editingMessageId, content: inputValue },
+        (response) => {
+          setIsUpdating(false);
+          if (response.success) {
+            setInputValue('');
             setEditingMessageId(null);
-          },
+          }
         }
       );
     } else {
-      sendMessage(
+      const recipientParticipant = conversation.participants.find(
+        (p) => p.userId !== currentUser?.id
+      );
+      if (!recipientParticipant) return;
+
+      setIsSending(true);
+      socketSendMessage(
         {
-          conversationId: conversation.id,
+          recipientId: recipientParticipant.userId,
           content: inputValue,
-          type: "TEXT",
-          attachments: [], // TODO: Handle real attachments
+          type: 'TEXT',
         },
-        {
-          onSuccess: () => {
-            setInputValue("");
-          },
+        (response) => {
+          setIsSending(false);
+          if (response.success) {
+            setInputValue('');
+          }
         }
       );
     }
@@ -107,13 +147,31 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
 
   const handleCancelEdit = () => {
     setEditingMessageId(null);
-    setInputValue("");
+    setInputValue('');
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this message?")) {
-      deleteMessage(id);
+    if (confirm('Are you sure you want to delete this message?')) {
+      socketDeleteMessage({ messageId: id });
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    sendTyping({ conversationId: conversation.id, isTyping: true });
+
+    typingTimeoutRef.current = setTimeout(() => {
+      sendTyping({ conversationId: conversation.id, isTyping: false });
+    }, 2000);
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    setInputValue((prev) => prev + emoji);
   };
 
   const handleAttachmentClick = () => {
@@ -124,14 +182,17 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     const file = e.target.files?.[0];
     if (file) {
       // Mock attachment logic for now as we don't have file upload API ready in this snippet
-      alert(`Selected file: ${file.name}. Attachment upload to be implemented.`);
+      alert(
+        `Selected file: ${file.name}. Attachment upload to be implemented.`
+      );
       // Reset input
-      e.target.value = "";
+      e.target.value = '';
     }
   };
 
   // Determine which messages to show
-  const displayMessages = showSearch && searchQuery ? (searchResults || []) : messages;
+  const displayMessages =
+    showSearch && searchQuery ? searchResults || [] : messages;
 
   if (!partner) return null;
 
@@ -150,15 +211,29 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           </Button>
           <div className="h-10 w-10 rounded-full overflow-hidden border border-primary/20 bg-muted">
             <div className="flex items-center justify-center w-full h-full bg-primary/20 text-primary font-bold">
-              {partner.firstName?.[0] || partner.username?.[0] || "?"}
+              {partner.firstName?.[0] || partner.username?.[0] || '?'}
             </div>
           </div>
           <div className="flex flex-col">
             <span className="text-[16px] font-bold text-foreground font-inter">
-              {partner.firstName ? `${partner.firstName} ${partner.lastName || ''}` : partner.username}
+              {partner.firstName
+                ? `${partner.firstName} ${partner.lastName || ''}`
+                : partner.username}
             </span>
             <div className="flex items-center gap-1.5">
-              <span className="text-[12px] text-green-500 font-medium">Online</span>
+              {Object.values(typingUsers).some(Boolean) ? (
+                <span className="text-[12px] text-primary font-medium">
+                  Typing...
+                </span>
+              ) : partnerStatus?.isOnline ? (
+                <span className="text-[12px] text-green-500 font-medium">
+                  Online
+                </span>
+              ) : (
+                <span className="text-[12px] text-muted-foreground">
+                  {formatLastSeen(partnerStatus?.lastSeen ?? null)}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -168,7 +243,9 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           variant="ghost"
           size="icon"
           onClick={() => setShowSearch(!showSearch)}
-          className={showSearch ? "bg-primary/10 text-primary" : "text-muted-foreground"}
+          className={
+            showSearch ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+          }
         >
           <Search className="h-5 w-5" />
         </Button>
@@ -193,25 +270,26 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           <div className="flex h-full items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
+        ) : displayMessages.length === 0 && showSearch && searchQuery ? (
+          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+            No results found for &quot;{searchQuery}&quot;
+          </div>
         ) : (
-          displayMessages.length === 0 && showSearch && searchQuery ? (
-            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-              No results found for "{searchQuery}"
-            </div>
-          ) : (
-            displayMessages.map((msg: Message) => (
-              <MessageBubble
-                key={msg.id}
-                id={msg.id}
-                content={msg.content}
-                timestamp={new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                isSent={msg.senderId === currentUser?.id}
-                isEdited={msg.updatedAt !== msg.createdAt}
-                onEdit={handleEditInit}
-                onDelete={handleDelete}
-              />
-            ))
-          )
+          displayMessages.map((msg: Message) => (
+            <MessageBubble
+              key={msg.id}
+              id={msg.id}
+              content={msg.isDeleted ? '[Message deleted]' : msg.content}
+              timestamp={new Date(msg.createdAt).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+              isSent={msg.senderId === currentUser?.id}
+              isEdited={msg.isEdited}
+              onEdit={msg.isDeleted ? undefined : handleEditInit}
+              onDelete={msg.isDeleted ? undefined : handleDelete}
+            />
+          ))
         )}
       </div>
 
@@ -219,8 +297,13 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       <div className="p-4 relative">
         {editingMessageId && (
           <div className="absolute top-0 left-4 right-4 -translate-y-full bg-background border border-primary/20 border-b-0 rounded-t-md p-2 flex items-center justify-between shadow-sm z-10">
-            <span className="text-xs font-medium text-primary">Editing message...</span>
-            <button onClick={handleCancelEdit} className="text-muted-foreground hover:text-foreground">
+            <span className="text-xs font-medium text-primary">
+              Editing message...
+            </span>
+            <button
+              onClick={handleCancelEdit}
+              className="text-muted-foreground hover:text-foreground"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -245,28 +328,31 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           </Button>
 
           <Input
-            placeholder={editingMessageId ? "Edit your message..." : "Type Message"}
+            placeholder={
+              editingMessageId ? 'Edit your message...' : 'Type Message'
+            }
             className="flex-1 bg-transparent border-none focus-visible:ring-0 px-2 h-10"
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 handleSend();
               }
             }}
-            disabled={isSending || isUpdating}
+            disabled={isSending || isUpdating || !isConnected}
           />
 
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground shrink-0">
-            <Smile className="h-[25px] w-[25px]" />
-          </Button>
+          <EmojiPicker
+            onEmojiSelect={handleEmojiSelect}
+            disabled={isSending || isUpdating || !isConnected}
+          />
 
           <Button
             size="icon"
             className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-md h-9 w-9 shrink-0"
             onClick={handleSend}
-            disabled={(isSending || isUpdating) || !inputValue.trim()}
+            disabled={isSending || isUpdating || !inputValue.trim()}
           >
             {isSending || isUpdating ? (
               <Loader2 className="h-4 w-4 animate-spin" />
