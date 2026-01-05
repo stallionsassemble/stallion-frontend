@@ -18,6 +18,15 @@ interface ChatWindowProps {
 
 export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user: currentUser } = useAuth();
+  const {
+    sendTyping,
+    isPeerTyping,
+    sendMessage,
+    updateMessage,
+    deleteMessage,
+    markAsRead,
+    markMessagesAsRead
+  } = useChatSocket(conversation.id);
 
   const { data: messages = [], isLoading } = useMessages(conversation.id);
   const {
@@ -70,10 +79,10 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   }, [conversation.participants, currentUser, isConnected, getOnlineStatus]);
 
   // Partner Logic
-  const getPartner = (participants: ConversationSummary['participants']) => {
-    if (!currentUser) return participants[0]?.user;
+  const getPartnerParticipant = (participants: ConversationSummary['participants']) => {
+    if (!currentUser) return participants[0];
     const partner = participants.find((p) => p.userId !== currentUser.id);
-    return partner ? partner.user : participants[0]?.user;
+    return partner || participants[0];
   };
 
   const partner = getPartner(conversation.participants);

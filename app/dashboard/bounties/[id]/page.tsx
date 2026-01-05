@@ -4,7 +4,7 @@ import { BountyCard } from '@/components/bounties/bounty-card'
 import { BountyDetailsSidebar } from '@/components/bounties/bounty-details-sidebar'
 import { DetailsHeader } from '@/components/bounties/details-header'
 import { DetailsNavigation } from '@/components/bounties/details-navigation'
-import { Badge } from '@/components/ui/badge'
+import { DiscussionList } from '@/components/discussions/discussion-list'
 import { Button } from '@/components/ui/button'
 import { useGetAllBounties, useGetBounty } from '@/lib/api/bounties/queries'
 import { useGetMyApplications } from '@/lib/api/projects/queries'
@@ -17,10 +17,8 @@ import {
   FileUp,
   Gift,
   Info,
-  Loader2,
-  MessageSquare
+  Loader2
 } from 'lucide-react'
-import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import { useRef } from 'react'
 
@@ -267,76 +265,8 @@ export default function BountyDetailsPage() {
           )}
 
           {/* Discussion Section */}
-          <section className='space-y-4 rounded-xl border border-primary bg-card/30 p-4 mt-8'>
-            <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
-              <MessageSquare className='h-4 w-4 text-primary' /> Discussion
-            </h3>
-
-            <div className="relative">
-              <div className="absolute top-3 left-4 z-10">
-                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                  <span className="text-xs font-bold text-primary">ME</span>
-                </div>
-              </div>
-              <textarea
-                className="w-full bg-card border border-primary rounded-xl p-4 pl-16 min-h-[120px] text-sm text-foreground focus:outline-none focus:border-primary resize-none placeholder:text-muted-foreground"
-                placeholder="Ask a question or leave a comment..."
-              />
-              <Button className="absolute bottom-3 right-3 bg-primary hover:bg-primary/90 h-8 text-xs font-medium px-4">Post Comment</Button>
-            </div>
-
-            {/* Comment List */}
-            <div className="space-y-8">
-              {/* Comment 1 */}
-              <div className="group">
-                <div className="flex gap-4">
-                  <div className="h-10 w-10 rounded-full bg-red-500 overflow-hidden shrink-0">
-                    <Image src="https://avatar.vercel.sh/alex" width={40} height={40} alt="User" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-foreground">Alex Chen</span>
-                      <span className="text-xs text-muted-foreground">2 days ago</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Is there any specific testing framework you prefer we use for the audit? I typically work with Foundry but can adapt to Hardhat if needed.
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
-                      <button className="hover:text-foreground flex items-center gap-1 transition-colors"><span className="text-red-500">❤️</span> 42</button>
-                      <button className="hover:text-foreground flex items-center gap-1 transition-colors">💬 Reply</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Comment 2 (Reply) */}
-              <div className="group pl-14 relative">
-                {/* Thread Line */}
-                <div className="absolute left-[27px] -top-8 bottom-8 w-px bg-border -z-10 rounded-full"></div>
-
-                <div className="flex gap-4">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 overflow-hidden shrink-0 p-1 flex items-center justify-center">
-                    <Image src="/assets/icons/sdollar.png" width={32} height={32} alt="Stallion" className="object-contain" />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-foreground">Solana Foundation</span>
-                        <Badge className="bg-primary/30 text-foreground border-0 text-[10px] px-1.5 h-4 hover:bg-primary/40">Author</Badge>
-                      </div>
-                      <span className="text-xs text-muted-foreground">1 day ago</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      We prefer Foundry for this project, but Hardhat is acceptable if coverage is comprehensive.
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
-                      <button className="hover:text-foreground flex items-center gap-1 transition-colors"><span className="text-red-500">❤️</span> 12</button>
-                      <button className="hover:text-foreground flex items-center gap-1 transition-colors">💬 Reply</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <section className='rounded-xl border border-primary bg-card/30 p-4 mt-8'>
+            <DiscussionList id={id} type="BOUNTY" />
           </section>
 
           {/* Mobile Footer Sidebar */}

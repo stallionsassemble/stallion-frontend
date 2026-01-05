@@ -49,6 +49,7 @@ class ChatService {
     return response.data;
   }
 
+  /*
   async addParticipants(id: string, payload: AddParticipantPayload) {
     const response = await api.post<AddParticipantResponse>(
       `/chat/conversations/${id}/participants`,

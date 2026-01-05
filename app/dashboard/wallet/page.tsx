@@ -16,7 +16,7 @@ import { toast } from "sonner";
 
 import { useGetPrices } from "@/lib/api/prices/queries";
 import { walletService } from "@/lib/api/wallet";
-import { useDeletePayoutMethod, useGetDepositAddress, useGetPayoutMethods, useSetTrustline, useSyncWallet } from "@/lib/api/wallet/queries";
+import { useDeletePayoutMethod, useGetDepositAddress, useGetPayoutMethods, useSetTrustline, useSyncWallet, useUnsetTrustline } from "@/lib/api/wallet/queries";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { cn, getCurrencyIcon } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -111,6 +111,7 @@ function WalletStats({ balances }: { balances: any }) {
 function WalletAssetList({ balances }: { balances: any }) {
   // balances is { balances: [...], ... }
   const assets = balances?.balances || [];
+  const { mutate: unsetTrustline, isPending } = useUnsetTrustline();
 
   const formatCurrency = (amount: number, currency: string = "USD") => {
     try {
@@ -123,12 +124,16 @@ function WalletAssetList({ balances }: { balances: any }) {
     }
   };
 
+  const handleRemove = (currency: string) => {
+    unsetTrustline(currency);
+  };
+
   return (
     <div className="space-y-3 min-h-[400px]">
       {assets.map((asset: any, i: number) => (
         <div
           key={asset.currency + i}
-          className="flex items-center justify-between p-4 rounded-xl bg-primary/10 hover:bg-primary/15 transition-colors"
+          className="flex items-center justify-between p-4 rounded-xl bg-primary/10 hover:bg-primary/15 transition-colors group"
         >
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 flex items-center justify-center shrink-0">
@@ -145,10 +150,23 @@ function WalletAssetList({ balances }: { balances: any }) {
               <p className="text-sm font-inter text-muted-foreground">{asset.asset_type === 'native' ? 'Native Token' : 'Asset'}</p>
             </div>
           </div>
-          <div className="text-right">
-            <span className="text-foreground font-bold font-space-grotesk block">{formatCurrency(asset.availableBalance, asset.currency)}</span>
-            {asset.balance !== asset.availableBalance && (
-              <span className="text-xs text-muted-foreground">Total: {formatCurrency(asset.balance, asset.currency)}</span>
+          <div className="text-right flex items-center gap-4">
+            <div>
+              <span className="text-foreground font-bold font-space-grotesk block">{formatCurrency(asset.availableBalance, asset.currency)}</span>
+              {asset.balance !== asset.availableBalance && (
+                <span className="text-xs text-muted-foreground">Total: {formatCurrency(asset.balance, asset.currency)}</span>
+              )}
+            </div>
+            {asset.asset_type !== 'native' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => handleRemove(asset.currency)}
+                disabled={isPending}
+              >
+                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              </Button>
             )}
           </div>
         </div>

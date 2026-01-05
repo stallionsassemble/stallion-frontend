@@ -1,35 +1,14 @@
-"use client";
-
-import { CongratulationsModal } from "@/components/bounties/congratulations-modal";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useApplyToBounty } from "@/lib/api/bounties/queries";
-import { useApplyProject } from "@/lib/api/projects/queries";
+import { useApplyProject, useUpdateApplication } from "@/lib/api/projects/queries";
 import { uploadService } from "@/lib/api/upload";
 import { Info, Loader2, Plus, Send, Upload, X } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // ... existing imports
 import { useAuth } from "@/lib/store/use-auth";
 import { BountySubmissionField } from "@/lib/types/bounties";
-import { Attachment } from "@/lib/types/project";
+import { Attachment, ProjectApplication } from "@/lib/types/project";
 
 interface SubmitModalProps {
   children: React.ReactNode;
@@ -40,6 +19,7 @@ interface SubmitModalProps {
   currency: string;
   sponsorLogo?: string;
   submissionFields?: BountySubmissionField[];
+  existingApplication?: ProjectApplication;
 }
 
 export function SubmitBountyModal({
@@ -50,7 +30,8 @@ export function SubmitBountyModal({
   reward,
   currency,
   sponsorLogo,
-  submissionFields
+  submissionFields,
+  existingApplication
 }: SubmitModalProps) {
   const [open, setOpen] = useState(false);
   const [showCongrats, setShowCongrats] = useState(false);
@@ -72,9 +53,20 @@ export function SubmitBountyModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutate: applyProject, isPending: isProjectPending } = useApplyProject();
+  const { mutate: updateApplication, isPending: isUpdatePending } = useUpdateApplication();
   const { mutate: applyBounty, isPending: isBountyPending } = useApplyToBounty();
 
-  const isPending = isProjectPending || isBountyPending;
+  const isPending = isProjectPending || isBountyPending || isUpdatePending;
+
+  useEffect(() => {
+    if (existingApplication && open) {
+      setCoverLetter(existingApplication.coverLetter);
+      setEstimateTime(existingApplication.estimatedCompletionTime.toString());
+      setEstimateUnit('days'); // Assuming backend stores days, we might want to convert back but 'days' is safe.
+      setPortfolioLinks(existingApplication.portfolioLinks || []);
+      setAttachments(existingApplication.attachments || []);
+    }
+  }, [existingApplication, open]);
 
   // ... helper functions (handleAddLink, handleFileSelect, removeAttachment) remain the same ...
   const handleAddLink = () => {
@@ -155,28 +147,45 @@ export function SubmitBountyModal({
     if (isProject) {
       const estimatedDays = parseInt(estimateTime) * (estimateUnit === 'weeks' ? 7 : estimateUnit === 'months' ? 30 : 1);
 
-      applyProject({
-        id: projectId,
-        payload: {
-          coverLetter,
-          estimatedCompletionTime: estimatedDays || 0,
-          portfolioLinks,
-          attachments: attachments
-        }
-      }, {
-        onSuccess: () => {
-          setOpen(false);
-          setShowCongrats(true);
-          // Reset form
-          setCoverLetter("");
-          setEstimateTime("");
-          setPortfolioLinks([]);
-          setAttachments([]);
-        },
-        onError: (err) => {
-          console.error("Failed to apply", err);
-        }
-      });
+      const payload = {
+        coverLetter,
+        estimatedCompletionTime: estimatedDays || 0,
+        portfolioLinks,
+        attachments: attachments
+      };
+
+      if (existingApplication) {
+        updateApplication({
+          id: existingApplication.id,
+          payload
+        }, {
+          onSuccess: () => {
+            setOpen(false);
+            // Maybe show toast instead of full congrats for update?
+            // But existing behavior is fine.
+            setShowCongrats(true);
+          },
+          onError: (err) => console.error(err)
+        });
+      } else {
+        applyProject({
+          id: projectId,
+          payload
+        }, {
+          onSuccess: () => {
+            setOpen(false);
+            setShowCongrats(true);
+            // Reset form
+            setCoverLetter("");
+            setEstimateTime("");
+            setPortfolioLinks([]);
+            setAttachments([]);
+          },
+          onError: (err) => {
+            console.error("Failed to apply", err);
+          }
+        });
+      }
     } else {
       // Extract submissionLink - prioritize explicit field, then githubRepo
       let submissionLink = submissionValues['submissionLink'] || submissionValues['githubRepo'] || "";
@@ -417,10 +426,10 @@ export function SubmitBountyModal({
               </Badge>
             </div>
             <DialogTitle className="text-2xl font-bold text-foreground">
-              {isProject ? "Apply for Project" : "Bounty Submission"}
+              {isProject ? (existingApplication ? "Update Application" : "Apply for Project") : "Bounty Submission"}
             </DialogTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {isProject ? "Submit your application for" : "Submit your work for"} <span className="text-foreground font-medium">{projectTitle}</span>
+              {isProject ? (existingApplication ? "Update details for" : "Submit your application for") : "Submit your work for"} <span className="text-foreground font-medium">{projectTitle}</span>
             </p>
           </DialogHeader>
 
@@ -433,7 +442,7 @@ export function SubmitBountyModal({
               disabled={isPending}
             >
               {isPending ? <Loader2 className="animate-spin h-5 w-5" /> : <Send className="h-5 w-5" />}
-              {isProject ? (isPending ? "Applying..." : "Submit Application") : (isPending ? "Submitting..." : "Submit Bounty")}
+              {isProject ? (isPending ? (existingApplication ? "Updating..." : "Applying...") : (existingApplication ? "Update Application" : "Submit Application")) : (isPending ? "Submitting..." : "Submit Bounty")}
             </Button>
           </DialogFooter>
           <div className="px-6 pb-6 text-center text-[10px] text-muted-foreground">
@@ -451,6 +460,8 @@ export function SubmitBountyModal({
         onClose={() => setShowCongrats(false)}
         userLogo={user?.profilePicture}
         sponsorLogo={sponsorLogo}
+        title={existingApplication ? "Application Updated!" : "Congratulations!"}
+        message={existingApplication ? "Your application details have been updated." : "Your application/submission has been received."}
       />
     </>
   );

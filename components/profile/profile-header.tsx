@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { chatService } from "@/lib/api/chat";
 import { useMyReputation } from "@/lib/api/reputation/queries";
+import { useChatSocket } from "@/lib/hooks/use-chat-socket";
 import { useAuth } from "@/lib/store/use-auth";
 import { User } from "@/lib/types";
 import { Reputation } from "@/lib/types/reputation";
@@ -20,6 +20,7 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) {
   const { user: authUser } = useAuth();
   const { data: myReputation } = useMyReputation();
+  const { createConversation } = useChatSocket(); // No conversationId needed
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const router = useRouter();
 
@@ -33,12 +34,9 @@ export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) 
   const handleMessage = async () => {
     if (!user || !authUser) return;
     try {
-      // Create or get conversation
-      const conversation = await chatService.createConversation({
-        type: 'GROUP', // API seems to require GROUP even for DM based on types? Or maybe defaults handle it. 
-        // Checking types, it asks for 'GROUP', participantIds, name. 
-        // A DM creation usually just needs participantIds.
-        // Let's assume standard behavior: single participant ID for DM or array.
+      // Create or get conversation via Socket
+      const conversation = await createConversation({
+        type: 'GROUP',
         participantIds: [user.id],
         name: `${fullName}`,
       });
@@ -141,13 +139,32 @@ export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) 
         </div>
 
         {/* Stats Row */}
-        <div className="flex flex-wrap items-center justify-between md:justify-start gap-4 md:gap-20 mt-4 md:pl-[224px]">
-          {/* Bounty Score */}
+        <div className="flex flex-wrap items-center justify-between md:justify-start gap-4 md:gap-12 mt-4 md:pl-[224px]">
+          {/* Total Earned */}
           <div className="flex flex-col items-center gap-1">
             <span className="text-lg font-bold font-inter text-foreground leading-none tracking-[-0.57px] text-center">
-              {reputation?.bountyScore || 0}
+              {user?.totalEarned ? `$${user.totalEarned}` : '$0'}
             </span>
-            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Bounty Score</span>
+            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Earned</span>
+          </div>
+
+          {/* Total Submissions */}
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-lg font-bold font-inter text-foreground leading-none tracking-[-0.57px] text-center">
+              {user?.totalSubmissions || 0}
+            </span>
+            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Submissions</span>
+          </div>
+
+          {/* Rating */}
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1">
+              <span className="text-lg font-bold font-inter text-foreground leading-none tracking-[-0.57px] text-center">
+                {user?.rating ? user.rating.toFixed(1) : '0.0'}
+              </span>
+              <UserStar className="w-3 h-3 fill-current text-[#FFE500]" />
+            </div>
+            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Rating</span>
           </div>
 
           {/* Reputation */}
@@ -158,21 +175,6 @@ export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) 
             <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Reputation</span>
           </div>
 
-          {/* Level */}
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-lg font-bold font-inter text-foreground leading-none tracking-[-0.57px] text-center">
-              {reputation?.level || 0}
-            </span>
-            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Level</span>
-          </div>
-
-          {/* Member Since */}
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-lg font-bold font-inter text-foreground leading-none tracking-[-0.57px] text-center">
-              {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Jan 2024'}
-            </span>
-            <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Member Since</span>
-          </div>
         </div>
       </div>
 

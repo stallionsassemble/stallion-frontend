@@ -6,8 +6,9 @@ import { DetailsHeader } from '@/components/bounties/details-header'
 import { DetailsNavigation } from '@/components/bounties/details-navigation'
 import {
   PaymentMilestones,
-  type Milestone,
+  type Milestone
 } from '@/components/bounties/payment-milestones'
+import { DiscussionList } from '@/components/discussions/discussion-list'
 import { Button } from '@/components/ui/button'
 import { useGetProject, useGetProjectMilestones, useGetProjects } from '@/lib/api/projects/queries'
 import { useAuth } from '@/lib/store/use-auth'
@@ -28,7 +29,7 @@ import { useRef } from 'react'
 export default function BountyDetailsPage() {
   const params = useParams()
   // Ensure id is a string
-  const id = Array.isArray(params.id) ? params.id[0] : params.id
+  const id = (Array.isArray(params.id) ? params.id[0] : params.id) as string
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
@@ -219,6 +220,11 @@ export default function BountyDetailsPage() {
             </section>
           )}
 
+          {/* Discussion Section */}
+          <section className='rounded-xl border border-primary bg-card/30 p-4 mt-8'>
+            <DiscussionList id={id} type="PROJECT" />
+          </section>
+
           {/* Similar Projects */}
           {similarBounties.length > 0 && (
             <section className='space-y-6 pt-8 border-t border-border'>
@@ -286,6 +292,7 @@ export default function BountyDetailsPage() {
           applied={project.applied}
           applicationId={application.id}
           winnerAnnouncement={project.winnerAnnouncement}
+          currentApplication={application}
         />
       </div>
 
@@ -305,6 +312,7 @@ export default function BountyDetailsPage() {
           applied={project.applied}
           applicationId={application.id}
           winnerAnnouncement={project.winnerAnnouncement}
+          currentApplication={application}
         />
       </div>
     </div>

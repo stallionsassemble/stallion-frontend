@@ -138,7 +138,7 @@ export function Header() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[320px] bg-popover border-border text-popover-foreground p-0 shadow-2xl flex flex-col rounded-xl overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/[0.08]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/8">
               <span className="font-bold text-base">Notifications</span>
               {unreadCount > 0 && (
                 <span className="text-xs bg-secondary text-secondary-foreground px-3 py-1 rounded-full border border-border">{unreadCount} New</span>
