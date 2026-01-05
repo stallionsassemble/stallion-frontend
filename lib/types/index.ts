@@ -36,6 +36,11 @@ export interface User {
     isActivated: boolean
     createdAt: string
   }
+  totalEarned?: string
+  totalSubmissions?: number
+  totalWon?: number
+  rating?: number
+  totalReviews?: number
 }
 
 export interface AuthResponse {

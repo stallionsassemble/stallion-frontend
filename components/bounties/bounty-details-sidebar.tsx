@@ -27,7 +27,8 @@ interface SidebarOwner {
 
 import { useWithdrawApplication } from "@/lib/api/projects/queries";
 
-import { BountyDistribution } from "@/lib/types/bounties";
+import { BountyDistribution } from "@/lib/types/bounties"; // Added import
+import { ApplyProjectResponse } from "@/lib/types/project"; // Corrected import
 
 interface BountyDetailsSidebarProps {
   type?: "BOUNTY" | "PROJECT";
@@ -45,6 +46,7 @@ interface BountyDetailsSidebarProps {
   applicationId?: string;
   distribution?: BountyDistribution[]; // New prop
   submissionFields?: any[]; // New prop passed to modal
+  currentApplication?: ApplyProjectResponse; // Corrected type
 }
 
 export function BountyDetailsSidebar({
@@ -63,6 +65,7 @@ export function BountyDetailsSidebar({
   applicationId,
   distribution,
   submissionFields,
+  currentApplication,
 }: BountyDetailsSidebarProps) {
 
   // ... existing time calc logic ...
@@ -176,13 +179,30 @@ export function BountyDetailsSidebar({
             </Button>
           ) : applied ? (
             applicationId ? (
-              <Button
-                onClick={handleWithdraw}
-                disabled={isWithdrawing}
-                className="w-full bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive font-bold h-11 border border-destructive/50"
-              >
-                {isWithdrawing ? "Withdrawing..." : "Withdraw Application"}
-              </Button>
+              <div className="flex gap-2">
+                {isProject && (
+                  <SubmitBountyModal
+                    type="PROJECT"
+                    projectId={projectId}
+                    projectTitle={projectTitle}
+                    reward={reward}
+                    currency={currency}
+                    sponsorLogo={owner?.companyLogo || owner?.profilePicture}
+                    existingApplication={currentApplication}
+                  >
+                    <Button className="flex-1 bg-primary/10 text-primary hover:bg-primary/20 font-bold h-11 border border-primary/20">
+                      Edit
+                    </Button>
+                  </SubmitBountyModal>
+                )}
+                <Button
+                  onClick={handleWithdraw}
+                  disabled={isWithdrawing}
+                  className="flex-1 bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive font-bold h-11 border border-destructive/50"
+                >
+                  {isWithdrawing ? "..." : (isProject ? "Withdraw" : "Withdraw")}
+                </Button>
+              </div>
             ) : (
               <Button disabled className="w-full bg-green-500/20 text-green-500 font-bold h-11 cursor-not-allowed border border-green-500/50">
                 Applied

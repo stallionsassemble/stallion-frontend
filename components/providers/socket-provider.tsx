@@ -34,17 +34,19 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     // Initialize Socket
-    const socketInstance = io(process.env.NEXT_PUBLIC_BACKEND_URL!, {
-      path: "/chat", // Standard path
+    // Connecting to /chat Namespace on default path /socket.io
+    // relying on Query Params for Auth to avoid CORS preflight issues with custom headers.
+    const socketInstance = io(`${process.env.NEXT_PUBLIC_BACKEND_URL!}/chat`, {
       addTrailingSlash: false,
-      transports: ["websocket", "polling"],
-      // User requested Bearer Authorization token
-      extraHeaders: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      // Some server implementations might also check auth payload
+      transports: ["polling", "websocket"],
+      // Auth via Query Params
       auth: {
-        token: accessToken
+        token: `Bearer ${accessToken}`,
+      },
+      query: {
+        token: `Bearer ${accessToken}`,
+        access_token: `Bearer ${accessToken}`,
+        authorization: `Bearer ${accessToken}`,
       }
     });
 
@@ -53,13 +55,16 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       setIsConnected(true);
     });
 
-    socketInstance.on("disconnect", () => {
-      console.log("[Socket] Disconnected");
+    socketInstance.on("disconnect", (reason) => {
+      console.log("[Socket] Disconnected:", reason);
       setIsConnected(false);
     });
 
     socketInstance.on("connect_error", (err) => {
       console.error("[Socket] Connection Error:", err.message);
+      console.error("[Socket] Error Details:", err);
+      // @ts-ignore
+      if (err.data) console.error("[Socket] Error Data:", err.data);
     });
 
     setSocket(socketInstance);

@@ -3,13 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  useDeleteMessage,
-  useMarkAsRead,
   useMessages,
   useSearchMessages,
-  useSendMessage,
-  useUpdateMessage,
 } from "@/lib/api/chat/queries";
+import { useChatSocket } from "@/lib/hooks/use-chat-socket";
 import { useAuth } from "@/lib/store/use-auth";
 import { ConversationSummary, Message } from "@/lib/types";
 import {
@@ -31,15 +28,22 @@ interface ChatWindowProps {
 
 export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user: currentUser } = useAuth();
+  const {
+    sendTyping,
+    isPeerTyping,
+    sendMessage,
+    updateMessage,
+    deleteMessage,
+    markAsRead,
+    markMessagesAsRead
+  } = useChatSocket(conversation.id);
 
   // Data Hooks
   const { data: messages = [], isLoading } = useMessages(conversation.id);
 
-  // Mutation Hooks
-  const { mutate: sendMessage, isPending: isSending } = useSendMessage();
-  const { mutate: updateMessage, isPending: isUpdating } = useUpdateMessage();
-  const { mutate: deleteMessage } = useDeleteMessage();
-  const { mutate: markAsRead } = useMarkAsRead();
+  // Local Loading States
+  const [isSending, setIsSending] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // State
   const [inputValue, setInputValue] = useState("");
@@ -49,54 +53,67 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
 
   // Ref for file input
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Search Query Hook
   const { data: searchResults } = useSearchMessages(conversation.id, searchQuery);
 
   // Mark as Read on Mount/Change
+  // Mark as Read on Mount/Change
   useEffect(() => {
-    if (conversation.id && conversation.unreadCount && conversation.unreadCount > 0) {
-      markAsRead(conversation.id);
+    if (messages.length > 0) {
+      const unreadIds = messages
+        .filter((m: Message) => !m.isRead && m.senderId !== currentUser?.id)
+        .map((m: Message) => m.id);
+
+      if (unreadIds.length > 0) {
+        markMessagesAsRead(conversation.id, unreadIds);
+      }
     }
-  }, [conversation.id, conversation.unreadCount, markAsRead]);
+  }, [conversation.id, messages, markMessagesAsRead, currentUser?.id]);
 
   // Partner Logic
-  const getPartner = (participants: ConversationSummary['participants']) => {
-    if (!currentUser) return participants[0]?.user;
+  const getPartnerParticipant = (participants: ConversationSummary['participants']) => {
+    if (!currentUser) return participants[0];
     const partner = participants.find((p) => p.userId !== currentUser.id);
-    return partner ? partner.user : participants[0]?.user;
+    return partner || participants[0];
   };
 
-  const partner = getPartner(conversation.participants);
+  const partnerParticipant = getPartnerParticipant(conversation.participants);
+  const partner = partnerParticipant?.user;
 
   // Handlers
   const handleSend = () => {
     if (!inputValue.trim()) return;
 
     if (editingMessageId) {
-      updateMessage(
-        { id: editingMessageId, content: inputValue },
-        {
-          onSuccess: () => {
-            setInputValue("");
-            setEditingMessageId(null);
-          },
-        }
-      );
+      setIsUpdating(true);
+      updateMessage(editingMessageId, inputValue)
+        .then(() => {
+          setInputValue("");
+          setEditingMessageId(null);
+        })
+        .catch((err) => {
+          console.error("Failed to update message", err);
+          // toast.error("Failed to update message"); // need to import toast
+        })
+        .finally(() => setIsUpdating(false));
     } else {
-      sendMessage(
-        {
-          conversationId: conversation.id,
-          content: inputValue,
-          type: "TEXT",
-          attachments: [], // TODO: Handle real attachments
-        },
-        {
-          onSuccess: () => {
-            setInputValue("");
-          },
-        }
-      );
+      setIsSending(true);
+      sendMessage({
+        conversationId: conversation.id,
+        recipientId: partnerParticipant?.userId || "",
+        content: inputValue,
+        type: "TEXT",
+        attachments: [], // TODO: Handle real attachments
+      })
+        .then(() => {
+          setInputValue("");
+        })
+        .catch((err) => {
+          console.error("Failed to send message", err);
+        })
+        .finally(() => setIsSending(false));
     }
   };
 
@@ -199,18 +216,30 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
               No results found for "{searchQuery}"
             </div>
           ) : (
-            displayMessages.map((msg: Message) => (
-              <MessageBubble
-                key={msg.id}
-                id={msg.id}
-                content={msg.content}
-                timestamp={new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                isSent={msg.senderId === currentUser?.id}
-                isEdited={msg.updatedAt !== msg.createdAt}
-                onEdit={handleEditInit}
-                onDelete={handleDelete}
-              />
-            ))
+            <>
+              {isPeerTyping && (
+                <div className="flex items-center gap-2 p-2 px-4 self-start">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce"></div>
+                  </div>
+                  <span className="text-xs text-muted-foreground">Typing...</span>
+                </div>
+              )}
+              {displayMessages.map((msg: Message) => (
+                <MessageBubble
+                  key={msg.id}
+                  id={msg.id}
+                  content={msg.content}
+                  timestamp={new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  isSent={msg.senderId === currentUser?.id}
+                  isEdited={msg.updatedAt !== msg.createdAt}
+                  onEdit={handleEditInit}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </>
           )
         )}
       </div>
@@ -248,7 +277,14 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             placeholder={editingMessageId ? "Edit your message..." : "Type Message"}
             className="flex-1 bg-transparent border-none focus-visible:ring-0 px-2 h-10"
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+              sendTyping(conversation.id, true);
+              if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+              typingTimeoutRef.current = setTimeout(() => {
+                sendTyping(conversation.id, false);
+              }, 2000);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();

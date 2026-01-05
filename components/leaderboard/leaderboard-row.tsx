@@ -72,9 +72,10 @@ export function LeaderboardRow({ user }: LeaderboardRowProps) {
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-1.5 text-blue-500">
             <Star className="fill-current w-4 h-4" />
-            <span className="font-bold text-foreground font-inter">{level}</span>
+            <span className="font-bold text-foreground font-inter">{user.rating ? user.rating.toFixed(1) : '—'}</span>
+            <span className="text-[10px] text-muted-foreground">({user.totalReviews || 0})</span>
           </div>
-          <span className="text-[12px] text-muted-foreground font-light font-inter">Level</span>
+          <span className="text-[12px] text-muted-foreground font-light font-inter">Rating</span>
         </div>
 
         {/* Completed */}

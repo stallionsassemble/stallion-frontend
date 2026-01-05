@@ -3,6 +3,7 @@
 import { Achievements } from "@/components/profile/achievements";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { RecentActivity } from "@/components/profile/recent-activity";
+import { ReviewList } from "@/components/reviews/review-list";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useUserReputation } from "@/lib/api/reputation/queries";
 import { useGetUserByUsername } from "@/lib/api/users/queries";
@@ -63,6 +64,11 @@ function PublicProfileContent({ username }: { username: string }) {
 
           <RecentActivity userId={userId} publicMode />
           <Achievements userId={userId} publicMode />
+
+          {/* User Reviews */}
+          <section className="bg-card/30 border border-primary/20 rounded-xl p-4">
+            <ReviewList userId={userId} username={userData.username} />
+          </section>
 
           {/* Portfolio is harder without direct user object with portfolio items. Omit for public view for now unless API supports it. */}
         </div>

@@ -1,7 +1,6 @@
 'use client'
 
-import { SendMessagePayload } from '@/lib/types'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { chatService } from './index'
 
 // Keys
@@ -30,7 +29,8 @@ export function useMessages(conversationId: string) {
   })
 }
 
-// Mutations
+/*
+// Mutations - DEPRECATED: Moved to WebSocket Emitters
 export function useSendMessage() {
   const queryClient = useQueryClient()
 
@@ -81,6 +81,7 @@ export function useDeleteMessage() {
     },
   })
 }
+*/
 
 // Search
 export function useSearchMessages(conversationId: string, query: string) {

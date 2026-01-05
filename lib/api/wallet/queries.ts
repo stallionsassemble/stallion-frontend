@@ -123,6 +123,22 @@ export function useSetTrustline() {
   })
 }
 
+export function useUnsetTrustline() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (currencyCode: string) =>
+      walletService.unsetTrustline(currencyCode),
+    onSuccess: () => {
+      toast.success('Trustline removed successfully')
+      queryClient.invalidateQueries({ queryKey: ['wallet-balances'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to remove trustline')
+    },
+  })
+}
+
 export function useGetDepositAddress() {
   return useQuery({
     queryKey: ['wallet-deposit-address'],

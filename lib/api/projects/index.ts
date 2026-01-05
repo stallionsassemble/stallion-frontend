@@ -109,6 +109,20 @@ export class ProjectService {
   }
 
   /**
+   * Update an application
+   * @param id Application id
+   * @param payload Update payload
+   * @returns
+   */
+  async updateApplication(id: string, payload: ApplyProjectPayload) {
+    const response = await api.patch<ApplyProjectResponse>(
+      `/projects/applications/${id}`,
+      payload
+    )
+    return response.data
+  }
+
+  /**
    * Withdraw application
    * @param id application id
    * @returns

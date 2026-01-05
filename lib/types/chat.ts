@@ -104,6 +104,7 @@ export interface AddParticipantResponse {
 
 export interface SendMessagePayload {
   recipientId: string
+  conversationId?: string
   content: string
   type?: 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM'
   identifier?: string

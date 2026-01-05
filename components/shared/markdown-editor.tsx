@@ -60,7 +60,7 @@ export function MarkdownEditor({
               "font-mono text-sm resize-none overflow-y-auto block", // enforce block and resize-none
               minHeight,
               // Override field-sizing-content using arbitrary property syntax if supported, or rely on height + overflow
-              "[field-sizing:fixed]"
+              // "[field-sizing:fixed]"
             )}
             style={{ fieldSizing: "fixed" } as any} // Direct style override to be safe against utility conflicts
             disabled={disabled}

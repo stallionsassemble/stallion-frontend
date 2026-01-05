@@ -113,6 +113,29 @@ export function useApplyProject() {
   })
 }
 
+export function useUpdateApplication() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string
+      payload: ApplyProjectPayload
+    }) => projectService.updateApplication(id, payload),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ['projects', 'applications', 'my'],
+      })
+      if (data?.projectId) {
+        queryClient.invalidateQueries({
+          queryKey: ['projects', data.projectId, 'applications'],
+        })
+      }
+    },
+  })
+}
+
 export function useReviewApplication() {
   const queryClient = useQueryClient()
   return useMutation({

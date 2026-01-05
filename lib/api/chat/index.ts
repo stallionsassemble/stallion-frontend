@@ -1,16 +1,8 @@
 import { api } from '@/lib/api'
-import {
-  AddParticipantPayload,
-  AddParticipantResponse,
-  Conversation,
-  ConversationSummary,
-  CreateConversationPayload,
-  Message,
-  SendMessagePayload,
-  SendMessageResponse,
-} from '@/lib/types/chat'
+import { Conversation, ConversationSummary, Message } from '@/lib/types/chat'
 
 class ChatService {
+  /*
   async createConversation(payload: CreateConversationPayload) {
     const response = await api.post<Conversation>(
       '/chat/conversations',
@@ -18,6 +10,7 @@ class ChatService {
     )
     return response.data
   }
+*/
 
   async getConversations() {
     const response = await api.get<ConversationSummary[]>('/chat/conversations')
@@ -36,6 +29,7 @@ class ChatService {
     return response.data
   }
 
+  /*
   async addParticipants(id: string, payload: AddParticipantPayload) {
     const response = await api.post<AddParticipantResponse>(
       `/chat/conversations/${id}/participants`,
@@ -80,6 +74,7 @@ class ChatService {
     )
     return response.data
   }
+*/
 
   async getUnreadCount(id: string) {
     const response = await api.get<{ message: string; updatedCount: number }>(

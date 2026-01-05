@@ -37,6 +37,8 @@ export interface LeaderboardEntry {
   earnedAmount: number
   completedTask: number
   successRate: number
+  rating?: number
+  totalReviews?: number
   badges: Pick<Badge, 'id' | 'name' | 'icon'>[]
 }
 

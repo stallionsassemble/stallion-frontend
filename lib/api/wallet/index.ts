@@ -7,7 +7,6 @@ import {
   SyncWalletResponse,
   Wallet,
   WalletBalances,
-  WalletTransaction,
   WalletTransactions,
   WalletTrustlineResponse,
   WithdrawFundPayload,
@@ -48,6 +47,13 @@ class WalletService {
     const response = await api.post<WalletTrustlineResponse>(
       '/wallet/trustline',
       { currencyCode }
+    )
+    return response.data
+  }
+
+  async unsetTrustline(currencyCode: string) {
+    const response = await api.delete<{ message: string }>(
+      `/wallet/trustline/${currencyCode}`
     )
     return response.data
   }
