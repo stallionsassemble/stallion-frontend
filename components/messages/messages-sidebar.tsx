@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { useAuth } from "@/lib/store/use-auth";
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Input } from '@/components/ui/input';
+import { useAuth } from '@/lib/store/use-auth';
 import { Conversation, ConversationSummary } from '@/lib/types';
-import { cn } from "@/lib/utils";
-import { Search, SearchX, UserCog } from "lucide-react";
+import { cn } from '@/lib/utils';
+import { Search, SearchX, UserCog } from 'lucide-react';
 
 interface MessagesSidebarProps {
   conversations: Conversation[];

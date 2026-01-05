@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { chatService } from './index'
+import { chatService } from './index';
 
 export const chatKeys = {
   all: ['chat'] as const,
@@ -16,7 +16,7 @@ export function useConversations() {
   return useQuery({
     queryKey: chatKeys.conversations(),
     queryFn: () => chatService.getConversations(),
-  })
+  });
 }
 
 export function useMessages(conversationId: string) {
@@ -41,5 +41,5 @@ export function useSearchMessages(conversationId: string, query: string) {
     queryKey: [...chatKeys.messages(conversationId), 'search', query],
     queryFn: () => chatService.searchMessages(conversationId, query),
     enabled: !!conversationId && !!query,
-  })
+  });
 }

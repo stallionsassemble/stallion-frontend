@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   DropdownMenu,
@@ -6,9 +6,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from "@/lib/utils";
-import { MoreVertical, Pencil, Trash } from "lucide-react";
-import { useState } from "react";
+import { cn } from '@/lib/utils';
+import { MoreVertical, Pencil, Trash } from 'lucide-react';
+import { useState } from 'react';
 
 interface MessageBubbleProps {
   id: string;

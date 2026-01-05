@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import { EmojiPicker } from '@/components/ui/emoji-picker';
 import { Input } from '@/components/ui/input';
 import { useMessages, useSearchMessages } from '@/lib/api/chat/queries';
@@ -18,15 +18,6 @@ interface ChatWindowProps {
 
 export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user: currentUser } = useAuth();
-  const {
-    sendTyping,
-    isPeerTyping,
-    sendMessage,
-    updateMessage,
-    deleteMessage,
-    markAsRead,
-    markMessagesAsRead
-  } = useChatSocket(conversation.id);
 
   const { data: messages = [], isLoading } = useMessages(conversation.id);
   const {
@@ -79,10 +70,10 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   }, [conversation.participants, currentUser, isConnected, getOnlineStatus]);
 
   // Partner Logic
-  const getPartnerParticipant = (participants: ConversationSummary['participants']) => {
-    if (!currentUser) return participants[0];
+  const getPartner = (participants: ConversationSummary['participants']) => {
+    if (!currentUser) return participants[0]?.user;
     const partner = participants.find((p) => p.userId !== currentUser.id);
-    return partner || participants[0];
+    return partner ? partner.user : participants[0]?.user;
   };
 
   const partner = getPartner(conversation.participants);

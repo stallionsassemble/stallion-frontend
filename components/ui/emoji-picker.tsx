@@ -1,7 +1,11 @@
-"use client";
+'use client';
 
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 import { Smile } from 'lucide-react';
@@ -36,11 +40,7 @@ export function EmojiPicker({ onEmojiSelect, disabled }: EmojiPickerProps) {
           <Smile className="h-[25px] w-[25px]" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent
-        side="top"
-        align="end"
-        className="w-full border-none p-0"
-      >
+      <PopoverContent side="top" align="end" className="w-full border-none p-0">
         <Picker
           data={data}
           onEmojiSelect={handleEmojiSelect}

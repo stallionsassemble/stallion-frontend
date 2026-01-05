@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useAuth } from "@/lib/store/use-auth";
+import { useAuth } from '@/lib/store/use-auth';
 import { AuthenticatedEvent, ExceptionEvent } from '@/lib/types/chat';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
