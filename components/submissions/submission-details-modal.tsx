@@ -108,14 +108,14 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
               </div>
 
               {/* Milestones for Projects */}
-              {isProject && milestones?.data && (
+              {isProject && milestones && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                     <span className="p-1 rounded"><Clock className="h-4 w-4 text-primary" /></span>
                     Milestones
                   </h3>
                   <div className="space-y-3">
-                    {milestones.data.map((milestone: any, i: number) => (
+                    {milestones.map((milestone: any, i: number) => (
                       <div key={i} className="border border-border bg-card rounded-xl p-4 flex items-center justify-between">
                         <div>
                           <h4 className="text-sm font-semibold text-foreground mb-1">{milestone.title}</h4>
@@ -138,7 +138,7 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
                         )}
                       </div>
                     ))}
-                    {milestones.data.length === 0 && (
+                    {milestones.length === 0 && (
                       <p className="text-sm text-muted-foreground">No milestones defined for this project.</p>
                     )}
                   </div>
