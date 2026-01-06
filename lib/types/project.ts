@@ -48,6 +48,8 @@ export interface GetProjectsPayload {
   type?: ProjectType
   status?: ProjectStatus
   ownerId?: string
+  limit?: number
+  page?: number
 }
 
 /**
