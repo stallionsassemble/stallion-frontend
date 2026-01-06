@@ -36,7 +36,7 @@ export default function BountyDetailsPage() {
   // Fetch similar bounties
   const { data: similarData, isLoading: isLoadingSimilar } = useGetAllBounties({
     limit: 5,
-    skills: tags.length > 0 ? tags : undefined
+    skills: tags.length > 0 ? tags.join(',') : undefined
   });
 
   // Fetch recent/all bounties as fallback to ensure list isn't empty
