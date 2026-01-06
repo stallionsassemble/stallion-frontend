@@ -220,11 +220,6 @@ export default function BountyDetailsPage() {
             </section>
           )}
 
-          {/* Discussion Section */}
-          <section className='rounded-xl border border-primary bg-card/30 p-4 mt-8'>
-            <DiscussionList id={id} type="PROJECT" />
-          </section>
-
           {/* Similar Projects */}
           {similarBounties.length > 0 && (
             <section className='space-y-6 pt-8 border-t border-border'>
@@ -273,6 +268,12 @@ export default function BountyDetailsPage() {
                   />
                 ))}
               </div>
+
+
+              {/* Discussion Section */}
+              <section className='rounded-xl border border-primary bg-card/30 p-4 mt-8'>
+                <DiscussionList id={id} type="PROJECT" />
+              </section>
             </section>
           )}
         </div>
@@ -290,7 +291,7 @@ export default function BountyDetailsPage() {
           createdAt={project.createdAt}
           deadline={project.deadline}
           applied={project.applied}
-          applicationId={application.id}
+          applicationId={application?.id}
           winnerAnnouncement={project.winnerAnnouncement}
           currentApplication={application}
         />
@@ -310,7 +311,7 @@ export default function BountyDetailsPage() {
           createdAt={project.createdAt}
           deadline={project.deadline}
           applied={project.applied}
-          applicationId={application.id}
+          applicationId={application?.id}
           winnerAnnouncement={project.winnerAnnouncement}
           currentApplication={application}
         />

@@ -89,7 +89,7 @@ export class ProjectService {
    */
   async getMyApplications() {
     const response = await api.get<ProjectApplications>(
-      `/projects/applications/my`
+      `/projects/applications`
     )
     return response.data
   }

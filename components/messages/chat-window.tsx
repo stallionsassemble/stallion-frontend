@@ -3,11 +3,13 @@
 import { Button } from '@/components/ui/button';
 import { EmojiPicker } from '@/components/ui/emoji-picker';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMessages, useSearchMessages } from '@/lib/api/chat/queries';
+import { uploadService } from '@/lib/api/upload';
 import { useChatSocket } from '@/lib/hooks/use-chat-socket';
 import { useAuth } from '@/lib/store/use-auth';
-import { Conversation, ConversationSummary, Message } from '@/lib/types';
-import { ChevronLeft, Loader2, Paperclip, Search, Send, X } from 'lucide-react';
+import { Conversation, ConversationSummary, Message, MessageAttachment } from '@/lib/types';
+import { ChevronLeft, CornerUpLeft, File, Loader2, Paperclip, Search, Send, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { MessageBubble } from './message-bubble';
 
@@ -34,13 +36,18 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
 
   const [inputValue, setInputValue] = useState('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; content: string; senderName: string } | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: searchResults } = useSearchMessages(
     conversation.id,
@@ -102,21 +109,26 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     return `Last seen ${lastSeenDate.toLocaleDateString()}`;
   };
 
-  const handleSend = () => {
-    if (!inputValue.trim() || !isConnected) return;
+  const handleSend = async () => {
+    if ((!inputValue.trim() && pendingAttachments.length === 0) || !isConnected) return;
 
     if (editingMessageId) {
       setIsUpdating(true);
-      socketUpdateMessage(
-        { messageId: editingMessageId, content: inputValue },
-        (response) => {
-          setIsUpdating(false);
-          if (response.success) {
-            setInputValue('');
-            setEditingMessageId(null);
-          }
+      try {
+        const response = await socketUpdateMessage({
+          messageId: editingMessageId,
+          content: inputValue,
+        });
+
+        if (response.success) {
+          setInputValue('');
+          setEditingMessageId(null);
         }
-      );
+      } catch (error) {
+        console.error('Failed to update message:', error);
+      } finally {
+        setIsUpdating(false);
+      }
     } else {
       const recipientParticipant = conversation.participants.find(
         (p) => p.userId !== currentUser?.id
@@ -124,30 +136,59 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       if (!recipientParticipant) return;
 
       setIsSending(true);
-      socketSendMessage(
-        {
+      try {
+        const response = await socketSendMessage({
           recipientId: recipientParticipant.userId,
-          content: inputValue,
-          type: 'TEXT',
-        },
-        (response) => {
-          setIsSending(false);
-          if (response.success) {
-            setInputValue('');
-          }
+          conversationId: conversation.id,
+          content: inputValue.trim() || (pendingAttachments.length > 0 ? (pendingAttachments[0].type.startsWith('image') ? 'Sent an image' : 'Sent a file') : ''),
+          type: pendingAttachments.length > 0 ? (pendingAttachments[0].type.startsWith('image') ? 'IMAGE' : 'FILE') : 'TEXT',
+          attachments: pendingAttachments,
+          replyToMessageId: replyingTo?.id,
+        });
+
+        if (response.success) {
+          setInputValue('');
+          setPendingAttachments([]);
+          setReplyingTo(null);
         }
-      );
+      } catch (error) {
+        console.error('Failed to send message:', error);
+      } finally {
+        setIsSending(false);
+      }
     }
   };
 
   const handleEditInit = (id: string, content: string) => {
     setEditingMessageId(id);
     setInputValue(content);
+    setReplyingTo(null); // Cancel reply if editing
+    inputRef.current?.focus();
   };
 
   const handleCancelEdit = () => {
     setEditingMessageId(null);
     setInputValue('');
+  };
+
+  const handleReply = (id: string, content: string) => {
+    const message = messages.find(m => m.id === id);
+    if (!message) return;
+
+    // Get sender name
+    const sender = message.senderId === currentUser?.id ? 'You' : (message.sender.firstName || message.sender.username);
+
+    setReplyingTo({
+      id,
+      content: message.content || (message.attachments?.length ? 'Attachment' : ''),
+      senderName: sender
+    });
+    setEditingMessageId(null); // Cancel edit if replying
+    inputRef.current?.focus();
+  };
+
+  const handleCancelReply = () => {
+    setReplyingTo(null);
   };
 
   const handleDelete = (id: string) => {
@@ -178,26 +219,55 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Mock attachment logic for now as we don't have file upload API ready in this snippet
-      alert(
-        `Selected file: ${file.name}. Attachment upload to be implemented.`
-      );
-      // Reset input
-      e.target.value = '';
+      setIsUploading(true);
+      try {
+        // Assume uploadService is available and working
+        // Determine upload method based on file type
+        let response;
+        if (file.type.startsWith('image/')) {
+          response = await uploadService.uploadImage(file);
+        } else if (file.type.startsWith('video/')) {
+          response = await uploadService.uploadVideo(file);
+        } else if (file.type.startsWith('audio/')) {
+          response = await uploadService.uploadAudio(file);
+        } else {
+          response = await uploadService.uploadDocument(file);
+        }
+
+        // Assume response has url
+        if (response && response.url) {
+          setPendingAttachments(prev => [...prev, {
+            url: response.url,
+            type: file.type,
+            name: file.name,
+            size: file.size
+          }]);
+        }
+      } catch (error) {
+        console.error("File upload failed", error);
+        alert("Failed to upload file");
+      } finally {
+        setIsUploading(false);
+        // Reset input
+        e.target.value = '';
+      }
     }
   };
 
   // Determine which messages to show
-  const displayMessages =
+  const rawMessages =
     showSearch && searchQuery ? searchResults || [] : messages;
+  const displayMessages = [...rawMessages].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
   if (!partner) return null;
 
   return (
-    <div className="flex flex-col flex-1 h-[calc(100vh-80px)] bg-background">
+    <div className="flex flex-col flex-1 h-full min-h-0 bg-background">
       {/* Chat Header */}
       <div className="h-[76px] px-6 flex items-center gap-3 border-b border-[0.68px] border-primary/50 shrink-0 justify-between">
         <div className="flex items-center gap-3">
@@ -210,8 +280,8 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             <ChevronLeft className="h-6 w-6" />
           </Button>
           <div className="h-10 w-10 rounded-full overflow-hidden border border-primary/20 bg-muted">
-            <div className="flex items-center justify-center w-full h-full bg-primary/20 text-primary font-bold">
-              {partner.firstName?.[0] || partner.username?.[0] || '?'}
+            <div className="flex items-center justify-center w-full h-full">
+              <img src={partner.profilePicture} alt={partner.firstName} width={40} height={40} />
             </div>
           </div>
           <div className="flex flex-col">
@@ -265,33 +335,40 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       )}
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col-reverse">
-        {isLoading ? (
-          <div className="flex h-full items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      {/* Messages Area */}
+      {/* Messages Area */}
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : displayMessages.length === 0 && showSearch && searchQuery ? (
+        <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+          No results found for &quot;{searchQuery}&quot;
+        </div>
+      ) : (
+        <ScrollArea className="flex-1 min-h-0 p-6">
+          <div className="flex flex-col-reverse space-y-4 space-y-reverse min-h-full">
+            {displayMessages.map((msg: Message) => (
+              <MessageBubble
+                key={msg.id}
+                id={msg.id}
+                content={msg.isDeleted ? '[Message deleted]' : msg.content}
+                timestamp={new Date(msg.createdAt).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+                isSent={msg.senderId === currentUser?.id}
+                isEdited={msg.isEdited}
+                attachments={msg.attachments}
+                replyToMessage={msg.replyToMessage}
+                onEdit={msg.isDeleted ? undefined : handleEditInit}
+                onDelete={msg.isDeleted ? undefined : handleDelete}
+                onReply={handleReply}
+              />
+            ))}
           </div>
-        ) : displayMessages.length === 0 && showSearch && searchQuery ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-            No results found for &quot;{searchQuery}&quot;
-          </div>
-        ) : (
-          displayMessages.map((msg: Message) => (
-            <MessageBubble
-              key={msg.id}
-              id={msg.id}
-              content={msg.isDeleted ? '[Message deleted]' : msg.content}
-              timestamp={new Date(msg.createdAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-              isSent={msg.senderId === currentUser?.id}
-              isEdited={msg.isEdited}
-              onEdit={msg.isDeleted ? undefined : handleEditInit}
-              onDelete={msg.isDeleted ? undefined : handleDelete}
-            />
-          ))
-        )}
-      </div>
+        </ScrollArea>
+      )}
 
       {/* Input Area */}
       <div className="p-4 relative">
@@ -308,6 +385,88 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             </button>
           </div>
         )}
+
+        {replyingTo && (
+          <div className="absolute top-0 left-4 right-4 -translate-y-full bg-background border border-primary/20 border-b-0 rounded-t-md p-2 flex items-center justify-between shadow-sm z-10">
+            <div className="flex-1 flex flex-col overflow-hidden mr-2">
+              <span className="text-xs font-bold text-primary flex items-center gap-1">
+                <CornerUpLeft className="h-3 w-3" />
+                Replying to {replyingTo.senderName}
+              </span>
+              <span className="text-xs text-muted-foreground truncate">
+                {replyingTo.content}
+              </span>
+            </div>
+            <button
+              onClick={handleCancelReply}
+              className="text-muted-foreground hover:text-foreground shrink-0"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Pending Attachments Preview */}
+        {pendingAttachments.length > 0 && (
+          <div className="absolute top-0 left-4 right-4 -translate-y-full bg-background border border-primary/20 border-b-0 rounded-t-md p-2 flex items-center gap-2 shadow-sm z-10 overflow-x-auto" style={{ top: replyingTo || editingMessageId ? '-56px' : '0' }}>
+            {/* Adjust top or translate based on stacked notifications if needed, for simplicity let's just stack them naturally or ensure only one is prominent, but user might want to reply AND attach. The current absolute positioning might overlap if both are present. Let's adjust logic: if replying/editing is present, attachments should sit above IT. */}
+            {/* For now, let's just let them overlap in Z or use a flex container above. Actually, current CSS `absolute top-0 -translate-y-full` puts it exactly above the input container. If we have multiple, we need to stack them. */}
+            {/* Simplified approach: If replying, attachments go above reply banner? Or just let them replace/stack. Let's try to stack them by adding a dynamic style or container. */}
+            {/* Better approach: Create a container ABOVE input that holds all 'context' bars (reply, edit, attachments) in a flex-col-reverse stack. */}
+          </div>
+        )}
+
+        {/* Improved Context Stack Container */}
+        <div className="absolute top-0 left-4 right-4 -translate-y-full flex flex-col-reverse z-10">
+          {/* Attachments */}
+          {pendingAttachments.length > 0 && (
+            <div className="bg-background border border-primary/20 border-b-0 rounded-t-md p-2 flex items-center gap-2 shadow-sm overflow-x-auto mb-[-1px]">
+              {pendingAttachments.map((att, i) => (
+                <div key={i} className="relative group shrink-0">
+                  <div className="w-12 h-12 rounded overflow-hidden bg-muted flex items-center justify-center border border-border">
+                    {att.type.startsWith('image/') ? (
+                      <img src={att.url} alt="preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <File className="w-6 h-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setPendingAttachments(prev => prev.filter((_, idx) => idx !== i))}
+                    className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-4 h-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {isUploading && <Loader2 className="w-4 h-4 animate-spin text-primary ml-2" />}
+            </div>
+          )}
+
+          {/* Reply or Edit Banner */}
+          {(editingMessageId || replyingTo) && (
+            <div className="bg-background border border-primary/20 border-b-0 rounded-t-md p-2 flex items-center justify-between shadow-sm mb-[-1px]">
+              {editingMessageId ? (
+                <>
+                  <span className="text-xs font-medium text-primary">Editing message...</span>
+                  <button onClick={handleCancelEdit} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1 flex flex-col overflow-hidden mr-2">
+                    <span className="text-xs font-bold text-primary flex items-center gap-1">
+                      <CornerUpLeft className="h-3 w-3" />
+                      Replying to {replyingTo?.senderName}
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {replyingTo?.content}
+                    </span>
+                  </div>
+                  <button onClick={handleCancelReply} className="text-muted-foreground hover:text-foreground shrink-0"><X className="h-4 w-4" /></button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-2 bg-transparent p-2">
           {/* Hidden File Input */}
@@ -328,8 +487,9 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           </Button>
 
           <Input
+            ref={inputRef}
             placeholder={
-              editingMessageId ? 'Edit your message...' : 'Type Message'
+              editingMessageId ? 'Edit your message...' : (replyingTo ? 'Type your reply...' : 'Type Message')
             }
             className="flex-1 bg-transparent border-none focus-visible:ring-0 px-2 h-10"
             value={inputValue}

@@ -1,13 +1,16 @@
-export interface LeaderboardUser {
+export interface LeaderboardEntry {
+  id: string
   rank: number
-  name: string
-  handle: string
-  avatar: string // URL
-  isVerified?: boolean
-  rating: number // e.g., 4.98
-  completedTasks: number
+  userId: string
+  username: string
+  firstName?: string
+  lastName?: string
+  profilePicture?: string
+  category: string
+  level: number
+  completedTasksCount: number
   earnedAmount: number
-  successRate: number // e.g. 98
-  skills?: string[]
-  category?: string
+  successRate: number
+  rating: number // 1-5
+  totalReviews: number
 }

@@ -1,23 +1,28 @@
 import { api } from '@/lib/api'
 import {
   CreateReviewPayload,
-  Review,
-  ReviewsResponse,
+  UserReview,
+  UserReviewsResponse,
 } from '@/lib/types/reviews'
 
 class ReviewsService {
-  async createReview(payload: CreateReviewPayload) {
-    const response = await api.post<Review>('/reviews', payload)
+  async createReview(userId: string, payload: CreateReviewPayload) {
+    const response = await api.post<UserReview>(
+      `/users/${userId}/reviews`,
+      payload
+    )
     return response.data
   }
 
   async getUserReviews(userId: string) {
-    const response = await api.get<ReviewsResponse>(`/reviews/user/${userId}`)
+    const response = await api.get<UserReviewsResponse>(
+      `/users/${userId}/reviews`
+    )
     return response.data
   }
 
   async getMyGivenReviews() {
-    const response = await api.get<ReviewsResponse>('/reviews/given')
+    const response = await api.get<UserReviewsResponse>('/reviews/given')
     return response.data
   }
 }

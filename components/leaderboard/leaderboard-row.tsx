@@ -17,7 +17,7 @@ export function LeaderboardRow({ user }: LeaderboardRowProps) {
   const fullName = user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.username;
   const category = user.category || "Developer";
   const level = user.level || 1
-  const completedTasks = user.completedTask || 0
+  const completedTasks = user.completedTasksCount || 0
   const earnedAmount = user.earnedAmount || 0.00
   const successRate = user.successRate || 0.00
   const { data: userData } = useGetUserByUsername(user.username)

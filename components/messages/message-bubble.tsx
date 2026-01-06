@@ -6,8 +6,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Message, MessageAttachment } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { MoreVertical, Pencil, Trash } from 'lucide-react';
+import { CornerUpLeft, FileIcon, MoreVertical, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';
 
 interface MessageBubbleProps {
@@ -18,8 +19,11 @@ interface MessageBubbleProps {
   isFirstInGroup?: boolean;
   isEdited?: boolean;
   isDeleted?: boolean;
+  attachments?: MessageAttachment[] | null;
+  replyToMessage?: Message | null;
   onEdit?: (id: string, content: string) => void;
   onDelete?: (id: string) => void;
+  onReply?: (id: string, content: string, senderName?: string) => void;
 }
 
 export function MessageBubble({
@@ -30,8 +34,11 @@ export function MessageBubble({
   isFirstInGroup = true,
   isEdited,
   isDeleted,
+  attachments,
+  replyToMessage,
   onEdit,
   onDelete,
+  onReply,
 }: MessageBubbleProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -45,7 +52,7 @@ export function MessageBubble({
       {/* Message Bubble */}
       <div
         className={cn(
-          'flex flex-col items-start px-4 py-3 text-sm font-inter leading-relaxed shadow-sm min-w-[120px] relative',
+          'flex flex-col items-start px-4 py-3 text-sm font-inter leading-relaxed shadow-sm min-w-[120px] relative transition-all',
           isSent
             ? 'bg-primary/76 text-foreground rounded-[12px] rounded-br-none'
             : 'bg-primary/20 text-foreground rounded-[12px] rounded-bl-none',
@@ -53,6 +60,48 @@ export function MessageBubble({
           isDeleted && 'opacity-60'
         )}
       >
+        {/* Reply Context */}
+        {replyToMessage && !isDeleted && (
+          <div className="mb-2 pl-2 border-l-2 border-primary/50 text-xs text-muted-foreground bg-background/20 rounded-r p-1 w-full opacity-80">
+            <span className="font-bold block mb-0.5">
+              {replyToMessage.sender?.firstName || replyToMessage.sender?.username || 'User'}
+            </span>
+            <span className="line-clamp-1 truncate block">
+              {replyToMessage.content || (replyToMessage.attachments?.length ? 'Attachment' : 'Message')}
+            </span>
+          </div>
+        )}
+
+        {/* Attachments */}
+        {attachments && attachments.length > 0 && (
+          <div className="mb-2 flex flex-col gap-2 w-full">
+            {attachments.map((attachment, index) => (
+              <div key={index} className="rounded-md overflow-hidden bg-background/50">
+                {attachment.type.startsWith('image/') ? (
+                  <img
+                    src={attachment.url}
+                    alt={attachment.name || 'Attachment'}
+                    className="max-w-full h-auto object-cover rounded-md"
+                    loading="lazy"
+                  />
+                ) : (
+                  <a
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 p-2 hover:bg-black/5 rounded"
+                  >
+                    <FileIcon className="h-4 w-4" />
+                    <span className="truncate max-w-[200px] underline">
+                      {attachment.name || 'View File'}
+                    </span>
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         <span className={cn(isDeleted && 'italic text-muted-foreground')}>
           {content}
         </span>
@@ -68,8 +117,8 @@ export function MessageBubble({
         </div>
       </div>
 
-      {/* Actions Dropdown (Only for sent messages) */}
-      {isSent && (onEdit || onDelete) && (
+      {/* Actions Dropdown */}
+      {(onReply || (isSent && (onEdit || onDelete))) && !isDeleted && (
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
             <button
@@ -82,13 +131,19 @@ export function MessageBubble({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align={isSent ? 'end' : 'start'}>
-            {onEdit && (
+            {onReply && (
+              <DropdownMenuItem onClick={() => onReply(id, content)}>
+                <CornerUpLeft className="mr-2 h-4 w-4" />
+                Reply
+              </DropdownMenuItem>
+            )}
+            {isSent && onEdit && (
               <DropdownMenuItem onClick={() => onEdit(id, content)}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
             )}
-            {onDelete && (
+            {isSent && onDelete && (
               <DropdownMenuItem
                 onClick={() => onDelete(id)}
                 className="text-destructive focus:text-destructive"

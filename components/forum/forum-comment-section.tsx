@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateComment, useDeleteComment, useUpdateComment } from "@/lib/api/forum/queries";
+import { useAuth } from "@/lib/store/use-auth";
 import { Comment } from "@/lib/types/forum";
 import { formatDistanceToNow } from "date-fns";
 import { Edit, Loader2, MessageCircle, MoreVertical, Trash2 } from "lucide-react";
@@ -111,7 +112,7 @@ function CommentItem({ comment, postId, depth = 0, currentUserId }: CommentItemP
               {isExpanded || comment.content.length <= 180 ? comment.content : `${comment.content.substring(0, 180)}...`}
             </p>
             {!isExpanded && comment.content.length > 180 && (
-              <Button variant="link" onClick={() => setIsExpanded(true)} className="p-0 h-auto font-normal text-xs text-primary text-muted-foreground">
+              <Button variant="link" onClick={() => setIsExpanded(true)} className="p-0 h-auto font-normal text-xs text-primary">
                 Read more
               </Button>
             )}
@@ -145,6 +146,7 @@ interface ForumCommentSectionProps {
 
 export function ForumCommentSection({ postId, comments, currentUserId }: ForumCommentSectionProps) {
   const [content, setContent] = useState("");
+  const { user: currentUser } = useAuth();
   const { mutate: createComment, isPending } = useCreateComment();
 
   const handleSubmit = () => {
@@ -165,8 +167,13 @@ export function ForumCommentSection({ postId, comments, currentUserId }: ForumCo
       {/* Comment Input */}
       <div className="flex gap-3">
         <div className="h-8 w-8 shrink-0 rounded-full bg-muted overflow-hidden">
-          {/* Placeholder for current user avatar */}
-          <div className="w-full h-full bg-primary/20" />
+          <Image
+            src={currentUser?.profilePicture || `https://avatar.vercel.sh/${currentUser?.username || 'guest'}`}
+            width={32}
+            height={32}
+            alt="Current user"
+            className="h-full w-full object-cover"
+          />
         </div>
         <div className="flex-1 gap-2 flex flex-col">
           <Textarea

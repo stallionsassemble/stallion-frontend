@@ -104,3 +104,7 @@ milestones: {
 }
 
 ```
+
+- Bounty discussion UI
+- My submissions UI and page functionality
+- Submissions Page updating

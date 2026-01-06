@@ -241,20 +241,20 @@ export function BountyDetailsSidebar({
       {/* About Organization */}
       <div className="w-full rounded-[13.97px] border-[1.16px] border-primary bg-card p-6 space-y-6">
         <div className="flex items-center gap-4">
-          <div className="h-[53px] w-[53px] rounded-full bg-background p-1 shrink-0 overflow-hidden flex items-center justify-center">
+          <div className="h-[53px] w-[53px] rounded-full bg-background  shrink-0 overflow-hidden flex items-center justify-center">
             <Image
               src={owner?.companyLogo || owner?.profilePicture || "/assets/icons/sdollar.png"}
               width={53}
               height={53}
               alt={owner?.companyName || owner?.username || "Stallion"}
-              className="object-contain"
+              className="object-cover"
             />
           </div>
           <div className="space-y-1 font-inter">
             <h3 className="text-[16px] font-medium text-foreground">{owner?.companyName || owner?.username || "Stallion User"}</h3>
             <div className="flex items-center gap-1.5">
               <Star className="h-4 w-4 text-primary fill-primary" />
-              <span className="text-[14px] text-foreground font-medium">4.8</span>
+              <span className="text-[14px] text-foreground font-medium">{owner?.rating || "N/A"}</span>
             </div>
           </div>
         </div>

@@ -167,12 +167,11 @@ export function ForumPost({ post, currentUserId }: ForumPostProps) {
           onClick={() => setShowComments(!showComments)}
         >
           <MessageCircle className="h-4 w-4" />
-          <span className="text-xs font-semibold">{comments.length} <span className="hidden sm:inline">Comments</span></span>
+          <span className="text-xs font-semibold">{comments.length}</span>
         </Button>
 
         <Button variant="ghost" className="text-muted-foreground hover:bg-transparent! hover:text-foreground gap-2 h-8 px-0">
           <Share2 className="h-4 w-4" />
-          <span className="text-xs font-semibold hidden sm:inline">Share</span>
         </Button>
       </div>
 

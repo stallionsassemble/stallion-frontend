@@ -112,7 +112,7 @@ export interface GetAllBountiesPayload {
   sortOrder?: 'asc' | 'desc'
   status?: 'ACTIVE' | 'COMPLETED' | 'CLOSED'
   currency?: string
-  skills?: string[]
+  skills?: string
   search?: string
   ownerId?: string
   minReward?: string

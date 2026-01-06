@@ -20,7 +20,7 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) {
   const { user: authUser } = useAuth();
   const { data: myReputation } = useMyReputation();
-  const { createConversation } = useChatSocket(); // No conversationId needed
+  const { sendMessage } = useChatSocket(); // No conversationId needed
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const router = useRouter();
 
@@ -35,12 +35,11 @@ export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) 
     if (!user || !authUser) return;
     try {
       // Create or get conversation via Socket
-      const conversation = await createConversation({
-        type: 'GROUP',
-        participantIds: [user.id],
-        name: `${fullName}`,
+      await sendMessage({
+        recipientId: user.id,
+        content: 'Hello',
       });
-      router.push(`/dashboard/chat?id=${conversation.id}`);
+      router.push(`/dashboard/messages`);
     } catch (error) {
       console.error("Failed to start conversation", error);
       toast.error("Failed to start conversation");
@@ -160,20 +159,20 @@ export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) 
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-1">
               <span className="text-lg font-bold font-inter text-foreground leading-none tracking-[-0.57px] text-center">
-                {user?.rating ? user.rating.toFixed(1) : '0.0'}
+                {(reputation?.rating || user?.rating || 0).toFixed(1)}
               </span>
-              <UserStar className="w-3 h-3 fill-current text-[#FFE500]" />
+              {/* <UserStar className="w-3 h-3 fill-current text-[#FFE500]" /> */}
             </div>
             <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Rating</span>
           </div>
 
           {/* Reputation */}
-          <div className="flex flex-col items-center gap-1">
+          {/* <div className="flex flex-col items-center gap-1">
             <span className="text-lg font-bold font-inter text-[#0066FF] leading-none tracking-[-0.57px] text-center">
               {reputation?.score || 0}
             </span>
             <span className="text-[12px] font-normal text-muted-foreground font-inter leading-none tracking-[-0.57px] text-center">Reputation</span>
-          </div>
+          </div> */}
 
         </div>
       </div>

@@ -16,6 +16,8 @@ export interface Reputation {
   communityScore: number
   badges: Badge[]
   rank: number
+  rating?: number
+  totalReviews?: number
   createdAt: string
   updatedAt: string
 }
@@ -35,7 +37,7 @@ export interface LeaderboardEntry {
   category: string
   isVerified: boolean
   earnedAmount: number
-  completedTask: number
+  completedTasksCount: number
   successRate: number
   rating?: number
   totalReviews?: number

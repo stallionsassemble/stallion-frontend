@@ -39,6 +39,7 @@ export interface User {
   totalEarned?: string
   totalSubmissions?: number
   totalWon?: number
+  totalPendingPay?: number
   rating?: number
   totalReviews?: number
 }

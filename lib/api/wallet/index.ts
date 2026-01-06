@@ -53,7 +53,10 @@ class WalletService {
 
   async unsetTrustline(currencyCode: string) {
     const response = await api.delete<{ message: string }>(
-      `/wallet/trustline/${currencyCode}`
+      '/wallet/trustline',
+      {
+        data: { currencyCode },
+      }
     )
     return response.data
   }

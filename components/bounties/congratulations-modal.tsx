@@ -11,9 +11,11 @@ interface CongratulationsModalProps {
   onClose: () => void;
   userLogo?: string;
   sponsorLogo?: string;
+  title?: string;
+  message?: string;
 }
 
-export function CongratulationsModal({ isOpen, onClose, userLogo, sponsorLogo }: CongratulationsModalProps) {
+export function CongratulationsModal({ isOpen, onClose, userLogo, sponsorLogo, title, message }: CongratulationsModalProps) {
   const router = useRouter();
 
   return (
@@ -58,15 +60,20 @@ export function CongratulationsModal({ isOpen, onClose, userLogo, sponsorLogo }:
           <div className="relative w-full max-w-sm mb-6">
             <div className="bg-background rounded-full py-2 px-6 w-full max-w-[392px] flex items-center justify-center shadow-lg mx-auto">
               <h2 className="text-2xl md:text-3xl font-extrabold leading-normal text-foreground italic -tracking-[1.55px] font-syne">
-                Congratulations
+                {title || "Congratulations"}
               </h2>
             </div>
           </div>
 
           <div className="space-y-1 mb-10">
-            <p className="text-muted-foreground tracking-[4%] font-light text-xs">Your application has been successfully submitted.
-              <br />
-              We'll notify you once it's been reviewed.
+            <p className="text-muted-foreground tracking-[4%] font-light text-xs">
+              {message || (
+                <>
+                  Your application has been successfully submitted.
+                  <br />
+                  We'll notify you once it's been reviewed.
+                </>
+              )}
             </p>
           </div>
 

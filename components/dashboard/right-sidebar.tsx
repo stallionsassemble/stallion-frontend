@@ -11,6 +11,7 @@ import { BadgeDollarSign, Crown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { EmptyState } from "../ui/empty-state";
 import { Skeleton } from "../ui/skeleton";
 import { VerticalMarquee } from "./vertical-marquee";
 
@@ -55,33 +56,52 @@ export function DashboardRightSidebar() {
         </div>
 
         {/* Vertical Marquee Top Earners */}
-        <VerticalMarquee height="h-full" duration="40s">
-          {isLoadingLeaderboard ? (
-            Array.from({ length: 10 }).map((_, i) => (
-              <Skeleton key={i} className="h-8 w-full rounded" />
-            ))
-          ) : (
-            leaderboard?.data.map((earner, i) => (
-              <div key={i} className="flex items-center justify-between gap-3 p-1 w-full">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
-                    <Image src={earner.profilePicture} width={32} height={32} alt={earner.firstName} className="h-full w-full object-cover" />
+        {!isLoadingLeaderboard && (!leaderboard?.data || leaderboard.data.length === 0) ? (
+          <div className="h-full flex items-center justify-center border border-dashed border-primary/20 bg-primary/5 rounded-lg">
+            <EmptyState
+              title="No top earners"
+              icon={Crown}
+              className="p-4"
+            />
+          </div>
+        ) : (
+          <VerticalMarquee height="h-full" duration="40s">
+            {isLoadingLeaderboard ? (
+              Array.from({ length: 10 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-full rounded" />
+              ))
+            ) : (
+              leaderboard?.data.map((earner, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 p-1 w-full">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
+                      <Image
+                        src={earner.profilePicture}
+                        width={32}
+                        height={32}
+                        alt={earner.firstName}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">{earner.firstName + ' ' + earner.lastName}</p>
+                      <p className="text-[10px] text-muted-foreground">{earner.level}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-foreground">{earner.firstName + ' ' + earner.lastName}</p>
-                    <p className="text-[10px] text-muted-foreground">{earner.level}</p>
+                  <div className="flex flex-col items-end gap-0.5">
+                    <div className="flex items-center justify-end gap-2">
+                      <p className="text-xs font-extrabold text-foreground">{earner.earnedAmount || 0}</p>
+                      <div className="w-[36px] h-[26px] rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium font-inter">
+                        USDC
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground text-right">#{i + 1}</p>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-0.5">
-                  <div className="flex items-center justify-end gap-2">
-                    <p className="text-xs font-extrabold text-foreground">{earner.earnedAmount || 0}</p>
-                    <div className="w-[36px] h-[26px] rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium font-inter">USDC</div>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground text-right">#{i + 1}</p>
-                </div>
-              </div>
-            )))}
-        </VerticalMarquee>
+              ))
+            )}
+          </VerticalMarquee>
+        )}
       </div>
 
       {/* Total Balance Card */}
@@ -156,31 +176,51 @@ export function DashboardRightSidebar() {
         </div>
 
         {/* Vertical Marquee Recent Earners */}
-        <VerticalMarquee height="h-[160px]" duration="25s" reverse={true}>
-          {isLoadingBountyWinners ? (
-            Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full rounded-lg" />
-            ))
-          ) : bountyWinners?.data.map((earner, i) => (
-            <div key={i} className="flex items-center justify-between gap-3 p-1 w-full">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
-                  <Image src={earner.user.profilePicture} width={32} height={32} alt={earner.user.username} className="h-full w-full object-cover" />
+        {!isLoadingBountyWinners && (!bountyWinners?.data || bountyWinners.data.length === 0) ? (
+          <div className="h-[160px] flex items-center justify-center border border-dashed border-primary/20 bg-primary/5 rounded-lg">
+            <EmptyState
+              title="No recent earners"
+              icon={BadgeDollarSign}
+              className="p-4"
+            />
+          </div>
+        ) : (
+          <VerticalMarquee height="h-[160px]" duration="25s" reverse={true}>
+            {isLoadingBountyWinners ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-lg" />
+              ))
+            ) : (
+              bountyWinners?.data.map((earner, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 p-1 w-full">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
+                      <Image
+                        src={earner.user.profilePicture}
+                        width={32}
+                        height={32}
+                        alt={earner.user.username}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">{earner.user.username}</p>
+                      <p className="text-[10px] text-muted-foreground">{earner.bounty.title}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-0.5">
+                    <div className="flex items-center justify-end gap-2">
+                      <p className="text-xs font-extrabold text-foreground">{earner.metadata.reward}</p>
+                      <div className="w-[36px] h-[26px] rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium font-inter">
+                        {earner.metadata.currency}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-foreground">{earner.user.username}</p>
-                  <p className="text-[10px] text-muted-foreground">{earner.bounty.title}</p>
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-0.5">
-                <div className="flex items-center justify-end gap-2">
-                  <p className="text-xs font-extrabold text-foreground">{earner.metadata.reward}</p>
-                  <div className="w-[36px] h-[26px] rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium font-inter">{earner.metadata.currency}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </VerticalMarquee>
+              ))
+            )}
+          </VerticalMarquee>
+        )}
       </div>
     </div>
   );

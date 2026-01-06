@@ -28,7 +28,7 @@ export function MessagesSidebar({
   };
 
   return (
-    <div className="w-full lg:w-[400px] border-r border-[0.68px] border-primary/50 flex flex-col bg-background h-[calc(100vh-80px)]">
+    <div className="w-full lg:w-[400px] border-r border-[0.68px] border-primary/50 flex flex-col bg-background h-full">
       {/* Search Header */}
       <div className="p-4 border-b border-[0.68px] border-primary/50">
         <div className="relative">
@@ -73,8 +73,8 @@ export function MessagesSidebar({
                 {/* Avatar */}
                 <div className="relative shrink-0">
                   <div className="h-12 w-12 rounded-full overflow-hidden border border-primary/20 bg-muted">
-                    <div className="flex items-center justify-center w-full h-full bg-primary/20 text-primary font-bold">
-                      {partner.firstName?.[0] || partner.username?.[0] || '?'}
+                    <div className="flex items-center justify-center w-full h-full">
+                      <img src={partner.profilePicture} alt={partner.firstName} width={60} height={60} className='object-fit' />
                     </div>
                   </div>
                 </div>

@@ -23,8 +23,6 @@ function PublicProfileContent({ username }: { username: string }) {
   const userId = userData?.id || "";
   const { data: userReputation, isLoading: isLoadingReputation } = useUserReputation(userId);
 
-  // We are loading if user is loading, or if user is found (we have ID) but reputation is loading.
-  // If user not found, we don't load reputation.
   const isLoading = isLoadingUser || (!!userId && isLoadingReputation);
 
   if (isLoading) {
@@ -65,10 +63,7 @@ function PublicProfileContent({ username }: { username: string }) {
           <RecentActivity userId={userId} publicMode />
           <Achievements userId={userId} publicMode />
 
-          {/* User Reviews */}
-          <section className="bg-card/30 border border-primary/20 rounded-xl p-4">
-            <ReviewList userId={userId} username={userData.username} />
-          </section>
+          <ReviewList userId={userId} username={userData.username || ""} />
 
           {/* Portfolio is harder without direct user object with portfolio items. Omit for public view for now unless API supports it. */}
         </div>

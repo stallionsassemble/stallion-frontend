@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, BriefcaseBusiness, CircleCheck, Gift, ListFilter, Timer, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -97,28 +98,25 @@ const mockGrants = [
 
 export function OpportunityList({ title = "Browse Opportunities", type = "bounties" }: { title?: string, type?: "bounties" | "projects" | "grants" }) {
   const [activeTabs, setActiveTabs] = useState(["All"]);
-  const [activeView, setActiveView] = useState(type === 'grants' ? "Grants" : "For you"); // "For you" | "Projects" | "Bounties" | "Grants"
+  const [activeView, setActiveView] = useState(type === 'grants' ? "Grants" : "For you");
 
   // Fetch Data
   const { data: bountiesData, isLoading: isLoadingBounties } = useGetAllBounties({});
   const { data: projectsData, isLoading: isLoadingProjects } = useGetProjects({});
 
   const toggleCategory = (cat: string) => {
+    // ... (logic unchanged)
     if (cat === "All") {
       setActiveTabs(["All"]);
       return;
     }
     setActiveTabs((prev) => {
-      // If "All" was selected, clear it and start fresh with the new category
       let newTabs = prev.includes("All") ? [] : [...prev];
-
       if (newTabs.includes(cat)) {
         newTabs = newTabs.filter((t) => t !== cat);
       } else {
         newTabs.push(cat);
       }
-
-      // If nothing left selected, default back to "All"
       return newTabs.length === 0 ? ["All"] : newTabs;
     });
   };
@@ -132,7 +130,7 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
       tags: b.skills || [],
       price: b.reward,
       currency: b.rewardCurrency || 'USDC',
-      company: b.owner?.username || 'Stallion', // Fallback if owner not populated
+      company: b.owner?.username || 'Stallion',
       logo: b.owner?.profilePicture || '/assets/icons/sdollar.png',
       type: 'bounty',
       createdAt: b.createdAt,
@@ -159,13 +157,10 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
   const isGrantsSection = type === 'grants';
   const opportunities = isGrantsSection ? mockGrants : realOpportunities;
 
-  // Derive categories from opportunities tags (Dynamic Skills)
+  // Derive categories from opportunities tags
   const categories = useMemo(() => {
     const allTags = opportunities.flatMap(opp => opp.tags);
     const uniqueTags = Array.from(new Set(allTags.map(tag => tag.trim()))).filter(Boolean).sort();
-    // Optional: Filter out tags that are too rare? For now show all unique ones up to a limit? 
-    // Let's just show top 10 appearing items maybe? 
-    // Or just all. Horizontal scroll handles it.
     return ["All", ...uniqueTags];
   }, [opportunities]);
 
@@ -176,9 +171,8 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
       if (activeView === "Bounties" && opp.type !== "bounty") return false;
     }
 
-    // 2. Filter by Category (Active Tabs match Tags)
+    // 2. Filter by Category
     if (!activeTabs.includes("All")) {
-      // Check if ANY selected category matches ANY of the opportunity's tags
       const hasCategory = activeTabs.some(cat =>
         opp.tags.some((tag: string) => tag.toLowerCase() === cat.toLowerCase())
       );
@@ -190,9 +184,7 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
 
   const isLoading = !isGrantsSection && (isLoadingBounties || isLoadingProjects);
 
-  if (isLoading) {
-    return <div className="p-8 text-center text-muted-foreground">Loading opportunities...</div>;
-  }
+  // REMOVED EARLY RETURN HERE
 
   const handleViewAll = () => {
     if (activeView === 'Projects') return '/dashboard/projects';
@@ -205,12 +197,10 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
     <div className="space-y-4">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* ... Header Content ... */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
-          {/* Title Row (Mobile: Title + Filter) */}
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-foreground shrink-0">{title}</h2>
-
-            {/* Mobile Filter Button */}
             <Button variant="default" size="icon" className="sm:hidden text-muted-foreground bg-transparent hover:text-foreground h-auto p-0">
               <ListFilter className="h-4 w-4" />
             </Button>
@@ -219,7 +209,6 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
           {!isGrantsSection && (
             <>
               <div className="hidden sm:block h-4 w-px bg-border"></div>
-
               <ul className="flex flex-row gap-4 text-sm font-medium text-muted-foreground overflow-x-auto no-scrollbar pb-1 w-full sm:w-auto">
                 {["For you", "Projects", "Bounties"].map((view) => (
                   <li
@@ -237,42 +226,74 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
             </>
           )}
         </div>
-
-        {/* Desktop Filter Button */}
         <Button variant="default" size="icon" className="hidden sm:flex text-muted-foreground bg-transparent hover:text-foreground">
           <ListFilter className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Categories Section */}
-      <div className="relative w-full group">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 no-scrollbar w-full mask-linear-fade max-w-full">
-          {categories.map((cat) => {
-            const isActive = activeTabs.includes(cat);
-            return (
-              <Button
-                key={cat}
-                size="sm"
-                variant={isActive ? "default" : "secondary"}
-                onClick={() => toggleCategory(cat)}
-                className={`h-8 text-xs px-4 whitespace-nowrap rounded-md shrink-0 transition-all ${isActive
-                  ? "bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/20"
-                  : "bg-secondary hover:bg-secondary/80 border border-border text-muted-foreground hover:text-foreground"
-                  }`}
-              >
-                {isActive && <CircleCheck className="h-4 w-4 mr-2 text-primary-foreground" />}
-                {cat}
-              </Button>
-            );
-          })}
+      {!isLoading && (
+        <div className="relative w-full group">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 no-scrollbar w-full mask-linear-fade max-w-full">
+            {categories.map((cat) => {
+              const isActive = activeTabs.includes(cat);
+              return (
+                <Button
+                  key={cat}
+                  size="sm"
+                  variant={isActive ? "default" : "secondary"}
+                  onClick={() => toggleCategory(cat)}
+                  className={`h-8 text-xs px-4 whitespace-nowrap rounded-md shrink-0 transition-all ${isActive
+                    ? "bg-primary hover:bg-primary/90 text-primary-foreground border border-primary/20"
+                    : "bg-secondary hover:bg-secondary/80 border border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                  {isActive && <CircleCheck className="h-4 w-4 mr-2 text-primary-foreground" />}
+                  {cat}
+                </Button>
+              );
+            })}
+          </div>
+          <div className="absolute right-0 top-0 bottom-2 w-12 bg-linear-to-l from-background to-transparent pointer-events-none md:hidden" />
         </div>
-        {/* Gradient Fade for scroll indication on mobile */}
-        <div className="absolute right-0 top-0 bottom-2 w-12 bg-linear-to-l from-background to-transparent pointer-events-none md:hidden" />
-      </div>
+      )}
+
+      {/* Loading Skeletons for Categories (Optional - or just hide categories when loading which is done above) */}
+      {isLoading && (
+        <div className="flex gap-2 overflow-hidden pb-2">
+          <Skeleton className="h-8 w-16 rounded-md" />
+          <Skeleton className="h-8 w-24 rounded-md" />
+          <Skeleton className="h-8 w-20 rounded-md" />
+          <Skeleton className="h-8 w-28 rounded-md" />
+        </div>
+      )}
 
       <div className="grid gap-3">
-        {filteredOpportunities.length > 0 ? (
+        {isLoading ? (
+          // Skeleton Loader
+          Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex flex-col sm:flex-row items-stretch overflow-hidden rounded-2xl border border-border bg-card p-4 gap-4">
+              <div className="flex flex-1 items-start md:items-center gap-3 md:gap-4">
+                <Skeleton className="h-10 w-10 md:h-12 md:w-12 rounded-full shrink-0" />
+                <div className="flex flex-col gap-2 flex-1 min-w-0">
+                  <Skeleton className="h-5 w-1/3 md:w-1/4" />
+                  <Skeleton className="h-4 w-full md:w-2/3" />
+                  <div className="flex gap-2 mt-1">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              </div>
+              <div className="hidden sm:flex flex-col items-end gap-2 justify-center pl-4">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-5 w-12 rounded-full" />
+              </div>
+            </div>
+          ))
+        ) : filteredOpportunities.length > 0 ? (
           filteredOpportunities.slice(0, 5).map((opp) => (
+
             <Link
               key={`${opp.type}-${opp.id}`}
               href={`/dashboard/${opp.type === 'project' ? 'projects' : 'bounties'}/${opp.id}`}
@@ -382,7 +403,53 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
   );
 }
 
+import { useGetActivities } from "@/lib/api/activities/queries";
+
+// ... (keep previous imports)
+
+// ... (imports remain)
+
 export function ActivityFeed() {
+  const { data: activitiesData, isLoading } = useGetActivities({
+    page: '1',
+    limit: '10',
+    type: 'ALL'
+  });
+
+  const activities = activitiesData?.data || [];
+
+  if (isLoading) {
+    return <div className="p-4 text-center text-muted-foreground text-sm">Loading activities...</div>;
+  }
+
+  // Fallback empty state
+  if (activities.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground">Recent Activities</h2>
+        <div className="relative pl-4">
+          <div className="absolute left-[36px] top-2 bottom-4 w-px bg-border" />
+          <p className="text-muted-foreground text-sm py-4">No recent activities.</p>
+        </div>
+      </div>
+    )
+  }
+
+  const getActivityActionText = (type: string) => {
+    switch (type) {
+      case 'BOUNTY_CREATED': return 'created a bounty';
+      case 'BOUNTY_SUBMISSION': return 'submitted work for';
+      case 'BOUNTY_WON': return 'won';
+      case 'BOUNTY_COMPLETED': return 'completed';
+      case 'PROJECT_CREATED': return 'started a project';
+      case 'PROJECT_WON': return 'was awarded';
+      case 'PROJECT_APPLICATION_SUBMITTED': return 'applied to';
+      case 'PROJECT_APPLICATION_ACCEPTED': return 'was accepted to';
+      case 'HACKATHON_WON': return 'won';
+      default: return 'performed action';
+    }
+  };
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-bold text-foreground">Recent Activities</h2>
@@ -391,61 +458,74 @@ export function ActivityFeed() {
         <div className="absolute left-[36px] top-2 bottom-4 w-px bg-border" />
 
         <div className="flex flex-col gap-8">
-          {activities.map((activity) => (
-            <div key={activity.id} className="flex items-center gap-4 group relative z-10">
-              {/* Leff Side - Avatar(s) */}
-              <div className="relative shrink-0 w-[70px] h-[40px] flex items-center justify-center">
+          {activities.map((activity) => {
+            const isWon = activity.type.includes('WON') || activity.type === 'BOUNTY_COMPLETED';
 
-                {activity.type === 'awarded' ? (
-                  <>
-                    {/* User Avatar (Back) */}
-                    <div className="absolute left-0 z-10 w-10 h-10 rounded-[10.28px] border-2 border-background bg-muted overflow-hidden">
-                      <img
-                        src={activity.avatar}
-                        alt={activity.user}
+            return (
+              <div key={activity.id} className="flex items-center gap-4 group relative z-10">
+                {/* Leff Side - Avatar(s) */}
+                <div className="relative shrink-0 w-[70px] h-[40px] flex items-center justify-center">
+
+                  {isWon ? (
+                    <>
+                      {/* User Avatar (Back) */}
+                      <div className="absolute left-0 z-10 w-10 h-10 rounded-[10.28px] border-2 border-background bg-muted overflow-hidden">
+                        <Image
+                          src={activity.user?.profilePicture || `https://avatar.vercel.sh/${activity.user?.username || 'user'}`}
+                          alt={activity.user?.username || "User"}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {/* Target/App Logo (Front) - Using S Logo for system/bounty */}
+                      <div className="absolute left-6 z-20 w-10 h-10 rounded-[10.28px] border-2 border-background bg-card flex items-center justify-center overflow-hidden shadow-lg">
+                        <div className="w-6 h-6 text-foreground">
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" /></svg>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    /* Other Activity - Single Centered Icon (Default User) */
+                    <div className="absolute left-0 z-10 w-10 h-10 rounded-[10.28px] border-2 border-background bg-muted overflow-hidden shadow-lg">
+                      <Image
+                        src={activity.user?.profilePicture || `https://avatar.vercel.sh/${activity.user?.username || 'user'}`}
+                        alt={activity.user?.username || "User"}
+                        width={40}
+                        height={40}
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    {/* Target/App Logo (Front) */}
-                    <div className="absolute left-6 z-20 w-10 h-10 rounded-[10.28px] border-2 border-background bg-card flex items-center justify-center overflow-hidden shadow-lg">
-                      <div className="w-6 h-6 text-foreground">
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" /></svg>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  /* Shared Activity - Single Centered Icon */
-                  <div className="absolute left-0 z-10 w-10 h-10 rounded-[10.28px] bg-primary flex items-center justify-center border-2 border-background shadow-lg">
-                    <span className="text-primary-foreground font-bold text-sm">ts</span>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              {/* Text Content */}
-              <div className="flex flex-wrap items-center gap-x-1.5 text-[13px] font-inter leading-relaxed">
-                <span className="text-foreground font-medium">{activity.user}</span>
-                <span className="text-muted-foreground">
-                  {activity.action}
-                </span>
+                {/* Text Content */}
+                <div className="flex flex-wrap items-center gap-x-1.5 text-[13px] font-inter leading-relaxed">
+                  <span className="text-foreground font-medium">
+                    {activity.user?.firstName ? `${activity.user.firstName} ${activity.user.lastName}` : activity.user?.username}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {getActivityActionText(activity.type)}
+                  </span>
 
-                {activity.type === 'awarded' && (
-                  <>
-                    <span className="text-foreground font-medium">
-                      {activity.target}
+                  {/* Target */}
+                  <span className="text-foreground font-medium truncate max-w-[150px]">
+                    {activity.bounty?.title || activity.metadata?.bountyTitle || "a bounty"}
+                  </span>
+
+                  {(activity.metadata?.reward) && (
+                    <span className="text-primary font-bold">
+                      {activity.metadata.reward} {activity.metadata.currency}
                     </span>
-                    <span className="text-muted-foreground">a</span>
-                  </>
-                )}
+                  )}
 
-                <span className="text-primary font-bold">
-                  {activity.amount}
-                </span>
-                <span className="text-muted-foreground text-xs ml-1">
-                  {activity.time}
-                </span>
+                  <span className="text-muted-foreground text-xs ml-1">
+                    {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>

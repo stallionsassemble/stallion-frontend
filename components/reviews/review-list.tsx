@@ -26,21 +26,17 @@ export function ReviewList({ userId, username }: ReviewListProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
-            <MessageSquare className="w-4 h-4 text-primary" />
-          </div>
-          Reviews
-          <span className="text-xs font-normal text-muted-foreground ml-1">({reviews.length})</span>
+    <div className="border-[0.68px] border-primary/20 rounded-xl p-4 md:p-6 bg-background">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-bold font-inter">
+          Reviews <span className="text-muted-foreground text-sm font-normal ml-1">({reviews.length})</span>
         </h3>
         {!isOwnProfile && currentUser && (
           <CreateReviewDialog userId={userId} username={username} />
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-0"> {/* Removed gap because items have their own padding/border */}
         {reviews.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center bg-primary/5 rounded-xl border border-dashed border-primary/20">
             <MessageSquare className="w-8 h-8 text-muted-foreground mb-2" />

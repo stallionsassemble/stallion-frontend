@@ -17,7 +17,7 @@ export default function MessagesPage() {
 
   return (
     <div className="flex h-full w-full bg-background p-4 md:p-0 overflow-hidden animate-in fade-in duration-500">
-      <div className="flex flex-col w-full gap-6">
+      <div className="flex flex-col w-full h-full gap-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-bold text-foreground font-inter">
             Messages
@@ -27,11 +27,10 @@ export default function MessagesPage() {
           </p>
         </div>
 
-        <div className="flex flex-1 w-full border-[0.68px] border-primary/50 rounded-lg overflow-hidden bg-card/20 shadow-sm">
+        <div className="flex w-full h-[calc(100vh-140px)] border-[0.68px] border-primary/50 rounded-lg overflow-hidden bg-card/20 shadow-sm">
           <div
-            className={`${
-              showChat ? 'hidden md:flex' : 'flex'
-            } w-full md:w-auto flex-col h-full`}
+            className={`${showChat ? 'hidden md:flex' : 'flex'
+              } w-full md:w-auto flex-col h-full`}
           >
             {isLoading ? (
               <div className="w-full lg:w-[400px] h-full flex items-center justify-center border-r border-primary/50">
@@ -52,9 +51,8 @@ export default function MessagesPage() {
           </div>
 
           <div
-            className={`${
-              showChat ? 'flex' : 'hidden md:flex'
-            } flex-1 flex-col h-full w-full bg-background/50`}
+            className={`${showChat ? 'flex' : 'hidden md:flex'
+              } flex-1 flex-col h-full w-full bg-background/50`}
           >
             {selectedConversation ? (
               <ChatWindow

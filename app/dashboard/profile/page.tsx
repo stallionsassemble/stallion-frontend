@@ -6,13 +6,15 @@ import { ProfileHeader } from "@/components/profile/profile-header";
 import { ProfileSidebar } from "@/components/profile/profile-sidebar";
 import { ProfileTabs } from "@/components/profile/profile-tabs";
 import { RecentActivity } from "@/components/profile/recent-activity";
-import { ReviewsView } from "@/components/profile/reviews-view";
 import { SkillsSection } from "@/components/profile/skills-section";
+import { ReviewList } from "@/components/reviews/review-list";
+import { useAuth } from "@/lib/store/use-auth";
 import { useSearchParams } from "next/navigation";
 
 import { Suspense } from "react";
 
 function ProfileContent() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab") || "overview";
 
@@ -35,7 +37,10 @@ function ProfileContent() {
 
           {tab === "portfolio" && <PortfolioView />}
 
-          {tab === "reviews" && <ReviewsView />}
+
+          {tab === "reviews" && user && (
+            <ReviewList userId={user.id} username={user.username || ""} />
+          )}
         </div>
 
         {/* Sidebar */}

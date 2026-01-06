@@ -4,9 +4,10 @@ import { BountyCard } from "@/components/bounties/bounty-card";
 import { PageFilters } from "@/components/bounties/page-filters";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
+import { useMemo, useState } from "react";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { useGetAllBounties } from "@/lib/api/bounties/queries";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { useAuth } from "@/lib/store/use-auth";
@@ -52,7 +53,7 @@ export default function BountiesPage() {
   const { data, isLoading } = useGetAllBounties({
     page: currentPage,
     limit: Number(rowsPerPage),
-    skills: activeTab !== "All" ? [activeTab.toLowerCase()] : undefined,
+    skills: activeTab !== "All" ? activeTab : undefined,
     search: debouncedSearch,
     sortBy,
     sortOrder,
@@ -60,9 +61,25 @@ export default function BountiesPage() {
     ownerId: filterOwnerId,
   });
 
+  // Fetch all bounties to derive available skills (filters) so they don't disappear when filtering
+  const { data: allBountiesData } = useGetAllBounties({
+    limit: 100,
+    status: 'ACTIVE'
+  });
+
   const bounties = data?.data || [];
   const meta = data?.meta;
   const totalPages = meta?.totalPages || 1;
+
+  // Derive unique skills from ALL fetched bounties (not just filtered ones)
+  const uniqueSkills = useMemo(() => {
+    const list = allBountiesData?.data || [];
+    const skills = new Set<string>();
+    list.forEach(b => {
+      b.skills?.forEach(s => skills.add(s));
+    });
+    return Array.from(skills).sort();
+  }, [allBountiesData]);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -98,6 +115,7 @@ export default function BountiesPage() {
         onStatusChange={(status) => { setActiveStatus(status); setCurrentPage(1); }}
         type="BOUNTY"
         count={meta?.total || 0}
+        availableSkills={uniqueSkills}
       />
 
       {isLoading ? (
@@ -124,9 +142,12 @@ export default function BountiesPage() {
             />
           ))}
           {!isLoading && bounties.length === 0 && (
-            <div className="col-span-full text-center py-20 text-muted-foreground">
-              No bounties found.
-            </div>
+            <EmptyState
+              title="No bounties found"
+              description="Try adjusting your filters or search to find what you're looking for."
+              className="col-span-full py-20 flex flex-col items-center justify-center text-center"
+              icon={Search}
+            />
           )}
         </div>
       )}

@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { CircleCheck, Search, SlidersHorizontal } from "lucide-react";
 
 interface PageFiltersProps {
   activeTab: string;
@@ -10,8 +10,10 @@ interface PageFiltersProps {
   onSearch?: (term: string) => void;
   onSortChange?: (sort: string) => void;
   onStatusChange?: (status: string) => void;
+  onTypeChange?: (type: string) => void;
   type?: "BOUNTY" | "PROJECT";
   count?: number;
+  availableSkills?: string[];
 }
 
 export function PageFilters({
@@ -20,10 +22,13 @@ export function PageFilters({
   onSearch,
   onSortChange,
   onStatusChange,
+  onTypeChange,
   type = "BOUNTY",
-  count = 8
+  count = 8,
+  availableSkills = []
 }: PageFiltersProps) {
-  const categories = ["All", "Design", "Development", "Content", "Marketing", "Research", "Other"];
+  // Use dynamic skills if provided, otherwise default to a basic list or empty + All
+  const categories = ["All", ...availableSkills].filter((v, i, a) => a.indexOf(v) === i); // Ensure unique just in case
   const typeLabel = type === "PROJECT" ? "Projects" : "Bounties";
 
   return (
@@ -52,6 +57,9 @@ export function PageFilters({
                   : "bg-secondary border-border text-muted-foreground hover:text-foreground hover:bg-secondary/80"
                   }`}
               >
+                {activeTab === cat && (
+                  <CircleCheck className="mr-2 h-4 w-4 fill-white text-primary" />
+                )}
                 {cat}
               </Button>
             ))}
@@ -67,6 +75,22 @@ export function PageFilters({
         <span>Showing {count} {typeLabel}</span>
 
         <div className="flex items-center gap-4">
+          {/* Project Type Filter (Only for Projects) */}
+          {type === "PROJECT" && (
+            <div className="flex items-center gap-2">
+              <span>Type:</span>
+              <select
+                className="bg-transparent text-foreground font-medium focus:outline-none cursor-pointer"
+                onChange={(e) => onTypeChange?.(e.target.value)}
+                defaultValue="ALL"
+              >
+                <option value="ALL" className="bg-card">All Types</option>
+                <option value="GIG" className="bg-card">Gigs</option>
+                <option value="JOB" className="bg-card">Jobs</option>
+              </select>
+            </div>
+          )}
+
           {/* Status Filter */}
           <div className="flex items-center gap-2">
             <span>Status:</span>
@@ -75,10 +99,13 @@ export function PageFilters({
               onChange={(e) => onStatusChange?.(e.target.value)}
               defaultValue="ACTIVE"
             >
-              <option value="ALL" className="bg-card">All</option>
+              <option value="ALL" className="bg-card">All Status</option>
               <option value="ACTIVE" className="bg-card">Active</option>
+              <option value="OPEN" className="bg-card">Open</option>
+              <option value="IN_PROGRESS" className="bg-card">In Progress</option>
               <option value="COMPLETED" className="bg-card">Completed</option>
-              <option value="CLOSED" className="bg-card">Closed</option>
+              {type === "BOUNTY" && <option value="CLOSED" className="bg-card">Closed</option>}
+              {type === "PROJECT" && <option value="CANCELLED" className="bg-card">Cancelled</option>}
             </select>
           </div>
 

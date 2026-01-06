@@ -53,10 +53,6 @@ export function BountyCard({
       {/* 1. Header: Logo + Company */}
       <div className="flex items-center gap-3">
         <div className="h-[48px] w-[48px] shrink-0 overflow-hidden rounded-full bg-background flex items-center justify-center">
-          {/* Assuming logo is black on transparent, user image shows White 'S' on Dark. 
-               The code previously had bg-white/5. 
-               Image shows a very clear White Logo. 
-               If the src is an image file, I'll render it. */}
           <Image
             src={logo}
             width={48}
@@ -75,7 +71,7 @@ export function BountyCard({
             {title}
           </h3>
         </Link>
-        <p className="line-clamp-2 text-[10px] font-inter text-muted-foreground font-light leading-relaxed">
+        <p className="line-clamp-2 text-[12px] font-inter text-muted-foreground font-light leading-relaxed">
           {description}
         </p>
       </div>

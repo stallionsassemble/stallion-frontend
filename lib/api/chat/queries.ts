@@ -1,7 +1,7 @@
-'use client';
+'use client'
 
-import { useQuery } from '@tanstack/react-query';
-import { chatService } from './index';
+import { useQuery } from '@tanstack/react-query'
+import { chatService } from './index'
 
 export const chatKeys = {
   all: ['chat'] as const,
@@ -10,13 +10,13 @@ export const chatKeys = {
     [...chatKeys.all, 'messages', conversationId] as const,
   unreadCount: (conversationId: string) =>
     [...chatKeys.all, 'unreadCount', conversationId] as const,
-};
+}
 
 export function useConversations() {
   return useQuery({
     queryKey: chatKeys.conversations(),
     queryFn: () => chatService.getConversations(),
-  });
+  })
 }
 
 export function useMessages(conversationId: string) {
@@ -25,7 +25,7 @@ export function useMessages(conversationId: string) {
     queryFn: () => chatService.getMessages(conversationId),
     enabled: !!conversationId,
     staleTime: 0,
-  });
+  })
 }
 
 export function useUnreadCount(conversationId: string) {
@@ -33,7 +33,8 @@ export function useUnreadCount(conversationId: string) {
     queryKey: chatKeys.unreadCount(conversationId),
     queryFn: () => chatService.getUnreadCount(conversationId),
     enabled: !!conversationId,
-  });
+    refetchInterval: 5000,
+  })
 }
 
 export function useSearchMessages(conversationId: string, query: string) {
@@ -41,5 +42,5 @@ export function useSearchMessages(conversationId: string, query: string) {
     queryKey: [...chatKeys.messages(conversationId), 'search', query],
     queryFn: () => chatService.searchMessages(conversationId, query),
     enabled: !!conversationId && !!query,
-  });
+  })
 }

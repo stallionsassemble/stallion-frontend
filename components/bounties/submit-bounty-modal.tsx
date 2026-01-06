@@ -6,9 +6,15 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 // ... existing imports
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/lib/store/use-auth";
 import { BountySubmissionField } from "@/lib/types/bounties";
-import { Attachment, ProjectApplication } from "@/lib/types/project";
+import { Attachment, ApplyProjectResponse as ProjectApplication } from "@/lib/types/project";
+import { CongratulationsModal } from "./congratulations-modal";
 
 interface SubmitModalProps {
   children: React.ReactNode;

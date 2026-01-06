@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { useGetMyBountySubmissions } from "@/lib/api/bounties/queries";
 import { useGetMyApplications } from "@/lib/api/projects/queries";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
@@ -16,10 +17,14 @@ import { Loader2 } from "lucide-react";
 export default function MySubmissionsPage() {
   const [activeTab, setActiveTab] = useState("All");
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
-  const categories = ["All", "Design", "Development", "Content", "Marketing", "Research", "Other"];
+  const categories = ["All", "Bounties", "Projects", "Design", "Development", "Content", "Marketing", "Research", "Other"];
 
   // Fetch Data
   const { data: projectApps, isLoading: isLoadingProjects } = useGetMyApplications();
+  const { data: bountySubmissions, isLoading: isLoadingBounties } = useGetMyBountySubmissions();
+
+  console.log("Projects:", projectApps);
+  console.log("Bounties:", bountySubmissions);
 
   const allSubmissions = useMemo(() => {
     const projects = (projectApps || []).map((app: any) => ({
@@ -40,10 +45,30 @@ export default function MySubmissionsPage() {
       }
     }));
 
-    return projects.sort((a: any, b: any) =>
+    const bounties = (bountySubmissions || []).map((sub: any) => ({
+      ...sub,
+      details: {
+        id: sub.id,
+        source: 'BOUNTY',
+        title: sub.bounty?.title || "Untitled Bounty",
+        description: sub.bounty?.description, // Or short description if available
+        orgName: sub.bounty?.creator?.companyName || sub.bounty?.creator?.username || "Unknown",
+        logo: sub.bounty?.creator?.profilePicture || "/assets/icons/sdollar.png",
+        amount: sub.bounty?.rewards?.[0]?.amount || "0", // Assuming single reward for now or taking first
+        currency: sub.bounty?.rewards?.[0]?.currency || "USDC",
+        status: sub.status,
+        date: sub.submittedAt || sub.createdAt,
+        updated: sub.updatedAt,
+        skills: sub.bounty?.skills || [] // If bounty has skills
+      }
+    }));
+
+    const merged = [...projects, ...bounties];
+
+    return merged.sort((a: any, b: any) =>
       new Date(b.details.date).getTime() - new Date(a.details.date).getTime()
     );
-  }, [projectApps]);
+  }, [projectApps, bountySubmissions]);
 
   // Pagination Logic
   const [rowsPerPage, setRowsPerPage] = useState("10");
@@ -54,14 +79,16 @@ export default function MySubmissionsPage() {
     return allSubmissions.filter(s =>
       s.details.title?.toLowerCase().includes(activeTab.toLowerCase()) ||
       s.details.skills?.some((k: string) => k.toLowerCase().includes(activeTab.toLowerCase())) ||
-      s.details.status.toLowerCase().includes(activeTab.toLowerCase())
+      s.details.status.toLowerCase().includes(activeTab.toLowerCase()) ||
+      (activeTab === "Bounties" && s.details.source === "BOUNTY") ||
+      (activeTab === "Projects" && s.details.source === "PROJECT")
     );
   }, [allSubmissions, activeTab]);
 
   const totalPages = Math.ceil(filteredSubmissions.length / Number(rowsPerPage)) || 1;
   const paginatedSubmissions = filteredSubmissions.slice((currentPage - 1) * Number(rowsPerPage), currentPage * Number(rowsPerPage));
 
-  const isLoading = isLoadingProjects;
+  const isLoading = isLoadingProjects || isLoadingBounties;
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {

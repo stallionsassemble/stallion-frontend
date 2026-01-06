@@ -1,9 +1,12 @@
+"use client"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { useBountyDiscussions, useCreateDiscussion, useProjectDiscussions } from "@/lib/api/discussions/queries"
-import { MessageSquarePlus, MessageSquareX } from "lucide-react"
+import { useAuth } from "@/lib/store/use-auth"
+import { MessageSquare, MessageSquareX } from "lucide-react"
+import Image from "next/image"
 import { useState } from "react"
 import { DiscussionItem } from "./discussion-item"
 
@@ -14,6 +17,7 @@ interface DiscussionListProps {
 
 export function DiscussionList({ id, type }: DiscussionListProps) {
   const [newComment, setNewComment] = useState("")
+  const { user } = useAuth()
 
   const { data: discussions, isLoading, isError } = type === 'BOUNTY'
     ? useBountyDiscussions(id)
@@ -63,28 +67,38 @@ export function DiscussionList({ id, type }: DiscussionListProps) {
 
   return (
     <div className="space-y-8 mt-6">
-      <div className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          Discussion
-          <span className="text-muted-foreground font-normal text-sm ml-1">
-            ({discussions?.length || 0})
-          </span>
-        </h3>
+      <div className="flex flex-col gap-6">
+        {/* Header */}
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-bold text-foreground">
+            Discussion <span className="text-muted-foreground font-normal text-base ml-1">({discussions?.length || 0} comments)</span>
+          </h3>
+        </div>
 
+        {/* Input Area */}
         <div className="flex gap-4 items-start">
-          {/* We could show user avatar here if we wanted */}
-          <div className="flex-1 flex flex-col gap-2">
+          <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-muted border border-border">
+            <Image
+              src={user?.profilePicture || `https://avatar.vercel.sh/${user?.username || 'guest'}`}
+              width={40}
+              height={40}
+              alt={user?.username || "User"}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="flex-1 space-y-3">
             <Textarea
-              placeholder="Ask a question or share your thoughts..."
+              placeholder="Ask Question or leave comment...."
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              className="min-h-[100px] resize-y"
+              className="min-h-[100px] resize-y bg-background border-primary/30 rounded-xl focus-visible:ring-primary/50 text-base p-4"
             />
-            <div className="flex justify-end">
+            <div className="flex justify-start">
               <Button
                 onClick={handleSubmit}
                 disabled={!newComment.trim() || createDiscussion.isPending}
-                className="w-full md:w-auto"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6 rounded-lg"
               >
                 {createDiscussion.isPending ? 'Posting...' : 'Post Comment'}
               </Button>
@@ -93,11 +107,10 @@ export function DiscussionList({ id, type }: DiscussionListProps) {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6 pt-2">
         {discussions?.length === 0 ? (
-          <div className="text-center py-10 border border-dashed rounded-lg bg-muted/20">
-            <MessageSquarePlus className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
-            <p className="text-muted-foreground">No discussions yet. Be the first to start the conversation!</p>
+          <div className="text-center py-10">
+            <p className="text-muted-foreground">No discussions yet.</p>
           </div>
         ) : (
           discussions?.map(discussion => (
@@ -105,7 +118,6 @@ export function DiscussionList({ id, type }: DiscussionListProps) {
               key={discussion.id}
               item={discussion}
               type={type}
-            // Root items don't have parentId passed
             />
           ))
         )}
