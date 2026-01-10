@@ -65,9 +65,9 @@ export function Header() {
         return "Community Forum";
       case "/dashboard/leaderboard":
         return "Leaderboard";
-      case "/dashboard/project-owner/projects":
+      case "/dashboard/owner/projects":
         return "Project Details";
-      case "/dashboard/project-owner/bounties":
+      case "/dashboard/owner/bounties":
         return "Bounty Details";
       default:
         // Handle dynamic routes (wildcard logic)
@@ -77,11 +77,15 @@ export function Header() {
         if (segments.length >= 3 && segments[0] === 'dashboard') {
           const section = segments[1];
 
+          if (section === 'owner') {
+            const subSection = segments[2];
+            if (subSection === 'bounties') return 'Bounty Details';
+            if (subSection === 'projects') return 'Project Details';
+          }
+
           switch (section) {
             case 'projects': return 'Project Details';
             case 'bounties': return 'Bounty Details';
-            case 'project-owner/projects': return 'Project Details';
-            case 'project-owner/bounties': return 'Bounty Details';
             case 'forums': return 'Forum Discussion';
             case 'profile': return 'User Profile';
             case 'submissions': return 'Submission Details';

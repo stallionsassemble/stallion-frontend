@@ -31,7 +31,7 @@ export function OwnerProfileHeader({ userData }: OwnerProfileHeaderProps) {
   };
 
   const handleEditProfile = () => {
-    router.push("/dashboard/project-owner/settings?tab=profile");
+    router.push("/dashboard/owner/settings?tab=profile");
   };
 
   return (

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMessages, useSearchMessages } from '@/lib/api/chat/queries';
 import { uploadService } from '@/lib/api/upload';
+import { useGetUser } from '@/lib/api/users/queries';
 import { useChatSocket } from '@/lib/hooks/use-chat-socket';
 import { useAuth } from '@/lib/store/use-auth';
 import { Conversation, ConversationSummary, Message, MessageAttachment } from '@/lib/types';
@@ -84,6 +85,13 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   };
 
   const partner = getPartner(conversation.participants);
+
+  // Fetch full user details to ensure we have company info
+  const { data: fullPartner } = useGetUser(partner?.id || '');
+
+  // Use fetched data if available, otherwise fallback to conversation participant data
+  const displayPartner = fullPartner || partner;
+
   const partnerParticipant = conversation.participants.find(
     (p) => p.userId !== currentUser?.id
   );
@@ -281,14 +289,18 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           </Button>
           <div className="h-10 w-10 rounded-full overflow-hidden border border-primary/20 bg-muted">
             <div className="flex items-center justify-center w-full h-full">
-              <img src={partner.profilePicture} alt={partner.firstName} width={40} height={40} />
+              <img
+                src={displayPartner.companyLogo || displayPartner.profilePicture}
+                alt={displayPartner.companyName || displayPartner.firstName}
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
           <div className="flex flex-col">
             <span className="text-[16px] font-bold text-foreground font-inter">
-              {partner.firstName
-                ? `${partner.firstName} ${partner.lastName || ''}`
-                : partner.username}
+              {displayPartner.companyName || (displayPartner.firstName
+                ? `${displayPartner.firstName} ${displayPartner.lastName || ''}`
+                : displayPartner.username)}
             </span>
             <div className="flex items-center gap-1.5">
               {Object.values(typingUsers).some(Boolean) ? (
@@ -334,8 +346,6 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
         </div>
       )}
 
-      {/* Messages Area */}
-      {/* Messages Area */}
       {/* Messages Area */}
       {isLoading ? (
         <div className="flex-1 flex items-center justify-center">

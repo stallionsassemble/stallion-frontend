@@ -64,7 +64,7 @@ export function MessageBubble({
         {replyToMessage && !isDeleted && (
           <div className="mb-2 pl-2 border-l-2 border-primary/50 text-xs text-muted-foreground bg-background/20 rounded-r p-1 w-full opacity-80">
             <span className="font-bold block mb-0.5">
-              {replyToMessage.sender?.firstName || replyToMessage.sender?.username || 'User'}
+              {replyToMessage.sender?.companyName || replyToMessage.sender?.firstName || replyToMessage.sender?.username || 'User'}
             </span>
             <span className="line-clamp-1 truncate block">
               {replyToMessage.content || (replyToMessage.attachments?.length ? 'Attachment' : 'Message')}

@@ -217,7 +217,7 @@ export default function OwnerProjectsPage() {
             paginatedProjects.map((project) => (
               <Link
                 key={project.id}
-                href={`/dashboard/project-owner/projects/${project.id}`}
+                href={`/dashboard/owner/projects/${project.id}`}
                 className="block h-full"
               >
                 <ProjectCard

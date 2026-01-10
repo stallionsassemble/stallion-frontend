@@ -1,0 +1,470 @@
+import { MarkdownEditor } from "@/components/shared/markdown-editor";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCreateBounty, useUpdateBounty } from "@/lib/api/bounties/queries";
+import { useGetWalletBalances } from "@/lib/api/wallet/queries";
+import { Bounty } from "@/lib/types/bounties";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { CalendarIcon, Loader2, Plus, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { InsufficientBalanceModal } from "./insufficient-balance-modal";
+
+interface CreateBountyModalProps {
+  children?: React.ReactNode;
+  existingBounty?: Bounty;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+const DEFAULT_TAGS = ["Frontend", "Backend", "Ui/UX Design", "Writing", "Digital Marketing", "Mobile", "Web3"];
+
+export function CreateBountyModal({ children, existingBounty, open: controlledOpen, onOpenChange: setControlledOpen }: CreateBountyModalProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = setControlledOpen !== undefined ? setControlledOpen : setInternalOpen;
+
+  const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
+
+  // Form State
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [requirements, setRequirements] = useState("");
+  const [deliverables, setDeliverables] = useState<string[]>([]);
+  const [deliverableInput, setDeliverableInput] = useState("");
+  const [budget, setBudget] = useState("");
+  const [currency, setCurrency] = useState("USDC");
+  const [deadline, setDeadline] = useState<Date | undefined>(undefined);
+  const [announcementDate, setAnnouncementDate] = useState<Date | undefined>(undefined);
+
+  // Prize Pool
+  const [firstPlace, setFirstPlace] = useState("");
+  const [secondPlace, setSecondPlace] = useState("");
+  const [thirdPlace, setThirdPlace] = useState("");
+
+  // Tags
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+
+  // Documents/Links (simplified for now to just links per design)
+  const [docLink, setDocLink] = useState("");
+  const [docLinks, setDocLinks] = useState<string[]>([]);
+
+  const { data: walletData } = useGetWalletBalances();
+  const { mutate: createBounty, isPending: isCreating } = useCreateBounty();
+  const { mutate: updateBounty, isPending: isUpdating } = useUpdateBounty();
+
+  const isPending = isCreating || isUpdating;
+
+  useEffect(() => {
+    if (existingBounty && isOpen) {
+      setTitle(existingBounty.title);
+      setDescription(existingBounty.description);
+      // Requirements usually array in backend but editor expects string or we join them
+      setRequirements(existingBounty.requirements?.join("\n") || "");
+      setDeliverables(existingBounty.deliverables || []);
+      setBudget(existingBounty.reward);
+      setCurrency(existingBounty.rewardCurrency);
+      setDeadline(existingBounty.submissionDeadline ? new Date(existingBounty.submissionDeadline) : undefined);
+      setAnnouncementDate(existingBounty.judgingDeadline ? new Date(existingBounty.judgingDeadline) : undefined);
+      setSelectedTags(existingBounty.skills || []);
+
+      // Distro
+      if (existingBounty.distribution) {
+        // rough map back
+        existingBounty.distribution.forEach((d) => {
+          const amount = (Number(d.percentage) / 100) * Number(existingBounty.reward);
+          if (d.rank === 1) setFirstPlace(amount.toString());
+          if (d.rank === 2) setSecondPlace(amount.toString());
+          if (d.rank === 3) setThirdPlace(amount.toString());
+        });
+      }
+    }
+  }, [existingBounty, isOpen]);
+
+  const handleAddDeliverable = () => {
+    if (deliverableInput.trim()) {
+      setDeliverables([...deliverables, deliverableInput.trim()]);
+      setDeliverableInput("");
+    }
+  };
+
+  const handleAddTag = (tag: string) => {
+    if (!selectedTags.includes(tag)) {
+      if (selectedTags.length >= 5) {
+        toast.error("Max 5 tags allowed");
+        return;
+      }
+      setSelectedTags([...selectedTags, tag]);
+    }
+    setTagInput("");
+  };
+
+  const handleAddDocLink = () => {
+    if (docLink.trim()) {
+      setDocLinks([...docLinks, docLink.trim()]);
+      setDocLink("");
+    }
+  };
+
+
+  const handleSubmit = () => {
+    // Validation
+    if (!title || !description || !budget || !deadline) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    const totalBudget = Number(budget.replace(/,/g, ''));
+    if (isNaN(totalBudget) || totalBudget <= 0) {
+      toast.error("Invalid budget amount");
+      return;
+    }
+
+    // Check Balance
+    const balance = walletData?.balances.find(b => b.currency === currency)?.availableBalance || 0;
+
+    // For update, we might not strictly need full balance if already escrowed, 
+    // but simplifying to always check for now or maybe only for CREATE?
+    // Let's assume Create needs full balance. Update might need difference? 
+    // For MVP, lets enforce balance check on Create.
+    if (!existingBounty && balance < totalBudget) {
+      setShowInsufficientBalance(true);
+      return;
+    }
+
+    // Prepare distribution
+    const first = Number(firstPlace) || 0;
+    const second = Number(secondPlace) || 0;
+    const third = Number(thirdPlace) || 0;
+    const distroTotal = first + second + third;
+
+    if (distroTotal > totalBudget) {
+      toast.error("Prize pool exceeds total budget");
+      return;
+    }
+
+    // Calculate percentages
+    const distribution = [
+      { rank: 1, percentage: (first / totalBudget) * 100 },
+      { rank: 2, percentage: (second / totalBudget) * 100 },
+      { rank: 3, percentage: (third / totalBudget) * 100 },
+    ].filter(d => d.percentage > 0);
+
+
+    const payload: any = {
+      title,
+      shortDescription: description.substring(0, 100), // Simple truncate for short desc
+      description, // requirements usually separate in UI but backend might want them merged or separate
+      requirements: requirements.split('\n').filter(Boolean),
+      deliverables,
+      skills: selectedTags,
+      reward: totalBudget,
+      rewardCurrency: currency,
+      submissionDeadline: deadline.toISOString(),
+      judgingDeadline: announcementDate?.toISOString() || new Date(deadline.getTime() + 86400000).toISOString(),
+      distribution,
+      // Attachments/Links would go here if backend supported
+    };
+
+    if (existingBounty) {
+      updateBounty({ id: existingBounty.id, payload }, {
+        onSuccess: () => {
+          setOpen(false);
+        }
+      });
+    } else {
+      createBounty(payload, {
+        onSuccess: () => {
+          setOpen(false);
+          // Reset form
+          setTitle("");
+          setDescription("");
+          setBudget("");
+        }
+      });
+    }
+  };
+
+  return (
+    <>
+      <Dialog open={isOpen} onOpenChange={setOpen}>
+        {children && <DialogTrigger asChild>{children}</DialogTrigger>}
+        <DialogContent className="bg-card border-border sm:max-w-[800px] max-h-[90vh] overflow-y-auto p-0 gap-0">
+          <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-card z-10">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Create New Bounty</h2>
+              <p className="text-xs text-muted-foreground mt-1">Launch a competition where contributors submit solutions.</p>
+            </div>
+            {/* Close button handled by Dialog primitive usually, but we can have custom one if needed */}
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Title */}
+            <div className="space-y-2">
+              <Label className="text-foreground">Bounty Title <span className="text-destructive">*</span></Label>
+              <Input
+                placeholder="e.g Bounty Hub"
+                className="bg-transparent border-input text-foreground placeholder:text-muted-foreground"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label className="text-foreground">Description <span className="text-destructive">*</span></Label>
+              <div className="min-h-[150px] border border-input rounded-md bg-transparent">
+                <MarkdownEditor
+                  value={description}
+                  onChange={setDescription}
+                  className="bg-transparent border-none text-foreground min-h-[140px]"
+                />
+              </div>
+            </div>
+
+            {/* Requirements */}
+            <div className="space-y-2">
+              <Label className="text-foreground">Requirements <span className="text-destructive">*</span></Label>
+              <div className="min-h-[150px] border border-input rounded-md bg-transparent">
+                <MarkdownEditor
+                  value={requirements}
+                  onChange={setRequirements}
+                  className="bg-transparent border-none text-foreground min-h-[140px]"
+                />
+              </div>
+            </div>
+
+            {/* Deliverables */}
+            <div className="space-y-2">
+              <Label className="text-foreground">Deliverables <span className="text-destructive">*</span></Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Link title"
+                  className="bg-transparent border-input text-foreground"
+                  value={deliverableInput}
+                  onChange={(e) => setDeliverableInput(e.target.value)}
+                />
+                <Button variant="secondary" onClick={handleAddDeliverable} className="bg-secondary hover:bg-secondary/80 border border-input">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {deliverables.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {deliverables.map((d, i) => (
+                    <Badge key={i} variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/80 gap-2">
+                      {d} <X className="h-3 w-3 cursor-pointer" onClick={() => setDeliverables(prev => prev.filter((_, idx) => idx !== i))} />
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Budget */}
+            <div className="space-y-2">
+              <Label className="text-foreground">Total Budget <span className="text-destructive">*</span></Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    placeholder="20,000"
+                    className="bg-transparent border-input text-foreground pl-7"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    type="number"
+                  />
+                </div>
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger className="w-[100px] bg-transparent border-input text-foreground">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border text-foreground">
+                    <SelectItem value="USDC">USDC</SelectItem>
+                    <SelectItem value="XLM">XLM</SelectItem>
+                    <SelectItem value="EURC">EURC</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Dates */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-foreground">Deadline <span className="text-destructive">*</span></Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !deadline && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {deadline ? format(deadline, "PPP") : "Select date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-card border-border">
+                    <Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus className="bg-card text-foreground" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">Announcement Date <span className="text-destructive">*</span></Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !announcementDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {announcementDate ? format(announcementDate, "PPP") : "Select date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-card border-border">
+                    <Calendar mode="single" selected={announcementDate} onSelect={setAnnouncementDate} initialFocus className="bg-card text-foreground" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            {/* Prize Pool */}
+            <div className="space-y-4">
+              <Label className="text-foreground">Prize Pool ({Number(budget).toLocaleString()} {currency}) <span className="text-destructive">*</span></Label>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-transparent border border-input rounded-md p-2 px-3 text-sm text-foreground flex items-center">
+                  1st Place
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    placeholder="10,000"
+                    className="bg-transparent border-input text-foreground pl-7"
+                    value={firstPlace}
+                    onChange={(e) => setFirstPlace(e.target.value)}
+                    type="number"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-transparent border border-input rounded-md p-2 px-3 text-sm text-foreground flex items-center">
+                  2nd Place
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    placeholder="7,000"
+                    className="bg-transparent border-input text-foreground pl-7"
+                    value={secondPlace}
+                    onChange={(e) => setSecondPlace(e.target.value)}
+                    type="number"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-transparent border border-input rounded-md p-2 px-3 text-sm text-foreground flex items-center">
+                  3rd Place
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    placeholder="3,000"
+                    className="bg-transparent border-input text-foreground pl-7"
+                    value={thirdPlace}
+                    onChange={(e) => setThirdPlace(e.target.value)}
+                    type="number"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-2">
+              <Label className="text-foreground">Tags <span className="text-destructive">*</span></Label>
+              <Input
+                placeholder="Select Tags"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && tagInput) {
+                    handleAddTag(tagInput);
+                  }
+                }}
+                className="bg-transparent border-input text-foreground"
+              />
+              <div className="flex flex-wrap gap-2 mt-2">
+                {DEFAULT_TAGS.map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => handleAddTag(tag)}
+                    className={cn(
+                      "text-xs px-3 py-1 rounded-full border transition-colors",
+                      selectedTags.includes(tag)
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-transparent text-foreground border-input hover:border-foreground/50"
+                    )}
+                  >
+                    {tag} {selectedTags.includes(tag) ? '-' : '+'}
+                  </button>
+                ))}
+                {selectedTags.filter(t => !DEFAULT_TAGS.includes(t)).map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}
+                    className="bg-primary text-primary-foreground border-primary text-xs px-3 py-1 rounded-full border transition-colors"
+                  >
+                    {tag} -
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Document Link */}
+            <div className="space-y-2">
+              <Label className="text-foreground">Bounty Document <span className="text-destructive">*</span></Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Link title"
+                  className="bg-transparent border-input text-foreground flex-1"
+                />
+                <Input
+                  placeholder="https://"
+                  className="bg-transparent border-input text-foreground flex-[2]"
+                  value={docLink}
+                  onChange={(e) => setDocLink(e.target.value)}
+                />
+                <Button variant="secondary" onClick={handleAddDocLink} className="bg-secondary hover:bg-secondary/80 border border-input">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {docLinks.map((link, i) => (
+                <div key={i} className="text-sm text-blue-400 flex items-center gap-2">
+                  {link} <X className="h-3 w-3 cursor-pointer text-foreground" onClick={() => setDocLinks(prev => prev.filter((_, idx) => idx !== i))} />
+                </div>
+              ))}
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              onClick={handleSubmit}
+              disabled={isPending}
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-base rounded-lg mt-4"
+            >
+              {isPending ? <Loader2 className="animate-spin mr-2" /> : <Plus className="mr-2 h-4 w-4" />}
+              {existingBounty ? "Update Bounty" : "Create Bounty"}
+            </Button>
+
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <InsufficientBalanceModal
+        isOpen={showInsufficientBalance}
+        onClose={() => setShowInsufficientBalance(false)}
+        requiredAmount={budget}
+        currency={currency}
+      />
+    </>
+  );
+}

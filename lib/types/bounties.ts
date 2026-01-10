@@ -182,7 +182,7 @@ export interface BountyWinnersResponseDto {
 }
 
 export interface SelectWinnersDto {
-  winners: string[] // Array of submission or user IDs
+  winners: string[] // Array of user IDs
 }
 
 export interface SelectWinnersResponseDto {

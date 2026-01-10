@@ -202,7 +202,7 @@ export default function OwnerBountiesPage() {
           paginatedBounties.map((bounty) => (
             <Link
               key={bounty.id}
-              href={`/dashboard/project-owner/bounties/${bounty.id}`}
+              href={`/dashboard/owner/bounties/${bounty.id}`}
               className="block h-full"
             >
               <BountyCard

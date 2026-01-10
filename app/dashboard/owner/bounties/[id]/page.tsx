@@ -1,26 +1,41 @@
 'use client'
 
+import { ConfirmWinnersModal } from "@/components/dashboard/owner/confirm-winners-modal";
+import { CreateBountyModal } from "@/components/dashboard/owner/create-bounty-modal";
 import { SubmissionItem } from "@/components/dashboard/owner/submission-item";
 import { SubmissionModal } from "@/components/dashboard/owner/submission-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetBounty, useGetSubmissions } from "@/lib/api/bounties/queries";
+import { useBountyWinners, Winner } from "@/lib/hooks/use-bounty-winners";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ArrowLeft, BadgeDollarSign, Briefcase, Calendar, Clock, Edit, FileText, Filter, Gift, MessageSquare, Share2, Users } from "lucide-react";
+import { ArrowLeft, BadgeDollarSign, Briefcase, Calendar, Clock, Edit, FileText, Filter, Gift, MessageSquare, Share2, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function BountyDetailsPage() {
   const params = useParams<{ id: string }>();
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [showConfirmWinnersModal, setShowConfirmWinnersModal] = useState(false);
+  const [initialModalView, setInitialModalView] = useState<'details' | 'selectWinner' | 'requestRevision'>('details');
 
   const { data: bounty, isLoading: isLoadingBounty } = useGetBounty(params.id);
   const { data: submissions = [], isLoading: isLoadingSubmissions } = useGetSubmissions(params.id);
+
+  // Winner management hook
+  const { winners, addWinner, removeWinner, clearWinners } = useBountyWinners(params.id);
 
   if (isLoadingBounty) {
     return <div className="p-10 text-white">Loading Bounty...</div>;
@@ -30,42 +45,104 @@ export default function BountyDetailsPage() {
     return <div className="p-10 text-white">Bounty not found</div>;
   }
 
+  // Get distribution data
+  const distList = bounty.distribution || bounty.rewardDistribution || [];
+  const totalReward = Number(bounty.reward || 0);
+  const requiredPositions = distList.length;
+  const takenPositions = winners.map((w) => w.position);
+  const allPositionsFilled = winners.length >= requiredPositions && requiredPositions > 0;
+
+  // Get user IDs of staged winners
+  const stagedWinnerUserIds = new Set(winners.map((w) => w.userId));
+
   const filteredSubmissions = submissions.filter((sub: any) => {
     if (activeTab === "all") return true;
-    if (activeTab === "review") return sub.status === "PENDING" || sub.status === "UNDER_REVIEW"; // Adjust based on actual API enum
-    if (activeTab === "winners") return sub.status === "ACCEPTED" || sub.status === "WINNER";
+    if (activeTab === "review") return sub.status === "PENDING" || sub.status === "UNDER_REVIEW";
+    if (activeTab === "winners") {
+      // Include API-confirmed winners OR localStorage-staged winners
+      const isApiWinner = sub.status === "ACCEPTED" || sub.status === "WINNER";
+      const isStagedWinner = sub.user?.id && stagedWinnerUserIds.has(sub.user.id);
+      return isApiWinner || isStagedWinner;
+    }
+    if (activeTab === "rejected") return sub.status === "REJECTED";
     return true;
   });
+
+  // Count staged winners for tab label
+  const totalWinnersCount = submissions.filter((s: any) =>
+    (s.status === "ACCEPTED" || s.status === "WINNER") ||
+    (s.user?.id && stagedWinnerUserIds.has(s.user.id))
+  ).length;
 
   const tabs = [
     { id: "all", label: `All Submission (${submissions.length})` },
     { id: "review", label: `In Review (${submissions.filter((s: any) => s.status === "PENDING" || s.status === "UNDER_REVIEW").length})` },
-    { id: "winners", label: `Winners (${submissions.filter((s: any) => s.status === "ACCEPTED" || s.status === "WINNER").length})` }
+    { id: "winners", label: `Winners (${totalWinnersCount})` },
   ];
+
+  const handleShare = () => {
+    const publicUrl = `${window.location.origin}/dashboard/bounties/${params.id}`;
+    navigator.clipboard.writeText(publicUrl);
+    toast.success("Bounty link copied to clipboard!");
+  };
+
+  const handleWinnerSelected = (winner: Winner) => {
+    addWinner(winner);
+  };
+
+  const handleWinnersConfirmed = () => {
+    clearWinners();
+    setShowConfirmWinnersModal(false);
+  };
 
   return (
     <div className="flex flex-col gap-6 h-full max-w-[1600px] mx-auto pb-20 relative">
       <SubmissionModal
         isOpen={!!selectedSubmission}
-        onClose={() => setSelectedSubmission(null)}
+        onClose={() => {
+          setSelectedSubmission(null);
+          setInitialModalView('details');
+        }}
         submission={selectedSubmission}
         bountyTitle={bounty.title}
+        bountyDistribution={distList}
+        totalReward={totalReward}
+        currency={bounty.rewardCurrency}
+        onWinnerSelected={handleWinnerSelected}
+        takenPositions={takenPositions}
+        initialView={initialModalView}
+      />
+
+      <ConfirmWinnersModal
+        isOpen={showConfirmWinnersModal}
+        onClose={() => setShowConfirmWinnersModal(false)}
+        bountyId={params.id}
+        bountyTitle={bounty.title}
+        currency={bounty.rewardCurrency}
+        winners={winners}
+        onConfirmed={handleWinnersConfirmed}
       />
 
       {/* Back Nav */}
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/project-owner/bounties">
+        <Link href="/dashboard/owner/bounties">
           <Button variant="outline" size="sm" className="bg-transparent border-border text-foreground hover:text-white gap-2">
             <ArrowLeft className="h-4 w-4" /> Back to Bounties
           </Button>
         </Link>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* Actions can be dynamic based on owner status */}
-          <Button variant="outline" size="sm" className="bg-transparent border-border text-foreground hover:text-white gap-2">
-            <Edit className="h-4 w-4" /> Edit
-          </Button>
-          <Button variant="outline" size="sm" className="bg-transparent border-border text-foreground hover:text-white gap-2">
+          <CreateBountyModal existingBounty={bounty}>
+            <Button variant="outline" size="sm" className="bg-transparent border-border text-foreground hover:text-white gap-2">
+              <Edit className="h-4 w-4" /> Edit
+            </Button>
+          </CreateBountyModal>
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-transparent border-border text-foreground hover:text-white gap-2"
+            onClick={handleShare}
+          >
             <Share2 className="h-4 w-4" /> Share
           </Button>
         </div>
@@ -93,12 +170,6 @@ export default function BountyDetailsPage() {
                 <Clock className="h-4 w-4 text-primary" />
                 <span className="text-foreground/70">Due {bounty.submissionDeadline ? format(new Date(bounty.submissionDeadline), "MMM dd") : "TBD"}</span>
               </div>
-              {/* 
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="text-foreground/70">Submission Open</span>
-              </div> 
-              */}
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-primary" />
                 <span className="text-foreground/70">{submissions.length} Submissions</span>
@@ -151,7 +222,6 @@ export default function BountyDetailsPage() {
                 </div>
               </CardContent>
             </Card>
-            {/* Escrowed logic if available in Bounty type, else hide or duplicate reward */}
             <Card className="bg-background border-[1.17px] border-border h-[100px] relative overflow-hidden group">
               <CardContent className="p-4 h-full flex items-center justify-between">
                 <div>
@@ -187,25 +257,47 @@ export default function BountyDetailsPage() {
               })}
             </div>
 
-            <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:text-white gap-2">
-              <Filter className="h-4 w-4" /> More Filter
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="bg-background border-border text-foreground hover:text-white gap-2">
+                  <Filter className="h-4 w-4" /> {activeTab === 'rejected' ? 'Rejected' : 'More Filter'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-popover border-border">
+                <DropdownMenuItem onClick={() => setActiveTab('rejected')} className="cursor-pointer">
+                  Rejected ({submissions.filter((s: any) => s.status === "REJECTED").length})
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {!isLoadingSubmissions ? (
             <div className="space-y-4">
               {filteredSubmissions.length > 0 ? (
-                filteredSubmissions.map((submission: any) => (
-                  <SubmissionItem
-                    key={submission.id}
-                    id={submission.id}
-                    candidateName={submission.user ? `${submission.user.firstName} ${submission.user.lastName}` : "Unknown"}
-                    candidateAvatar={submission.user?.profilePicture}
-                    submittedDate={format(new Date(submission.createdAt), "MM/dd/yyyy")}
-                    status={submission.status}
-                    onView={() => setSelectedSubmission(submission)}
-                  />
-                ))
+                filteredSubmissions.map((submission: any) => {
+                  // Check if this submission's user is a staged winner
+                  const stagedWinner = winners.find((w) => w.userId === submission.user?.id);
+
+                  return (
+                    <SubmissionItem
+                      key={submission.id}
+                      id={submission.id}
+                      candidateName={submission.user ? `${submission.user.firstName} ${submission.user.lastName}` : "Unknown"}
+                      candidateAvatar={submission.user?.profilePicture}
+                      submittedDate={format(new Date(submission.createdAt), "MM/dd/yyyy")}
+                      status={submission.status}
+                      onView={() => setSelectedSubmission(submission)}
+                      onSelectWinner={() => {
+                        setSelectedSubmission(submission);
+                        setInitialModalView('selectWinner');
+                      }}
+                      winnerPosition={stagedWinner?.position}
+                      winnerAmount={stagedWinner?.amount}
+                      currency={bounty.rewardCurrency}
+                      onRemoveWinner={stagedWinner ? () => removeWinner(stagedWinner.position) : undefined}
+                    />
+                  );
+                })
               ) : (
                 <div className="text-center py-10 text-slate-500">No submissions found for this tab.</div>
               )}
@@ -233,48 +325,56 @@ export default function BountyDetailsPage() {
               </div>
             </div>
 
-            {/* If distribution exists, render dynamically, else fallback or hide */}
             {/* Distribution Logic */}
-            {(() => {
-              const distList = bounty.distribution || bounty.rewardDistribution;
-              const totalReward = Number(bounty.reward || 0);
+            {distList.length > 0 ? (
+              <div className="p-4 space-y-3">
+                {distList.map((dist, idx) => {
+                  const percentage = Array.isArray(dist.percentage) ? dist.percentage[1] : dist.percentage;
+                  const amount = (percentage / 100) * totalReward;
+                  const currencySymbol = bounty.rewardCurrency === 'XLM' ? '' : '$';
+                  const winner = winners.find((w) => w.position === idx + 1);
 
-              if (distList && distList.length > 0) {
-                return (
-                  <div className="p-4 space-y-3">
-                    {distList.map((dist, idx) => {
-                      // Handle both single number and array (though type says number | number[], usually number for rank)
-                      const percentage = typeof dist.percentage === 'number' ? dist.percentage : 0;
-                      const amount = (percentage / 100) * totalReward;
-                      const currencySymbol = bounty.rewardCurrency === 'XLM' ? '' : '$';
-
-                      return (
-                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-primary/10">
-                          <div className="flex items-center gap-3">
-                            <span className="text-xl">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : ''}</span>
-                            <span className="text-sm font-medium text-muted-foreground">{idx + 1}{idx === 0 ? 'st' : idx === 1 ? 'nd' : idx === 2 ? 'rd' : 'th'} Place</span>
-                          </div>
-                          <div className="flex flex-col items-end">
-                            <span className="font-bold text-foreground">
-                              {currencySymbol}{amount.toLocaleString()} {bounty.rewardCurrency}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground">
-                              {percentage}%
-                            </span>
-                          </div>
+                  return (
+                    <div key={idx} className={cn(
+                      "flex items-center justify-between p-3 rounded-lg",
+                      winner ? "bg-green-500/20 border border-green-500/30" : "bg-primary/10"
+                    )}>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '🏅'}</span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-muted-foreground">
+                            {idx + 1}{idx === 0 ? 'st' : idx === 1 ? 'nd' : idx === 2 ? 'rd' : 'th'} Place
+                          </span>
+                          {winner && (
+                            <span className="text-xs text-green-400">{winner.name}</span>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                );
-              }
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="font-bold text-foreground">
+                          {currencySymbol}{amount.toLocaleString()} {bounty.rewardCurrency}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
 
-              return (
-                <div className="p-4 space-y-3">
-                  <p className="text-center text-sm text-muted-foreground">Distribution details available in description.</p>
-                </div>
-              );
-            })()}
+                {/* Confirm Winners Button */}
+                {allPositionsFilled && (
+                  <Button
+                    variant="stallion"
+                    className="w-full h-12 mt-4 font-bold flex items-center justify-center gap-2"
+                    onClick={() => setShowConfirmWinnersModal(true)}
+                  >
+                    <Trophy className="h-4 w-4" /> Confirm Winners
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 space-y-3">
+                <p className="text-center text-sm text-muted-foreground">Distribution details available in description.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

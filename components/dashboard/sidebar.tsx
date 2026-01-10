@@ -86,43 +86,43 @@ const talentSidebarItems = [
 const ownerSidebarItems = [
   {
     title: "Dashboard",
-    href: "/dashboard/project-owner",
+    href: "/dashboard/owner",
     icon: LayoutDashboard,
   },
   {
     title: "Bounties",
-    href: "/dashboard/project-owner/bounties",
+    href: "/dashboard/owner/bounties",
     icon: Trophy,
   },
   {
     title: "Projects",
-    href: "/dashboard/project-owner/projects",
+    href: "/dashboard/owner/projects",
     icon: Briefcase,
   },
   {
     title: "Messages",
-    href: "/dashboard/project-owner/messages",
+    href: "/dashboard/owner/messages",
     icon: MessageSquare,
     badge: 2,
   },
   {
     title: "Contributors",
-    href: "/dashboard/project-owner/contributors",
+    href: "/dashboard/owner/contributors",
     icon: Users,
   },
   {
     title: "Wallet",
-    href: "/dashboard/project-owner/wallet",
+    href: "/dashboard/owner/wallet",
     icon: Wallet,
   },
   {
     title: "Profile",
-    href: "/dashboard/project-owner/profile",
+    href: "/dashboard/owner/profile",
     icon: User,
   },
   {
     title: "Settings",
-    href: "/dashboard/project-owner/settings",
+    href: "/dashboard/owner/settings",
     icon: Settings,
   },
 ];
@@ -145,7 +145,7 @@ function SidebarContent({ onLinkClick, isCollapsed = false }: SidebarContentProp
 
   const unreadMessagesCount = conversations.reduce((acc, curr) => acc + (curr.unreadCount || 0), 0);
 
-  const isOwnerRoute = pathname.startsWith("/dashboard/project-owner");
+  const isOwnerRoute = pathname.startsWith("/dashboard/owner");
   const sidebarItems = isOwnerRoute ? ownerSidebarItems : talentSidebarItems;
 
   return (

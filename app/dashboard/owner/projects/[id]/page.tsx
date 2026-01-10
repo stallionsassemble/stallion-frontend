@@ -22,7 +22,7 @@ export default function ProjectDetailsPage() {
     return (
       <div className="p-8 text-center space-y-4">
         <h2 className="text-xl font-bold">Project not found</h2>
-        <Link href="/dashboard/project-owner/projects">
+        <Link href="/dashboard/owner/projects">
           <Button variant="outline">Back to Projects</Button>
         </Link>
       </div>
@@ -33,7 +33,7 @@ export default function ProjectDetailsPage() {
     <div className="flex flex-col gap-6 h-full max-w-[1600px] mx-auto pb-20 relative">
       {/* Back Nav */}
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/project-owner/projects">
+        <Link href="/dashboard/owner/projects">
           <Button variant="outline" size="sm" className="bg-transparent border-border text-foreground hover:text-white gap-2">
             <ArrowLeft className="h-4 w-4" /> Back to Projects
           </Button>

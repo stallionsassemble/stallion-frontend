@@ -9,6 +9,10 @@ import { ArrowRight, BadgeDollarSign, Calendar, Gift, InfoIcon, Star } from "luc
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useWithdrawApplication } from "@/lib/api/projects/queries";
+import { useUserReputation } from "@/lib/api/reputation/queries";
+import { BountyDistribution } from "@/lib/types/bounties"; // Added import
+import { ApplyProjectResponse } from "@/lib/types/project"; // Corrected import
 
 interface SidebarOwner {
   id: string
@@ -24,12 +28,6 @@ interface SidebarOwner {
   bio?: string
   rating?: string
 }
-
-import { useWithdrawApplication } from "@/lib/api/projects/queries";
-
-import { useUserReputation } from "@/lib/api/reputation/queries";
-import { BountyDistribution } from "@/lib/types/bounties"; // Added import
-import { ApplyProjectResponse } from "@/lib/types/project"; // Corrected import
 
 interface BountyDetailsSidebarProps {
   type?: "BOUNTY" | "PROJECT";

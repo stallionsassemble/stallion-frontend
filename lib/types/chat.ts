@@ -9,6 +9,8 @@ export interface User {
   lastName: string
   profilePicture?: string
   role?: string
+  companyName?: string | null
+  companyLogo?: string | null
 }
 
 export interface MessageAttachment {

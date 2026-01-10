@@ -21,9 +21,10 @@ interface SendMessageModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   contributor: Contributor | null
+  redirectPath?: string
 }
 
-export function SendMessageModal({ open, onOpenChange, contributor }: SendMessageModalProps) {
+export function SendMessageModal({ open, onOpenChange, contributor, redirectPath }: SendMessageModalProps) {
   const router = useRouter()
   const [message, setMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
@@ -44,8 +45,12 @@ export function SendMessageModal({ open, onOpenChange, contributor }: SendMessag
         onOpenChange(false)
 
         // Redirect to the conversation
-        // Using project-owner specific route with search param for deep linking
-        router.push(`/dashboard/project-owner/messages?id=${response.message.conversationId}`)
+        // Use provided redirectPath or default to project-owner specific route
+        const targetPath = redirectPath
+          ? `${redirectPath}?id=${response.message.conversationId}`
+          : `/dashboard/owner/messages?id=${response.message.conversationId}`
+
+        router.push(targetPath)
       } else {
         toast.error(response?.error || "Failed to send message")
       }

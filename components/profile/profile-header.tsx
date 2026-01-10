@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useMyReputation } from "@/lib/api/reputation/queries";
-import { useChatSocket } from "@/lib/hooks/use-chat-socket";
 import { useAuth } from "@/lib/store/use-auth";
 import { User } from "@/lib/types";
 import { Reputation } from "@/lib/types/reputation";
@@ -9,8 +8,9 @@ import { Edit, MessageSquare, UserStar } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 import { EditProfileDialog } from "./edit-profile-dialog";
+
+import { SendMessageModal } from "@/components/dashboard/owner/send-message-modal";
 
 interface ProfileHeaderProps {
   userData?: User;
@@ -20,8 +20,8 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) {
   const { user: authUser } = useAuth();
   const { data: myReputation } = useMyReputation();
-  const { sendMessage } = useChatSocket(); // No conversationId needed
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const router = useRouter();
 
   const user = userData || authUser;
@@ -31,19 +31,9 @@ export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) 
   const fullName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : "User";
   const username = user?.username ? `@${user.username}` : "";
 
-  const handleMessage = async () => {
+  const handleMessage = () => {
     if (!user || !authUser) return;
-    try {
-      // Create or get conversation via Socket
-      await sendMessage({
-        recipientId: user.id,
-        content: 'Hello',
-      });
-      router.push(`/dashboard/messages`);
-    } catch (error) {
-      console.error("Failed to start conversation", error);
-      toast.error("Failed to start conversation");
-    }
+    setIsMessageModalOpen(true);
   };
 
   return (
@@ -182,6 +172,28 @@ export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) 
           user={user}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
+        />
+      )}
+
+      {!isOwnProfile && user && (
+        <SendMessageModal
+          open={isMessageModalOpen}
+          onOpenChange={setIsMessageModalOpen}
+          contributor={{
+            id: user.id,
+            name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'User',
+            role: user.role || 'CONTRIBUTOR',
+            avatar: user.profilePicture || '',
+            initials: `${(user.firstName || 'U')[0]}${(user.lastName || '')[0] || ''}`.toUpperCase(),
+            bio: user.bio || '',
+            stats: {
+              bounties: 0,
+              projects: 0,
+              totalEarned: Number(user.totalEarned || 0),
+              currency: 'USDC'
+            }
+          }}
+          redirectPath="/dashboard/messages"
         />
       )}
     </div>
