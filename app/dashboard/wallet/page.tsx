@@ -22,7 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { endOfDay, isWithinInterval, startOfDay } from "date-fns";
 import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, CheckCircle2, ChevronLeft, ChevronRight, Coins, Copy, DollarSign, History, Info, Loader2, Plus, RefreshCcw, Search, Send, Trash2, Wallet } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { DateRange } from "react-day-picker";
 
 

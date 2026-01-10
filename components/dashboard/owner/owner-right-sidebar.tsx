@@ -108,7 +108,7 @@ export function OwnerRightSidebar() {
         {/* Total Paid Out */}
         <KpiCard
           layout="row"
-          iconAlignment="left"
+          iconAlignment="center"
           label="Total Paid Out"
           value={ownerStats?.totalPaidOut}
           valuePrefix="$"
@@ -122,7 +122,7 @@ export function OwnerRightSidebar() {
         {/* Pending Payments */}
         <KpiCard
           layout="row"
-          iconAlignment="left"
+          iconAlignment="center"
           label="Pending Payments"
           value={ownerStats?.pendingPayments}
           valuePrefix="$"
@@ -136,7 +136,7 @@ export function OwnerRightSidebar() {
         {/* Total Bounties */}
         <KpiCard
           layout="row"
-          iconAlignment="left"
+          iconAlignment="center"
           label="Total Bounties"
           value={ownerStats?.totalBountiesCreated}
           icon={FileText}
@@ -149,7 +149,7 @@ export function OwnerRightSidebar() {
         {/* Total Contributors */}
         <KpiCard
           layout="row"
-          iconAlignment="left"
+          iconAlignment="center"
           label="Contributors"
           value={ownerStats?.totalContributors || 0}
           icon={Users}

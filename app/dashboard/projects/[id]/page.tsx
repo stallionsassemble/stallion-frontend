@@ -91,8 +91,8 @@ export default function BountyDetailsPage() {
   const milestones: Milestone[] = draftMilestones
 
   const attachments = project.attachments || []
-  const application = project.applications.filter((a) => a.userId === user?.id)[0]
-  const appliedUser = project.applications
+  const application = (project.applications || []).filter((a) => a.userId === user?.id)[0]
+  const appliedUser = (project.applications || [])
     .filter((a) => a.userId !== user?.id && a.user)
     .map((a) => a.user.profilePicture || '/assets/icons/sdollar.png')
   console.log("Applied", appliedUser)
@@ -117,7 +117,7 @@ export default function BountyDetailsPage() {
               title={project.title}
               company={project.owner?.companyName || project.owner?.username || 'Stallion User'}
               logo={project.owner?.companyLogo || project.owner?.profilePicture || '/assets/icons/sdollar.png'}
-              participants={project.applications.length || 0}
+              participants={project.applications?.length || 0}
               dueDate={`${formatDistanceToNow(new Date(project.deadline))} left`}
               tags={project.skills}
               status={project.status}

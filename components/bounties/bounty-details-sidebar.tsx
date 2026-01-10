@@ -18,18 +18,18 @@ interface SidebarOwner {
   companyName: string
   profilePicture: string
   companyLogo?: string
-  createdAt: string
+  createdAt?: string
   totalPaid: string
   totalBounties: number
-  bio: string
-  rating: string
+  bio?: string
+  rating?: string
 }
 
 import { useWithdrawApplication } from "@/lib/api/projects/queries";
 
+import { useUserReputation } from "@/lib/api/reputation/queries";
 import { BountyDistribution } from "@/lib/types/bounties"; // Added import
 import { ApplyProjectResponse } from "@/lib/types/project"; // Corrected import
-import { useUserReputation } from "@/lib/api/reputation/queries";
 
 interface BountyDetailsSidebarProps {
   type?: "BOUNTY" | "PROJECT";

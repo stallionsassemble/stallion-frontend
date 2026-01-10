@@ -78,7 +78,7 @@ export function InviteContributorModal({ contributor, open, onOpenChange }: Invi
   // Real Data Fetching
   const { data: bounties } = useGetMyBounties();
   const { data: projectsData } = useGetProjects({ ownerId: user?.id });
-  const projects = projectsData?.projects || [];
+  const projects = projectsData || [];
 
   // Invitation Sending
   const { sendMessage } = useChatSocket();
@@ -98,13 +98,13 @@ export function InviteContributorModal({ contributor, open, onOpenChange }: Invi
         date: b.createdAt ? format(new Date(b.createdAt), 'MM/dd/yyyy') : ''
       }
     })),
-    ...(projects || []).filter(p => p.status === 'ACTIVE').map(p => ({
+    ...(projects || []).filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS').map(p => ({
       id: p.id,
       type: "Project" as const,
       title: p.title,
       description: p.description,
-      reward: Number(p.budget?.min || 0), // Using min budget as reward proxy
-      currency: p.budget?.currency || "USDC",
+      reward: parseFloat((p.reward || "0").toString().replace(/[^0-9.]/g, '')),
+      currency: p.currency || "USDC",
       tags: p.skills || [],
       stats: {
         applicants: 0, // Projects might handle this differently

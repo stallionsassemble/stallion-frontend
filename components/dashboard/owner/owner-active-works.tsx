@@ -16,7 +16,7 @@ interface WorkItem {
   title: string;
   description: string;
   reward: string;
-  currency: "USDC";
+  currency: string;
   skills: string[];
   applicants: number;
   submissions: number;
@@ -50,7 +50,7 @@ export function OwnerActiveWorks() {
   const [filterCategory, setFilterCategory] = useState<string>("All");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
-  const activeWorksList = [
+  const activeWorksList: WorkItem[] = [
     ...(ownerBounties?.map((b) => ({
       ...b,
       type: "Bounty" as const,
