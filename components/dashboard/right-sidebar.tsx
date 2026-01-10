@@ -2,9 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { WithdrawFundsModal } from "@/components/wallet/withdraw-funds-modal";
-import { useGetActivities } from "@/lib/api/activities/queries";
 import { useGetPrices } from "@/lib/api/prices/queries";
-import { useLeaderboard } from "@/lib/api/reputation/queries";
+import { useLeaderboard, useRecentEarners } from "@/lib/api/reputation/queries";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
 import { getCurrencyIcon } from "@/lib/utils";
 import { BadgeDollarSign, Crown } from "lucide-react";
@@ -18,7 +17,7 @@ import { VerticalMarquee } from "./vertical-marquee";
 export function DashboardRightSidebar() {
   const { data: walletData, isLoading: isLoadingWallet } = useGetWalletBalances();
   const { data: leaderboard, isLoading: isLoadingLeaderboard } = useLeaderboard({ limit: 10 });
-  const { data: bountyWinners, isLoading: isLoadingBountyWinners } = useGetActivities({ page: '1', limit: '10', type: 'BOUNTY_WON' });
+  const { data: recentEarners, isLoading: isLoadingEarner } = useRecentEarners({ page: 1, limit: 10, days: 7 });
 
   const assets = walletData?.balances || [];
   const topAssets = assets.slice(0, 3);
@@ -43,6 +42,7 @@ export function DashboardRightSidebar() {
         onClose={() => setIsWithdrawOpen(false)}
         availableBalance={assets[0]?.availableBalance || 0}
         currency={assets[0]?.currency || 'USDC'}
+        balances={walletData}
       />
 
       {/* Top Earners */}
@@ -176,7 +176,7 @@ export function DashboardRightSidebar() {
         </div>
 
         {/* Vertical Marquee Recent Earners */}
-        {!isLoadingBountyWinners && (!bountyWinners?.data || bountyWinners.data.length === 0) ? (
+        {!isLoadingEarner && (!recentEarners?.data || recentEarners.data.length === 0) ? (
           <div className="h-[160px] flex items-center justify-center border border-dashed border-primary/20 bg-primary/5 rounded-lg">
             <EmptyState
               title="No recent earners"
@@ -186,33 +186,37 @@ export function DashboardRightSidebar() {
           </div>
         ) : (
           <VerticalMarquee height="h-[160px]" duration="25s" reverse={true}>
-            {isLoadingBountyWinners ? (
+            {isLoadingEarner ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-10 w-full rounded-lg" />
               ))
             ) : (
-              bountyWinners?.data.map((earner, i) => (
+              recentEarners?.data.map((earner, i) => (
                 <div key={i} className="flex items-center justify-between gap-3 p-1 w-full">
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
                       <Image
-                        src={earner.user.profilePicture}
+                        src={earner.profilePicture || "https://avatar.vercel.sh/" + earner.username}
                         width={32}
                         height={32}
-                        alt={earner.user.username}
+                        alt={earner.username}
                         className="h-full w-full object-cover"
                       />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-foreground">{earner.user.username}</p>
-                      <p className="text-[10px] text-muted-foreground">{earner.bounty.title}</p>
+                      <p className="text-xs font-semibold text-foreground">{earner.username}</p>
+                      <p className="text-[10px] text-muted-foreground w-32 truncate">
+                        {earner.type === 'project'
+                          ? (earner.projectTitle || "Project Task")
+                          : (earner.bountyTitle || "Bounty Reward")}
+                      </p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-0.5">
                     <div className="flex items-center justify-end gap-2">
-                      <p className="text-xs font-extrabold text-foreground">{earner.metadata.reward}</p>
+                      <p className="text-xs font-extrabold text-foreground">{earner.rewardAmount}</p>
                       <div className="w-[36px] h-[26px] rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium font-inter">
-                        {earner.metadata.currency}
+                        {earner.rewardCurrency}
                       </div>
                     </div>
                   </div>

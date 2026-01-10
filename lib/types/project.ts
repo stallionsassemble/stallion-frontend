@@ -13,6 +13,7 @@ export interface Attachment {
   filename: string
   url: string
   size: number
+  mimetype?: string
 }
 
 export interface MilestoneDraft {
@@ -48,8 +49,6 @@ export interface GetProjectsPayload {
   type?: ProjectType
   status?: ProjectStatus
   ownerId?: string
-  limit?: number
-  page?: number
 }
 
 /**
@@ -73,13 +72,17 @@ export interface Project {
   acceptedCount: number
   contractProjectId: number
   txHash: string
+  escrowContractId: number | null
   createdAt: string
   updatedAt: string
   ownerId: string
-  winnerAnnouncement: string
-  milestones?: MilestoneDraft[]
+  winnerAnnouncement?: string
+  milestones?: (MilestoneDraft & { id?: string; order?: number })[]
   applied: boolean
-  applications: ApplyProjectResponse[]
+  applications?: ApplyProjectResponse[]
+  released?: string
+  escrowed?: string
+  winner?: any
   owner: {
     id: string
     username: string
@@ -88,11 +91,12 @@ export interface Project {
     companyName: string
     profilePicture: string
     companyLogo?: string
-    createdAt: string
+    createdAt?: string
     totalPaid: string
     totalBounties: number
-    bio: string
-    rating: string
+    totalProjects: number
+    bio?: string
+    rating?: string
   }
 }
 
@@ -158,26 +162,51 @@ export type ProjectReviewResponse = ApplyProjectResponse
  */
 export interface ProjectMilestone {
   id: string
+  status: string
+  submissionNote: string | null
+  submissionUrl: string | null
+  submittedAt: string | null
+  reviewNote: string | null
+  reviewedAt: string | null
+  revisionNote: string | null
+  txHash: string | null
+  paidAt: string | null
+  createdAt: string
+  updatedAt: string
+  milestoneId: string
+  applicationId: string
+  contributorId: string
+  milestone: {
+    id: string
+    title: string
+    description: string
+    amount: string
+    dueDate: string
+    order: number
+    createdAt: string
+    updatedAt: string
+    projectId: string
+    project: {
+      id: string
+      title: string
+      currency: string
+    }
+  }
+}
+
+export interface GetProjectMilestonesResponse {
+  id: string
   title: string
   description: string
   amount: string
   dueDate: string
-  status: string
   order: number
-  submissionNote: string
-  submissionUrl: string
-  submittedAt: string
-  reviewNote: string
-  reviewedAt: string
-  revisionNote: string
-  txHash: string
-  paidAt: string
   createdAt: string
   updatedAt: string
   projectId: string
-  applicationId: string
-  contributorId: string
 }
+
+export type GetProjectMilestonesResponses = GetProjectMilestonesResponse[]
 
 /**
  * Array of project milestones
@@ -195,6 +224,7 @@ export type MyMilestones = ProjectMilestone[]
 export interface SubmitMilestonePayload {
   submissionNote: string
   submissionUrl: string
+  attachments?: Attachment[]
 }
 
 /**
@@ -216,11 +246,47 @@ export interface ReviewMilestoneResponse extends ProjectMilestone {}
  */
 export interface ProjectActivity {
   id: string
-  type: string
+  type:
+    | 'PROJECT_COMPLETED'
+    | 'PROJECT_MILESTONE_PAID'
+    | 'PROJECT_MILESTONE_APPROVED'
+    | 'PROJECT_MILESTONE_SUBMITTED'
+    | 'PROJECT_APPLICATION_ACCEPTED'
+    | 'PROJECT_APPLICATION_SUBMITTED'
+    | 'PROJECT_UPDATED'
+    | 'PROJECT_CREATED'
   message: string
   metadata: Record<string, any>
   createdAt: string
-  projectId: string
   userId: string
-  user: User
+  bountyId: string | null
+  projectId: string
+  hackathonId: string | null
+  user: {
+    id: string
+    username: string
+    firstName: string
+    lastName: string
+    profilePicture: string
+  }
+  bounty: any | null
+  project: {
+    id: string
+    title: string
+    currency: string
+  }
+  hackathon: any | null
+}
+
+/**
+ * Response for project activities
+ */
+export interface ProjectActivitiesResponse {
+  data: ProjectActivity[]
+  pagination: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
 }

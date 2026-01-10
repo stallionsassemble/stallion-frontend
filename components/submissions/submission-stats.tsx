@@ -1,8 +1,7 @@
 "use client";
 
+import { useTalentStatsQuery } from "@/lib/api/dashboard/queries";
 import { BadgeCheck, DollarSign, FilePen } from "lucide-react";
-import { useGetUser } from "@/lib/api/users/queries";
-import { useAuth } from "@/lib/store/use-auth";
 
 interface StatCardProps {
   label: string;
@@ -26,29 +25,28 @@ function StatCard({ label, value, icon }: StatCardProps) {
   );
 }
 
-export function SubmissionStats() {
-  const { user } = useAuth()
-  const { data: profileStats } = useGetUser(user?.id || '')
+interface SubmissionStatsProps {
+  totalSubmissions?: number;
+}
+
+export function SubmissionStats({ totalSubmissions }: SubmissionStatsProps) {
+  const { data: talentStats } = useTalentStatsQuery()
+
   return (
-    <div className="grid grid-cols-1 gap-[28.66px] sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-[28.66px] sm:grid-cols-3">
       <StatCard
         label="Total Earned"
-        value={profileStats?.totalEarned?.toString() || "0"}
+        value={`$${talentStats?.totalEarnings?.toLocaleString() || "0"}`}
         icon={<DollarSign className="h-6 w-6" />}
       />
       <StatCard
         label="Total Submission"
-        value={profileStats?.totalSubmissions?.toString() || "0"}
+        value={totalSubmissions?.toString() || "0"}
         icon={<FilePen className="h-6 w-6" />}
       />
       <StatCard
-        label="Pending Pay"
-        value={profileStats?.totalPendingPay?.toString() || "0"}
-        icon={<DollarSign className="h-6 w-6" />}
-      />
-      <StatCard
         label="Completed"
-        value={profileStats?.totalWon?.toString() || "0"}
+        value={talentStats?.completedBounties?.toString() || "0"}
         icon={<BadgeCheck className="h-6 w-6" />}
       />
     </div>

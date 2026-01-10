@@ -60,7 +60,9 @@ export interface WalletTrustlineResponse {
 export interface WithdrawFundPayload {
   amount: number
   currency: string
-  payoutMethodId: string
+  payoutMethodId?: string
+  address?: string
+  totpCode: string
 }
 
 export interface PayoutMethodPayload {

@@ -103,7 +103,22 @@ export function MessageBubble({
         )}
 
         <span className={cn(isDeleted && 'italic text-muted-foreground')}>
-          {content}
+          {content.split(/(https?:\/\/[^\s]+)/g).map((part, index) => {
+            if (part.match(/https?:\/\/[^\s]+/)) {
+              return (
+                <a
+                  key={index}
+                  href={part}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:underline break-all"
+                >
+                  {part}
+                </a>
+              );
+            }
+            return part;
+          })}
         </span>
         <div className="flex items-center gap-1 mt-1 self-start">
           <span className="text-[10px] text-muted-foreground/80">

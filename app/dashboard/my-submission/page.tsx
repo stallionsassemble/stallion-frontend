@@ -6,89 +6,111 @@ import { SubmissionStats } from "@/components/submissions/submission-stats";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileQuestion, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { useGetMyBountySubmissions } from "@/lib/api/bounties/queries";
-import { useGetMyApplications } from "@/lib/api/projects/queries";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useGetUserSubmissions } from "@/lib/api/users/queries";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function MySubmissionsPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
-  const categories = ["All", "Bounties", "Projects", "Design", "Development", "Content", "Marketing", "Research", "Other"];
 
   // Fetch Data
-  const { data: projectApps, isLoading: isLoadingProjects } = useGetMyApplications();
-  const { data: bountySubmissions, isLoading: isLoadingBounties } = useGetMyBountySubmissions();
-
-  console.log("Projects:", projectApps);
-  console.log("Bounties:", bountySubmissions);
+  const { data: submissionsData, isLoading } = useGetUserSubmissions();
+  console.log("Submission", submissionsData)
 
   const allSubmissions = useMemo(() => {
-    const projects = (projectApps || []).map((app: any) => ({
-      ...app,
-      details: {
-        id: app.id,
-        source: 'PROJECT',
-        title: app.project?.title || "Untitled Project",
-        description: app.project?.shortDescription,
-        orgName: app.project?.owner?.companyName || app.project?.owner?.username || "Unknown",
-        logo: app.project?.owner?.companyLogo || app.project?.owner?.profilePicture || "/assets/icons/sdollar.png",
-        amount: app.project?.reward,
-        currency: app.project?.currency,
-        status: app.status,
-        date: app.createdAt,
-        updated: app.updatedAt,
-        skills: app.project?.skills || []
+    if (!submissionsData?.data) return [];
+
+    return submissionsData.data.map((item: any) => {
+      const isProject = item.type === 'project';
+      const entity = isProject ? item.project : item.bounty;
+
+      return {
+        ...item,
+        details: {
+          id: item.id, // Submission ID for key/tracking
+          entityId: isProject ? item.projectId : item.bountyId, // The project/bounty ID
+          source: isProject ? 'PROJECT' : 'BOUNTY',
+          title: entity.title,
+          description: entity.shortDescription, // Or just description
+          orgName: (entity as any).owner?.companyName || "Stallion",
+          ownerId: (entity as any).ownerId,
+          logo: "/assets/icons/sdollar.png", // TODO: Update if API provides
+          amount: isProject ? (entity as any).reward : (entity as any).reward,
+          currency: isProject ? (entity as any).currency : (entity as any).rewardCurrency,
+          status: item.status, // "PENDING", "ACCEPTED", "REJECTED"
+          date: item.createdAt,
+          updated: item.updatedAt,
+          feedback: item.rejectionReason,
+          skills: entity.skills || [],
+          attachments: item.attachments || [],
+          deadline: isProject ? (entity as any).deadline : (entity as any).deadline,
+        }
+      };
+    });
+  }, [submissionsData]);
+
+  const uniqueSkills = useMemo(() => {
+    const skills = new Set<string>();
+    allSubmissions.forEach((sub: any) => {
+      if (sub.details.skills) {
+        sub.details.skills.forEach((skill: string) => skills.add(skill));
       }
-    }));
+    });
+    return Array.from(skills).sort();
+  }, [allSubmissions]);
 
-    const bounties = (bountySubmissions || []).map((sub: any) => ({
-      ...sub,
-      details: {
-        id: sub.id,
-        source: 'BOUNTY',
-        title: sub.bounty?.title || "Untitled Bounty",
-        description: sub.bounty?.description, // Or short description if available
-        orgName: sub.bounty?.creator?.companyName || sub.bounty?.creator?.username || "Unknown",
-        logo: sub.bounty?.creator?.profilePicture || "/assets/icons/sdollar.png",
-        amount: sub.bounty?.rewards?.[0]?.amount || "0", // Assuming single reward for now or taking first
-        currency: sub.bounty?.rewards?.[0]?.currency || "USDC",
-        status: sub.status,
-        date: sub.submittedAt || sub.createdAt,
-        updated: sub.updatedAt,
-        skills: sub.bounty?.skills || [] // If bounty has skills
-      }
-    }));
-
-    const merged = [...projects, ...bounties];
-
-    return merged.sort((a: any, b: any) =>
-      new Date(b.details.date).getTime() - new Date(a.details.date).getTime()
-    );
-  }, [projectApps, bountySubmissions]);
+  const categories = useMemo(() => ["All", "Bounties", "Projects", ...uniqueSkills], [uniqueSkills]);
 
   // Pagination Logic
   const [rowsPerPage, setRowsPerPage] = useState("10");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredSubmissions = useMemo(() => {
-    if (activeTab === "All") return allSubmissions;
-    return allSubmissions.filter(s =>
-      s.details.title?.toLowerCase().includes(activeTab.toLowerCase()) ||
-      s.details.skills?.some((k: string) => k.toLowerCase().includes(activeTab.toLowerCase())) ||
-      s.details.status.toLowerCase().includes(activeTab.toLowerCase()) ||
-      (activeTab === "Bounties" && s.details.source === "BOUNTY") ||
-      (activeTab === "Projects" && s.details.source === "PROJECT")
-    );
-  }, [allSubmissions, activeTab]);
+  const filteredAndSortedSubmissions = useMemo(() => {
+    let result = [...allSubmissions];
 
-  const totalPages = Math.ceil(filteredSubmissions.length / Number(rowsPerPage)) || 1;
-  const paginatedSubmissions = filteredSubmissions.slice((currentPage - 1) * Number(rowsPerPage), currentPage * Number(rowsPerPage));
+    // 1. Filter by Category/Tab
+    if (activeTab !== "All") {
+      if (activeTab === "Bounties") {
+        result = result.filter(s => s.details.source === "BOUNTY");
+      } else if (activeTab === "Projects") {
+        result = result.filter(s => s.details.source === "PROJECT");
+      } else {
+        // Skill filter
+        result = result.filter(s => s.details.skills?.includes(activeTab));
+      }
+    }
 
-  const isLoading = isLoadingProjects || isLoadingBounties;
+    // 2. Filter by Search Query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(s =>
+        s.details.title?.toLowerCase().includes(query) ||
+        s.details.orgName?.toLowerCase().includes(query) ||
+        s.details.description?.toLowerCase().includes(query)
+      );
+    }
+
+    // 3. Sort
+    result.sort((a, b) => {
+      const dateA = new Date(a.details.date).getTime();
+      const dateB = new Date(b.details.date).getTime();
+      return sortBy === "newest" ? dateB - dateA : dateA - dateB;
+    });
+
+    return result;
+  }, [allSubmissions, activeTab, searchQuery, sortBy]);
+
+  const totalPages = Math.ceil(filteredAndSortedSubmissions.length / Number(rowsPerPage)) || 1;
+  const paginatedSubmissions = filteredAndSortedSubmissions.slice((currentPage - 1) * Number(rowsPerPage), currentPage * Number(rowsPerPage));
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -99,12 +121,14 @@ export default function MySubmissionsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-3xl md:text-4xl font-inter -tracking-[4%] font-bold text-foreground">My Submissions</h1>
-        <p className="text-muted-foreground font-medium font-inter">Track and manage all your submissions across bounties, grants, and projects.</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl md:text-4xl font-inter -tracking-[4%] font-bold text-foreground">My Submissions</h1>
+          <p className="text-muted-foreground font-medium font-inter">Track and manage all your submissions across bounties, grants, and projects.</p>
+        </div>
       </div>
 
-      <SubmissionStats />
+      <SubmissionStats totalSubmissions={submissionsData?.total || 0} />
 
       <div className="space-y-6">
         {/* Filters & Controls */}
@@ -132,12 +156,14 @@ export default function MySubmissionsPage() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                 className="pl-9 h-9 bg-card border-none text-foreground placeholder:text-muted-foreground rounded-lg w-full focus-visible:ring-1 "
               />
             </div>
 
             {/* Sort */}
-            <Select defaultValue="newest">
+            <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-[120px] h-9 bg-secondary border-border text-foreground text-xs">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -161,6 +187,7 @@ export default function MySubmissionsPage() {
                 <SubmissionCard
                   id={sub.details.id}
                   project={sub.details.orgName}
+                  source={sub.details.source}
                   title={sub.details.title}
                   description={sub.details.description || ""}
                   logo={sub.details.logo}
@@ -177,86 +204,98 @@ export default function MySubmissionsPage() {
               </div>
             ))}
             {!isLoading && paginatedSubmissions.length === 0 && (
-              <div className="text-center py-20 text-muted-foreground">
-                No submissions found.
-              </div>
+              <EmptyState
+                icon={FileQuestion}
+                title="No submissions found"
+                description={activeTab === 'All' && !searchQuery
+                  ? "You haven't submitted work to any bounties or projects yet. Start exploring opportunities to earn rewards."
+                  : "No submissions match your current filter."}
+                action={
+                  (activeTab === 'All' && !searchQuery) ? (
+                    <Button onClick={() => router.push('/dashboard/bounties')} variant="stallion" className="mt-4">
+                      Explore Opportunities
+                    </Button>
+                  ) : (
+                    <Button onClick={() => { setActiveTab('All'); setSearchQuery(""); }} variant="outline" className="mt-4">
+                      Clear Filters
+                    </Button>
+                  )
+                }
+              />
             )}
           </div>
         )}
 
         {/* Pagination Footer */}
-        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-6 gap-y-4 pt-4 border-t border-border">
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <span>Rows per page</span>
-            <Select
-              value={rowsPerPage}
-              onValueChange={(val) => { setRowsPerPage(val); setCurrentPage(1); }}
-            >
-              <SelectTrigger className="h-8 w-[60px] bg-card border-border text-foreground text-xs">
-                <SelectValue placeholder="10" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border text-popover-foreground">
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {paginatedSubmissions.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-6 gap-y-4 pt-4 border-t border-border">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <span>Rows per page</span>
+              <Select
+                value={rowsPerPage}
+                onValueChange={(val) => { setRowsPerPage(val); setCurrentPage(1); }}
+              >
+                <SelectTrigger className="h-8 w-[60px] bg-card border-border text-foreground text-xs">
+                  <SelectValue placeholder="10" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border text-popover-foreground">
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-            <span className="text-sm font-medium text-muted-foreground mr-2">Page {currentPage} of {totalPages || 1}</span>
-            <div className="flex items-center gap-1">
-              <Button
-                size="icon"
-                variant="secondary"
-                onClick={() => handlePageChange(1)}
-                disabled={currentPage === 1}
-                className="h-8 w-8 rounded-md bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed border border-border hover:bg-secondary/80"
-              >
-                <ChevronsLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant="secondary"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="h-8 w-8 rounded-md bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed border border-border hover:bg-secondary/80"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="h-8 w-8 rounded-md bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => handlePageChange(totalPages)}
-                disabled={currentPage === totalPages}
-                className="h-8 w-8 rounded-md bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronsRight className="h-4 w-4" />
-              </Button>
+            <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+              <span className="text-sm font-medium text-muted-foreground mr-2">Page {currentPage} of {totalPages || 1}</span>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8 rounded-md bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed border border-border hover:bg-secondary/80"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8 rounded-md bg-secondary text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed border border-border hover:bg-secondary/80"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="h-8 w-8 rounded-md bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="h-8 w-8 rounded-md bg-card border-border text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <SubmissionDetailsModal
           isOpen={!!selectedSubmission}
           onClose={() => setSelectedSubmission(null)}
           submission={selectedSubmission}
         />
-
-        {/* Footer info - Removed or kept? Design shows just pagination. 
-            I'll keep a minimal spacer or remove the old 'Get Help' since it's not in the new design mockup 
-            but kept the details modal functionality.
-        */}
       </div>
     </div>
   );

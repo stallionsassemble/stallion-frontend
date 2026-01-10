@@ -10,13 +10,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { authService } from "@/lib/api/auth";
 import { uploadService } from "@/lib/api/upload";
 import { talentOnboardingSchema, TalentOnboardingValues } from "@/lib/schemas/auth";
 import { useAuth } from "@/lib/store/use-auth";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { countries as countriesData } from "countries-list";
 import { Check, ChevronsUpDown, Github, Globe, Instagram, Linkedin, Upload, X } from "lucide-react";
 import Image from "next/image";
@@ -112,12 +112,11 @@ export default function TalentOnboardingPage() {
     }
 
     try {
-      const response = await authService.completeProfileContributor(payload)
+      await authService.completeProfileContributor(payload)
 
-      // Update local user state
-      if (user) {
-        setUser({ ...response.user, profileCompleted: true })
-      }
+      // Fetch fresh profile data to ensure state is synced
+      const updatedUser = await authService.profile();
+      setUser(updatedUser);
 
       toast.success("Profile completed successfully!", { id: toastId })
       router.push("/auth/onboarding/success?role=talent")

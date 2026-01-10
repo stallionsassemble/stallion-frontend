@@ -69,3 +69,28 @@ export interface ReputationHistoryEntry {
 }
 
 export type ReputationHistory = ReputationHistoryEntry[]
+
+export interface RecentEarner {
+  type: 'project' | 'bounty'
+  userId: string
+  username: string
+  firstName: string
+  lastName: string
+  profilePicture: string
+  rewardAmount: string
+  rewardCurrency: string
+  usdValue: string
+  earnedAt: string
+
+  // Project specific fields
+  projectId?: string
+  projectTitle?: string
+  milestoneId?: string
+  milestoneTitle?: string
+
+  // Bounty specific fields
+  bountyId?: string
+  bountyTitle?: string
+}
+
+export type RecentEarnerResponse = PaginatedResponse<RecentEarner>

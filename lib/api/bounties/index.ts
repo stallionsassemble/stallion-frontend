@@ -26,7 +26,7 @@ import {
 
 class BountyService {
   async getSupportedCurrencies() {
-    const response = await api.get<Currencies>('/bounties/supported-currencies')
+    const response = await api.get<Currencies>('/wallet/supported-currencies')
     return response.data
   }
 
@@ -121,7 +121,7 @@ class BountyService {
 
   async getDetailedSubmissions(id: string) {
     const response = await api.get<BountySubmission[]>(
-      `/bounties/${id}/submissions/detailed`
+      `/bounties/${id}/submissions`
     )
     return response.data
   }

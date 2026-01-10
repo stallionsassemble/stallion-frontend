@@ -11,6 +11,7 @@ export const reputationKeys = {
     [...reputationKeys.all, 'history', userId] as const,
   badges: () => [...reputationKeys.all, 'badges'] as const,
   badge: (id: string) => [...reputationKeys.all, 'badges', id] as const,
+  recentEarners: () => [...reputationKeys.all, 'recent-earners'] as const,
 }
 
 export function useMyReputation() {
@@ -66,5 +67,21 @@ export function useBadge(badgeId: string) {
     queryKey: reputationKeys.badge(badgeId),
     queryFn: () => reputationService.getBadge(badgeId),
     enabled: !!badgeId,
+  })
+}
+
+export function useRecentEarners(params?: {
+  page?: number
+  limit?: number
+  days?: number
+}) {
+  return useQuery({
+    queryKey: [...reputationKeys.recentEarners(), params],
+    queryFn: () =>
+      reputationService.getRecentEarners(
+        params?.page,
+        params?.limit,
+        params?.days
+      ),
   })
 }

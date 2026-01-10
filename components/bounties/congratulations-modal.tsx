@@ -92,7 +92,7 @@ export function CongratulationsModal({ isOpen, onClose, userLogo, sponsorLogo, t
               className="w-full bg-background hover:bg-muted border-[1.19px] border-border text-foreground h-12 rounded-[10px] leading-[23px text-base font-normal shadow-sm"
               onClick={() => {
                 onClose();
-                router.push("/dashboard/submissions");
+                router.push("/dashboard/my-submission");
               }}
             >
               Check Submission

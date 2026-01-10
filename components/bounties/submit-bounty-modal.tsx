@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/lib/store/use-auth";
 import { BountySubmissionField } from "@/lib/types/bounties";
 import { Attachment, ApplyProjectResponse as ProjectApplication } from "@/lib/types/project";
+import { toast } from 'sonner';
 import { CongratulationsModal } from "./congratulations-modal";
 
 interface SubmitModalProps {
@@ -151,12 +152,35 @@ export function SubmitBountyModal({
 
   const handleSubmit = () => {
     if (isProject) {
+      // Auto-add current link if typed but not added
+      let finalLinks = [...portfolioLinks];
+      if (portfolioLink.trim()) {
+        finalLinks.push(portfolioLink.trim());
+        setPortfolioLinks(finalLinks); // Update state for UI consistency if submission fails later
+        setPortfolioLink("");
+      }
+
+      if (finalLinks.length === 0) {
+        toast.error("Please add at least one portfolio link");
+        return;
+      }
+
+      if (!coverLetter.trim()) {
+        toast.error("Cover letter is required");
+        return;
+      }
+
+      if (!estimateTime) {
+        toast.error("Estimated completion time is required");
+        return;
+      }
+
       const estimatedDays = parseInt(estimateTime) * (estimateUnit === 'weeks' ? 7 : estimateUnit === 'months' ? 30 : 1);
 
       const payload = {
         coverLetter,
         estimatedCompletionTime: estimatedDays || 0,
-        portfolioLinks,
+        portfolioLinks: finalLinks,
         attachments: attachments
       };
 
@@ -193,19 +217,25 @@ export function SubmitBountyModal({
         });
       }
     } else {
+      // 1. Identify active fields (same logic as renderBountyForm)
+      const fields = submissionFields && submissionFields.length > 0 ? submissionFields : [
+        { name: 'submissionLink', label: 'Submission Link', type: 'url', required: true },
+        { name: 'comments', label: 'Comments', type: 'text', required: false }
+      ];
+
+      // 2. Validate required fields
+      for (const field of fields) {
+        if (field.required && !submissionValues[field.name]?.trim()) {
+          toast.error(`${field.label} is required`);
+          return;
+        }
+      }
+
       // Extract submissionLink - prioritize explicit field, then githubRepo
       let submissionLink = submissionValues['submissionLink'] || submissionValues['githubRepo'] || "";
 
-      // If still empty and we have fields, maybe one is a URL? 
-      // User requirement implies submissionLink is "main", so we should ensure we grab it.
-      // If explicit 'submissionLink' field exists in submissionFields, we used that above.
-
       // Create separate submissionData object excluding the main link if it was one of the keys
       const { submissionLink: _l, githubRepo: _g, ...otherData } = submissionValues;
-
-      // If we didn't find a primary link yet, and we have to fallback to *something*, 
-      // we might just have to send an empty string or error if required. 
-      // But assuming the form validation (HTML required attribute) handles the presence.
 
       applyBounty({
         id: projectId,
@@ -219,8 +249,9 @@ export function SubmitBountyModal({
           setShowCongrats(true);
           setSubmissionValues({});
         },
-        onError: (err) => {
+        onError: (err: any) => {
           console.error("Failed to submit bounty", err);
+          // toast.error is already handled in the mutation hook, but we can log it
         }
       });
     }
@@ -357,7 +388,13 @@ export function SubmitBountyModal({
                   <div className="bg-primary/10 p-1.5 rounded">
                     <Upload className="h-3 w-3 text-primary" />
                   </div>
-                  <span className="text-sm truncate max-w-[200px]">{file.filename}</span>
+                  {file.url ? (
+                    <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-sm truncate max-w-[200px] hover:underline text-primary">
+                      {file.filename}
+                    </a>
+                  ) : (
+                    <span className="text-sm truncate max-w-[200px]">{file.filename}</span>
+                  )}
                   <span className="text-xs text-muted-foreground">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                 </div>
                 <button onClick={() => removeAttachment(i)} className="text-muted-foreground hover:text-destructive p-1">

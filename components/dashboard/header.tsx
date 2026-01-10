@@ -65,6 +65,10 @@ export function Header() {
         return "Community Forum";
       case "/dashboard/leaderboard":
         return "Leaderboard";
+      case "/dashboard/project-owner/projects":
+        return "Project Details";
+      case "/dashboard/project-owner/bounties":
+        return "Bounty Details";
       default:
         // Handle dynamic routes (wildcard logic)
         // Expected pattern: /dashboard/<section>/<id>
@@ -76,6 +80,8 @@ export function Header() {
           switch (section) {
             case 'projects': return 'Project Details';
             case 'bounties': return 'Bounty Details';
+            case 'project-owner/projects': return 'Project Details';
+            case 'project-owner/bounties': return 'Bounty Details';
             case 'forums': return 'Forum Discussion';
             case 'profile': return 'User Profile';
             case 'submissions': return 'Submission Details';

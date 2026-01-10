@@ -2,6 +2,7 @@ import { api } from '@/lib/api'
 import {
   Badge,
   Leaderboard,
+  RecentEarnerResponse,
   Reputation,
   ReputationHistory,
 } from '@/lib/types/reputation'
@@ -47,6 +48,20 @@ class ReputationService {
 
   async getBadge(badgeId: string) {
     const response = await api.get<Badge>(`/reputation/badges/${badgeId}`)
+    return response.data
+  }
+
+  async getRecentEarners(page?: number, limit?: number, days?: number) {
+    const response = await api.get<RecentEarnerResponse>(
+      '/reputation/leaderboard/recent-earners',
+      {
+        params: {
+          page,
+          limit,
+          days,
+        },
+      }
+    )
     return response.data
   }
 }

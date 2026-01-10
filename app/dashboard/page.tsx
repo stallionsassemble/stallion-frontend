@@ -6,8 +6,9 @@ import {
 } from '@/components/dashboard/main-sections'
 import { DashboardRightSidebar } from '@/components/dashboard/right-sidebar'
 import { StatsRow } from '@/components/dashboard/stats-row'
-import Image from 'next/image'
 import { useAuth } from '@/lib/store/use-auth'
+
+import { WelcomeBanner } from '@/components/dashboard/welcome-banner'
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -16,35 +17,7 @@ export default function DashboardPage() {
       {/* Main Column */}
       <div className='space-y-8 min-w-0 flex-1 pb-20'>
         {/* Welcome Banner */}
-        <div className='relative overflow-hidden rounded-2xl bg-primary p-6 md:p-10 text-primary-foreground'>
-          {/* Grid Pattern Overlay */}
-          <div
-            className='absolute inset-0 z-0 opacity-20'
-            style={{
-              backgroundImage:
-                'radial-gradient(circle, white 1px, transparent 1px)',
-              backgroundSize: '20px 20px',
-            }}
-          ></div>
-
-          <div className='relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6'>
-            <div className='h-20 w-20 shrink-0 overflow-hidden rounded-full border-4 border-primary-foreground/20'>
-              <img
-                src={user?.profilePicture || `https://avatar.vercel.sh/${user?.firstName || 'John'}`}
-                width={80}
-                height={80}
-                alt={`${user?.firstName}`}
-                className='h-full w-full object-cover'
-              />
-            </div>
-            <div className='text-center md:text-left'>
-              <h1 className='text-3xl font-bold mb-2'>Welcome back, {user?.firstName}!</h1>
-              <p className='text-primary-foreground/90 text-sm md:text-base font-medium'>
-                Ready to build something amazing today?
-              </p>
-            </div>
-          </div>
-        </div>
+        <WelcomeBanner />
 
         {/* Stats Row */}
         <StatsRow />
@@ -53,7 +26,7 @@ export default function DashboardPage() {
         <OpportunityList title='Browse Opportunities' type='bounties' />
 
         {/* Grants */}
-        <OpportunityList title='Grants' type='grants' />
+        {/* <OpportunityList title='Grants' type='grants' /> */}
 
         {/* Recent Activities */}
         <ActivityFeed />

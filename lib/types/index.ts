@@ -158,4 +158,73 @@ export interface UpdatePostPayload {
   content: string
 }
 
+export interface SubmissionProject {
+  id: string
+  title: string
+  shortDescription: string
+  reward: string
+  currency: string
+  status: string
+  deadline: string
+  type: 'GIG' | 'JOB'
+  skills?: string[]
+}
+
+export interface SubmissionBounty {
+  id: string
+  title: string
+  shortDescription: string
+  reward: string
+  rewardCurrency: string
+  status: string
+  submissionDeadline: string
+  skills?: string[]
+}
+
+export interface UserProjectSubmission {
+  type: 'project'
+  id: string
+  coverLetter: string
+  estimatedCompletionTime: number
+  portfolioLinks: string[]
+  attachments: {
+    url: string
+    size: number
+    filename: string
+  }[]
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED'
+  rejectionReason: string | null
+  createdAt: string
+  updatedAt: string
+  projectId: string
+  userId: string
+  project: SubmissionProject
+}
+
+export interface UserBountySubmission {
+  type: 'bounty'
+  id: string
+  submission: {
+    description: string
+    estimatedHours?: number
+    [key: string]: any
+  }
+  submissionLink: string
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED'
+  createdAt: string
+  updatedAt: string
+  userId: string
+  bountyId: string
+  bounty: SubmissionBounty
+}
+
+export type UserSubmission = UserProjectSubmission | UserBountySubmission
+
+export interface UserSubmissionsResponse {
+  data: UserSubmission[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
 export * from './chat'

@@ -34,7 +34,6 @@ export default function ProjectsPage() {
 
   // Fetch ALL projects to derive available skills for persistent filter chips
   const { data: allProjectsData } = useGetProjects({
-    limit: 100,
     status: 'OPEN' // Or undef to get everything? Let's match default "Open" or strict "All"? 
     // If we want *all* potential skills, we should probably fetch broadly. 
     // But mostly we care about open projects. Let's start with OPEN or undefined if supported.

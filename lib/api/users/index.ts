@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import { User } from '@/lib/types'
+import { User, UserSubmissionsResponse } from '@/lib/types'
 
 export class UserService {
   async getUser(id: string) {
@@ -39,6 +39,13 @@ export class UserService {
       history: any[]
       badges: any[]
     }>('/reputation/me')
+    return response.data
+  }
+
+  async getUserSubmissions() {
+    const response = await api.get<UserSubmissionsResponse>(
+      `/users/submissions`
+    )
     return response.data
   }
 }

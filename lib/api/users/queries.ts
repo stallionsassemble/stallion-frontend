@@ -55,3 +55,10 @@ export function useUpdateOwnerProfile() {
     },
   })
 }
+
+export function useGetUserSubmissions() {
+  return useQuery({
+    queryKey: ['user-submissions'],
+    queryFn: () => userService.getUserSubmissions(),
+  })
+}

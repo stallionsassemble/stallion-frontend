@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { KpiCard } from "@/components/ui/kpi-card";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -16,18 +15,37 @@ import { toast } from "sonner";
 
 import { useGetPrices } from "@/lib/api/prices/queries";
 import { walletService } from "@/lib/api/wallet";
-import { useDeletePayoutMethod, useGetDepositAddress, useGetPayoutMethods, useSetTrustline, useSyncWallet, useUnsetTrustline } from "@/lib/api/wallet/queries";
+import { useDeletePayoutMethod, useGetDepositAddress, useGetPayoutMethods, useSetTrustline, useSyncWallet } from "@/lib/api/wallet/queries";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { cn, getCurrencyIcon } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay, isWithinInterval, startOfDay } from "date-fns";
-import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, CheckCircle2, ChevronLeft, ChevronRight, Clock, Coins, Copy, DollarSign, History, Info, Loader2, Plus, RefreshCcw, Search, Send, Trash2, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, CheckCircle2, ChevronLeft, ChevronRight, Coins, Copy, DollarSign, History, Info, Loader2, Plus, RefreshCcw, Search, Send, Trash2, Wallet } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
 
 
 
+
+function StatCard({ label, value, icon, status, statusColor }: { label: string, value: string, icon: ReactNode, status?: string, statusColor?: string }) {
+  return (
+    <div
+      className="flex items-center justify-between bg-card text-card-foreground relative overflow-hidden rounded-xl p-6 sm:p-10 border border-border shadow-sm min-h-[128px]"
+    >
+      <div className="space-y-1 z-10 font-inter">
+        <p className="text-[16px] text-muted-foreground font-normal">{label}</p>
+        <p className="text-3xl font-extrabold text-foreground">{value}</p>
+        {status && (
+          <p className={cn("text-xs font-medium pt-1", statusColor)}>{status}</p>
+        )}
+      </div>
+      <div className="rounded-full bg-primary p-3 text-primary-foreground z-10 shadow-md">
+        {icon}
+      </div>
+    </div>
+  );
+}
 
 function WalletStats({ balances }: { balances: any }) {
   // balances is now { balances: [], totalAssets: number }
@@ -45,12 +63,7 @@ function WalletStats({ balances }: { balances: any }) {
     return sum + (asset.balance * price);
   }, 0);
 
-  // Calculate Pending Value (using same logic)
-  const pendingValue = assets.reduce((sum: number, asset: any) => {
-    const price = prices[asset.currency] || (['usdc', 'usd'].includes(asset.currency.toLowerCase()) ? 1 : 0);
-    const pending = asset.balance - asset.availableBalance;
-    return sum + (pending * price);
-  }, 0);
+
 
   const formatCurrency = (amount: number, currency: string = "USD") => {
     try {
@@ -65,44 +78,27 @@ function WalletStats({ balances }: { balances: any }) {
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-3">
-        <KpiCard
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+        <StatCard
           label="Total Balance"
           value={formatCurrency(totalValue, "USD")}
           status={`${assets.length} Assets Held`}
-          statusColor="text-primary font-medium text-sm"
-          icon={DollarSign}
-          valueClassName="text-4xl text-white"
-          className="rounded-2xl border-border bg-card"
-          layout="row"
+          statusColor="text-primary"
+          icon={<DollarSign className="h-6 w-6" />}
         />
-        <KpiCard
-          label="Pending"
-          value={formatCurrency(pendingValue, "USD")}
-          status="Awaiting release"
-          statusColor="text-[#FF9500] font-medium text-sm"
-          icon={Clock}
-          valueClassName="text-4xl text-white"
-          className="rounded-2xl border-border bg-card"
-          layout="row"
-        />
-        <KpiCard
+        <StatCard
           label="This month"
-          value={formatCurrency(totalValue, "USD")} // Placeholder: Real monthly gain needs history API
+          value={formatCurrency(totalValue, "USD")} // Placeholder
           status="Total account value"
-          statusColor="text-green-500 font-medium text-sm"
-          icon={DollarSign}
-          valueClassName="text-4xl text-foreground"
-          className="rounded-2xl border-border bg-card"
-          layout="row"
+          statusColor="text-green-500"
+          icon={<DollarSign className="h-6 w-6" />}
         />
       </div>
 
       <WithdrawFundsModal
         isOpen={false}
         onClose={() => { }}
-        availableBalance={totalValue} // Allow withdraw check against total USD value? Or specific asset?
-      // Note: Withdraw modal usually needs specific asset. For now, this prop might be unused or just indicative.
+        availableBalance={totalValue}
       />
     </>
   );
@@ -111,8 +107,6 @@ function WalletStats({ balances }: { balances: any }) {
 function WalletAssetList({ balances }: { balances: any }) {
   // balances is { balances: [...], ... }
   const assets = balances?.balances || [];
-  const { mutate: unsetTrustline, isPending } = useUnsetTrustline();
-
   const formatCurrency = (amount: number, currency: string = "USD") => {
     try {
       return new Intl.NumberFormat("en-US", {
@@ -124,9 +118,7 @@ function WalletAssetList({ balances }: { balances: any }) {
     }
   };
 
-  const handleRemove = (currency: string) => {
-    unsetTrustline(currency);
-  };
+
 
   return (
     <div className="space-y-3 min-h-[400px]">
@@ -157,17 +149,7 @@ function WalletAssetList({ balances }: { balances: any }) {
                 <span className="text-xs text-muted-foreground">Total: {formatCurrency(asset.balance, asset.currency)}</span>
               )}
             </div>
-            {asset.asset_type !== 'native' && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleRemove(asset.currency)}
-                disabled={isPending}
-              >
-                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-              </Button>
-            )}
+
           </div>
         </div>
       ))}
@@ -410,8 +392,8 @@ function PayoutsContent({ setShowAddMethodModal }: { setShowAddMethodModal: (val
   );
 }
 
-function BalancesConsumerModal({ isOpen, onClose, availableBalance, currency }: { isOpen: boolean; onClose: () => void, availableBalance: number, currency: string }) {
-  return <WithdrawFundsModal isOpen={isOpen} onClose={onClose} availableBalance={availableBalance} currency={currency} />;
+function BalancesConsumerModal({ isOpen, onClose, balances }: { isOpen: boolean; onClose: () => void, balances: any }) {
+  return <WithdrawFundsModal isOpen={isOpen} onClose={onClose} balances={balances} />;
 }
 
 export default function WalletPage() {
@@ -558,8 +540,7 @@ export default function WalletPage() {
         <BalancesConsumerModal
           isOpen={showWithdrawFundsModal}
           onClose={() => setShowWithdrawFundsModal(false)}
-          availableBalance={balances?.balances?.[0]?.availableBalance || 0}
-          currency={balances?.balances?.[0]?.currency || "USD"}
+          balances={balances}
         />
       )}
 

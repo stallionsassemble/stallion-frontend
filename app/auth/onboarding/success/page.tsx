@@ -6,10 +6,13 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
+import { useAuth } from "@/lib/store/use-auth";
+
 function SuccessContent() {
   const searchParams = useSearchParams();
   const role = searchParams.get("role") as "talent" | "owner" | null;
   const isOwner = role === "owner";
+  const { user } = useAuth();
 
   return (
     <div className="flex flex-col items-center justify-center space-y-12 text-center">
@@ -27,12 +30,12 @@ function SuccessContent() {
       </div>
 
       <div className="relative">
-        <div className="h-64 w-64 overflow-hidden rounded-3xl shadow-2xl">
+        <div className="h-64 w-64 overflow-hidden rounded-3xl shadow-2xl bg-slate-800">
           <Image
-            src="/jane-avatar.png" // Placeholder, in real app usage specific generated avatar
+            src={user?.profilePicture || "/jane-avatar.png"}
             width={256}
             height={256}
-            alt="Profile"
+            alt={user?.firstName || "Profile"}
             className="h-full w-full object-cover"
           />
         </div>

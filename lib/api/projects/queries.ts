@@ -50,10 +50,11 @@ export function useGetProjectMilestones(id: string) {
   })
 }
 
-export function useGetMyMilestones() {
+export function useGetMyMilestones(projectId: string) {
   return useQuery({
-    queryKey: ['projects', 'milestones', 'my'],
-    queryFn: () => projectService.getMyMilestones(),
+    queryKey: ['projects', projectId, 'milestones', 'my'],
+    queryFn: () => projectService.getMyMilestones(projectId),
+    enabled: !!projectId,
   })
 }
 
@@ -131,6 +132,10 @@ export function useUpdateApplication() {
         queryClient.invalidateQueries({
           queryKey: ['projects', data.projectId, 'applications'],
         })
+        // Invalidate project details to reflect updated application data
+        queryClient.invalidateQueries({
+          queryKey: ['projects', data.projectId],
+        })
       }
     },
   })
@@ -185,9 +190,9 @@ export function useSubmitMilestone() {
       payload: SubmitMilestonePayload
     }) => projectService.submitMilestone(id, payload),
     onSuccess: (data) => {
-      if (data?.projectId) {
+      if ((data as any)?.projectId) {
         queryClient.invalidateQueries({
-          queryKey: ['projects', data.projectId, 'milestones'],
+          queryKey: ['projects', (data as any).projectId, 'milestones'],
         })
       }
       queryClient.invalidateQueries({
@@ -208,9 +213,9 @@ export function useReviewMilestone() {
       payload: ReviewMilestonePayload
     }) => projectService.reviewMilestone(id, payload),
     onSuccess: (data) => {
-      if (data?.projectId) {
+      if ((data as any)?.projectId) {
         queryClient.invalidateQueries({
-          queryKey: ['projects', data.projectId, 'milestones'],
+          queryKey: ['projects', (data as any).projectId, 'milestones'],
         })
       }
     },

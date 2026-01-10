@@ -286,6 +286,8 @@ export default function BountyDetailsPage() {
           projectId={project.id}
           projectTitle={project.title}
           reward={project.reward}
+          totalPaid={project.owner.totalPaid}
+          totalContributors={project.owner.totalProjects}
           currency={project.currency}
           owner={project.owner}
           createdAt={project.createdAt}
@@ -305,7 +307,7 @@ export default function BountyDetailsPage() {
           projectTitle={project.title}
           reward={project.reward}
           totalPaid={project.owner.totalPaid}
-          totalContributors={project.owner.totalBounties}
+          totalContributors={project.owner.totalProjects}
           currency={project.currency}
           owner={project.owner}
           createdAt={project.createdAt}

@@ -120,10 +120,9 @@ export default function OwnerOnboardingPage() {
     try {
       await authService.completeProfileOwner(payload)
 
-      // Update local user state
-      if (user) {
-        setUser({ ...user, profileCompleted: true })
-      }
+      // Fetch fresh profile data to ensure state is synced
+      const updatedUser = await authService.profile();
+      setUser(updatedUser);
 
       router.push("/auth/onboarding/success?role=owner");
       toast.success("Profile completed successfully!", { id: toastId })

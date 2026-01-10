@@ -38,7 +38,7 @@ export function EditSubmissionModal({ isOpen, onClose, submission }: EditSubmiss
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#09090B] border-white/10 sm:max-w-3xl max-h-[90vh] overflow-y-auto block p-0 gap-0">
+      <DialogContent className="bg-[#09090B] border-white/10 sm:max-w-[550px] max-h-[90vh] overflow-y-auto block p-0 gap-0">
         <DialogHeader className="p-6 border-b border-white/10 relative">
           <div className="flex items-center gap-1 mb-2 font-inter">
             <Badge className="bg-background hover:bg-background/90 text-white rounded-[13.7px] px-3 py-0.5 font-bold text-xs tracking-[-4%]">

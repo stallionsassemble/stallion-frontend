@@ -137,6 +137,14 @@ export function useGetMyBountySubmissions() {
   })
 }
 
+export function useGetSubmissions(id: string) {
+  return useQuery({
+    queryKey: ['bounty', id, 'submissions'],
+    queryFn: () => bountyService.getDetailedSubmissions(id),
+    enabled: !!id,
+  })
+}
+
 export function useSelectWinners() {
   const queryClient = useQueryClient()
 

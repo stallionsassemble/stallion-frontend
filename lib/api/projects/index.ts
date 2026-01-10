@@ -3,9 +3,10 @@ import {
   ApplyProjectPayload,
   ApplyProjectResponse,
   CreateProjectPayload,
+  GetProjectMilestonesResponses,
   GetProjectsPayload,
   Project,
-  ProjectActivity,
+  ProjectActivitiesResponse,
   ProjectApplications,
   ProjectMilestone,
   ProjectMilestones,
@@ -140,7 +141,7 @@ export class ProjectService {
    * @returns
    */
   async getProjectMilestones(id: string) {
-    const response = await api.get<ProjectMilestones>(
+    const response = await api.get<GetProjectMilestonesResponses>(
       `/projects/${id}/milestones`
     )
     return response.data
@@ -150,8 +151,11 @@ export class ProjectService {
    * Get my milestones (GIG Only)
    * @returns
    */
-  async getMyMilestones() {
-    const response = await api.get<ProjectMilestones>(`/projects/milestones/my`)
+  async getMyMilestones(projectId: string) {
+    const response = await api.get<ProjectMilestones>(
+      `/projects/milestones/me`,
+      { params: projectId }
+    )
     return response.data
   }
 
@@ -189,7 +193,9 @@ export class ProjectService {
    * @returns
    */
   async getProjectActivity(id: string) {
-    const response = await api.get<ProjectActivity>(`/projects/${id}/activity`)
+    const response = await api.get<ProjectActivitiesResponse>(
+      `/projects/${id}/activities`
+    )
     return response.data
   }
 }

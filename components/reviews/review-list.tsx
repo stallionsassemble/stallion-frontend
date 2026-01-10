@@ -2,7 +2,6 @@
 import { useGetUserReviews } from "@/lib/api/reviews/queries";
 import { useAuth } from "@/lib/store/use-auth";
 import { Loader2, MessageSquare } from "lucide-react";
-import { CreateReviewDialog } from "./create-review-dialog";
 import { ReviewItem } from "./review-item";
 
 interface ReviewListProps {
@@ -31,9 +30,9 @@ export function ReviewList({ userId, username }: ReviewListProps) {
         <h3 className="text-lg font-bold font-inter">
           Reviews <span className="text-muted-foreground text-sm font-normal ml-1">({reviews.length})</span>
         </h3>
-        {!isOwnProfile && currentUser && (
+        {/* {!isOwnProfile && currentUser && (
           <CreateReviewDialog userId={userId} username={username} />
-        )}
+        )} */}
       </div>
 
       <div className="space-y-0"> {/* Removed gap because items have their own padding/border */}
@@ -41,7 +40,7 @@ export function ReviewList({ userId, username }: ReviewListProps) {
           <div className="flex flex-col items-center justify-center py-8 text-center bg-primary/5 rounded-xl border border-dashed border-primary/20">
             <MessageSquare className="w-8 h-8 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">No reviews yet.</p>
-            {!isOwnProfile && currentUser && (
+            {/* {!isOwnProfile && currentUser && (
               <div className="mt-4">
                 <CreateReviewDialog
                   userId={userId}
@@ -49,7 +48,7 @@ export function ReviewList({ userId, username }: ReviewListProps) {
                   trigger={<button className="text-primary hover:underline text-sm font-medium">Be the first to leave a review</button>}
                 />
               </div>
-            )}
+            )} */}
           </div>
         ) : (
           reviews.map((review) => (

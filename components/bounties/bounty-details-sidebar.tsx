@@ -29,6 +29,7 @@ import { useWithdrawApplication } from "@/lib/api/projects/queries";
 
 import { BountyDistribution } from "@/lib/types/bounties"; // Added import
 import { ApplyProjectResponse } from "@/lib/types/project"; // Corrected import
+import { useUserReputation } from "@/lib/api/reputation/queries";
 
 interface BountyDetailsSidebarProps {
   type?: "BOUNTY" | "PROJECT";
@@ -110,6 +111,9 @@ export function BountyDetailsSidebar({
     const v = n % 100;
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   };
+
+  const { data: userReputation } = useUserReputation(owner?.id || '')
+  const userRating = userReputation?.rating
 
   return (
     <div className="space-y-6 w-full">
@@ -195,13 +199,15 @@ export function BountyDetailsSidebar({
                     </Button>
                   </SubmitBountyModal>
                 )}
-                <Button
-                  onClick={handleWithdraw}
-                  disabled={isWithdrawing}
-                  className="flex-1 bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive font-bold h-11 border border-destructive/50"
-                >
-                  {isWithdrawing ? "..." : (isProject ? "Withdraw" : "Withdraw")}
-                </Button>
+                {!isProject && (
+                  <Button
+                    onClick={handleWithdraw}
+                    disabled={isWithdrawing}
+                    className="flex-1 bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive font-bold h-11 border border-destructive/50"
+                  >
+                    {isWithdrawing ? "..." : "Withdraw"}
+                  </Button>
+                )}
               </div>
             ) : (
               <Button disabled className="w-full bg-green-500/20 text-green-500 font-bold h-11 cursor-not-allowed border border-green-500/50">
@@ -254,7 +260,7 @@ export function BountyDetailsSidebar({
             <h3 className="text-[16px] font-medium text-foreground">{owner?.companyName || owner?.username || "Stallion User"}</h3>
             <div className="flex items-center gap-1.5">
               <Star className="h-4 w-4 text-primary fill-primary" />
-              <span className="text-[14px] text-foreground font-medium">{owner?.rating || "N/A"}</span>
+              <span className="text-[14px] text-foreground font-medium">{userRating || "N/A"}</span>
             </div>
           </div>
         </div>
@@ -267,7 +273,7 @@ export function BountyDetailsSidebar({
           <div className="flex items-center gap-3">
             <Gift className="h-5 w-5 text-primary" />
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-400 font-normal text-[12px] tracking-[-2%]">Total Bounties</span>
+              <span className="text-gray-400 font-normal text-[12px] tracking-[-2%]">{type === "BOUNTY" ? "Total Bounties" : "Total Projects"}</span>
               <span className="font-extralight text-[12px] tracking-[-2%] text-center">:</span>
               <span className="text-white font-bold text-[12px] tracking-[-2%]">{totalContributors}</span>
             </div>
@@ -291,9 +297,15 @@ export function BountyDetailsSidebar({
         </div>
 
         <div className="pt-2 flex justify-center gap-4">
-          <Link href={`/dashboard/bounties?ownerId=${owner?.id}`} className="flex items-center gap-2 text-primary text-[12px] font-semibold transition-all">
-            View Bounties <ArrowRight className="h-4 w-4" />
-          </Link>
+          {type === 'BOUNTY' ? (
+            <Link href={`/dashboard/bounties?ownerId=${owner?.id}`} className="flex items-center gap-2 text-primary text-[12px] font-semibold transition-all">
+              View Bounties <ArrowRight className="h-4 w-4" />
+            </Link>
+          ) : (
+            <Link href={`/dashboard/projects?ownerId=${owner?.id}`} className="flex items-center gap-2 text-primary text-[12px] font-semibold transition-all">
+              View Projects <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
           <Link href={`/dashboard/profile/${owner?.id}`} className="flex items-center gap-2 text-primary text-[12px] font-semibold transition-all">
             View Profile <ArrowRight className="h-4 w-4" />
           </Link>
@@ -301,13 +313,15 @@ export function BountyDetailsSidebar({
       </div>
 
       {/* Footer Info */}
-      <div className="font-medium font-inter px-2">
-        <p className="text-[16px] text-foreground uppercase mb-1">Winner Announcement By</p>
+      {type === 'BOUNTY' && (
+        <div className="font-medium font-inter px-2">
+          <p className="text-[16px] text-foreground uppercase mb-1">Winner Announcement By</p>
 
-        <p className="text-[14px] text-foreground">
-          {winnerAnnouncement ? new Date(winnerAnnouncement).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" }) : "Date TBD"} - as scheduled by the project owner
-        </p>
-      </div>
+          <p className="text-[14px] text-foreground">
+            {winnerAnnouncement ? new Date(winnerAnnouncement).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" }) : "Date TBD"} - as scheduled by the project owner
+          </p>
+        </div>
+      )}
     </div>
   );
 }

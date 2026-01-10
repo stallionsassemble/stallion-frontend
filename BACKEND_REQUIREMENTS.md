@@ -90,6 +90,7 @@ owner: {
     lastName: string
     companyName: string
     profilePicture: string
+    companyLogo: string
     createdAt: string
     totalPaid: string
     totalBounties: number
@@ -108,3 +109,5 @@ milestones: {
 - Bounty discussion UI
 - My submissions UI and page functionality
 - Submissions Page updating
+
+- Come back and work on the Bounties Page filters

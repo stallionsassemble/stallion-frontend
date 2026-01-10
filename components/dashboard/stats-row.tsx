@@ -1,9 +1,11 @@
 import { CheckCircle2, DollarSign, Target, TrendingUp } from "lucide-react";
 import { useAuth } from "@/lib/store/use-auth";
 import { useGetUser } from "@/lib/api/users/queries";
+import { useTalentStatsQuery } from "@/lib/api/dashboard/queries";
 
 export function StatsRow() {
   const { user } = useAuth()
+  const { data: talentStats } = useTalentStatsQuery()
   return (
     <div className="grid gap-4 md:grid-cols-3">
       {/* Total Earnings */}
@@ -17,10 +19,10 @@ export function StatsRow() {
           </div>
         </div>
         <div className="space-y-1">
-          <span className="text-2xl md:text-3xl font-bold text-foreground">{user?.totalWon || 0}</span>
+          <span className="text-2xl md:text-3xl font-bold text-foreground">{talentStats?.totalEarnings || 0}</span>
           <div className="flex items-center gap-1 text-[10px] md:text-xs">
             <span className="text-primary flex items-center gap-0.5 font-medium">
-              +12% <TrendingUp className="w-3 h-3" />
+              {talentStats?.earningsPercentageChange || 0}% <TrendingUp className="w-3 h-3" />
             </span>
             <span className="text-muted-foreground">from last month</span>
           </div>
@@ -39,7 +41,7 @@ export function StatsRow() {
           </div>
         </div>
         <div className="space-y-1">
-          <span className="text-2xl md:text-3xl font-bold text-foreground">10</span>
+          <span className="text-2xl md:text-3xl font-bold text-foreground">{talentStats?.activeBounties || 0}</span>
           <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground">
             In progress
           </div>
@@ -58,7 +60,7 @@ export function StatsRow() {
           </div>
         </div>
         <div className="space-y-1">
-          <span className="text-2xl md:text-3xl font-bold text-foreground">{user?.totalSubmissions || 0}</span>
+          <span className="text-2xl md:text-3xl font-bold text-foreground">{talentStats?.completedBounties || 0}</span>
           <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground">
             All time
           </div>

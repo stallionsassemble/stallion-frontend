@@ -10,11 +10,12 @@ export type SubmissionStatus = "Approved" | "Pending Review" | "Revision Request
 export interface SubmissionCardProps {
   id: string | number;
   project: string;
+  source: string
   title: string;
   description: string;
   logo: string;
   amount: string;
-  type: "USDC" | "SOL" | "USD";
+  type: string
   status: SubmissionStatus;
   submittedAt: string;
   lastUpdated: string;
@@ -38,6 +39,7 @@ const getStatusColor = (status: SubmissionStatus) => {
 export function SubmissionCard({
   id,
   project,
+  source,
   title,
   description,
   logo,
@@ -66,7 +68,7 @@ export function SubmissionCard({
           <div className="space-y-1">
             <div className="flex items-center gap-2 mb-1">
               <Badge variant="outline" className="h-5 px-1.5 font-inter font-medium text-[8px] border-primary border-[0.54px] text-primary-foreground bg-primary rounded-full">
-                Project
+                {source.charAt(0).toUpperCase() + source.slice(1).toLowerCase()}
               </Badge>
             </div>
             <h3 className="text-lg font-bold font-inter text-foreground transition-colors">

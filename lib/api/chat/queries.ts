@@ -1,6 +1,7 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { CreateConversationPayload } from '@/lib/types/chat'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { chatService } from './index'
 
 export const chatKeys = {
@@ -42,5 +43,16 @@ export function useSearchMessages(conversationId: string, query: string) {
     queryKey: [...chatKeys.messages(conversationId), 'search', query],
     queryFn: () => chatService.searchMessages(conversationId, query),
     enabled: !!conversationId && !!query,
+  })
+}
+
+export function useCreateConversation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: CreateConversationPayload) =>
+      chatService.createConversation(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: chatKeys.conversations() })
+    },
   })
 }

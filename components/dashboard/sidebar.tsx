@@ -22,7 +22,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-const sidebarItems = [
+const talentSidebarItems = [
   {
     title: "Dashboard",
     href: "/dashboard",
@@ -83,6 +83,50 @@ const sidebarItems = [
   },
 ];
 
+const ownerSidebarItems = [
+  {
+    title: "Dashboard",
+    href: "/dashboard/project-owner",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Bounties",
+    href: "/dashboard/project-owner/bounties",
+    icon: Trophy,
+  },
+  {
+    title: "Projects",
+    href: "/dashboard/project-owner/projects",
+    icon: Briefcase,
+  },
+  {
+    title: "Messages",
+    href: "/dashboard/project-owner/messages",
+    icon: MessageSquare,
+    badge: 2,
+  },
+  {
+    title: "Contributors",
+    href: "/dashboard/project-owner/contributors",
+    icon: Users,
+  },
+  {
+    title: "Wallet",
+    href: "/dashboard/project-owner/wallet",
+    icon: Wallet,
+  },
+  {
+    title: "Profile",
+    href: "/dashboard/project-owner/profile",
+    icon: User,
+  },
+  {
+    title: "Settings",
+    href: "/dashboard/project-owner/settings",
+    icon: Settings,
+  },
+];
+
 import { useConversations } from "@/lib/api/chat/queries";
 import { useUnreadNotificationsCount } from "@/lib/api/notifications/queries";
 import { useUI } from "@/lib/store/use-ui";
@@ -100,6 +144,9 @@ function SidebarContent({ onLinkClick, isCollapsed = false }: SidebarContentProp
   const { data: conversations = [] } = useConversations();
 
   const unreadMessagesCount = conversations.reduce((acc, curr) => acc + (curr.unreadCount || 0), 0);
+
+  const isOwnerRoute = pathname.startsWith("/dashboard/project-owner");
+  const sidebarItems = isOwnerRoute ? ownerSidebarItems : talentSidebarItems;
 
   return (
     <div className="flex h-full flex-col bg-background">
@@ -133,9 +180,10 @@ function SidebarContent({ onLinkClick, isCollapsed = false }: SidebarContentProp
           } else if (item.title === "Notification") {
             currentBadge = undefined;
           } else if (item.title === "Messages" && unreadMessagesCount > 0) {
-            currentBadge = unreadMessagesCount;
-          } else if (item.title === "Messages") {
-            currentBadge = undefined;
+            // Only show message badge if we have logic for it. 
+            // Currently using static '2' from the array or dynamic if available?
+            // For now adhering to existing logic:
+            currentBadge = unreadMessagesCount > 0 ? unreadMessagesCount : item.badge;
           }
 
           return (
@@ -194,7 +242,7 @@ export function Sidebar() {
     <aside
       className={cn(
         "hidden h-screen flex-col border-r border-border bg-background md:flex sticky top-0 transition-all duration-300 ease-in-out group/sidebar",
-        isSidebarCollapsed ? "w-20" : "w-64"
+        isSidebarCollapsed ? "w-20" : "w-56"
       )}
     >
       <SidebarContent isCollapsed={isSidebarCollapsed} />
