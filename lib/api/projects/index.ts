@@ -15,6 +15,7 @@ import {
   Projects,
   ReviewMilestonePayload,
   SubmitMilestonePayload,
+  UpdateProjectPayload,
 } from '@/lib/types/project'
 
 export class ProjectService {
@@ -35,6 +36,17 @@ export class ProjectService {
    */
   async createProject(payload: CreateProjectPayload) {
     const response = await api.post<Project>('/projects', payload)
+    return response.data
+  }
+
+  /**
+   * Update a project
+   * @param id Project id
+   * @param payload Project update payload
+   * @returns
+   */
+  async updateProject(id: string, payload: UpdateProjectPayload) {
+    const response = await api.patch<Project>(`/projects/${id}`, payload)
     return response.data
   }
 

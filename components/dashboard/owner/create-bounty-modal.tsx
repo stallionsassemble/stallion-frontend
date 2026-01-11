@@ -82,11 +82,21 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
       setSelectedTags(existingBounty.skills || []);
 
       // Distro
-      if (existingBounty.distribution) {
-        const distro = existingBounty.distribution.map((d) => ({
-          rank: d.rank,
-          amount: ((Number(d.percentage) / 100) * Number(existingBounty.reward)).toString(),
-        })).sort((a, b) => a.rank - b.rank);
+      const distList = existingBounty.distribution || existingBounty.rewardDistribution;
+      if (distList) {
+        const distro = distList.map((d) => {
+          let percentage = 0;
+          if (Array.isArray(d.percentage)) {
+            percentage = d.percentage.length > 1 ? d.percentage[1] : d.percentage[0];
+          } else {
+            percentage = Number(d.percentage);
+          }
+
+          return {
+            rank: Number(d.rank),
+            amount: ((percentage / 100) * Number(existingBounty.reward)).toString(),
+          };
+        }).sort((a, b) => a.rank - b.rank);
 
         if (distro.length > 0) {
           setPrizeDistribution(distro);

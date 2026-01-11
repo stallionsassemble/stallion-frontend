@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { ArrowRight, Blocks, FileStack, Gift } from "lucide-react";
 import Link from "next/link";
 
+import { useGetMyBounties } from "@/lib/api/bounties/queries";
 import { useState } from "react";
 import { CreateBountyModal } from "./create-bounty-modal";
 import { CreateProjectModal } from "./create-project-modal";
@@ -59,6 +60,9 @@ export function QuickActions() {
   const [openBountyModal, setOpenBountyModal] = useState(false);
   const [openProjectModal, setOpenProjectModal] = useState(false);
 
+  const { data: bounties } = useGetMyBounties();
+  const totalSubmissions = bounties?.reduce((acc, b) => acc + (b.submissionCount || 0), 0) || 0;
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -76,10 +80,10 @@ export function QuickActions() {
           onClick={() => setOpenProjectModal(true)}
         />
         <ActionCard
-          title="Review Pending (4)"
-          description="Post a new job for freelancers" // Need to fix this description later if wrong, copy-paste error from previous file content?
+          title={`Review Submissions ${totalSubmissions > 0 ? `(${totalSubmissions})` : ''}`}
+          description="Check received submissions"
           icon={FileStack}
-          href="/dashboard/owner/reviews"
+          href="/dashboard/owner/bounties"
         />
       </div>
 

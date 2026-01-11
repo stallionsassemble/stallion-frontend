@@ -1,5 +1,6 @@
 "use client";
 
+import { CreateProjectModal } from "@/components/dashboard/owner/create-project-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,11 +9,13 @@ import { format } from "date-fns";
 import { ArrowLeft, Briefcase, Clock, Edit, FileText, Share2, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 
 export default function ProjectDetailsPage() {
   const params = useParams();
   const id = params?.id as string;
   const { data: project, isLoading } = useGetProject(id);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   if (isLoading) {
     return <div className="p-8 text-center">Loading project details...</div>;
@@ -40,7 +43,12 @@ export default function ProjectDetailsPage() {
         </Link>
 
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" size="sm" className="bg-transparent border-border text-foreground hover:text-white gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-transparent border-border text-foreground hover:text-white gap-2"
+            onClick={() => setIsEditModalOpen(true)}
+          >
             <Edit className="h-4 w-4" /> Edit
           </Button>
           <Button variant="outline" size="sm" className="bg-transparent border-border text-foreground hover:text-white gap-2">
@@ -124,6 +132,12 @@ export default function ProjectDetailsPage() {
 
         </div>
       </div>
-    </div>
+
+      <CreateProjectModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        existingProject={project}
+      />
+    </div >
   );
 }

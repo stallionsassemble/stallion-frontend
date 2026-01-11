@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCreateProject } from "@/lib/api/projects/queries";
+import { useCreateProject, useUpdateProject } from "@/lib/api/projects/queries";
 import { uploadService } from "@/lib/api/upload";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
 import { BountyAttachment } from "@/lib/types/bounties"; // Reusing attachment type
@@ -68,8 +68,10 @@ export function CreateProjectModal({ children, existingProject, open: controlled
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: walletData } = useGetWalletBalances();
-  const { mutate: createProject, isPending } = useCreateProject();
-  // TODO: Add useUpdateProject if API supports it, currently primarily creating based on design
+  const { mutate: createProject, isPending: isCreating } = useCreateProject();
+  const { mutate: updateProject, isPending: isUpdating } = useUpdateProject();
+
+  const isPending = isCreating || isUpdating;
 
   useEffect(() => {
     if (existingProject && isOpen) {
@@ -220,18 +222,26 @@ export function CreateProjectModal({ children, existingProject, open: controlled
       attachments: attachments.map(a => ({ filename: a.filename, url: a.url, size: a.size, mimetype: a.mimetype })),
     };
 
-    createProject(payload, {
-      onSuccess: () => {
-        setOpen(false);
-        // Reset
-        setTitle("");
-        setDescription("");
-        setBudget("");
-        setMilestones([]);
-        setStartMilestoneTitle("");
-        setStartMilestoneAmount("");
-      }
-    });
+    if (existingProject) {
+      updateProject({ id: existingProject.id, payload: payload as any }, {
+        onSuccess: () => {
+          setOpen(false);
+        }
+      });
+    } else {
+      createProject(payload, {
+        onSuccess: () => {
+          setOpen(false);
+          // Reset
+          setTitle("");
+          setDescription("");
+          setBudget("");
+          setMilestones([]);
+          setStartMilestoneTitle("");
+          setStartMilestoneAmount("");
+        }
+      });
+    }
 
   };
 

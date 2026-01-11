@@ -43,6 +43,11 @@ export interface CreateProjectPayload {
 }
 
 /**
+ * Payload for updating a project
+ */
+export interface UpdateProjectPayload extends Partial<CreateProjectPayload> {}
+
+/**
  * Payload for getting projects with filters
  */
 export interface GetProjectsPayload {

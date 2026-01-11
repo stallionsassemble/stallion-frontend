@@ -5,8 +5,10 @@ import {
   ProjectReviewPayload,
   ReviewMilestonePayload,
   SubmitMilestonePayload,
+  UpdateProjectPayload,
 } from '@/lib/types/project'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { projectService } from './index'
 
 // --- Queries ---
@@ -74,7 +76,32 @@ export function useCreateProject() {
     mutationFn: (payload: CreateProjectPayload) =>
       projectService.createProject(payload),
     onSuccess: () => {
+      toast.success('Project created successfully')
       queryClient.invalidateQueries({ queryKey: ['projects'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to create project')
+    },
+  })
+}
+
+export function useUpdateProject() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string
+      payload: UpdateProjectPayload
+    }) => projectService.updateProject(id, payload),
+    onSuccess: (_, { id }) => {
+      toast.success('Project updated successfully')
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      queryClient.invalidateQueries({ queryKey: ['projects', id] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update project')
     },
   })
 }
