@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { BountyCard } from "@/components/dashboard/owner/bounty-card";
+import { CreateBountyModal } from "@/components/dashboard/owner/create-bounty-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -98,9 +99,11 @@ export default function OwnerBountiesPage() {
           <h1 className="text-3xl font-bold text-white">Bounties</h1>
           <p className="text-muted-foreground mt-1">Competition-style challenges with prize pools</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-          <Plus className="h-4 w-4" /> Create Bounty
-        </Button>
+        <CreateBountyModal>
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+            <Plus className="h-4 w-4" /> Create Bounty
+          </Button>
+        </CreateBountyModal>
       </div>
 
       {/* Filters & Search */}
@@ -206,6 +209,7 @@ export default function OwnerBountiesPage() {
               className="block h-full"
             >
               <BountyCard
+                bountyId={bounty.id}
                 status={bounty.status}
                 type="Bounty"
                 title={bounty.title}
@@ -214,7 +218,6 @@ export default function OwnerBountiesPage() {
                 currency={bounty.rewardCurrency}
                 skills={bounty.skills || []}
                 applicants={bounty.applicationCount || 0}
-                submissions={bounty.applicationCount || 0}
                 date={bounty.createdAt ? format(new Date(bounty.createdAt), 'MM/dd/yyyy') : ''}
               />
             </Link>

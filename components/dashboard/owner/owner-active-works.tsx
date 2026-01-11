@@ -7,7 +7,9 @@ import { useGetProjects } from "@/lib/api/projects/queries";
 import { useAuth } from "@/lib/store/use-auth";
 import { ChevronRight, CircleCheck, Clock, User, Users } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
+import { SubmissionCount } from "./submission-count";
 
 interface WorkItem {
   id: string;
@@ -20,6 +22,7 @@ interface WorkItem {
   skills: string[];
   applicants: number;
   submissions: number;
+  deadline?: string;
   timeLeft?: string;
   hired?: boolean;
   totalMilestones?: number;
@@ -58,7 +61,8 @@ export function OwnerActiveWorks() {
       status: b.status === 'ACTIVE' ? "ACTIVE" : b.status === 'COMPLETED' ? "Completed" : "Closed",
       currency: b.rewardCurrency,
       applicants: b.applicationCount || 0,
-      submissions: b.applicationCount || 0,
+      submissions: b.submissionCount || 0,
+      deadline: b.submissionDeadline,
       totalMilestones: 0,
       completedMilestones: 0,
       acceptedCount: 0,
@@ -209,89 +213,113 @@ export function OwnerActiveWorks() {
             </Card>
           ))
         ) : (
-          filteredAndSortedWorks.slice(0, 6).map((work) => (
-            <Card key={work.id} className="bg-background border-primary overflow-hidden relative group hover:border-primary/50 transition-all rounded-xl">
-              <CardContent className="p-6 flex flex-col h-full relative z-10">
+          filteredAndSortedWorks.slice(0, 6).map((work) => {
+            const detailsUrl = work.type === "Bounty"
+              ? `/dashboard/owner/bounties/${work.id}`
+              : `/dashboard/owner/projects/${work.id}`;
+            const isEnded = work.deadline ? new Date(work.deadline) < new Date() : false;
 
-                {/* Badges */}
-                <div className="flex items-center gap-2 mb-4">
-                  <Badge className="bg-[#1E1E1E] text-[#9CA3AF] hover:bg-[#2A2A2A] border-0 rounded-md text-[10px] font-medium px-2 py-0.5 uppercase tracking-wide">
-                    {work.status}
-                  </Badge>
-                  <Badge className="bg-[#0F2942] text-blue-400 hover:bg-[#0F2942] border-0 rounded-md text-[10px] font-medium px-2 py-0.5 uppercase tracking-wide">
-                    {work.type}
-                  </Badge>
-                </div>
+            return (
+              <Link key={work.id} href={detailsUrl} className="block">
+                <Card className="bg-background border-primary overflow-hidden relative group hover:border-primary/50 transition-all rounded-xl h-full">
+                  <CardContent className="p-6 flex flex-col h-full relative z-10">
 
-                {/* Title & Description */}
-                <h3 className="font-bold text-[19px] leading-tight mb-2 text-white">{work.title}</h3>
-                <p className="text-[#64748B] text-[13px] leading-relaxed mb-5 line-clamp-3">{work.description}</p>
-
-                {/* Price Row */}
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-[26px] font-bold text-white tracking-tight">
-                    {work?.currency === 'XLM' ? '' : '$'}{work.reward}
-                  </span>
-                  <Badge className="bg-blue-600/90 text-white hover:bg-blue-600 border-0 rounded-full text-[10px] font-bold px-2.5 py-0.5">
-                    {work?.currency || ''}
-                  </Badge>
-                </div>
-
-                {/* Progress Bar (Only for In Progress) */}
-                {work.status === 'In Progress' && work.totalMilestones && work.completedMilestones && (
-                  <div className="w-full mb-4">
-                    <div className="w-full h-1 bg-[#1E293B] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.round((work.completedMilestones / work.totalMilestones) * 100)}%` }}
-                      />
+                    {/* Badges */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <Badge className="bg-[#1E1E1E] text-[#9CA3AF] hover:bg-[#2A2A2A] border-0 rounded-md text-[10px] font-medium px-2 py-0.5 uppercase tracking-wide">
+                        {work.status}
+                      </Badge>
+                      <Badge className="bg-[#0F2942] text-blue-400 hover:bg-[#0F2942] border-0 rounded-md text-[10px] font-medium px-2 py-0.5 uppercase tracking-wide">
+                        {work.type}
+                      </Badge>
                     </div>
-                    <div className="mt-1 text-[10px] text-foreground/50 font-medium">
-                      Milestone {work.completedMilestones} of {work.totalMilestones}
-                    </div>
-                  </div>
-                )}
-                {!(work.status === 'In Progress') && <div className="mb-4"></div>}
 
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {work.skills.map(skill => (
-                    <Badge key={skill} variant="secondary" className="bg-primary/20 text-foreground hover:bg-primary/30 text-[10px] px-2 py-0.5 transition-colors border-0">
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
+                    {/* Title & Description */}
+                    <h3 className="font-bold text-[19px] leading-tight mb-2 text-white">{work.title}</h3>
+                    <p className="text-[#64748B] text-[13px] leading-relaxed mb-5 line-clamp-3">{work.description}</p>
 
-                {/* Footer Row */}
-                <div className="flex items-center justify-between mt-auto pt-2">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-4 text-[11px] text-[#64748B] font-medium">
-                      <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-primary" /> <span className="text-white">{work.applicants}</span></span>
-                      <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-primary" /> <span className="text-white">{work.submissions} Submissions</span></span>
-                    </div>
-                    <div className="flex items-center gap-4 text-[11px] font-medium mt-1">
-                      <span className="text-red-500 flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5" /> Ended
+                    {/* Price Row */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-[26px] font-bold text-white tracking-tight">
+                        {work?.currency === 'XLM' ? '' : '$'}{work.reward}
                       </span>
-                      {work.type === "Project" && (work.acceptedCount || 0) > 0 && (
-                        <div className="flex items-center gap-1.5">
-                          <div className="relative h-4 w-4 rounded-full overflow-hidden border border-slate-700">
-                            <Image src="https://avatar.vercel.sh/james" alt="hired" fill className="object-cover" />
-                          </div>
-                          <span className="text-green-500">Hired</span>
-                        </div>
-                      )}
+                      <Badge className="bg-blue-600/90 text-white hover:bg-blue-600 border-0 rounded-full text-[10px] font-bold px-2.5 py-0.5">
+                        {work?.currency || ''}
+                      </Badge>
                     </div>
-                  </div>
 
-                  <Button size="icon" className="h-10 w-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20 shrink-0">
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </div>
+                    {/* Progress Bar (Only for In Progress) */}
+                    {work.status === 'In Progress' && work.totalMilestones && work.completedMilestones && (
+                      <div className="w-full mb-4">
+                        <div className="w-full h-1 bg-[#1E293B] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.round((work.completedMilestones / work.totalMilestones) * 100)}%` }}
+                          />
+                        </div>
+                        <div className="mt-1 text-[10px] text-foreground/50 font-medium">
+                          Milestone {work.completedMilestones} of {work.totalMilestones}
+                        </div>
+                      </div>
+                    )}
+                    {!(work.status === 'In Progress') && <div className="mb-4"></div>}
 
-              </CardContent>
-            </Card>
-          ))
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {work.skills.map(skill => (
+                        <Badge key={skill} variant="secondary" className="bg-primary/20 text-foreground hover:bg-primary/30 text-[10px] px-2 py-0.5 transition-colors border-0">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    {/* Footer Row */}
+                    <div className="flex items-center justify-between mt-auto pt-2">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-4 text-[11px] text-[#64748B] font-medium">
+                          <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-primary" /> <span className="text-white">{work.applicants}</span></span>
+                          <span className="flex items-center gap-1.5">
+                            <Users className="h-3.5 w-3.5 text-primary" />
+                            <span className="text-white">
+                              {work.type === "Bounty" ? (
+                                <><SubmissionCount bountyId={work.id} /> Submissions</>
+                              ) : (
+                                <>{work.submissions} Submissions</>
+                              )}
+                            </span>
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-[11px] font-medium mt-1">
+                          {isEnded ? (
+                            <span className="text-red-500 flex items-center gap-1.5">
+                              <Clock className="h-3.5 w-3.5" /> Ended
+                            </span>
+                          ) : work.deadline ? (
+                            <span className="text-green-500 flex items-center gap-1.5">
+                              <Clock className="h-3.5 w-3.5" /> Due {new Date(work.deadline).toLocaleDateString()}
+                            </span>
+                          ) : null}
+                          {work.type === "Project" && (work.acceptedCount || 0) > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <div className="relative h-4 w-4 rounded-full overflow-hidden border border-slate-700">
+                                <Image src="https://avatar.vercel.sh/james" alt="hired" fill className="object-cover" />
+                              </div>
+                              <span className="text-green-500">Hired</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <Button size="icon" className="h-10 w-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20 shrink-0">
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </div>
+
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { MarkdownEditor } from "@/components/shared/markdown-editor";
+import { RichTextEditor } from "@/components/shared/rich-text-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -8,12 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateProject } from "@/lib/api/projects/queries";
+import { uploadService } from "@/lib/api/upload";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
+import { BountyAttachment } from "@/lib/types/bounties"; // Reusing attachment type
 import { Project } from "@/lib/types/project";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CalendarIcon, Loader2, Plus, Upload, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { InsufficientBalanceModal } from "./insufficient-balance-modal";
 
@@ -60,9 +62,10 @@ export function CreateProjectModal({ children, existingProject, open: controlled
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
 
-  // Documents/Links
-  const [docLink, setDocLink] = useState("");
-  const [docLinks, setDocLinks] = useState<string[]>([]);
+  // Documents/Attachments
+  const [attachments, setAttachments] = useState<BountyAttachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: walletData } = useGetWalletBalances();
   const { mutate: createProject, isPending } = useCreateProject();
@@ -110,10 +113,28 @@ export function CreateProjectModal({ children, existingProject, open: controlled
     setTagInput("");
   };
 
-  const handleAddDocLink = () => {
-    if (docLink.trim()) {
-      setDocLinks([...docLinks, docLink.trim()]);
-      setDocLink("");
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const response = await uploadService.uploadDocument(file);
+      setAttachments([...attachments, {
+        filename: response.originalName || response.filename,
+        url: response.url,
+        size: response.size,
+        mimetype: response.mimetype,
+      }]);
+      toast.success("Document uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload document");
+      console.error("Upload error:", error);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -185,18 +206,18 @@ export function CreateProjectModal({ children, existingProject, open: controlled
 
     const payload: any = {
       title,
-      shortDescription: description.substring(0, 100),
+      shortDescription: description.replace(/<[^>]*>/g, '').substring(0, 150),
       description,
-      requirements: requirements.split('\n').filter(Boolean),
+      requirements: [requirements], // Rich text HTML as single requirement block
       deliverables,
       skills: selectedTags,
-      reward: totalBudget.toString(), // Project API expects string usually? Interface says string.
+      reward: totalBudget.toString(),
       currency,
       deadline: deadline.toISOString(),
-      type: 'GIG', // Defaulting to GIG as per most common use case here? Or JOB? Design says "Post a job"
-      peopleNeeded: 1, // Default
+      type: 'GIG',
+      peopleNeeded: 1,
       milestones: finalMilestones,
-      attachments: [] // docLinks not fully supported in simple attachment interface yet
+      attachments: attachments.map(a => ({ filename: a.filename, url: a.url, size: a.size, mimetype: a.mimetype })),
     };
 
     createProject(payload, {
@@ -241,25 +262,21 @@ export function CreateProjectModal({ children, existingProject, open: controlled
             {/* Description */}
             <div className="space-y-2">
               <Label className="text-foreground">Description <span className="text-destructive">*</span></Label>
-              <div className="min-h-[150px] border border-input rounded-md bg-transparent">
-                <MarkdownEditor
-                  value={description}
-                  onChange={setDescription}
-                  className="bg-transparent border-none text-foreground min-h-[140px]"
-                />
-              </div>
+              <RichTextEditor
+                value={description}
+                onChange={setDescription}
+                placeholder="Detailed description of the project..."
+              />
             </div>
 
             {/* Requirements */}
             <div className="space-y-2">
               <Label className="text-foreground">Requirements <span className="text-destructive">*</span></Label>
-              <div className="min-h-[150px] border border-input rounded-md bg-transparent">
-                <MarkdownEditor
-                  value={requirements}
-                  onChange={setRequirements}
-                  className="bg-transparent border-none text-foreground min-h-[140px]"
-                />
-              </div>
+              <RichTextEditor
+                value={requirements}
+                onChange={setRequirements}
+                placeholder="Specific requirements, tech stack, etc..."
+              />
             </div>
 
             {/* Deliverables */}
@@ -414,29 +431,41 @@ export function CreateProjectModal({ children, existingProject, open: controlled
               </div>
             </div>
 
-            {/* Document Link */}
+            {/* Document Upload */}
             <div className="space-y-2">
-              <Label className="text-foreground">Project Document <span className="text-destructive">*</span></Label>
+              <Label className="text-foreground">Project Document</Label>
               <div className="flex gap-2">
-                <Input
-                  placeholder="Link title"
-                  className="bg-transparent border-input text-foreground flex-1"
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept=".pdf,.doc,.docx,.txt,.md"
+                  className="hidden"
                 />
-                <Input
-                  placeholder="https://"
-                  className="bg-transparent border-input text-foreground flex-[2]"
-                  value={docLink}
-                  onChange={(e) => setDocLink(e.target.value)}
-                />
-                <Button variant="secondary" onClick={handleAddDocLink} className="bg-secondary hover:bg-secondary/80 border border-input">
-                  <Plus className="h-4 w-4" />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="bg-secondary hover:bg-secondary/80 border border-input flex-1"
+                >
+                  {isUploading ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
+                  ) : (
+                    <><Upload className="h-4 w-4 mr-2" /> Upload Document</>
+                  )}
                 </Button>
               </div>
-              {docLinks.map((link, i) => (
-                <div key={i} className="text-sm text-blue-400 flex items-center gap-2">
-                  {link} <X className="h-3 w-3 cursor-pointer text-foreground" onClick={() => setDocLinks(prev => prev.filter((_, idx) => idx !== i))} />
+              {attachments.length > 0 && (
+                <div className="space-y-1 mt-2">
+                  {attachments.map((attachment, i) => (
+                    <div key={i} className="text-sm bg-muted/50 px-3 py-2 rounded-md flex items-center justify-between">
+                      <span className="text-foreground truncate flex-1">{attachment.filename}</span>
+                      <X className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground" onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
 
             {/* Submit Button */}

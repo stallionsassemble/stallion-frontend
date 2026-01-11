@@ -1,10 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useGetSubmissions } from "@/lib/api/bounties/queries";
 import { cn } from "@/lib/utils";
 import { ChevronRight, Clock, Users } from "lucide-react";
 
 interface BountyCardProps {
+  bountyId: string;
   status: string;
   type: "Bounty";
   title: string;
@@ -13,11 +15,14 @@ interface BountyCardProps {
   currency: string;
   skills: string[];
   applicants: number;
-  submissions: number;
   date: string;
 }
 
-export function BountyCard({ status, type, title, description, reward, currency, skills, applicants, submissions, date }: BountyCardProps) {
+export function BountyCard({ bountyId, status, type, title, description, reward, currency, skills, applicants, date }: BountyCardProps) {
+  // Fetch submissions count using the existing hook
+  const { data: submissions = [] } = useGetSubmissions(bountyId);
+  const submissionCount = submissions.length;
+
   const statusColors: { [key: string]: string } = {
     "Open": "bg-yellow-500/10 text-foreground hover:bg-yellow-500/20",
     "Completed": "bg-green-500/10 text-foreground hover:bg-green-500/20",
@@ -58,7 +63,7 @@ export function BountyCard({ status, type, title, description, reward, currency,
         <div className="flex items-center justify-between mt-auto">
           <div className="flex items-center gap-4 text-xs text-slate-400 font-medium">
             <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {applicants}</span>
-            <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {submissions} Submissions</span>
+            <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {submissionCount} Submissions</span>
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {date}</span>
           </div>
 

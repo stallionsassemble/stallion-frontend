@@ -1,4 +1,4 @@
-import { MarkdownEditor } from "@/components/shared/markdown-editor";
+import { RichTextEditor } from "@/components/shared/rich-text-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateBounty, useUpdateBounty } from "@/lib/api/bounties/queries";
+import { uploadService } from "@/lib/api/upload";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
-import { Bounty } from "@/lib/types/bounties";
+import { Bounty, BountyAttachment } from "@/lib/types/bounties";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CalendarIcon, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { InsufficientBalanceModal } from "./insufficient-balance-modal";
 
@@ -45,17 +46,21 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
   const [announcementDate, setAnnouncementDate] = useState<Date | undefined>(undefined);
 
   // Prize Pool
-  const [firstPlace, setFirstPlace] = useState("");
-  const [secondPlace, setSecondPlace] = useState("");
-  const [thirdPlace, setThirdPlace] = useState("");
+  // Prize Pool
+  const [prizeDistribution, setPrizeDistribution] = useState<{ rank: number; amount: string }[]>([
+    { rank: 1, amount: "" },
+    { rank: 2, amount: "" },
+    { rank: 3, amount: "" },
+  ]);
 
   // Tags
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
 
-  // Documents/Links (simplified for now to just links per design)
-  const [docLink, setDocLink] = useState("");
-  const [docLinks, setDocLinks] = useState<string[]>([]);
+  // Documents/Attachments
+  const [attachments, setAttachments] = useState<BountyAttachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: walletData } = useGetWalletBalances();
   const { mutate: createBounty, isPending: isCreating } = useCreateBounty();
@@ -78,13 +83,14 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
 
       // Distro
       if (existingBounty.distribution) {
-        // rough map back
-        existingBounty.distribution.forEach((d) => {
-          const amount = (Number(d.percentage) / 100) * Number(existingBounty.reward);
-          if (d.rank === 1) setFirstPlace(amount.toString());
-          if (d.rank === 2) setSecondPlace(amount.toString());
-          if (d.rank === 3) setThirdPlace(amount.toString());
-        });
+        const distro = existingBounty.distribution.map((d) => ({
+          rank: d.rank,
+          amount: ((Number(d.percentage) / 100) * Number(existingBounty.reward)).toString(),
+        })).sort((a, b) => a.rank - b.rank);
+
+        if (distro.length > 0) {
+          setPrizeDistribution(distro);
+        }
       }
     }
   }, [existingBounty, isOpen]);
@@ -107,10 +113,45 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
     setTagInput("");
   };
 
-  const handleAddDocLink = () => {
-    if (docLink.trim()) {
-      setDocLinks([...docLinks, docLink.trim()]);
-      setDocLink("");
+  const handleAddPrize = () => {
+    const nextRank = prizeDistribution.length + 1;
+    setPrizeDistribution([...prizeDistribution, { rank: nextRank, amount: "" }]);
+  };
+
+  const handleRemovePrize = (index: number) => {
+    const newDistro = prizeDistribution.filter((_, i) => i !== index)
+      .map((item, i) => ({ ...item, rank: i + 1 })); // Recalculate ranks
+    setPrizeDistribution(newDistro);
+  };
+
+  const handleUpdatePrize = (index: number, val: string) => {
+    const newDistro = [...prizeDistribution];
+    newDistro[index].amount = val;
+    setPrizeDistribution(newDistro);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const response = await uploadService.uploadDocument(file);
+      setAttachments([...attachments, {
+        filename: response.originalName || response.filename,
+        url: response.url,
+        size: response.size,
+        mimetype: response.mimetype,
+      }]);
+      toast.success("Document uploaded successfully");
+    } catch (error) {
+      toast.error("Failed to upload document");
+      console.error("Upload error:", error);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -141,10 +182,8 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
     }
 
     // Prepare distribution
-    const first = Number(firstPlace) || 0;
-    const second = Number(secondPlace) || 0;
-    const third = Number(thirdPlace) || 0;
-    const distroTotal = first + second + third;
+    // Prepare distribution
+    const distroTotal = prizeDistribution.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
     if (distroTotal > totalBudget) {
       toast.error("Prize pool exceeds total budget");
@@ -152,26 +191,27 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
     }
 
     // Calculate percentages
-    const distribution = [
-      { rank: 1, percentage: (first / totalBudget) * 100 },
-      { rank: 2, percentage: (second / totalBudget) * 100 },
-      { rank: 3, percentage: (third / totalBudget) * 100 },
-    ].filter(d => d.percentage > 0);
+    const distribution = prizeDistribution
+      .map(p => ({
+        rank: p.rank,
+        percentage: (Number(p.amount) / totalBudget) * 100
+      }))
+      .filter(d => d.percentage > 0);
 
 
     const payload: any = {
       title,
-      shortDescription: description.substring(0, 100), // Simple truncate for short desc
-      description, // requirements usually separate in UI but backend might want them merged or separate
-      requirements: requirements.split('\n').filter(Boolean),
+      shortDescription: description.replace(/<[^>]*>/g, '').substring(0, 150), // Strip HTML tags for short desc
+      description,
+      requirements: [requirements], // Rich text HTML as single requirement block
       deliverables,
       skills: selectedTags,
       reward: totalBudget,
       rewardCurrency: currency,
       submissionDeadline: deadline.toISOString(),
-      judgingDeadline: announcementDate?.toISOString() || new Date(deadline.getTime() + 86400000).toISOString(),
+      judgingDeadline: announcementDate?.toISOString() || new Date(deadline.getTime() + 86400000 * 7).toISOString(),
       distribution,
-      // Attachments/Links would go here if backend supported
+      attachments: attachments.map(a => ({ filename: a.filename, url: a.url, size: a.size, mimetype: a.mimetype })),
     };
 
     if (existingBounty) {
@@ -220,26 +260,22 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
 
             {/* Description */}
             <div className="space-y-2">
-              <Label className="text-foreground">Description <span className="text-destructive">*</span></Label>
-              <div className="min-h-[150px] border border-input rounded-md bg-transparent">
-                <MarkdownEditor
-                  value={description}
-                  onChange={setDescription}
-                  className="bg-transparent border-none text-foreground min-h-[140px]"
-                />
-              </div>
+              <Label className="text-foreground">Description<span className="text-destructive">*</span></Label>
+              <RichTextEditor
+                value={description}
+                onChange={setDescription}
+                placeholder="Introduce yourself and explain why you're the best fit for this project. Include relevant experience, approach to the problem and what makes you stand out..."
+              />
             </div>
 
             {/* Requirements */}
             <div className="space-y-2">
-              <Label className="text-foreground">Requirements <span className="text-destructive">*</span></Label>
-              <div className="min-h-[150px] border border-input rounded-md bg-transparent">
-                <MarkdownEditor
-                  value={requirements}
-                  onChange={setRequirements}
-                  className="bg-transparent border-none text-foreground min-h-[140px]"
-                />
-              </div>
+              <Label className="text-foreground">Requirements<span className="text-destructive">*</span></Label>
+              <RichTextEditor
+                value={requirements}
+                onChange={setRequirements}
+                placeholder="Introduce yourself and explain why you're the best fit for this project. Include relevant experience, approach to the problem and what makes you stand out..."
+              />
             </div>
 
             {/* Deliverables */}
@@ -328,55 +364,53 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
 
             {/* Prize Pool */}
             <div className="space-y-4">
-              <Label className="text-foreground">Prize Pool ({Number(budget).toLocaleString()} {currency}) <span className="text-destructive">*</span></Label>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-transparent border border-input rounded-md p-2 px-3 text-sm text-foreground flex items-center">
-                  1st Place
-                </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input
-                    placeholder="10,000"
-                    className="bg-transparent border-input text-foreground pl-7"
-                    value={firstPlace}
-                    onChange={(e) => setFirstPlace(e.target.value)}
-                    type="number"
-                  />
-                </div>
+              <div className="flex items-center justify-between">
+                <Label className="text-foreground">Prize Pool ({Number(budget).toLocaleString()} {currency}) <span className="text-destructive">*</span></Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleAddPrize}
+                  className="h-8 text-primary hover:text-primary hover:bg-primary/10"
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Add Position
+                </Button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-transparent border border-input rounded-md p-2 px-3 text-sm text-foreground flex items-center">
-                  2nd Place
-                </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input
-                    placeholder="7,000"
-                    className="bg-transparent border-input text-foreground pl-7"
-                    value={secondPlace}
-                    onChange={(e) => setSecondPlace(e.target.value)}
-                    type="number"
-                  />
-                </div>
+              <div className="space-y-3">
+                {prizeDistribution.map((item, index) => (
+                  <div key={index} className="grid grid-cols-[100px_1fr_40px] gap-4 items-center animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="bg-transparent border border-input rounded-md p-2 px-3 text-sm text-foreground flex items-center justify-center font-medium bg-secondary/20">
+                      {index + 1}{index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th'}
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                      <Input
+                        placeholder="Amount"
+                        className="bg-transparent border-input text-foreground pl-7"
+                        value={item.amount}
+                        onChange={(e) => handleUpdatePrize(index, e.target.value)}
+                        type="number"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemovePrize(index)}
+                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-10 w-10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-transparent border border-input rounded-md p-2 px-3 text-sm text-foreground flex items-center">
-                  3rd Place
+              {prizeDistribution.length === 0 && (
+                <div className="text-sm text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">
+                  No prizes added. Add at least one position.
                 </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input
-                    placeholder="3,000"
-                    className="bg-transparent border-input text-foreground pl-7"
-                    value={thirdPlace}
-                    onChange={(e) => setThirdPlace(e.target.value)}
-                    type="number"
-                  />
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Tags */}
@@ -420,29 +454,41 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
               </div>
             </div>
 
-            {/* Document Link */}
+            {/* Document Upload */}
             <div className="space-y-2">
-              <Label className="text-foreground">Bounty Document <span className="text-destructive">*</span></Label>
+              <Label className="text-foreground">Bounty Document</Label>
               <div className="flex gap-2">
-                <Input
-                  placeholder="Link title"
-                  className="bg-transparent border-input text-foreground flex-1"
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept=".pdf,.doc,.docx,.txt,.md"
+                  className="hidden"
                 />
-                <Input
-                  placeholder="https://"
-                  className="bg-transparent border-input text-foreground flex-[2]"
-                  value={docLink}
-                  onChange={(e) => setDocLink(e.target.value)}
-                />
-                <Button variant="secondary" onClick={handleAddDocLink} className="bg-secondary hover:bg-secondary/80 border border-input">
-                  <Plus className="h-4 w-4" />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="bg-secondary hover:bg-secondary/80 border border-input flex-1"
+                >
+                  {isUploading ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
+                  ) : (
+                    <><Upload className="h-4 w-4 mr-2" /> Upload Document</>
+                  )}
                 </Button>
               </div>
-              {docLinks.map((link, i) => (
-                <div key={i} className="text-sm text-blue-400 flex items-center gap-2">
-                  {link} <X className="h-3 w-3 cursor-pointer text-foreground" onClick={() => setDocLinks(prev => prev.filter((_, idx) => idx !== i))} />
+              {attachments.length > 0 && (
+                <div className="space-y-1 mt-2">
+                  {attachments.map((attachment, i) => (
+                    <div key={i} className="text-sm bg-muted/50 px-3 py-2 rounded-md flex items-center justify-between">
+                      <span className="text-foreground truncate flex-1">{attachment.filename}</span>
+                      <X className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground" onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
 
             {/* Submit Button */}

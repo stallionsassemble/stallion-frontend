@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Search, S
 import Link from "next/link";
 import { useState } from "react";
 
+import { CreateProjectModal } from "@/components/dashboard/owner/create-project-modal";
 import { ProjectCard } from "@/components/dashboard/owner/project-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -107,9 +108,11 @@ export default function OwnerProjectsPage() {
             <h1 className="text-3xl font-bold text-white">Project</h1>
             <p className="text-muted-foreground">Browse and manage available projects</p>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-            <Plus className="h-4 w-4" /> Create Project
-          </Button>
+          <CreateProjectModal>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+              <Plus className="h-4 w-4" /> Create Project
+            </Button>
+          </CreateProjectModal>
         </div>
 
         {/* Filters & Search */}

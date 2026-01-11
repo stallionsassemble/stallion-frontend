@@ -15,7 +15,7 @@ export interface User {
     linkedin?: string
     instagram?: string
   }
-  role?: 'CONTRIBUTOR' | 'OWNER'
+  role?: 'CONTRIBUTOR' | 'PROJECT_OWNER' | 'OWNER'
   companyName?: string | null
   entityName?: string | null
   phoneNumber?: string | null

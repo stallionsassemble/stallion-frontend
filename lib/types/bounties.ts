@@ -62,6 +62,7 @@ export interface Bounty {
   token?: string
   txHash?: string
   applicationCount?: number
+  submissionCount?: number
 }
 
 export interface CreateBountyDto {

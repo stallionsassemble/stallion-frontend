@@ -111,7 +111,7 @@ function VerifyContent() {
     setIsVerifying(true);
     const toastId = toast.loading("Verifying...");
     try {
-      const apiRole = role === "owner" ? "PROJECT_OWNER" : "CONTRIBUTOR";
+      const apiRole = role ? (role === "owner" ? "PROJECT_OWNER" : "CONTRIBUTOR") : undefined;
 
       const user = await verifyCode({
         email,

@@ -126,7 +126,10 @@ export const useAuth = create<AuthState>()(
             })
           } else {
             const { role, ...signupPayload } = payload
-            response = await authService.verifySignupCode(signupPayload)
+            response = await authService.verifySignupCode({
+              ...signupPayload,
+              role,
+            })
           }
           set({
             user: {

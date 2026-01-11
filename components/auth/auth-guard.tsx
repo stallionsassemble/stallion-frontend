@@ -2,12 +2,14 @@
 
 import { useAuth } from "@/lib/store/use-auth"
 import { Loader2 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading, checkAuth } = useAuth()
+  console.log(user)
   const router = useRouter()
+  const pathname = usePathname()
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       if (!isAuthenticated) {
         router.push("/auth/login")
       } else if (user && !user.profileCompleted) {
-        const path = window.location.pathname;
+        const path = pathname;
         const isOwnerOnboarding = path.includes("/auth/onboarding/owner");
         const isTalentOnboarding = path.includes("/auth/onboarding/talent");
 
@@ -39,9 +41,16 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             router.push("/auth/onboarding/talent")
           }
         }
+      } else if (user && user.profileCompleted) {
+        // Role-based route protection
+        if (user.role === 'PROJECT_OWNER' && pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/owner')) {
+          router.replace('/dashboard/owner');
+        } else if (user.role !== 'PROJECT_OWNER' && pathname.startsWith('/dashboard/owner')) {
+          router.replace('/dashboard');
+        }
       }
     }
-  }, [hydrated, isLoading, isAuthenticated, user, router])
+  }, [hydrated, isLoading, isAuthenticated, user, router, pathname])
 
   // Show nothing or a loader while hydrating or checking auth
   if (!hydrated || isLoading) {
