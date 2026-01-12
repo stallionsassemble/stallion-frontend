@@ -1,5 +1,3 @@
-import { User } from '@/lib/types'
-
 export type ProjectStatus =
   | 'OPEN'
   | 'IN_PROGRESS'
@@ -161,7 +159,7 @@ export type ProjectApplications = ApplyProjectResponse[]
  */
 export interface ProjectReviewPayload {
   status: 'ACCEPTED' | 'REJECTED'
-  rejectReason: string
+  rejectReason?: string
 }
 
 /**

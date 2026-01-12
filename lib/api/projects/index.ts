@@ -114,7 +114,7 @@ export class ProjectService {
    * @returns
    */
   async reviewApplication(id: string, payload: ProjectReviewPayload) {
-    const response = await api.post<ProjectReviewResponse>(
+    const response = await api.patch<ProjectReviewResponse>(
       `/projects/applications/${id}/review`,
       payload
     )

@@ -1,17 +1,22 @@
 "use client";
 
 import { CreateProjectModal } from "@/components/dashboard/owner/create-project-modal";
-import { HireTalentModal } from "@/components/dashboard/owner/hire-talent-modal";
+
+import { HireTalentModal } from "@/components/dashboard/owner/hire-talent-modal"; // Keep existing imports
+import { MilestoneReviewModal } from "@/components/dashboard/owner/milestone-review-modal";
 import { ProjectApplicantCard } from "@/components/dashboard/owner/project-applicant-card";
 import { ProjectDetailsSidebar } from "@/components/dashboard/owner/project-details-sidebar";
 import { ProjectMilestoneCard } from "@/components/dashboard/owner/project-milestone-card";
 import { ProjectSubmissionDetailsModal } from "@/components/dashboard/owner/project-submission-details-modal";
+import { RequestRevisionModal } from "@/components/dashboard/owner/request-revision-modal";
+import { SendMessageModal } from "@/components/dashboard/owner/send-message-modal"; // New import
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { useGetProject, useGetProjectApplications, useGetProjectMilestones, useReviewApplication } from "@/lib/api/projects/queries";
+import { useGetProject, useGetProjectApplications, useGetProjectMilestones, useReviewApplication, useReviewMilestone } from "@/lib/api/projects/queries";
+import { ProjectMilestone } from "@/lib/types/project";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, BriefcaseBusiness, Calendar, Edit, FileText, Filter, Search, Share2, User, Users } from "lucide-react";
@@ -27,11 +32,11 @@ export default function ProjectDetailsPage() {
   const { data: project, isLoading } = useGetProject(id);
   const { data: projectMilestones, isLoading: projectMilestonesLoading } = useGetProjectMilestones(id);
   const { data: projectApplications, isLoading: projectApplicationsLoading } = useGetProjectApplications(id);
-  console.log("Application", projectApplications)
 
   const { mutate: reviewApplication, isPending: isReviewing } = useReviewApplication();
+  const { mutate: reviewMilestone, isPending: isReviewingMilestone } = useReviewMilestone();
 
-  const acceptedTalent = projectApplications?.find((a) => a.status === "ACCEPTED");
+  const acceptedTalent = projectApplications?.find((a: any) => a.status === "ACCEPTED");
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("milestones");
@@ -41,6 +46,14 @@ export default function ProjectDetailsPage() {
   const [isViewSubmissionModalOpen, setIsViewSubmissionModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL"); // ALL, PENDING, ACCEPTED, REJECTED
+
+  // Milestone Review States
+  const [selectedReviewMilestone, setSelectedReviewMilestone] = useState<ProjectMilestone | null>(null);
+  const [isReviewMilestoneModalOpen, setIsReviewMilestoneModalOpen] = useState(false);
+  const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
+
+  // Message Modal State
+  const [isSendMessageModalOpen, setIsSendMessageModalOpen] = useState(false);
 
   const itemsPerPage = 5;
 
@@ -73,7 +86,6 @@ export default function ProjectDetailsPage() {
       id: selectedApplication.id,
       payload: {
         status: 'ACCEPTED',
-        rejectReason: ''
       }
     }, {
       onSuccess: () => {
@@ -86,6 +98,63 @@ export default function ProjectDetailsPage() {
       }
     });
   };
+
+  // Milestone Actions
+  const openMilestoneReview = (milestone: ProjectMilestone) => {
+    setSelectedReviewMilestone(milestone);
+    setIsReviewMilestoneModalOpen(true);
+  };
+
+  const openRequestRevision = (milestone: ProjectMilestone) => {
+    setSelectedReviewMilestone(milestone);
+    setIsRevisionModalOpen(true);
+  };
+
+  const handleApproveMilestone = (notes: string) => {
+    if (!selectedReviewMilestone) return;
+
+    reviewMilestone({
+      id: selectedReviewMilestone.id,
+      payload: {
+        approve: true,
+        reviewNote: notes,
+        revisionNote: ""
+      }
+    }, {
+      onSuccess: () => {
+        toast.success("Milestone approved successfully");
+        setIsReviewMilestoneModalOpen(false);
+        setSelectedReviewMilestone(null);
+      },
+      onError: (err: any) => {
+        toast.error(err.response?.data?.message || "Failed to approve milestone");
+      }
+    });
+  };
+
+  const handleSendRevision = (notes: string) => {
+    if (!selectedReviewMilestone) return;
+
+    reviewMilestone({
+      id: selectedReviewMilestone.id,
+      payload: {
+        approve: false,
+        reviewNote: "",
+        revisionNote: notes
+      }
+    }, {
+      onSuccess: () => {
+        toast.success("Revision requested successfully");
+        setIsRevisionModalOpen(false);
+        setIsReviewMilestoneModalOpen(false); // Close review modal too if open
+        setSelectedReviewMilestone(null);
+      },
+      onError: (err: any) => {
+        toast.error(err.response?.data?.message || "Failed to request revision");
+      }
+    });
+  };
+
 
   if (isLoading) {
     return <div className="p-8 text-center text-muted-foreground">Loading project details...</div>;
@@ -101,6 +170,11 @@ export default function ProjectDetailsPage() {
       </div>
     );
   }
+
+  // Calculate Progress
+  const totalReward = parseFloat(project.reward?.replace(/,/g, '') || '0');
+  const releasedAmount = parseFloat(project.released?.replace(/,/g, '') || '0');
+  const progressPercentage = totalReward > 0 ? Math.round((releasedAmount / totalReward) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-6 h-full max-w-[1600px] mx-auto pb-20 relative">
@@ -176,7 +250,7 @@ export default function ProjectDetailsPage() {
             <Card className="bg-background border-[1.17px] border-border p-4 relative overflow-hidden">
               <p className="text-xs text-muted-foreground mb-1">Released</p>
               <div className="flex justify-between items-end">
-                <h3 className="text-2xl font-bold text-foreground">$15,000</h3>
+                <h3 className="text-2xl font-bold text-foreground">{project.released} {project.currency}</h3>
                 <User className="text-muted-foreground/30 w-5 h-5 mb-1" />
               </div>
             </Card>
@@ -279,6 +353,9 @@ export default function ProjectDetailsPage() {
                     currency={project.currency}
                     dueDate={m.dueDate}
                     status={m.status || 'Pending'}
+                    onViewSubmission={() => openMilestoneReview(m)}
+                    onApprove={() => openMilestoneReview(m)} // Approve opens review modal too, or direct?
+                    onRequestRevision={() => openRequestRevision(m)}
                   />
                 ))}
 
@@ -342,11 +419,20 @@ export default function ProjectDetailsPage() {
         </div>
 
         {/* Right Sidebar */}
-        <ProjectDetailsSidebar totalPrizes={project.reward} currency={project.currency} hiredTalent={{
-          name: acceptedTalent?.user.firstName + ' ' + acceptedTalent?.user.lastName || '',
-          role: acceptedTalent?.user.skills?.[0] || '',
-          avatar: acceptedTalent?.user.profilePicture || 'https://github.com/shadcn.png'
-        }} progress={5} isHired={acceptedTalent ? true : false} paidAmount={0} totalAmount={project.reward} />
+        <ProjectDetailsSidebar
+          totalPrizes={project.reward}
+          currency={project.currency}
+          hiredTalent={{
+            name: acceptedTalent?.user.firstName + ' ' + acceptedTalent?.user.lastName || '',
+            role: acceptedTalent?.user.skills?.[0] || '',
+            avatar: acceptedTalent?.user.profilePicture || 'https://github.com/shadcn.png'
+          }}
+          progress={progressPercentage}
+          isHired={acceptedTalent ? true : false}
+          paidAmount={project.released || '0'}
+          totalAmount={project.reward}
+          onMessage={() => setIsSendMessageModalOpen(true)}
+        />
 
       </div>
 
@@ -359,7 +445,7 @@ export default function ProjectDetailsPage() {
       <HireTalentModal
         open={isHireModalOpen}
         onOpenChange={setIsHireModalOpen}
-        applicant={selectedApplication?.user}
+        applicant={selectedApplication?.user || null}
         onConfirm={confirmHire}
         isConfirming={isReviewing}
       />
@@ -369,6 +455,41 @@ export default function ProjectDetailsPage() {
         onOpenChange={setIsViewSubmissionModalOpen}
         application={selectedApplication}
       />
+
+      <MilestoneReviewModal
+        open={isReviewMilestoneModalOpen}
+        onOpenChange={setIsReviewMilestoneModalOpen}
+        milestone={selectedReviewMilestone}
+        applicant={acceptedTalent?.user || null}
+        onApprove={handleApproveMilestone}
+        onRequestRevision={handleSendRevision} // Using same revision handler but via review modal's button/textarea
+        isProcessing={isReviewingMilestone}
+      />
+
+      <RequestRevisionModal
+        open={isRevisionModalOpen}
+        onOpenChange={setIsRevisionModalOpen}
+        applicant={acceptedTalent?.user || null}
+        onSend={handleSendRevision}
+        isProcessing={isReviewingMilestone}
+      />
+
+      {acceptedTalent && (
+        <SendMessageModal
+          open={isSendMessageModalOpen}
+          onOpenChange={setIsSendMessageModalOpen}
+          contributor={{
+            id: acceptedTalent.user.id,
+            name: `${acceptedTalent.user.firstName} ${acceptedTalent.user.lastName}`,
+            role: acceptedTalent.user.skills?.[0] || 'Talent',
+            avatar: acceptedTalent.user.profilePicture,
+            initials: (acceptedTalent.user.firstName?.[0] || '') + (acceptedTalent.user.lastName?.[0] || ''),
+            bio: '',
+            stats: { bounties: 0, projects: 0, totalEarned: 0, currency: 'USD' }
+          }}
+          redirectPath="/dashboard/owner/messages"
+        />
+      )}
     </div>
   );
 }

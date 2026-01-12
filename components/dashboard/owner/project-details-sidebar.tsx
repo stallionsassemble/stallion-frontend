@@ -15,7 +15,8 @@ export function ProjectDetailsSidebar(
     progress,
     paidAmount,
     totalAmount,
-    isHired
+    isHired,
+    onMessage
   }: {
     totalPrizes: string;
     currency: string;
@@ -25,9 +26,10 @@ export function ProjectDetailsSidebar(
       avatar: string;
     };
     progress: number;
-    paidAmount: number;
+    paidAmount: string;
     totalAmount: string;
-    isHired: boolean
+    isHired: boolean;
+    onMessage?: () => void;
   }
 ) {
 
@@ -67,7 +69,11 @@ export function ProjectDetailsSidebar(
                     <p className="text-xs text-muted-foreground">{hiredTalent.role}</p>
                   </div>
                 </div>
-                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-8 px-3">
+                <Button
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-8 px-3"
+                  onClick={onMessage}
+                >
                   <MessageSquare className="h-3 w-3 mr-1.5" />
                   Message
                 </Button>
@@ -84,8 +90,8 @@ export function ProjectDetailsSidebar(
               </div>
               <Progress value={progress} className="h-2 bg-muted" indicatorClassName="bg-primary" />
               <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-2">
-                <span>Milestone 1</span>
-                <span>{paidAmount} / {totalAmount} {currency} paid</span>
+                <span>Funds Released</span>
+                <span>{paidAmount} / {totalAmount} {currency}</span>
               </div>
             </div>
           )}

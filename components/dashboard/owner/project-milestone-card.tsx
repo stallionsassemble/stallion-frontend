@@ -17,7 +17,10 @@ interface ProjectMilestoneCardProps {
   deadline?: string;
   dueDate?: string;
   paidDate?: string;
-  status: MilestoneStatus;
+  status: MilestoneStatus | string;
+  onViewSubmission?: () => void;
+  onApprove?: () => void;
+  onRequestRevision?: () => void;
 }
 
 export function ProjectMilestoneCard({
@@ -29,7 +32,10 @@ export function ProjectMilestoneCard({
   deadline,
   dueDate,
   paidDate,
-  status
+  status,
+  onViewSubmission,
+  onApprove,
+  onRequestRevision
 }: ProjectMilestoneCardProps) {
 
   const statusColors = {
@@ -62,7 +68,7 @@ export function ProjectMilestoneCard({
           <div className="flex-1 space-y-1">
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-base font-bold text-foreground leading-none">{title}</h3>
-              <Badge variant="outline" className={cn("px-2 py-0.5 text-[10px] font-medium rounded-full uppercase tracking-wide", statusColors[status])}>
+              <Badge variant="outline" className={cn("px-2 py-0.5 text-[10px] font-medium rounded-full uppercase tracking-wide", statusColors[status as MilestoneStatus] || statusColors.Pending)}>
                 {isPaid && <Check className="w-3 h-3 mr-1" />}
                 {status}
               </Badge>
@@ -90,13 +96,27 @@ export function ProjectMilestoneCard({
             {/* Actions for Submitted Status */}
             {status === "Submitted" && (
               <div className="flex gap-2 mt-5">
-                <Button size="sm" className="h-8 bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Button
+                  size="sm"
+                  onClick={onViewSubmission}
+                  className="h-8 bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
                   <Eye className="w-3.5 h-3.5 mr-1.5" /> View Submissions
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onApprove}
+                  className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent"
+                >
                   <Check className="w-3.5 h-3.5 mr-1.5" /> Approve
                 </Button>
-                <Button size="sm" variant="outline" className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onRequestRevision}
+                  className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent"
+                >
                   <RefreshCcw className="w-3.5 h-3.5 mr-1.5" /> Request Revision
                 </Button>
               </div>
