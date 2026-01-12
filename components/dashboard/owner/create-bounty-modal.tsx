@@ -10,13 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateBounty, useUpdateBounty } from "@/lib/api/bounties/queries";
 import { uploadService } from "@/lib/api/upload";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
-import { Bounty, BountyAttachment } from "@/lib/types/bounties";
+import { Bounty, BountyAttachment, CreateBountyDto } from "@/lib/types/bounties";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { InsufficientBalanceModal } from "./insufficient-balance-modal";
+// ... (imports remain)
+
+// ...
+
 
 interface CreateBountyModalProps {
   children?: React.ReactNode;
@@ -86,7 +90,7 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
       // Distro
       const distList = existingBounty.distribution || existingBounty.rewardDistribution;
       if (distList) {
-        const distro = distList.map((d) => {
+        const distro = distList.map((d, i) => {
           let percentage = 0;
           if (Array.isArray(d.percentage)) {
             percentage = d.percentage.length > 1 ? d.percentage[1] : d.percentage[0];
@@ -95,13 +99,30 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
           }
 
           return {
-            rank: Number(d.rank),
+            rank: i + 1, // Force 1-based ranking based on index
             amount: ((percentage / 100) * Number(existingBounty.reward)).toString(),
           };
-        }).sort((a, b) => a.rank - b.rank);
+        }); // Removed .sort because we trust the index order now, or we sort properly then re-map? 
+        // Better: sort first then map to index.
+        // Actually, if distList is unordered, mapping index to rank might be wrong if we don't sort first.
 
-        if (distro.length > 0) {
-          setPrizeDistribution(distro);
+        const sortedDistList = [...distList].sort((a, b) => Number(a.rank) - Number(b.rank));
+
+        const finalDistro = sortedDistList.map((d, i) => {
+          let percentage = 0;
+          if (Array.isArray(d.percentage)) {
+            percentage = d.percentage.length > 1 ? d.percentage[1] : d.percentage[0];
+          } else {
+            percentage = Number(d.percentage);
+          }
+          return {
+            rank: i + 1,
+            amount: ((percentage / 100) * Number(existingBounty.reward)).toString()
+          };
+        });
+
+        if (finalDistro.length > 0) {
+          setPrizeDistribution(finalDistro);
         }
       }
     }
@@ -210,13 +231,17 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
     }
 
     // Calculate percentages
+    // Calculate percentages
     const distribution = prizeDistribution
-      .map(p => ({
-        rank: p.rank,
+      .map((p, i) => ({
+        rank: i + 1, // Ensure strictly 1-based sequential
         percentage: (Number(p.amount) / totalBudget) * 100
       }))
       .filter(d => d.percentage > 0);
 
+    // Ensure deadline is end of day to avoid "past" issues for today's date
+    const submissionDate = new Date(deadline);
+    submissionDate.setHours(23, 59, 59, 999);
 
     // Base payload with common fields
     const basePayload = {
@@ -226,20 +251,15 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
       requirements,
       deliverables,
       skills: selectedTags,
-      submissionDeadline: deadline.toISOString(),
-      distribution: prizeDistribution.map((p, index) => ({
-        rank: index + 1, // Ensure rank is strict 1-based index
-        percentage: (Number(p.amount) / totalBudget) * 100
-      })).filter(d => d.percentage > 0),
+      submissionDeadline: submissionDate.toISOString(),
+      distribution: distribution, // Use calculated distribution
       attachments: attachments.map(a => ({ filename: a.filename, url: a.url, size: a.size, mimetype: a.mimetype })),
     };
 
     if (existingBounty) {
       // Update payload: Exclude immutable fields
-      // Use clean payload
-      const updatePayload = {
+      const updatePayload: any = { // Partial<CreateBountyDto> ideally but structure varies slightly for update
         ...basePayload,
-        // judgingDeadline is immutable or sensitive on update? The error said it should not exist.
       };
 
       updateBounty({ id: existingBounty.id, payload: updatePayload }, {
@@ -249,9 +269,17 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
       });
     } else {
       // Create payload: Include immutable fields
-      const createPayload = {
-        ...basePayload,
-        reward: totalBudget,
+      const createPayload: CreateBountyDto = {
+        title: basePayload.title,
+        shortDescription: basePayload.shortDescription,
+        description: basePayload.description,
+        requirements: basePayload.requirements,
+        deliverables: basePayload.deliverables,
+        skills: basePayload.skills,
+        submissionDeadline: basePayload.submissionDeadline,
+        distribution: basePayload.distribution,
+        attachments: basePayload.attachments,
+        reward: totalBudget, // number is allowed by DTO
         rewardCurrency: currency,
         judgingDeadline: announcementDate?.toISOString() || new Date(deadline.getTime() + 86400000 * 7).toISOString(),
       };
@@ -278,8 +306,12 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
         <DialogContent className="bg-card border-border sm:max-w-[800px] max-h-[90vh] overflow-y-auto p-0 gap-0">
           <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-card z-10">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Create New Bounty</h2>
-              <p className="text-xs text-muted-foreground mt-1">Launch a competition where contributors submit solutions.</p>
+              <h2 className="text-2xl font-bold text-foreground">
+                {existingBounty ? "Edit Bounty" : "Create New Bounty"}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {existingBounty ? "Update bounty details." : "Launch a competition where contributors submit solutions."}
+              </p>
             </div>
             {/* Close button handled by Dialog primitive usually, but we can have custom one if needed */}
           </div>

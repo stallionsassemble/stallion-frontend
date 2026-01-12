@@ -140,7 +140,14 @@ export interface ApplyProjectResponse {
   updatedAt: string
   projectId: string
   userId: string
-  user: User
+  user: {
+    id: string
+    username: string
+    firstName: string
+    lastName: string
+    profilePicture: string
+    skills: string[]
+  }
   project: ProjectDetails
 }
 

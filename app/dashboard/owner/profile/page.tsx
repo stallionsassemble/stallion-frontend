@@ -32,7 +32,7 @@ function ProfileContent() {
             </>
           )}
 
-          {tab === "portfolio" && <PortfolioView />}
+          {tab === "portfolio" && <PortfolioView viewType="owner" />}
         </div>
       </div>
     </div>

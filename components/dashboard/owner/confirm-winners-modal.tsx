@@ -77,12 +77,6 @@ export function ConfirmWinnersModal({
       <DialogContent className="max-w-lg bg-background border-border text-foreground p-0 gap-0 overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="relative p-6 px-8 border-b border-white/5 bg-background">
-          <button
-            onClick={onClose}
-            className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
 
           <h1 className="text-2xl font-bold text-white mb-1">Confirm Winners & Distribute Prizes</h1>
           <p className="text-sm text-slate-500">Choose a prize for {bountyTitle}.</p>

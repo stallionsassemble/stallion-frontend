@@ -75,8 +75,8 @@ export default function BountiesPage() {
   const uniqueSkills = useMemo(() => {
     const list = allBountiesData?.data || [];
     const skills = new Set<string>();
-    list.forEach(b => {
-      b.skills?.forEach(s => skills.add(s));
+    list.forEach((b: any) => {
+      b.skills?.forEach((s: string) => skills.add(s));
     });
     return Array.from(skills).sort();
   }, [allBountiesData]);
@@ -124,7 +124,7 @@ export default function BountiesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {bounties.map((bounty) => (
+          {bounties.map((bounty: any) => (
             <BountyCard
               key={bounty.id}
               id={bounty.id}

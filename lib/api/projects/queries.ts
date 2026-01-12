@@ -2,7 +2,9 @@ import {
   ApplyProjectPayload,
   CreateProjectPayload,
   GetProjectsPayload,
+  ProjectApplications,
   ProjectReviewPayload,
+  Projects,
   ReviewMilestonePayload,
   SubmitMilestonePayload,
   UpdateProjectPayload,
@@ -13,11 +15,11 @@ import { projectService } from './index'
 
 // --- Queries ---
 
-export function useGetProjects(payload: GetProjectsPayload) {
-  return useQuery({
-    queryKey: ['projects', payload],
-    queryFn: () => projectService.getProjects(payload),
-    enabled: !!payload,
+export function useGetProjects(params?: GetProjectsPayload, options?: any) {
+  return useQuery<Projects>({
+    queryKey: ['projects', params],
+    queryFn: () => projectService.getProjects(params),
+    ...options,
   })
 }
 
@@ -37,10 +39,12 @@ export function useGetProjectApplications(id: string) {
   })
 }
 
-export function useGetMyApplications() {
-  return useQuery({
-    queryKey: ['projects', 'applications', 'my'],
+export function useGetMyApplications(options?: any) {
+  return useQuery<ProjectApplications>({
+    queryKey: ['projects', 'applications', 'me'],
     queryFn: () => projectService.getMyApplications(),
+    enabled: !!options?.enabled, // To respect enabled if passed, though usually default true
+    ...options,
   })
 }
 

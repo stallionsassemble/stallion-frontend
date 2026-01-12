@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { X } from "lucide-react";
 import Link from "next/link";
 
@@ -18,48 +18,39 @@ export function InsufficientBalanceModal({
 }: InsufficientBalanceModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-card border-none sm:max-w-[600px] flex flex-col items-center justify-center text-center p-12 [&>button]:hidden">
+      <DialogContent className="bg-[#030309] border-none sm:max-w-[600px] p-0 overflow-hidden text-white gap-0">
 
-        {/* Close Button manually placed to match design */}
-        <div className="absolute right-6 top-6 z-50">
-          <button
-            onClick={onClose}
-            className="text-foreground hover:text-foreground/80 transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
+        {/* Header Bar */}
+        <div className="flex items-center justify-between p-6 border-b border-white/5">
+          <div>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">Insufficient Wallet Balance</h2>
+            <p className="text-xs text-foreground mt-1">Transfer funds to your preferred payout method</p>
+          </div>
         </div>
 
-        <DialogHeader className="mb-8 space-y-2">
-          <DialogTitle className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
-            Insufficient Wallet Balance
-          </DialogTitle>
-          <DialogDescription className="text-muted-foreground text-sm">
-            Transfer funds to your preferred payout method
-          </DialogDescription>
-        </DialogHeader>
+        {/* Main Content */}
+        <div className="flex flex-col items-center justify-center text-center p-12 py-16">
+          <div className="space-y-6 w-full">
+            <h2 className="text-3xl font-syne font-extrabold text-foreground leading-tight font-wide tracking-wider">
+              Fund Your Wallet to Continue
+            </h2>
 
-        <div className="space-y-6 max-w-[400px]">
-          <h2 className="text-4xl md:text-5xl font-black text-foreground leading-tight font-wide tracking-wide uppercase">
-            Fund Your Wallet to Continue
-          </h2>
+            <div className="text-foreground text-sm font-light leading-relaxed">
+              <p>You need to fund your wallet before creating a project or bounty.</p>
+            </div>
 
-          <div className="text-muted-foreground text-sm font-light space-y-1">
-            <p>You need to fund your wallet before creating a project</p>
-            <p>Please add funds to continue and publish your bounty project.</p>
-          </div>
-
-          <div className="pt-4">
-            <Button
-              asChild
-              onClick={onClose}
-              variant="stallion"
-              className="w-full h-12 rounded-lg text-base font-bold"
-            >
-              <Link href="/dashboard/wallet">
-                Fund Wallet
-              </Link>
-            </Button>
+            <div className="pt-4">
+              <Button
+                asChild
+                onClick={onClose}
+                variant={'stallion'}
+                className="w-[200px] h-10 rounded-lg text-sm font-semibold text-foreground border-0"
+              >
+                <Link href="/dashboard/owner/wallet">
+                  Fund Wallet
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

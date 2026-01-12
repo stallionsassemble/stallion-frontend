@@ -1,8 +1,10 @@
 import {
   ApplyToBountyDto,
+  BountySubmission,
   CreateBountyDto,
   EmergencyWithdrawDto,
   GetAllBountiesPayload,
+  PaginatedBountiesResponseDto,
   SelectWinnersDto,
   UpdateAdminDto,
   UpdateBountyDto,
@@ -20,10 +22,14 @@ export function useGetSupportedCurrencies() {
   })
 }
 
-export function useGetAllBounties(params?: GetAllBountiesPayload) {
-  return useQuery({
+export function useGetAllBounties(
+  params?: GetAllBountiesPayload,
+  options?: any
+) {
+  return useQuery<PaginatedBountiesResponseDto>({
     queryKey: ['bounties', 'all', params],
     queryFn: () => bountyService.getAllBounties(params),
+    ...options,
   })
 }
 
@@ -130,10 +136,11 @@ export function useGetBountiesByUser(userId: string) {
   })
 }
 
-export function useGetMyBountySubmissions() {
-  return useQuery({
+export function useGetMyBountySubmissions(options?: any) {
+  return useQuery<BountySubmission[]>({
     queryKey: ['bounties', 'submissions', 'my'],
     queryFn: () => bountyService.getMySubmissions(),
+    ...options,
   })
 }
 

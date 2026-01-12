@@ -4,6 +4,7 @@ import { ConfirmWinnersModal } from "@/components/dashboard/owner/confirm-winner
 import { CreateBountyModal } from "@/components/dashboard/owner/create-bounty-modal";
 import { SubmissionItem } from "@/components/dashboard/owner/submission-item";
 import { SubmissionModal } from "@/components/dashboard/owner/submission-modal";
+import { RichTextRenderer } from "@/components/shared/rich-text-renderer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -233,6 +234,39 @@ export default function BountyDetailsPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Description & Details */}
+          <div className="space-y-6">
+            <Card className="bg-background border-[1.17px] border-border">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Description
+                </h3>
+                <RichTextRenderer content={bounty.description} className="text-sm [&_p]:text-sm [&_li]:text-sm" />
+              </CardContent>
+            </Card>
+
+            {/* Requirements */}
+            {bounty.requirements && bounty.requirements.length > 0 && (
+              <Card className="bg-background border-[1.17px] border-border">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Requirements
+                  </h3>
+                  <ul className="space-y-2">
+                    {bounty.requirements.map((req: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
+                        <span className="text-primary mt-1">•</span>
+                        <span>{req}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Tabs / Filters */}

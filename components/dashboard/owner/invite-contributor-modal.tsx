@@ -98,7 +98,7 @@ export function InviteContributorModal({ contributor, open, onOpenChange }: Invi
         date: b.createdAt ? format(new Date(b.createdAt), 'MM/dd/yyyy') : ''
       }
     })),
-    ...(projects || []).filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS').map(p => ({
+    ...(projects || []).filter((p: any) => p.status === 'OPEN' || p.status === 'IN_PROGRESS').map((p: any) => ({
       id: p.id,
       type: "Project" as const,
       title: p.title,

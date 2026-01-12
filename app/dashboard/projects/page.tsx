@@ -104,8 +104,6 @@ export default function ProjectsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Handle Loading/Error states
-  // ... (keep usage, simpler return usually)
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-[1200px] mx-auto animate-in fade-in duration-500">
@@ -149,7 +147,7 @@ export default function ProjectsPage() {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {paginatedBounties.map((project) => (
+            {paginatedBounties.map((project: any) => (
               <BountyCard
                 key={project.id}
                 id={project.id}

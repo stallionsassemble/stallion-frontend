@@ -11,13 +11,18 @@ import { useCreateProject, useUpdateProject } from "@/lib/api/projects/queries";
 import { uploadService } from "@/lib/api/upload";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
 import { BountyAttachment } from "@/lib/types/bounties"; // Reusing attachment type
-import { Project } from "@/lib/types/project";
+import { CreateProjectPayload, Project } from "@/lib/types/project";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2, Plus, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { InsufficientBalanceModal } from "./insufficient-balance-modal";
+// ... (imports remain)
+
+// ...
+
+
 
 interface CreateProjectModalProps {
   children?: React.ReactNode;
@@ -48,14 +53,18 @@ export function CreateProjectModal({ children, existingProject, open: controlled
   const [requirements, setRequirements] = useState("");
   const [deliverables, setDeliverables] = useState<string[]>([]);
   const [deliverableInput, setDeliverableInput] = useState("");
+  const [peopleNeeded, setPeopleNeeded] = useState(1);
   const [budget, setBudget] = useState("");
   const [currency, setCurrency] = useState("USDC");
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
+  const [projectType, setProjectType] = useState<"GIG" | "JOB">("GIG");
 
   // Milestones
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [startMilestoneTitle, setStartMilestoneTitle] = useState("");
   const [startMilestoneAmount, setStartMilestoneAmount] = useState("");
+  const [startMilestoneDescription, setStartMilestoneDescription] = useState("");
+  const [startMilestoneDueDate, setStartMilestoneDueDate] = useState<Date | undefined>(undefined);
 
 
   // Tags
@@ -80,10 +89,12 @@ export function CreateProjectModal({ children, existingProject, open: controlled
       // Requirements usually array in backend but editor expects string or we join them
       setRequirements(existingProject.requirements?.join("\n") || "");
       setDeliverables(existingProject.deliverables || []);
+      setPeopleNeeded(existingProject.peopleNeeded || 1);
       setBudget(existingProject.reward);
       setCurrency(existingProject.currency);
       setDeadline(existingProject.deadline ? new Date(existingProject.deadline) : undefined);
       setSelectedTags(existingProject.skills || []);
+      setProjectType(existingProject.type || "GIG");
 
       // Milestones
       if (existingProject.milestones) {
@@ -141,36 +152,35 @@ export function CreateProjectModal({ children, existingProject, open: controlled
   };
 
   const handleAddMilestone = () => {
-    // In design, it looks like just one row initially, but '+' suggests adding more.
-    // Let's assume standard 'add' flow
-    if (!startMilestoneTitle || !startMilestoneAmount) return;
+    if (!startMilestoneTitle || !startMilestoneAmount || !startMilestoneDescription || !startMilestoneDueDate) {
+      toast.error("Please fill all milestone fields");
+      return;
+    }
 
     const newMilestone: Milestone = {
       title: startMilestoneTitle,
       amount: startMilestoneAmount,
-      description: `Milestone: ${startMilestoneTitle}`, // Default description
-      dueDate: deadline ? deadline.toISOString() : new Date().toISOString() // Fallback
+      description: startMilestoneDescription,
+      dueDate: startMilestoneDueDate.toISOString()
     };
 
     setMilestones([...milestones, newMilestone]);
     setStartMilestoneTitle("");
     setStartMilestoneAmount("");
+    setStartMilestoneDescription("");
+    setStartMilestoneDueDate(undefined);
   };
-
-  // Design shows simpler "Milestone 1  $20,000" input. 
-  // If user only enters the first one without clicking add, we should catch it or treat it as the only milestone?
-  // Let's treat the inputs as "Adding a milestone" but checking if current inputs are filled on submit to auto-add.
 
   const handleSubmit = () => {
     let finalMilestones = [...milestones];
 
-    // Auto-add current input if valid
-    if (startMilestoneTitle && startMilestoneAmount) {
+    // Auto-add current input if valid and all fields filled
+    if (startMilestoneTitle && startMilestoneAmount && startMilestoneDescription && startMilestoneDueDate) {
       finalMilestones.push({
         title: startMilestoneTitle,
         amount: startMilestoneAmount,
-        description: `Milestone: ${startMilestoneTitle}`,
-        dueDate: deadline ? deadline.toISOString() : new Date().toISOString()
+        description: startMilestoneDescription,
+        dueDate: startMilestoneDueDate.toISOString()
       });
     }
 
@@ -206,30 +216,37 @@ export function CreateProjectModal({ children, existingProject, open: controlled
       return;
     }
 
-    const payload: any = {
+    // Base fields common to both
+    const basePayload = {
       title,
       shortDescription: description.replace(/<[^>]*>/g, '').substring(0, 150),
       description,
-      requirements: [requirements], // Rich text HTML as single requirement block
+      requirements: [requirements],
       deliverables,
       skills: selectedTags,
-      reward: totalBudget.toString(),
-      currency,
-      deadline: deadline.toISOString(),
-      type: 'GIG',
-      peopleNeeded: 1,
+      deadline: deadline!.toISOString(),
       milestones: finalMilestones,
       attachments: attachments.map(a => ({ filename: a.filename, url: a.url, size: a.size, mimetype: a.mimetype })),
     };
 
     if (existingProject) {
-      updateProject({ id: existingProject.id, payload: payload as any }, {
+      // Update: Exclude immutable fields (reward, currency, type)
+      updateProject({ id: existingProject.id, payload: basePayload }, {
         onSuccess: () => {
           setOpen(false);
         }
       });
     } else {
-      createProject(payload, {
+      // Create: Include all fields
+      const createPayload: CreateProjectPayload = {
+        ...basePayload,
+        reward: totalBudget.toString(),
+        currency,
+        type: projectType,
+        peopleNeeded: 1,
+      };
+
+      createProject(createPayload, {
         onSuccess: () => {
           setOpen(false);
           // Reset
@@ -239,6 +256,8 @@ export function CreateProjectModal({ children, existingProject, open: controlled
           setMilestones([]);
           setStartMilestoneTitle("");
           setStartMilestoneAmount("");
+          setStartMilestoneDescription("");
+          setStartMilestoneDueDate(undefined);
         }
       });
     }
@@ -252,21 +271,39 @@ export function CreateProjectModal({ children, existingProject, open: controlled
         <DialogContent className="bg-card border-border sm:max-w-[800px] max-h-[90vh] overflow-y-auto p-0 gap-0">
           <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-card z-10">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Create New Project</h2>
-              <p className="text-xs text-muted-foreground mt-1">Post a job for freelancers to apply.</p>
+              <h2 className="text-2xl font-bold text-foreground">
+                {existingProject ? "Edit Project" : "Create New Project"}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {existingProject ? "Update project details." : "Post a job for freelancers to apply."}
+              </p>
             </div>
           </div>
 
           <div className="p-6 space-y-6">
-            {/* Title */}
-            <div className="space-y-2">
-              <Label className="text-foreground">Project Title <span className="text-destructive">*</span></Label>
-              <Input
-                placeholder="e.g Bounty Hub"
-                className="bg-transparent border-input text-foreground placeholder:text-muted-foreground"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
+            {/* Title & Type */}
+            <div className="flex gap-4">
+              <div className="flex-[2] space-y-2">
+                <Label className="text-foreground">Project Title <span className="text-destructive">*</span></Label>
+                <Input
+                  placeholder="e.g Bounty Hub"
+                  className="bg-transparent border-input text-foreground placeholder:text-muted-foreground"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+              <div className="flex-1 space-y-2">
+                <Label className="text-foreground">Type <span className="text-destructive">*</span></Label>
+                <Select value={projectType} onValueChange={(val: "GIG" | "JOB") => setProjectType(val)}>
+                  <SelectTrigger className="bg-transparent border-input text-foreground">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border text-foreground">
+                    <SelectItem value="GIG">Gig</SelectItem>
+                    <SelectItem value="JOB">Job</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Description */}
@@ -341,34 +378,40 @@ export function CreateProjectModal({ children, existingProject, open: controlled
               </div>
             </div>
 
-            {/* Milestone */}
+            {/* Milestone - Updated Layout */}
             <div className="space-y-2">
-              <Label className="text-foreground">Milestone <span className="text-destructive">*</span></Label>
+              <Label className="text-foreground">Milestones <span className="text-destructive">*</span></Label>
+              <p className="text-xs text-muted-foreground mb-2">Break down the project into trackable milestones.</p>
 
               {/* Existing added milestones */}
-              {milestones.map((m, i) => (
-                <div key={i} className="flex gap-2 mb-2 items-center">
-                  <div className="flex-1 bg-secondary border border-input rounded-md px-3 py-2 text-sm text-foreground">
-                    {m.title}
+              <div className="space-y-3 mb-4">
+                {milestones.map((m, i) => (
+                  <div key={i} className="bg-secondary/20 border border-input rounded-md p-3 relative">
+                    <Button variant="ghost" size="sm" className="absolute top-2 right-2 h-6 w-6 p-0" onClick={() => setMilestones(prev => prev.filter((_, idx) => idx !== i))}>
+                      <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                    </Button>
+                    <div className="flex justify-between items-start mb-1 pr-6">
+                      <span className="font-medium text-sm text-foreground">{m.title}</span>
+                      <span className="font-bold text-sm text-foreground">${m.amount}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-1 mb-1">{m.description}</p>
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <CalendarIcon className="h-3 w-3" />
+                      {format(new Date(m.dueDate), "PPP")}
+                    </div>
                   </div>
-                  <div className="w-[150px] bg-secondary border border-input rounded-md px-3 py-2 text-sm text-foreground">
-                    ${m.amount}
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => setMilestones(prev => prev.filter((_, idx) => idx !== i))}>
-                    <X className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              ))}
+                ))}
+              </div>
 
               {/* Input row */}
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-3 p-3 border border-border rounded-lg bg-card/50">
                 <Input
                   placeholder="Milestone Title"
-                  className="flex-[2] bg-transparent border-input text-foreground"
+                  className="bg-transparent border-input text-foreground"
                   value={startMilestoneTitle}
                   onChange={(e) => setStartMilestoneTitle(e.target.value)}
                 />
-                <div className="relative flex-1">
+                <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                   <Input
                     placeholder="Amount"
@@ -378,20 +421,40 @@ export function CreateProjectModal({ children, existingProject, open: controlled
                     type="number"
                   />
                 </div>
-                <Button variant="secondary" onClick={handleAddMilestone} className="bg-secondary hover:bg-secondary/80 border border-input">
-                  <Plus className="h-4 w-4" />
-                </Button>
+                <Input
+                  placeholder="Description"
+                  className="col-span-2 bg-transparent border-input text-foreground"
+                  value={startMilestoneDescription}
+                  onChange={(e) => setStartMilestoneDescription(e.target.value)}
+                />
+                <div className="col-span-2 flex gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn("flex-1 justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !startMilestoneDueDate && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startMilestoneDueDate ? format(startMilestoneDueDate, "PPP") : "Milestone Due Date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-card border-border">
+                      <Calendar mode="single" selected={startMilestoneDueDate} onSelect={setStartMilestoneDueDate} initialFocus className="bg-card text-foreground" />
+                    </PopoverContent>
+                  </Popover>
+                  <Button variant="secondary" onClick={handleAddMilestone} className="bg-secondary hover:bg-secondary/80 border border-input shrink-0">
+                    <Plus className="h-4 w-4 mr-2" /> Add Milestone
+                  </Button>
+                </div>
               </div>
             </div>
 
+
             {/* Deadline */}
             <div className="space-y-2">
-              <Label className="text-foreground">Submission Deadline <span className="text-destructive">*</span></Label>
+              <Label className="text-foreground">Project Valid Until <span className="text-destructive">*</span></Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !deadline && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {deadline ? format(deadline, "PPP") : "Select date"}
+                    {deadline ? format(deadline, "PPP") : "Select Submission Deadline"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 bg-card border-border">

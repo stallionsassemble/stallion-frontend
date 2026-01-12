@@ -35,7 +35,7 @@ function ProfileContent() {
             </>
           )}
 
-          {tab === "portfolio" && <PortfolioView />}
+          {tab === "portfolio" && <PortfolioView viewType="talent" />}
 
 
           {tab === "reviews" && user && (

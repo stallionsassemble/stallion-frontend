@@ -1,8 +1,9 @@
 import { api } from '@/lib/api'
+import { PaginatedActivityResponse } from '@/lib/types/activities'
 import { ActivityResponse } from '@/lib/types/activity'
 
 class ActivitiesService {
-  async getActivities(page: string, limit: string, type: string) {
+  async getActivities(page: string, limit: string, type?: string) {
     const response = await api.get<ActivityResponse>('/activities', {
       params: {
         page,
@@ -10,6 +11,19 @@ class ActivitiesService {
         type,
       },
     })
+    return response.data
+  }
+
+  async getMyActivities(page: number, limit: number) {
+    const response = await api.get<PaginatedActivityResponse>(
+      '/activities/me',
+      {
+        params: {
+          page,
+          limit,
+        },
+      }
+    )
     return response.data
   }
 

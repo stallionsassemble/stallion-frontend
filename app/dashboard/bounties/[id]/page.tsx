@@ -5,6 +5,7 @@ import { BountyDetailsSidebar } from '@/components/bounties/bounty-details-sideb
 import { DetailsHeader } from '@/components/bounties/details-header'
 import { DetailsNavigation } from '@/components/bounties/details-navigation'
 import { DiscussionList } from '@/components/discussions/discussion-list'
+import { RichTextRenderer } from '@/components/shared/rich-text-renderer'
 import { Button } from '@/components/ui/button'
 import { useGetAllBounties, useGetBounty } from '@/lib/api/bounties/queries'
 import { useGetMyApplications } from '@/lib/api/projects/queries'
@@ -47,11 +48,11 @@ export default function BountyDetailsPage() {
   });
 
   // Filter out current bounty from similar
-  const filteredSimilar = (similarData?.data || []).filter(b => b.id !== id);
+  const filteredSimilar = (similarData?.data || []).filter((b: any) => b.id !== id);
 
   // Filter out current bounty and already included similar ones from allData
-  const similarIds = new Set(filteredSimilar.map(b => b.id));
-  const filteredRecent = (allData?.data || []).filter(b => b.id !== id && !similarIds.has(b.id));
+  const similarIds = new Set(filteredSimilar.map((b: any) => b.id));
+  const filteredRecent = (allData?.data || []).filter((b: any) => b.id !== id && !similarIds.has(b.id));
 
   // Merge: Similar first, then Recent, up to 10 total (or 5? let's do 10 to allow scrolling)
   const similarBounties = [...filteredSimilar, ...filteredRecent].slice(0, 10);
@@ -127,9 +128,7 @@ export default function BountyDetailsPage() {
             <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
               <Info className='h-4 w-4 text-primary' /> Description
             </h3>
-            <div className='prose prose-invert max-w-none text-muted-foreground text-xs leading-relaxed whitespace-pre-wrap'>
-              {bounty.description}
-            </div>
+            <RichTextRenderer content={bounty.description} className="text-xs [&_p]:text-xs [&_li]:text-xs [&_h1]:text-sm [&_h2]:text-sm [&_h3]:text-xs" />
           </section>
 
           {/* Requirements */}
@@ -282,7 +281,7 @@ export default function BountyDetailsPage() {
               owner={bounty.owner as any}
               createdAt={bounty.createdAt}
               deadline={bounty.submissionDeadline}
-              applied={isApplied}
+              applied={bounty.applied}
               applicationId={myApplication?.id}
               distribution={bounty.distribution || bounty.rewardDistribution}
               submissionFields={bounty.submissionFields}
@@ -305,7 +304,7 @@ export default function BountyDetailsPage() {
           owner={bounty.owner as any}
           createdAt={bounty.createdAt}
           deadline={bounty.submissionDeadline}
-          applied={isApplied}
+          applied={bounty.applied}
           applicationId={myApplication?.id}
           distribution={bounty.rewardDistribution}
           submissionFields={bounty.submissionFields}

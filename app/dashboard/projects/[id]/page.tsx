@@ -9,6 +9,7 @@ import {
   type Milestone
 } from '@/components/bounties/payment-milestones'
 import { DiscussionList } from '@/components/discussions/discussion-list'
+import { RichTextRenderer } from '@/components/shared/rich-text-renderer'
 import { Button } from '@/components/ui/button'
 import { useGetProject, useGetProjectMilestones, useGetProjects } from '@/lib/api/projects/queries'
 import { useAuth } from '@/lib/store/use-auth'
@@ -76,7 +77,7 @@ export default function BountyDetailsPage() {
 
   // Filter similar projects (exclude current one)
   const similarBounties = (allProjects || [])
-    .filter(p => p.id !== project.id)
+    .filter((p: any) => p.id !== project.id)
     .slice(0, 5)
 
 
@@ -133,9 +134,7 @@ export default function BountyDetailsPage() {
             <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
               <Info className='h-4 w-4 text-primary' /> Description
             </h3>
-            <div className='prose prose-invert max-w-none text-muted-foreground text-xs leading-relaxed whitespace-pre-wrap'>
-              <p>{project.description}</p>
-            </div>
+            <RichTextRenderer content={project.description} className="text-sm [&_p]:text-sm [&_li]:text-sm" />
           </section>
 
           {/* Requirements */}
@@ -251,7 +250,7 @@ export default function BountyDetailsPage() {
                 ref={scrollContainerRef}
                 className='flex overflow-x-auto pb-6 gap-5 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent pl-1 scroll-smooth'
               >
-                {similarBounties.map((repoProject) => (
+                {similarBounties.map((repoProject: any) => (
                   <BountyCard
                     key={repoProject.id}
                     id={repoProject.id}

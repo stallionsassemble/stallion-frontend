@@ -1,10 +1,5 @@
 'use client'
 
-import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Search, SlidersHorizontal } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-
 import { CreateProjectModal } from "@/components/dashboard/owner/create-project-modal";
 import { ProjectCard } from "@/components/dashboard/owner/project-card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +24,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetProjects } from "@/lib/api/projects/queries";
 import { useAuth } from "@/lib/store/use-auth";
+import { format } from "date-fns";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, Search, SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function OwnerProjectsPage() {
   const { user } = useAuth();
@@ -46,11 +45,11 @@ export default function OwnerProjectsPage() {
   const [currencyFilter, setCurrencyFilter] = useState("All");
 
   // Filter and Sort Logic
-  const filteredProjects = myProjects.filter((p) => {
+  const filteredProjects = myProjects.filter((p: any) => {
     // 1. Search Filter
     const matchesSearch =
       p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.skills?.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
+      p.skills?.some((skill: string) => skill.toLowerCase().includes(searchQuery.toLowerCase()));
 
     if (!matchesSearch) return false;
 
@@ -72,7 +71,7 @@ export default function OwnerProjectsPage() {
     }
 
     return matchesStatus && matchesCurrency;
-  }).sort((a, b) => {
+  }).sort((a: any, b: any) => {
     // Sort Logic
     switch (sortOrder) {
       case "newest":
@@ -217,17 +216,18 @@ export default function OwnerProjectsPage() {
               </Card>
             ))
           ) : paginatedProjects.length > 0 ? (
-            paginatedProjects.map((project) => (
+            paginatedProjects.map((project: any) => (
               <Link
                 key={project.id}
                 href={`/dashboard/owner/projects/${project.id}`}
                 className="block h-full"
               >
                 <ProjectCard
+                  projectId={project.id}
                   status={project.status}
                   type="Project"
                   title={project.title}
-                  description={project.shortDescription || project.description}
+                  description={project.shortDescription || project.description?.replace(/<[^>]*>/g, '').substring(0, 100) + '...' || ''}
                   reward={project.reward}
                   currency={project.currency}
                   skills={project.skills || []}

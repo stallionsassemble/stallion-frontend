@@ -407,19 +407,23 @@ import { useGetActivities } from "@/lib/api/activities/queries";
 
 // ... (keep previous imports)
 
-// ... (imports remain)
-
 export function ActivityFeed() {
   const { data: activitiesData, isLoading } = useGetActivities({
     page: '1',
     limit: '10',
-    type: 'ALL'
   });
 
   const activities = activitiesData?.data || [];
 
   if (isLoading) {
-    return <div className="p-4 text-center text-muted-foreground text-sm">Loading activities...</div>;
+    return (
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-foreground">Recent Activities</h2>
+        <div className="flex justify-center p-8">
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    )
   }
 
   // Fallback empty state
@@ -435,91 +439,37 @@ export function ActivityFeed() {
     )
   }
 
-  const getActivityActionText = (type: string) => {
-    switch (type) {
-      case 'BOUNTY_CREATED': return 'created a bounty';
-      case 'BOUNTY_SUBMISSION': return 'submitted work for';
-      case 'BOUNTY_WON': return 'won';
-      case 'BOUNTY_COMPLETED': return 'completed';
-      case 'PROJECT_CREATED': return 'started a project';
-      case 'PROJECT_WON': return 'was awarded';
-      case 'PROJECT_APPLICATION_SUBMITTED': return 'applied to';
-      case 'PROJECT_APPLICATION_ACCEPTED': return 'was accepted to';
-      case 'HACKATHON_WON': return 'won';
-      default: return 'performed action';
-    }
-  };
-
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-bold text-foreground">Recent Activities</h2>
-      <div className="relative pl-4">
+      <div className="relative pl-2">
         {/* Vertical Line */}
-        <div className="absolute left-[36px] top-2 bottom-4 w-px bg-border" />
+        <div className="absolute left-[7px] top-2 bottom-4 w-px bg-border hidden sm:block" />
 
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-6">
           {activities.map((activity) => {
+            // Basic determining of "Won" status for styling, though simplified
             const isWon = activity.type.includes('WON') || activity.type === 'BOUNTY_COMPLETED';
 
             return (
-              <div key={activity.id} className="flex items-center gap-4 group relative z-10">
-                {/* Leff Side - Avatar(s) */}
-                <div className="relative shrink-0 w-[70px] h-[40px] flex items-center justify-center">
-
-                  {isWon ? (
-                    <>
-                      {/* User Avatar (Back) */}
-                      <div className="absolute left-0 z-10 w-10 h-10 rounded-[10.28px] border-2 border-background bg-muted overflow-hidden">
-                        <Image
-                          src={activity.user?.profilePicture || `https://avatar.vercel.sh/${activity.user?.username || 'user'}`}
-                          alt={activity.user?.username || "User"}
-                          width={40}
-                          height={40}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      {/* Target/App Logo (Front) - Using S Logo for system/bounty */}
-                      <div className="absolute left-6 z-20 w-10 h-10 rounded-[10.28px] border-2 border-background bg-card flex items-center justify-center overflow-hidden shadow-lg">
-                        <div className="w-6 h-6 text-foreground">
-                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z" /></svg>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    /* Other Activity - Single Centered Icon (Default User) */
-                    <div className="absolute left-0 z-10 w-10 h-10 rounded-[10.28px] border-2 border-background bg-muted overflow-hidden shadow-lg">
-                      <Image
-                        src={activity.user?.profilePicture || `https://avatar.vercel.sh/${activity.user?.username || 'user'}`}
-                        alt={activity.user?.username || "User"}
-                        width={40}
-                        height={40}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                </div>
+              <div key={activity.id} className="flex items-start gap-4 group relative z-10 pl-6">
+                {/* Timeline Dot */}
+                <div className="absolute left-[2px] top-[6px] w-2.5 h-2.5 rounded-full bg-border group-hover:bg-primary transition-colors ring-4 ring-background z-20" />
 
                 {/* Text Content */}
-                <div className="flex flex-wrap items-center gap-x-1.5 text-[13px] font-inter leading-relaxed">
-                  <span className="text-foreground font-medium">
-                    {activity.user?.firstName ? `${activity.user.firstName} ${activity.user.lastName}` : activity.user?.username}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {getActivityActionText(activity.type)}
-                  </span>
+                <div className="flex flex-col gap-1 pt-0.5 min-w-0 flex-1">
+                  <div className="text-[13px] font-inter leading-relaxed text-foreground">
+                    {activity.message}
+                  </div>
 
-                  {/* Target */}
-                  <span className="text-foreground font-medium truncate max-w-[150px]">
-                    {activity.bounty?.title || activity.metadata?.bountyTitle || "a bounty"}
-                  </span>
-
+                  {/* Optional Meta Info */}
                   {(activity.metadata?.reward) && (
-                    <span className="text-primary font-bold">
-                      {activity.metadata.reward} {activity.metadata.currency}
+                    <span className="text-primary font-bold text-xs">
+                      Reward: {activity.metadata.reward} {activity.metadata.currency}
                     </span>
                   )}
 
-                  <span className="text-muted-foreground text-xs ml-1">
+                  <span className="text-muted-foreground text-xs">
                     {formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })}
                   </span>
                 </div>

@@ -1,9 +1,10 @@
 import { KpiCard } from "@/components/ui/kpi-card";
-import { useProjectOwnerStatsQuery } from "@/lib/api/dashboard/queries";
+import { useProjectContributors, useProjectOwnerStatsQuery } from "@/lib/api/dashboard/queries";
 import { DollarSign, FileText, Timer, Users } from "lucide-react";
 
 export function OwnerStats() {
-  const { data: ownerStats } = useProjectOwnerStatsQuery()
+  const { data: ownerStats } = useProjectOwnerStatsQuery();
+  const { data: contributors } = useProjectContributors();
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
       <KpiCard
@@ -51,9 +52,9 @@ export function OwnerStats() {
         layout="column"
         iconAlignment="top"
         label="Contributors"
-        value={ownerStats?.totalContributors || 0}
+        value={contributors?.length || 0}
         icon={Users}
-        // status="Avg. 3.2 weeks"
+        status="Total Contributors"
         statusColor="text-muted-foreground"
         borderColor="hover:border-blue-500/50"
         className="bg-background border-[1.17px] border-border h-full"

@@ -24,7 +24,7 @@ export class ProjectService {
    * @param payload Filter payload
    * @returns
    */
-  async getProjects(payload: GetProjectsPayload) {
+  async getProjects(payload?: GetProjectsPayload) {
     const response = await api.get<Projects>('/projects', { params: payload })
     return response.data
   }

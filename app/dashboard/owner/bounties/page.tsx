@@ -213,7 +213,7 @@ export default function OwnerBountiesPage() {
                 status={bounty.status}
                 type="Bounty"
                 title={bounty.title}
-                description={bounty.description?.substring(0, 100) + '...'}
+                description={bounty.description?.replace(/<[^>]*>/g, '').substring(0, 100) + '...'}
                 reward={bounty.reward}
                 currency={bounty.rewardCurrency}
                 skills={bounty.skills || []}

@@ -61,6 +61,7 @@ export interface Bounty {
 
   token?: string
   txHash?: string
+  applied?: boolean
   applicationCount?: number
   submissionCount?: number
 }
