@@ -37,7 +37,9 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
   // Form State
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [requirements, setRequirements] = useState("");
+
+  const [requirements, setRequirements] = useState<string[]>([]);
+  const [requirementInput, setRequirementInput] = useState("");
   const [deliverables, setDeliverables] = useState<string[]>([]);
   const [deliverableInput, setDeliverableInput] = useState("");
   const [budget, setBudget] = useState("");
@@ -72,8 +74,8 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
     if (existingBounty && isOpen) {
       setTitle(existingBounty.title);
       setDescription(existingBounty.description);
-      // Requirements usually array in backend but editor expects string or we join them
-      setRequirements(existingBounty.requirements?.join("\n") || "");
+
+      setRequirements(existingBounty.requirements || []);
       setDeliverables(existingBounty.deliverables || []);
       setBudget(existingBounty.reward);
       setCurrency(existingBounty.rewardCurrency);
@@ -109,6 +111,13 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
     if (deliverableInput.trim()) {
       setDeliverables([...deliverables, deliverableInput.trim()]);
       setDeliverableInput("");
+    }
+  };
+
+  const handleAddRequirement = () => {
+    if (requirementInput.trim()) {
+      setRequirements([...requirements, requirementInput.trim()]);
+      setRequirementInput("");
     }
   };
 
@@ -209,35 +218,54 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
       .filter(d => d.percentage > 0);
 
 
-    const payload: any = {
+    // Base payload with common fields
+    const basePayload = {
       title,
-      shortDescription: description.replace(/<[^>]*>/g, '').substring(0, 150), // Strip HTML tags for short desc
+      shortDescription: description.replace(/<[^>]*>/g, '').substring(0, 150),
       description,
-      requirements: [requirements], // Rich text HTML as single requirement block
+      requirements,
       deliverables,
       skills: selectedTags,
-      reward: totalBudget,
-      rewardCurrency: currency,
       submissionDeadline: deadline.toISOString(),
-      judgingDeadline: announcementDate?.toISOString() || new Date(deadline.getTime() + 86400000 * 7).toISOString(),
-      distribution,
+      distribution: prizeDistribution.map((p, index) => ({
+        rank: index + 1, // Ensure rank is strict 1-based index
+        percentage: (Number(p.amount) / totalBudget) * 100
+      })).filter(d => d.percentage > 0),
       attachments: attachments.map(a => ({ filename: a.filename, url: a.url, size: a.size, mimetype: a.mimetype })),
     };
 
     if (existingBounty) {
-      updateBounty({ id: existingBounty.id, payload }, {
+      // Update payload: Exclude immutable fields
+      // Use clean payload
+      const updatePayload = {
+        ...basePayload,
+        // judgingDeadline is immutable or sensitive on update? The error said it should not exist.
+      };
+
+      updateBounty({ id: existingBounty.id, payload: updatePayload }, {
         onSuccess: () => {
           setOpen(false);
         }
       });
     } else {
-      createBounty(payload, {
+      // Create payload: Include immutable fields
+      const createPayload = {
+        ...basePayload,
+        reward: totalBudget,
+        rewardCurrency: currency,
+        judgingDeadline: announcementDate?.toISOString() || new Date(deadline.getTime() + 86400000 * 7).toISOString(),
+      };
+
+      createBounty(createPayload, {
         onSuccess: () => {
           setOpen(false);
           // Reset form
           setTitle("");
           setDescription("");
           setBudget("");
+          setRequirements([]);
+          setDeliverables([]);
+          setPrizeDistribution([{ rank: 1, amount: "" }, { rank: 2, amount: "" }, { rank: 3, amount: "" }]);
         }
       });
     }
@@ -280,12 +308,33 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
 
             {/* Requirements */}
             <div className="space-y-2">
-              <Label className="text-foreground">Requirements<span className="text-destructive">*</span></Label>
-              <RichTextEditor
-                value={requirements}
-                onChange={setRequirements}
-                placeholder="Introduce yourself and explain why you're the best fit for this project. Include relevant experience, approach to the problem and what makes you stand out..."
-              />
+              <Label className="text-foreground">Requirements <span className="text-destructive">*</span></Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add a requirement"
+                  className="bg-transparent border-input text-foreground"
+                  value={requirementInput}
+                  onChange={(e) => setRequirementInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && requirementInput) {
+                      handleAddRequirement();
+                    }
+                  }}
+                />
+                <Button variant="secondary" onClick={handleAddRequirement} className="bg-secondary hover:bg-secondary/80 border border-input">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {requirements.length > 0 && (
+                <div className="flex flex-col gap-2 mt-2">
+                  {requirements.map((r, i) => (
+                    <Badge key={i} variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/80 gap-2 justify-between py-2 px-3 w-full">
+                      <span className="truncate">{r}</span>
+                      <X className="h-3 w-3 cursor-pointer shrink-0" onClick={() => setRequirements(prev => prev.filter((_, idx) => idx !== i))} />
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Deliverables */}

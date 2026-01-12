@@ -35,6 +35,8 @@ export function DashboardRightSidebar() {
 
   const formattedTotal = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalBalance);
 
+  const topEarners = leaderboard?.data?.filter((earner) => earner.earnedAmount > 0) || [];
+
   return (
     <div className="space-y-6 w-full">
       <WithdrawFundsModal
@@ -56,8 +58,8 @@ export function DashboardRightSidebar() {
         </div>
 
         {/* Vertical Marquee Top Earners */}
-        {!isLoadingLeaderboard && (!leaderboard?.data || leaderboard.data.length === 0) ? (
-          <div className="h-full flex items-center justify-center border border-dashed border-primary/20 bg-primary/5 rounded-lg">
+        {!isLoadingLeaderboard && topEarners.length === 0 ? (
+          <div className="h-full w-full flex items-center justify-center border border-dashed border-primary/20 bg-primary/5 rounded-lg">
             <EmptyState
               title="No top earners"
               icon={Crown}
@@ -71,7 +73,7 @@ export function DashboardRightSidebar() {
                 <Skeleton key={i} className="h-8 w-full rounded" />
               ))
             ) : (
-              leaderboard?.data.map((earner, i) => (
+              topEarners.map((earner, i) => (
                 <div key={i} className="flex items-center justify-between gap-3 p-1 w-full">
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full bg-gray-700 overflow-hidden shrink-0">
