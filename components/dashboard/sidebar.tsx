@@ -52,7 +52,7 @@ const talentSidebarItems = [
     title: "Messages",
     href: "/dashboard/messages",
     icon: MessageSquare,
-    badge: 2,
+    badge: undefined,
   },
   {
     title: "Forums",
@@ -103,7 +103,7 @@ const ownerSidebarItems = [
     title: "Messages",
     href: "/dashboard/owner/messages",
     icon: MessageSquare,
-    badge: 2,
+    badge: undefined,
   },
   {
     title: "Contributors",

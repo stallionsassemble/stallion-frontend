@@ -9,6 +9,7 @@ import {
   useGetCategories,
   useGetTags,
   useGetTagThreads,
+  useGetThreads,
   useMyPinnedThreads,
   useSearchThreads,
   useTogglePinThread
@@ -70,6 +71,13 @@ export default function ForumPage() {
     dateRange
   );
 
+  const { data: browseResults, isLoading: isBrowseLoading } = useGetThreads(
+    activeCategoryId === 'all' ? undefined : activeCategoryId,
+    50, // Limit
+    0, // Offset - TODO: Implement server-side pagination if needed
+    !debouncedSearch && !activeTag // Only fetch if not searching and not filtering by tag
+  );
+
   const { data: tagThreads = [], isLoading: isTagLoading } = useGetTagThreads(activeTag || "");
 
   // Handle potential non-array response (pagination wrapper) despite type definition
@@ -81,10 +89,21 @@ export default function ForumPage() {
     ? tagThreads
     : (tagThreads as any)?.threads || (tagThreads as any)?.data || [];
 
+  const safeBrowseThreads = browseResults?.threads || [];
+
   // Determine if Pinned Section should be visible
   const showPinnedSection = activeCategoryId === 'all' && !searchQuery && !activeTag && pinnedThreads.length > 0 && currentPage === 1;
 
-  const threads = (activeTag ? safeTagThreads : safeSearchResults).filter(
+  let threads = [];
+  if (activeTag) {
+    threads = safeTagThreads;
+  } else if (debouncedSearch) {
+    threads = safeSearchResults;
+  } else {
+    threads = safeBrowseThreads;
+  }
+
+  threads = threads.filter(
     (thread: any) => {
       // If Pinned Section is visible, remove pinned threads from main list to avoid duplication
       if (showPinnedSection) {
@@ -94,7 +113,8 @@ export default function ForumPage() {
       return true;
     }
   );
-  const isThreadsLoading = activeTag ? isTagLoading : isSearchLoading;
+
+  const isThreadsLoading = activeTag ? isTagLoading : (debouncedSearch ? isSearchLoading : isBrowseLoading);
 
   // Handlers
   const handleTogglePin = (id: string) => {
@@ -138,7 +158,7 @@ export default function ForumPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-[36px] md:text-4xl font-inter -tracking-[4%] font-bold text-foreground">Community Forum</h1>
+          <h1 className="text-3xl md:text-4xl font-inter -tracking-[4%] font-bold text-foreground">Community Forum</h1>
           <p className="text-foreground font-medium font-inter text-[14px]">Discuss, share, and learn with the community</p>
         </div>
         <div className="flex gap-3">

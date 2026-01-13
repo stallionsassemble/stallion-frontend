@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export interface Winner {
   submissionId: string
@@ -26,16 +26,37 @@ interface UseBountyWinnersReturn {
 const STORAGE_KEY_PREFIX = 'bounty-winners-'
 
 export function useBountyWinners(bountyId: string): UseBountyWinnersReturn {
-  const [winners, setWinners] = useState<Winner[]>([])
   const storageKey = `${STORAGE_KEY_PREFIX}${bountyId}`
 
-  // Load from localStorage on mount
+  // Initialize from localStorage
+  const [winners, setWinners] = useState<Winner[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const stored = localStorage.getItem(storageKey)
+      return stored ? JSON.parse(stored) : []
+    } catch (e) {
+      console.error('Failed to load winners from localStorage', e)
+      return []
+    }
+  })
+
+  // Handle bountyId changes (sync with new storage key)
+  // Skip initial load as it's handled by useState
+  const isFirstRender = useRef(true)
+
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+
     if (typeof window === 'undefined') return
     try {
       const stored = localStorage.getItem(storageKey)
       if (stored) {
         setWinners(JSON.parse(stored))
+      } else {
+        setWinners([])
       }
     } catch (e) {
       console.error('Failed to load winners from localStorage', e)

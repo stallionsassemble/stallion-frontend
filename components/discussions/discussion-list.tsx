@@ -3,12 +3,15 @@
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
-import { useBountyDiscussions, useCreateDiscussion, useProjectDiscussions } from "@/lib/api/discussions/queries"
+import { DiscussionsService } from "@/lib/api/discussions"
+import { DISCUSSION_KEYS, useCreateDiscussion } from "@/lib/api/discussions/queries"
 import { useAuth } from "@/lib/store/use-auth"
+import { useQuery } from "@tanstack/react-query"
 import { MessageSquare, MessageSquareX } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 import { DiscussionItem } from "./discussion-item"
+
 
 interface DiscussionListProps {
   id: string
@@ -19,9 +22,13 @@ export function DiscussionList({ id, type }: DiscussionListProps) {
   const [newComment, setNewComment] = useState("")
   const { user } = useAuth()
 
-  const { data: discussions, isLoading, isError } = type === 'BOUNTY'
-    ? useBountyDiscussions(id)
-    : useProjectDiscussions(id)
+  const { data: discussions, isLoading, isError } = useQuery({
+    queryKey: type === 'BOUNTY' ? DISCUSSION_KEYS.bounty(id) : DISCUSSION_KEYS.project(id),
+    queryFn: () => type === 'BOUNTY'
+      ? DiscussionsService.getBountyDiscussions(id)
+      : DiscussionsService.getProjectDiscussions(id),
+    enabled: !!id
+  })
 
   const createDiscussion = useCreateDiscussion()
 

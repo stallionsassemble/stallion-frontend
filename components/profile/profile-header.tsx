@@ -56,7 +56,7 @@ export function ProfileHeader({ userData, reputationData }: ProfileHeaderProps) 
             <Button
               variant="outline"
               onClick={() => setIsEditDialogOpen(true)}
-              className="flex gap-2 border-white/20 hover:bg-white/10 text-white hover:text-white bg-transparent h-9 px-4 text-xs font-medium transition-colors"
+              className="flex gap-2 border-white/20 hover:bg-white/10 text-white hover:text-white bg-transparent h-9 px-4 text-xs font-medium transition-colors cursor-pointer"
             >
               <Edit className="w-3 h-3" />
               Edit Profile

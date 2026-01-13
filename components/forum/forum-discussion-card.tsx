@@ -41,7 +41,7 @@ export function ForumDiscussionCard({
   };
 
   return (
-    <div className="group relative border-b border-[0.68px] border-primary/50 bg-card p-5 transition-all hover:border-primary/50 hover:bg-primary/10">
+    <div className="group relative border-b border-[0.68px] border-primary/50 bg-card p-4 md:p-5 transition-all hover:border-primary/50 hover:bg-primary/10">
 
       {/* Pin Action - Absolute positioned for easy access */}
       {onPin && (
@@ -59,7 +59,7 @@ export function ForumDiscussionCard({
 
       <div className="flex gap-3 md:gap-4 pr-8">
         {/* Avatar Placeholder/User Icon */}
-        <div className="h-[60px] w-[60px] md:h-[91px] md:w-[91px] shrink-0 overflow-hidden rounded-[8000.41px] bg-primary/20 flex items-center justify-center mt-6.5">
+        <div className="h-[50px] w-[50px] md:h-[91px] md:w-[91px] shrink-0 overflow-hidden rounded-[8000.41px] bg-primary/20 flex items-center justify-center mt-2 md:mt-6.5">
           <Image
             src={`https://avatar.vercel.sh/${author}`}
             width={91}

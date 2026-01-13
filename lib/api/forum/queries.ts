@@ -50,6 +50,19 @@ export function useCreateCategory() {
 }
 
 // Threads
+export function useGetThreads(
+  categoryId?: string,
+  limit: number = 50,
+  offset: number = 0,
+  enabled: boolean = true
+) {
+  return useQuery({
+    queryKey: ['forum', 'threads', 'list', categoryId, limit, offset],
+    queryFn: () => forumService.getThreads(categoryId, limit, offset),
+    enabled,
+  })
+}
+
 export function useSearchThreads(
   q: string,
   categoryId?: string,

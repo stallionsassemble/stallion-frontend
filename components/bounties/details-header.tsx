@@ -54,7 +54,7 @@ export function DetailsHeader({
 
           <div className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5 text-primary" />
-            <span>Due in {dueDate}</span>
+            <span>Due in {dueDate.replace(" left", "")}</span>
           </div>
 
           <div className="flex items-center gap-1.5">

@@ -57,6 +57,21 @@ class ForumService {
     )
     return response.data
   }
+  async getThreads(
+    categoryId?: string,
+    limit: number = 50,
+    offset: number = 0
+  ) {
+    const response = await api.get<{
+      threads: any[] // We can refine this type later or import it
+      total: number
+      limit: number
+      offset: number
+    }>('/forum/threads', {
+      params: { categoryId, limit, offset },
+    })
+    return response.data
+  }
 
   async searchThreads(
     q: string,

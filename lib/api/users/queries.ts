@@ -1,3 +1,4 @@
+import { useAuth } from '@/lib/store/use-auth'
 import { User } from '@/lib/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -25,11 +26,13 @@ export function useUpdateContributorProfile() {
   return useMutation({
     mutationFn: (data: Partial<User>) =>
       userService.updateContributorProfile(data),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Profile updated successfully')
       // Invalidate user queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['user'] })
-      queryClient.invalidateQueries({ queryKey: ['auth', 'user'] })
+      await queryClient.invalidateQueries({ queryKey: ['user'] })
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'user'] })
+      // Sync with auth store
+      await useAuth.getState().checkAuth()
     },
     onError: (error: any) => {
       console.error('Failed to update profile:', error)
@@ -43,11 +46,13 @@ export function useUpdateOwnerProfile() {
 
   return useMutation({
     mutationFn: (data: Partial<User>) => userService.updateOwnerProfile(data),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Profile updated successfully')
       // Invalidate user queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['user'] })
-      queryClient.invalidateQueries({ queryKey: ['auth', 'user'] })
+      await queryClient.invalidateQueries({ queryKey: ['user'] })
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'user'] })
+      // Sync with auth store
+      await useAuth.getState().checkAuth()
     },
     onError: (error: any) => {
       console.error('Failed to update profile:', error)

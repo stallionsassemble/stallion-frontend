@@ -55,6 +55,7 @@ export function SubmissionModal({
   const [modalView, setModalView] = useState<ModalView>(initialView);
 
   // Sync modalView with initialView when modal opens
+  // eslint-disable-next-line
   useEffect(() => {
     if (isOpen) {
       setModalView(initialView);

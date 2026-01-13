@@ -12,6 +12,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [hydrated, setHydrated] = useState(false)
 
+  // eslint-disable-next-line
   useEffect(() => {
     // Wait for Zustand persist to hydrate state from localStorage
     setHydrated(true)

@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { useGetTags, useSearchThreads } from "@/lib/api/forum/queries";
+import { useGetTags, useGetThreads } from "@/lib/api/forum/queries";
 import { useAuth } from "@/lib/store/use-auth";
 import { Loader2, MessageSquare, Users } from "lucide-react";
 import Image from "next/image";
@@ -31,14 +31,14 @@ export function ForumSidebar({ categoryId, currentThreadId, author }: ForumSideb
   const displayUser = author || currentUser;
 
   // Fetch related threads if categoryId is provided, otherwise fetch recent threads (empty search)
-  const { data: relatedThreadsResponse, isLoading: isRelatedLoading } = useSearchThreads("", categoryId);
+  // Use useGetThreads instead of search
+  const { data: threadsData, isLoading: isRelatedLoading } = useGetThreads(
+    categoryId,
+    5, // limit
+    0  // offset
+  );
 
-  // Handle different response structures if searchThreads returns { data: [], meta: ... } or just []
-  // Assuming standard PagedResponse or array. Based on queries.ts it's likely just array or object with data.
-  // We'll treat it safely.
-  const rawRelatedThreads = Array.isArray(relatedThreadsResponse)
-    ? relatedThreadsResponse
-    : (relatedThreadsResponse as any)?.data || [];
+  const rawRelatedThreads = threadsData?.threads || [];
 
   const relatedThreads = rawRelatedThreads.filter((t: any) => t.id !== currentThreadId);
 
