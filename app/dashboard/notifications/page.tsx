@@ -44,9 +44,9 @@ export default function NotificationsPage() {
       case 'SUBMISSION_ACCEPTED':
         return "border-green-500/20 bg-green-500/10 border-l-2 border-l-green-500";
       case 'BOUNTY_MATCH':
-        return "border-border bg-card hover:bg-muted/50";
+        return "border-border bg-card hover:bg-card/40";
       default:
-        return "border-border bg-card hover:bg-muted/50";
+        return "border-border bg-card hover:bg-card/40";
     }
   };
 
