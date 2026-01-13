@@ -125,7 +125,11 @@ function VerifyContent() {
 
       // Smart redirection based on profile status
       if (user?.profileCompleted) {
-        router.push("/dashboard");
+        if (user.role === 'PROJECT_OWNER' || user.role === 'OWNER') {
+          router.push("/dashboard/owner");
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         // Use returned user role or fallback to URL param.
         // Priority: If URL param says "owner", redirect to owner onboarding to match user intent.

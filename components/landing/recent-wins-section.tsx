@@ -26,15 +26,17 @@ function HorizontalMarquee({
       <div className='absolute top-0 right-0 h-full w-24 bg-linear-to-l from-[#020617] to-transparent z-10 pointer-events-none' />
 
       <div
-        className={`flex w-max gap-[29px] pause-on-hover ${
-          direction === 'left'
-            ? 'animate-marquee-left'
-            : 'animate-marquee-right'
-        } will-change-transform`}
+        className={`flex w-max ${direction === 'left'
+          ? 'animate-marquee-left'
+          : 'animate-marquee-right'
+          } will-change-transform`}
       >
-        {children}
-        {/* We need one full duplicate set for seamless looping of 50% translation */}
-        {children}
+        <div className="flex shrink-0 gap-[29px] pr-[29px]">
+          {children}
+        </div>
+        <div className="flex shrink-0 gap-[29px] pr-[29px]">
+          {children}
+        </div>
       </div>
     </div>
   )
@@ -161,25 +163,24 @@ export function RecentWins() {
 
     const cardStyle = isHighlighted
       ? {
-          border: '1.79px solid #3434D34D',
-          boxShadow:
-            '0px 7.17px 8.97px -5.38px #007AFF38, 0px 17.93px 22.41px -4.48px #007AFF1A',
-          background:
-            'linear-gradient(135deg, rgba(0, 122, 255, 0.28) 0%, rgba(20, 90, 166, 0.35) 100%)',
-        }
+        border: '1.79px solid #3434D34D',
+        boxShadow:
+          '0px 7.17px 8.97px -5.38px #007AFF38, 0px 17.93px 22.41px -4.48px #007AFF1A',
+        background:
+          'linear-gradient(135deg, rgba(0, 122, 255, 0.28) 0%, rgba(20, 90, 166, 0.35) 100%)',
+      }
       : {
-          background: '#09090B',
-          // border removed from inline to allow hover override via class
-        }
+        background: '#09090B',
+        // border removed from inline to allow hover override via class
+      }
 
     return (
       <div
         key={`${win.id}-${index}`}
-        className={`relative rounded-xl p-3 w-[80vw] max-w-[301.98px] h-[83.27px] md:w-[325px] md:h-[90px] flex flex-col justify-center overflow-visible shrink-0 transition-all duration-300 ${
-          !isHighlighted
-            ? 'border-[0.9px] border-[#292537] hover:border-primary'
-            : ''
-        }`}
+        className={`relative rounded-xl p-3 w-[80vw] max-w-[301.98px] h-[83.27px] md:w-[325px] md:h-[90px] flex flex-col justify-center overflow-visible shrink-0 transition-all duration-300 ${!isHighlighted
+          ? 'border-[0.9px] border-[#292537] hover:border-primary'
+          : ''
+          }`}
         style={cardStyle}
       >
         {/* Price Badge */}
@@ -245,7 +246,7 @@ export function RecentWins() {
   return (
     <section className='py-20 text-center overflow-hidden'>
       {/* Desktop View */}
-      <div className='hidden md:flex flex-col gap-10 w-full px-4'>
+      <div className='hidden md:flex flex-col gap-10 container mx-auto max-w-6xl px-4'>
         {/* Row 1: Static #1 + Scroll Left */}
         <div className='flex items-center gap-[29px] w-full'>
           <div className='shrink-0 z-20'>
@@ -299,11 +300,10 @@ export function RecentWins() {
           {/* Prev Arrow */}
           <button
             onClick={handlePrev}
-            className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${
-              mobileIndex === 0
-                ? 'border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed'
-                : 'border-primary text-primary hover:bg-primary hover:text-white'
-            }`}
+            className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${mobileIndex === 0
+              ? 'border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed'
+              : 'border-primary text-primary hover:bg-primary hover:text-white'
+              }`}
           >
             <ChevronLeft className='w-2 h-2' strokeWidth={2.5} />
           </button>
@@ -320,11 +320,10 @@ export function RecentWins() {
           {/* Next Arrow */}
           <button
             onClick={handleNext}
-            className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${
-              mobileIndex === chunks.length - 1
-                ? 'border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed'
-                : 'border-primary text-primary hover:bg-primary hover:text-white'
-            }`}
+            className={`flex items-center justify-center rounded-full border w-[23.32px] h-[23.32px] bg-transparent p-0 shrink-0 transition-colors ${mobileIndex === chunks.length - 1
+              ? 'border-[#B8CCE3] text-[#B8CCE3] cursor-not-allowed'
+              : 'border-primary text-primary hover:bg-primary hover:text-white'
+              }`}
           >
             <ChevronRight className='w-2 h-2' strokeWidth={2.5} />
           </button>
@@ -336,9 +335,8 @@ export function RecentWins() {
             <button
               key={idx}
               onClick={() => setMobileIndex(idx)}
-              className={`w-1 h-1 rounded-full transition-colors ${
-                idx === mobileIndex ? 'bg-primary' : 'bg-white/20'
-              }`}
+              className={`w-1 h-1 rounded-full transition-colors ${idx === mobileIndex ? 'bg-primary' : 'bg-white/20'
+                }`}
             />
           ))}
         </div>

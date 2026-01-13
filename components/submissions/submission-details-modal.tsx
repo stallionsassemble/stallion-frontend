@@ -38,7 +38,6 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
   const { details } = submission;
 
   // Map Activities to Timeline
-  // Map Activities to Timeline
   const timeline = (activitiesData?.data || [])
     .filter((activity: any) => {
       const isGlobal = ['PROJECT_CREATED', 'PROJECT_UPDATED', 'PROJECT_COMPLETED'].includes(activity.type);
@@ -67,9 +66,6 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
         isMe
       };
     });
-
-  // Fallback if no activities found (or just empty list)
-  // if (timeline.length === 0) ...
 
   return (
     <>
@@ -294,9 +290,9 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
                   size="lg"
                   className="flex-1 w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => setIsSubmitMilestoneOpen(true)}
-                  disabled={details.status !== 'ACCEPTED'}
+                  disabled={details.status !== 'ACCEPTED' || details.projectStatus === 'COMPLETED' || details.projectStatus === 'CLOSED'}
                 >
-                  <FileUp className="h-4 w-4 mr-2" /> Submit Milestone
+                  <FileUp className="h-4 w-4 mr-2" /> {details.projectStatus === 'COMPLETED' ? "Project Completed" : "Submit Milestone"}
                 </Button>
               ) : (
                 <Button
@@ -339,6 +335,8 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
         milestones={milestones || []}
         projectId={details.id}
         projectTitle={details.title}
+        milestoneAmount={details.amount}
+        milestoneCurrency={details.currency}
       />
     </>
   );

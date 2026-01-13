@@ -18,20 +18,20 @@ export function HeroSection() {
       </p>
 
       <div className='flex justify-start md:justify-center gap-4'>
-        <Link href='/bounties'>
+        <Link href='/dashboard/bounties'>
           <Button
             size='lg'
             className='bg-primary hover:bg-primary/80 font-inter tracking-tighter font-regular text-[12px] md:text-lg w-[127.88px] md:w-[190px] h-[37.82px] md:h-[56px] rounded-[4.03px] md:rounded-[6px]  border-transparent border-[0.67px] md:border px-[32.94px] md:px-[49px] py-[9.41px] md:py-[14px] gap-[6.72px]'
           >
-            Get Started
+            Find Work
           </Button>
         </Link>
-        <Link href='/register'>
+        <Link href='/auth/register'>
           <Button
             size='lg'
             className='bg-secondary hover:bg-secondary/80 font-inter tracking-tighter font-regular text-[12px]  md:text-lg w-[127.88px] md:w-[190px] h-[37.82px] md:h-[56px] rounded-[4.03px] md:rounded-[6px] border-transparent border-[0.67px] md:border px-[32.94px] md:px-[49px] py-[9.41px] md:py-[14px] gap-[6.72px]'
           >
-            Learn More
+            Hire Talent
           </Button>
         </Link>
       </div>

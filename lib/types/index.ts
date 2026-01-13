@@ -179,6 +179,12 @@ export interface SubmissionBounty {
   status: string
   submissionDeadline: string
   skills?: string[]
+  submissionFields?: {
+    name: string
+    label: string
+    type: 'url' | 'text' | 'number'
+    required: boolean
+  }[]
 }
 
 export interface UserProjectSubmission {
@@ -192,7 +198,7 @@ export interface UserProjectSubmission {
     size: number
     filename: string
   }[]
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED'
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'COMPLETED'
   rejectionReason: string | null
   createdAt: string
   updatedAt: string
@@ -210,7 +216,7 @@ export interface UserBountySubmission {
     [key: string]: any
   }
   submissionLink: string
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED'
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'COMPLETED'
   createdAt: string
   updatedAt: string
   userId: string

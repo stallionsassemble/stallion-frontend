@@ -3,6 +3,7 @@ export interface TalentDashboardStats {
   earningsPercentageChange: number
   activeBounties: number
   completedBounties: number
+  completedProjects: number
 }
 
 export interface ProjectOwnerStats {

@@ -93,7 +93,7 @@ export function ProjectDetailsSidebar(
               <Progress value={progress} className="h-2 bg-muted" indicatorClassName="bg-primary" />
               <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-2">
                 <span>Funds Released</span>
-                <span>{paidAmount} / {totalAmount} {currency}</span>
+                <span>{progress === 100 ? totalAmount : paidAmount} / {totalAmount} {currency}</span>
               </div>
             </div>
           )}

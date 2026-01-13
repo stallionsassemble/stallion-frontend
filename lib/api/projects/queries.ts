@@ -23,11 +23,11 @@ export function useGetProjects(params?: GetProjectsPayload, options?: any) {
   })
 }
 
-export function useGetProject(id: string) {
+export function useGetProject(id: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ['projects', id],
     queryFn: () => projectService.getProject(id),
-    enabled: !!id,
+    enabled: !!id && enabled,
   })
 }
 

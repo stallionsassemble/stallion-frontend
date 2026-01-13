@@ -82,22 +82,25 @@ export function MilestoneReviewModal({
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-white">Description</h4>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              {milestone.submissionNote || "No specific notes provided with submission."}
+              {milestone.description || "No specific notes provided with submission."}
             </p>
           </div>
 
           {/* Submission Links */}
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-white">Submission Links</h4>
-            {milestone.submissionUrl ? (
+            {milestone.links.length > 0 ? (
               <div className="flex flex-col gap-2">
-                <Link
-                  href={milestone.submissionUrl}
-                  target="_blank"
-                  className="text-sm text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-2 truncate"
-                >
-                  1. Link - {milestone.submissionUrl} <ExternalLink className="w-3 h-3" />
-                </Link>
+                {milestone.links.map((link, index) => (
+                  <Link
+                    key={index}
+                    href={link}
+                    target="_blank"
+                    className="text-sm text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-2 truncate"
+                  >
+                    {index + 1}. Link - {link} <ExternalLink className="w-3 h-3" />
+                  </Link>
+                ))}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground italic">No links provided.</p>
@@ -118,16 +121,23 @@ export function MilestoneReviewModal({
           {/* Additional Attachments */}
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-white">Additional Attachments</h4>
-            <div className="text-sm text-muted-foreground">No Attachments</div>
+            {milestone.attachments.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                {milestone.attachments.map((attachment, index) => (
+                  <Link
+                    key={index}
+                    href={attachment.url}
+                    target="_blank"
+                    className="text-sm text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-2 truncate"
+                  >
+                    {index + 1}. Attachment - {attachment.filename} <ExternalLink className="w-3 h-3" />
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">No attachments provided.</p>
+            )}
           </div>
-
-          {/* Rating Placeholder (Visual Only as per image) */}
-          {/* <div className="flex justify-center py-2">
-            <div className="flex gap-1">
-              {[1, 2, 3, 4].map(i => <Star key={i} className="w-6 h-6 text-blue-500 fill-blue-500" />)}
-              <Star className="w-6 h-6 text-blue-500" />
-            </div>
-          </div> */}
 
         </div>
 

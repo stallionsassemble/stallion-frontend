@@ -66,7 +66,11 @@ export default function LoginPage() {
         setUser(response.user)
       }
 
-      router.push("/dashboard")
+      if (response.user.role === 'PROJECT_OWNER' || response.user.role === 'OWNER') {
+        router.push("/dashboard/owner")
+      } else {
+        router.push("/dashboard")
+      }
     } catch (error: any) {
       console.error(error)
       toast.error(error.response?.data?.message || "Passkey authentication failed", { id: toastId })

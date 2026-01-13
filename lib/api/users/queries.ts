@@ -3,11 +3,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { userService } from './index'
 
-export function useGetUser(id: string) {
+export function useGetUser(id: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ['user', id],
     queryFn: () => userService.getUser(id),
-    enabled: !!id,
+    enabled: !!id && enabled,
   })
 }
 

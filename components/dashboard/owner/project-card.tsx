@@ -71,7 +71,11 @@ export function ProjectCard({
   const totalMilestones = milestones.length;
   // stored status might be "COMPLETED" or similar. Adjust based on API
   const completedMilestones = milestones.filter((m: any) => m.status === 'COMPLETED' || m.status === 'PAID').length;
-  const progress = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
+
+  let progress = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
+  if (status === 'COMPLETED' || status === 'CLOSED') {
+    progress = 100;
+  }
 
   // Hired logic
   const isHired = hiredCount > 0;
@@ -139,22 +143,18 @@ export function ProjectCard({
         </div>
 
         {/* Footer Stats */}
-        <div className="flex items-center justify-between pt-2">
-          <div className="flex items-center gap-4 text-sm text-slate-400 font-medium">
+        <div className="flex items-center justify-between pt-2 mt-auto">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-400 font-medium">
             {/* Applicant Count */}
             <div className="flex items-center gap-1.5">
               <User className="h-4 w-4 text-blue-500" />
               <span>{applicants}</span>
             </div>
 
-            {/* Submissions (Mocked or passed props? Using applicants for now as placeholder if submissions not passed, but interface has applicants. User asked for submissions. Reusing applicant count for now or need submissions prop?)
-                User prompt says: "20 Submissions". 
-                Usually applicants = submissions in this context? Or distinct?
-                I'll assume applicants prop holds this value for now based on previous ProjectCard usage.
-              */}
+            {/* Submissions (Hidden on small screens if space is tight, or wrapped) */}
             <div className="flex items-center gap-1.5">
               <Users className="h-4 w-4 text-blue-500" />
-              <span>{applicants} Submissions</span>
+              <span className="whitespace-nowrap">{applicants} Submissions</span>
             </div>
 
             {/* Dynamic Status / Hired */}
@@ -166,8 +166,8 @@ export function ProjectCard({
             )}
 
             {isHired && (
-              <div className="flex items-center gap-1.5 text-green-500 ml-2">
-                <div className="h-5 w-5 rounded-full bg-slate-700 overflow-hidden">
+              <div className="flex items-center gap-1.5 text-green-500">
+                <div className="h-5 w-5 rounded-full bg-slate-700 overflow-hidden shrink-0">
                   {/* Avatar placeholder - in real app pass hired user avatar */}
                   <img src="/assets/icons/sdollar.png" alt="Hired" className="h-full w-full object-cover" />
                 </div>
@@ -176,7 +176,7 @@ export function ProjectCard({
             )}
           </div>
 
-          <Button size="icon" className="h-10 w-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white shrink-0 shadow-lg shadow-blue-900/20">
+          <Button size="icon" className="h-10 w-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white shrink-0 shadow-lg shadow-blue-900/20 ml-2">
             <ChevronRight className="h-5 w-5" />
           </Button>
         </div>

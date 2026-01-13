@@ -192,7 +192,11 @@ export default function ProjectDetailsPage() {
   // Calculate Progress
   const totalReward = parseFloat(project.reward?.replace(/,/g, '') || '0');
   const releasedAmount = parseFloat(project.released?.replace(/,/g, '') || '0');
-  const progressPercentage = totalReward > 0 ? Math.round((releasedAmount / totalReward) * 100) : 0;
+  let progressPercentage = totalReward > 0 ? Math.round((releasedAmount / totalReward) * 100) : 0;
+
+  if (project.status === 'COMPLETED' || project.status === 'CLOSED') {
+    progressPercentage = 100;
+  }
 
   return (
     <div className="flex flex-col gap-6 h-full max-w-[1600px] mx-auto pb-20 relative">

@@ -12,21 +12,17 @@ import { AddPaymentMethodModal } from "@/components/wallet/add-payment-method-mo
 import { WithdrawFundsModal } from "@/components/wallet/withdraw-funds-modal";
 import { useGetSupportedCurrencies } from "@/lib/api/bounties/queries";
 import { toast } from "sonner";
-
 import { useGetPrices } from "@/lib/api/prices/queries";
 import { walletService } from "@/lib/api/wallet";
 import { useDeletePayoutMethod, useGetDepositAddress, useGetPayoutMethods, useSetTrustline, useSyncWallet } from "@/lib/api/wallet/queries";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { cn, getCurrencyIcon } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { endOfDay, isWithinInterval, startOfDay } from "date-fns";
+import { add, endOfDay, isWithinInterval, startOfDay } from "date-fns";
 import { ArrowDownLeft, ArrowUpRight, BadgeDollarSign, CheckCircle2, ChevronLeft, ChevronRight, Coins, Copy, DollarSign, History, Info, Loader2, Plus, RefreshCcw, Search, Send, Trash2, Wallet } from "lucide-react";
 import Image from "next/image";
 import { ReactNode, useState } from "react";
 import { DateRange } from "react-day-picker";
-
-
-
 
 function StatCard({ label, value, icon, status, statusColor }: { label: string, value: string, icon: ReactNode, status?: string, statusColor?: string }) {
   return (
@@ -598,7 +594,7 @@ function DepositModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
             </div>
             <div className="flex items-center justify-between gap-2 pl-4 pr-1 py-1 rounded-lg border border-border bg-background h-12">
               <div className="flex-1 min-w-0 font-mono text-sm text-foreground truncate select-all">
-                {isLoading ? "Loading..." : addressData?.address || "Address not available"}
+                {isLoading ? "Loading..." : addressData?.address.slice(0, 15) + '...' + addressData?.address.slice(30) || "Address not available"}
               </div>
               <Button size="icon" variant="ghost" className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0" onClick={handleCopy}>
                 {copied ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
@@ -608,7 +604,7 @@ function DepositModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
 
           <div className="rounded-xl bg-blue-500/10 p-4 text-xs text-blue-200 border border-blue-500/20 flex gap-3 items-start">
             <Info className="h-5 w-5 shrink-0 text-blue-400 mt-0.5" />
-            <span className="leading-relaxed text-muted-foreground">Only send Stellar network assets (XLM, USDC on Stellar). Sending other assets may result in permanent loss.</span>
+            <span className="leading-relaxed text-muted-foreground">Only send supported Stellar network assets (XLM, USDC, EURC on Stellar). Sending other assets may result in permanent loss.</span>
           </div>
 
           <Button

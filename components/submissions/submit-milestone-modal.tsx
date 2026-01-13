@@ -33,12 +33,14 @@ interface SubmitMilestoneModalProps {
   isOpen: boolean;
   onClose: () => void;
   milestones: any[];
-  projectId: string; // Needed for API call
-  applicationId?: string; // Might be needed depending on API
+  projectId: string;
+  applicationId?: string;
   projectTitle: string;
+  milestoneAmount: string;
+  milestoneCurrency: string;
 }
 
-export function SubmitMilestoneModal({ isOpen, onClose, milestones, projectId, projectTitle }: SubmitMilestoneModalProps) {
+export function SubmitMilestoneModal({ isOpen, onClose, milestones, projectId, applicationId, projectTitle, milestoneAmount, milestoneCurrency }: SubmitMilestoneModalProps) {
   const [selectedMilestone, setSelectedMilestone] = useState("");
   const [description, setDescription] = useState("");
   const [milestoneLink, setMilestoneLink] = useState("");
@@ -46,11 +48,12 @@ export function SubmitMilestoneModal({ isOpen, onClose, milestones, projectId, p
   const [isUploading, setIsUploading] = useState(false);
 
   const { mutate: submitMilestone, isPending: isSubmitting } = useSubmitMilestone();
+  // const { data: projectMilestones } = useGetMyMilestones(projectId); // Removed redundant fetch
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Filter for pending milestones
-  const pendingMilestones = milestones?.filter(m => m.status === 'PENDING') || [];
+  const pendingMilestones = milestones?.filter((m: any) => m.status === 'PENDING') || [];
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -126,8 +129,8 @@ export function SubmitMilestoneModal({ isOpen, onClose, milestones, projectId, p
     submitMilestone({
       id: selectedMilestone,
       payload: {
-        submissionNote: description,
-        submissionUrl: milestoneLink,
+        description: description,
+        links: [milestoneLink],
         attachments: attachments.map(a => ({
           filename: a.filename,
           url: a.url || "",
@@ -159,7 +162,7 @@ export function SubmitMilestoneModal({ isOpen, onClose, milestones, projectId, p
         <DialogHeader className="p-6 border-b border-white/10 relative">
           <div className="flex items-center gap-1 mb-2 font-inter">
             <Badge className="bg-[#0066CC] hover:bg-[#0066CC]/90 text-white rounded-[13.7px] px-3 py-0.5 font-bold text-xs tracking-[-4%]">
-              $3,500 <span className="text-[8px] bg-white/20 ml-1 px-1 rounded-sm">USDC</span>
+              {milestoneAmount} <span className="text-[8px] bg-white/20 ml-1 px-1 rounded-sm">{milestoneCurrency}</span>
             </Badge>
           </div>
           <DialogTitle className="text-2xl font-bold text-white">
@@ -168,9 +171,6 @@ export function SubmitMilestoneModal({ isOpen, onClose, milestones, projectId, p
           <p className="text-sm text-gray-400 mt-1">
             Submit your milestone for <span className="text-white font-medium">{projectTitle}</span>
           </p>
-          <Button variant="ghost" size="icon" onClick={onClose} className="absolute right-4 top-4 text-gray-400 hover:text-white">
-            <X className="h-6 w-6" />
-          </Button>
         </DialogHeader>
 
         <div className="p-6 space-y-6">

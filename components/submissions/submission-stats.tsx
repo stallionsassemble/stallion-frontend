@@ -12,13 +12,13 @@ interface StatCardProps {
 function StatCard({ label, value, icon }: StatCardProps) {
   return (
     <div
-      className="flex items-center justify-between bg-card text-card-foreground relative overflow-hidden rounded-xl p-10 border border-border shadow-sm min-h-[128px]"
+      className="flex items-center justify-between bg-card text-card-foreground relative overflow-hidden rounded-xl p-6 border border-border shadow-sm min-h-[100px]"
     >
       <div className="space-y-1 z-10 font-inter">
-        <p className="text-[16px] text-muted-foreground font-normal">{label}</p>
-        <p className="text-3xl font-extrabold text-foreground">{value}</p>
+        <p className="text-sm text-muted-foreground font-normal">{label}</p>
+        <p className="text-2xl font-extrabold text-foreground">{value}</p>
       </div>
-      <div className="rounded-full bg-primary p-3 text-primary-foreground z-10 shadow-md">
+      <div className="rounded-full bg-primary/10 p-2.5 text-primary z-10">
         {icon}
       </div>
     </div>
@@ -46,7 +46,7 @@ export function SubmissionStats({ totalSubmissions }: SubmissionStatsProps) {
       />
       <StatCard
         label="Completed"
-        value={talentStats?.completedBounties?.toString() || "0"}
+        value={((talentStats?.completedBounties ?? 0) + (talentStats?.completedProjects ?? 0)).toString()}
         icon={<BadgeCheck className="h-6 w-6" />}
       />
     </div>

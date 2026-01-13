@@ -166,7 +166,7 @@ export class ProjectService {
   async getMyMilestones(projectId: string) {
     const response = await api.get<ProjectMilestones>(
       `/projects/milestones/me`,
-      { params: projectId }
+      { params: { projectId } }
     )
     return response.data
   }

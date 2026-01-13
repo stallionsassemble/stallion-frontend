@@ -170,17 +170,58 @@ export type ProjectReviewResponse = ApplyProjectResponse
 /**
  * Project milestone interface
  */
+// export interface ProjectMilestone {
+//   id: string
+//   status: string
+//   submissionNote: string | null
+//   submissionUrl: string | null
+//   submittedAt: string | null
+//   reviewNote: string | null
+//   reviewedAt: string | null
+//   revisionNote: string | null
+//   txHash: string | null
+//   paidAt: string | null
+//   createdAt: string
+//   updatedAt: string
+//   milestoneId: string
+//   applicationId: string
+//   contributorId: string
+//   milestone: {
+//     id: string
+//     title: string
+//     description: string
+//     amount: string
+//     dueDate: string
+//     order: number
+//     createdAt: string
+//     updatedAt: string
+//     projectId: string
+//     project: {
+//       id: string
+//       title: string
+//       currency: string
+//     }
+//   }
+// }
+
 export interface ProjectMilestone {
   id: string
   status: string
-  submissionNote: string | null
-  submissionUrl: string | null
+  description: string | null
+  links: string[]
+  attachments: {
+    url: string
+    size: number
+    filename: string
+    mimetype: string
+  }[]
   submittedAt: string | null
   reviewNote: string | null
   reviewedAt: string | null
   revisionNote: string | null
   txHash: string | null
   paidAt: string | null
+  usdValueAtCompletion: number | null
   createdAt: string
   updatedAt: string
   milestoneId: string
@@ -199,8 +240,40 @@ export interface ProjectMilestone {
     project: {
       id: string
       title: string
+      shortDescription: string
+      description: string
+      requirements: string[]
+      deliverables: string[]
+      skills: string[]
+      attachments: any[]
+      reward: string
       currency: string
+      deadline: string
+      status: string
+      type: string
+      peopleNeeded: number
+      contractProjectId: number
+      txHash: string | null
+      escrowContractId: string | null
+      acceptedCount: number
+      createdAt: string
+      updatedAt: string
+      ownerId: string
+      owner: {
+        id: string
+        username: string
+        firstName: string
+        lastName: string
+        companyName: string | null
+      }
     }
+  }
+  contributor: {
+    id: string
+    username: string
+    firstName: string
+    lastName: string
+    profilePicture: string | null
   }
 }
 
@@ -232,8 +305,8 @@ export type MyMilestones = ProjectMilestone[]
  * Payload for submitting a milestone
  */
 export interface SubmitMilestonePayload {
-  submissionNote: string
-  submissionUrl: string
+  description: string
+  links: string[]
   attachments?: Attachment[]
 }
 

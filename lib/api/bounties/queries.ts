@@ -112,11 +112,11 @@ export function useUpdateSubmission() {
   })
 }
 
-export function useGetBounty(id: string) {
+export function useGetBounty(id: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ['bounty', id],
     queryFn: () => bountyService.getBounty(id),
-    enabled: !!id,
+    enabled: !!id && enabled,
   })
 }
 

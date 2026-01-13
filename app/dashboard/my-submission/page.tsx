@@ -41,7 +41,7 @@ export default function MySubmissionsPage() {
           source: isProject ? 'PROJECT' : 'BOUNTY',
           title: entity.title,
           description: entity.shortDescription, // Or just description
-          orgName: (entity as any).owner?.companyName || "Stallion",
+          orgName: (entity as any).owner?.companyName || "",
           ownerId: (entity as any).ownerId,
           logo: "/assets/icons/sdollar.png", // TODO: Update if API provides
           amount: isProject ? (entity as any).reward : (entity as any).reward,
@@ -52,7 +52,8 @@ export default function MySubmissionsPage() {
           feedback: item.rejectionReason,
           skills: entity.skills || [],
           attachments: item.attachments || [],
-          deadline: isProject ? (entity as any).deadline : (entity as any).deadline,
+          deadline: isProject ? (entity as any).deadline : (entity as any).submissionDeadline,
+          projectStatus: (entity as any).status,
         }
       };
     });
@@ -111,6 +112,7 @@ export default function MySubmissionsPage() {
 
   const totalPages = Math.ceil(filteredAndSortedSubmissions.length / Number(rowsPerPage)) || 1;
   const paginatedSubmissions = filteredAndSortedSubmissions.slice((currentPage - 1) * Number(rowsPerPage), currentPage * Number(rowsPerPage));
+  console.log("Paginated Submissions", paginatedSubmissions)
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -196,10 +198,15 @@ export default function MySubmissionsPage() {
                   status={
                     sub.details.status === "PENDING" ? "Pending Review" :
                       sub.details.status === "ACCEPTED" ? "Approved" :
-                        sub.details.status === "REJECTED" ? "Rejected" : sub.details.status as any
+                        sub.details.status === "REJECTED" ? "Rejected" :
+                          sub.details.status === "COMPLETED" ? "Completed" : sub.details.status as any
                   }
+                  projectStatus={sub.details.projectStatus}
                   submittedAt={sub.details.date ? new Date(sub.details.date).toLocaleDateString() : ""}
                   lastUpdated={sub.details.updated ? formatDistanceToNow(new Date(sub.details.updated), { addSuffix: true }) : ""}
+                  ownerId={sub.details.ownerId}
+                  projectId={sub.details.source === 'PROJECT' ? sub.details.entityId : undefined}
+                  bountyId={sub.details.source === 'BOUNTY' ? sub.details.entityId : undefined}
                 />
               </div>
             ))}

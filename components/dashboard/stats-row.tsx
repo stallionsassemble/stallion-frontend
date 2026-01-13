@@ -60,7 +60,7 @@ export function StatsRow() {
           </div>
         </div>
         <div className="space-y-1">
-          <span className="text-2xl md:text-3xl font-bold text-foreground">{talentStats?.completedBounties || 0}</span>
+          <span className="text-2xl md:text-3xl font-bold text-foreground">{((talentStats?.completedBounties || 0) + (talentStats?.completedProjects || 0)).toString()}</span>
           <div className="flex items-center gap-1 text-[10px] md:text-xs text-muted-foreground">
             All time
           </div>
