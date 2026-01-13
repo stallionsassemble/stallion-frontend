@@ -1,3 +1,4 @@
+import { NotificationProvider } from "@/components/providers/notification-provider";
 import QueryProvider from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -62,19 +63,21 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider>
-            {/* GLOBAL GRID OVERLAY */}
-            <div
-              className="fixed inset-0 pointer-events-none z-0 opacity-20"
-              style={{
-                backgroundImage: "url('/grid-bg.png')",
-                backgroundRepeat: "repeat",
-                backgroundSize: "auto"
-              }}
-            />
-            <div className="relative z-10">
-              {children}
-            </div>
-            <Toaster />
+            <NotificationProvider>
+              {/* GLOBAL GRID OVERLAY */}
+              <div
+                className="fixed inset-0 pointer-events-none z-0 opacity-20"
+                style={{
+                  backgroundImage: "url('/grid-bg.png')",
+                  backgroundRepeat: "repeat",
+                  backgroundSize: "auto"
+                }}
+              />
+              <div className="relative z-10">
+                {children}
+              </div>
+              <Toaster />
+            </NotificationProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>
