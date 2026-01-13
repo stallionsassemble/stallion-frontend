@@ -192,7 +192,7 @@ export class ProjectService {
    * @returns
    */
   async reviewMilestone(id: string, payload: ReviewMilestonePayload) {
-    const response = await api.post<ProjectMilestone>(
+    const response = await api.patch<ProjectMilestone>(
       `/projects/milestones/${id}/review`,
       payload
     )
@@ -207,6 +207,13 @@ export class ProjectService {
   async getProjectActivity(id: string) {
     const response = await api.get<ProjectActivitiesResponse>(
       `/projects/${id}/activities`
+    )
+    return response.data
+  }
+
+  async getMyApplicationMilestone(applicationId: string) {
+    const response = await api.get<ProjectMilestones>(
+      `/projects/applications/${applicationId}/milestones`
     )
     return response.data
   }

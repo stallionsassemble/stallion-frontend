@@ -15,14 +15,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { useGetProject, useGetProjectApplications, useGetProjectMilestones, useReviewApplication, useReviewMilestone } from "@/lib/api/projects/queries";
+import { useGetApplicationMilestones, useGetProject, useGetProjectApplications, useGetProjectMilestones, useReviewApplication, useReviewMilestone } from "@/lib/api/projects/queries";
+import { useChatSocket } from "@/lib/hooks/use-chat-socket";
 import { ProjectMilestone } from "@/lib/types/project";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, BriefcaseBusiness, Calendar, Edit, FileText, Filter, Search, Share2, User, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function ProjectDetailsPage() {
@@ -36,7 +37,18 @@ export default function ProjectDetailsPage() {
   const { mutate: reviewApplication, isPending: isReviewing } = useReviewApplication();
   const { mutate: reviewMilestone, isPending: isReviewingMilestone } = useReviewMilestone();
 
+  /* 
+    If a talent is accepted, we fetch the *Application Milestones* which contain valid status/submission data.
+    Otherwise, we use the generic *Project Milestones* (definitions only).
+  */
   const acceptedTalent = projectApplications?.find((a: any) => a.status === "ACCEPTED");
+  console.log("Accepted Talent", acceptedTalent)
+  const { data: applicationMilestones, isLoading: applicationMilestonesLoading } = useGetApplicationMilestones(acceptedTalent?.id || "");
+  console.log("Accepted Milestones", applicationMilestones)
+
+  // Use application milestones if available (hired), otherwise fallback to generic project milestones
+  const displayMilestones = acceptedTalent ? applicationMilestones : projectMilestones;
+
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("milestones");
@@ -54,6 +66,7 @@ export default function ProjectDetailsPage() {
 
   // Message Modal State
   const [isSendMessageModalOpen, setIsSendMessageModalOpen] = useState(false);
+  const { sendMessage } = useChatSocket();
 
   const itemsPerPage = 5;
 
@@ -67,11 +80,16 @@ export default function ProjectDetailsPage() {
     setIsViewSubmissionModalOpen(true);
   };
 
-  const filteredApplications = projectApplications ? projectApplications.filter((app: any) => {
-    const matchesSearch =
-      (app.user.firstName + ' ' + app.user.lastName).toLowerCase().includes(searchQuery.toLowerCase());
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
 
-    const matchesStatus = statusFilter === "ALL" || app.status === statusFilter;
+  const filteredApplications = projectApplications ? projectApplications.filter((app: any) => {
+    const fullName = `${app.user?.firstName || ''} ${app.user?.lastName || ''}`.trim();
+    const matchesSearch = fullName.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = statusFilter === "ALL" || (app.status && app.status.toUpperCase() === statusFilter);
 
     return matchesSearch && matchesStatus;
   }) : [];
@@ -132,27 +150,27 @@ export default function ProjectDetailsPage() {
     });
   };
 
-  const handleSendRevision = (notes: string) => {
+  const handleSendRevision = async (notes: string) => {
     if (!selectedReviewMilestone) return;
 
-    reviewMilestone({
-      id: selectedReviewMilestone.id,
-      payload: {
-        approve: false,
-        reviewNote: "",
-        revisionNote: notes
+    // Send message via socket immediately
+    if (acceptedTalent?.user?.id) {
+      try {
+        await sendMessage({
+          recipientId: acceptedTalent.user.id,
+          content: `[Revision Requested] ${notes}`
+        });
+        toast.success("Revision request sent to talent");
+      } catch (err) {
+        console.error("Failed to send revision message via socket", err);
+        toast.error("Failed to send message to talent");
       }
-    }, {
-      onSuccess: () => {
-        toast.success("Revision requested successfully");
-        setIsRevisionModalOpen(false);
-        setIsReviewMilestoneModalOpen(false); // Close review modal too if open
-        setSelectedReviewMilestone(null);
-      },
-      onError: (err: any) => {
-        toast.error(err.response?.data?.message || "Failed to request revision");
-      }
-    });
+    }
+
+    // Close modals immediately - No API call
+    setIsRevisionModalOpen(false);
+    setIsReviewMilestoneModalOpen(false);
+    setSelectedReviewMilestone(null);
   };
 
 
@@ -343,21 +361,27 @@ export default function ProjectDetailsPage() {
               </div>
 
               <div className="space-y-4">
-                {activeTab === "milestones" && projectMilestones?.map((m: any, i) => (
-                  <ProjectMilestoneCard
-                    key={i}
-                    index={i + 1}
-                    title={m.title}
-                    description={m.description}
-                    amount={m.amount}
-                    currency={project.currency}
-                    dueDate={m.dueDate}
-                    status={m.status || 'Pending'}
-                    onViewSubmission={() => openMilestoneReview(m)}
-                    onApprove={() => openMilestoneReview(m)} // Approve opens review modal too, or direct?
-                    onRequestRevision={() => openRequestRevision(m)}
-                  />
-                ))}
+                {activeTab === "milestones" && displayMilestones?.map((m: any, i) => {
+                  // Normalize data structure: applicationMilestones have nested 'milestone' object, generic ones are flat
+                  const details = m.milestone || m;
+
+                  return (
+                    <ProjectMilestoneCard
+                      key={i}
+                      index={i + 1}
+                      title={details.title}
+                      description={details.description}
+                      amount={details.amount}
+                      currency={project.currency}
+                      dueDate={details.dueDate}
+                      status={m.status || 'Pending'} // Status is always at root if present
+                      onViewSubmission={() => openMilestoneReview(m)}
+                      onApprove={() => openMilestoneReview(m)}
+                      onRequestRevision={() => openRequestRevision(m)}
+                      hasHiredTalent={!!acceptedTalent}
+                    />
+                  );
+                })}
 
                 {activeTab === "applicants" && (
                   <div className="space-y-4">
@@ -369,6 +393,8 @@ export default function ProjectDetailsPage() {
                             user={app.user}
                             appliedAt={app.createdAt}
                             coverLetter={app.coverLetter}
+                            totalBounties={app.user.bountySubmissionsCount}
+                            totalProjects={app.user.projectApplicationsCount}
                             onHire={() => handleHireClick(app)}
                             onViewSubmission={() => handleViewSubmission(app)}
                             isHired={app.status === "ACCEPTED"}
@@ -425,7 +451,7 @@ export default function ProjectDetailsPage() {
           hiredTalent={{
             name: acceptedTalent?.user.firstName + ' ' + acceptedTalent?.user.lastName || '',
             role: acceptedTalent?.user.skills?.[0] || '',
-            avatar: acceptedTalent?.user.profilePicture || 'https://github.com/shadcn.png'
+            avatar: acceptedTalent?.user.profilePicture || 'https://github.com/shadcn.png',
           }}
           progress={progressPercentage}
           isHired={acceptedTalent ? true : false}

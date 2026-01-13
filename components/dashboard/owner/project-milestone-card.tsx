@@ -21,6 +21,7 @@ interface ProjectMilestoneCardProps {
   onViewSubmission?: () => void;
   onApprove?: () => void;
   onRequestRevision?: () => void;
+  hasHiredTalent?: boolean;
 }
 
 export function ProjectMilestoneCard({
@@ -35,17 +36,27 @@ export function ProjectMilestoneCard({
   status,
   onViewSubmission,
   onApprove,
-  onRequestRevision
+  onRequestRevision,
+  hasHiredTalent = false
 }: ProjectMilestoneCardProps) {
 
-  const statusColors = {
+  /* FAILSAFE: Normalize status to Title Case to handle API variations (SUBMITTED vs Submitted vs submitted) */
+  const normalizeStatus = (s: string) => {
+    if (!s) return "Pending";
+    const lower = s.toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+  };
+
+  const normalizedStatus = normalizeStatus(status as string);
+
+  const statusColors: Record<string, string> = {
     Paid: "bg-green-500/10 text-green-500 border-green-500/20",
     Submitted: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
     Pending: "bg-muted text-muted-foreground border-border"
   };
 
-  const isCurrent = status === "Submitted"; // Highlight current milestone
-  const isPaid = status === "Paid";
+  const isCurrent = normalizedStatus === "Submitted"; // Highlight current milestone
+  const isPaid = normalizedStatus === "Paid";
 
   return (
     <Card className={cn(
@@ -65,41 +76,41 @@ export function ProjectMilestoneCard({
             {index}
           </div>
 
-          <div className="flex-1 space-y-1">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-base font-bold text-foreground leading-none">{title}</h3>
-              <Badge variant="outline" className={cn("px-2 py-0.5 text-[10px] font-medium rounded-full uppercase tracking-wide", statusColors[status as MilestoneStatus] || statusColors.Pending)}>
+          <div className="flex-1 space-y-1 min-w-0">
+            <div className="flex items-center justify-between mb-1 gap-4">
+              <h3 className="text-base font-bold text-foreground leading-tight break-words">{title}</h3>
+              <Badge variant="outline" className={cn("px-2 py-0.5 text-[10px] font-medium rounded-full uppercase tracking-wide shrink-0", statusColors[normalizedStatus] || statusColors.Pending)}>
                 {isPaid && <Check className="w-3 h-3 mr-1" />}
-                {status}
+                {normalizedStatus}
               </Badge>
             </div>
 
-            <p className="text-sm text-foreground/70 mb-3">{description}</p>
+            <p className="text-sm text-foreground/70 mb-3 break-words whitespace-pre-wrap">{description}</p>
 
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                 <span className="font-semibold text-foreground">{amount} {currency}</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <Clock className="w-3.5 h-3.5" />
                 <span>Due: {dueDate || deadline}</span>
               </div>
               {paidDate && (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <Check className="w-3.5 h-3.5 text-green-500" />
                   <span className="text-green-500">Paid: {paidDate}</span>
                 </div>
               )}
             </div>
 
-            {/* Actions for Submitted Status */}
-            {status === "Submitted" && (
-              <div className="flex gap-2 mt-5">
+            {/* Actions visible if talent is hired AND milestone is not yet Paid (covers Pending & Submitted) */}
+            {normalizedStatus !== "Paid" && hasHiredTalent && ( // Check against normalizedStatus
+              <div className="flex gap-2 mt-5 flex-wrap">
                 <Button
                   size="sm"
                   onClick={onViewSubmission}
-                  className="h-8 bg-primary hover:bg-primary/90 text-primary-foreground"
+                  className="h-8 bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
                 >
                   <Eye className="w-3.5 h-3.5 mr-1.5" /> View Submissions
                 </Button>
@@ -107,7 +118,7 @@ export function ProjectMilestoneCard({
                   size="sm"
                   variant="outline"
                   onClick={onApprove}
-                  className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent"
+                  className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent shrink-0"
                 >
                   <Check className="w-3.5 h-3.5 mr-1.5" /> Approve
                 </Button>
@@ -115,7 +126,7 @@ export function ProjectMilestoneCard({
                   size="sm"
                   variant="outline"
                   onClick={onRequestRevision}
-                  className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent"
+                  className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent shrink-0"
                 >
                   <RefreshCcw className="w-3.5 h-3.5 mr-1.5" /> Request Revision
                 </Button>

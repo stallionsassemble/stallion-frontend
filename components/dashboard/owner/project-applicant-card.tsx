@@ -15,6 +15,8 @@ interface ProjectApplicantCardProps {
   onHire: () => void;
   onViewSubmission?: () => void;
   isHired?: boolean;
+  totalBounties: number;
+  totalProjects: number
 }
 
 export function ProjectApplicantCard({
@@ -23,7 +25,9 @@ export function ProjectApplicantCard({
   coverLetter,
   onHire,
   onViewSubmission,
-  isHired
+  isHired,
+  totalBounties,
+  totalProjects
 }: ProjectApplicantCardProps) {
 
   return (
@@ -58,11 +62,11 @@ export function ProjectApplicantCard({
           <div className="flex items-center gap-6 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Gift className="w-3.5 h-3.5 text-blue-500" />
-              <span>{user.totalSubmissions || 0} Projects</span>
+              <span>{totalProjects || 0} Projects</span>
             </div>
             <div className="flex items-center gap-1.5">
               <LayoutGrid className="w-3.5 h-3.5 text-blue-500" />
-              <span>{user.totalWon || 0} Bounties</span>
+              <span>{totalBounties || 0} Bounties</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-blue-500" />

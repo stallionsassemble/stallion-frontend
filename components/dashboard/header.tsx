@@ -1,5 +1,8 @@
 "use client";
 
+import { SearchPalette } from "@/components/dashboard/search-palette";
+import * as React from "react";
+
 import { MobileSidebar } from "@/components/dashboard/sidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -103,6 +106,19 @@ export function Header() {
   // Filter for top 5 recent notifications for the dropdown
   const recentNotifications = notifications.slice(0, 5);
 
+  const [open, setOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setOpen((open) => !open)
+      }
+    }
+    document.addEventListener("keydown", down)
+    return () => document.removeEventListener("keydown", down)
+  }, [])
+
   return (
     <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-border bg-background/80 backdrop-blur-md px-4 md:px-8">
       {/* Left: Sidebar Toggle + Title */}
@@ -132,7 +148,12 @@ export function Header() {
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
         {/* Search Button */}
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground border border-white/20 rounded-[8px] w-9 h-9">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground hover:text-foreground border border-white/20 rounded-[8px] w-9 h-9"
+          onClick={() => setOpen(true)}
+        >
           <Search className="h-4 w-4" />
         </Button>
 
@@ -210,7 +231,7 @@ export function Header() {
             <div className="flex items-center gap-3 cursor-pointer group">
               <div className="h-9 w-9 overflow-hidden rounded-full border border-border transition-colors group-hover:border-primary/50">
                 <Image
-                  src={user?.profilePicture || `https://avatar.vercel.sh/${user?.firstName}`}
+                  src={user?.companyLogo || user?.profilePicture || `https://avatar.vercel.sh/${user?.firstName}`}
                   width={36}
                   height={36}
                   alt={user?.firstName || "User"}
@@ -218,7 +239,7 @@ export function Header() {
                 />
               </div>
               <span className="hidden md:flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                {user?.firstName}
+                {user?.companyName || user?.firstName}
                 <ChevronDown className="h-4 w-4" />
               </span>
             </div>
@@ -254,6 +275,8 @@ export function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <SearchPalette open={open} onOpenChange={setOpen} />
     </header>
   );
 }

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { X } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 import { useState } from "react";
 
 interface RequestRevisionModalProps {
@@ -47,12 +47,6 @@ export function RequestRevisionModal({
                 Request revision for {applicant.firstName} {applicant.lastName}&apos;s submission.
               </p>
             </div>
-            <button
-              onClick={() => onOpenChange(false)}
-              className="p-2 rounded-full hover:bg-white/5 text-muted-foreground hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
         </div>
 
@@ -65,9 +59,9 @@ export function RequestRevisionModal({
             </Avatar>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Badge className="bg-orange-500/90 hover:bg-orange-500 text-white border-0 text-[10px] px-2 py-0.5 rounded-full">
+                {/* <Badge className="bg-orange-500/90 hover:bg-orange-500 text-white border-0 text-[10px] px-2 py-0.5 rounded-full">
                   Fair Payer
-                </Badge>
+                </Badge> */}
               </div>
               <h3 className="text-lg font-bold text-white leading-none">
                 {applicant.firstName} {applicant.lastName}
@@ -96,7 +90,7 @@ export function RequestRevisionModal({
             disabled={isProcessing || !message.trim()}
             className="w-[200px] h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg"
           >
-            <span className="mr-2">💬</span> Send Revision
+            <MessageCircle className="mr-2" /> Send Revision
           </Button>
         </div>
 

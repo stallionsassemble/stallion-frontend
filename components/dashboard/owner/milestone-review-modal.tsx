@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ProjectMilestone } from "@/lib/types/project";
-import { ExternalLink, Star, X } from "lucide-react";
+import { CircleCheck, ExternalLink, MessageCircle, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -54,12 +54,6 @@ export function MilestoneReviewModal({
               </DialogTitle>
               <p className="text-sm text-muted-foreground mt-1">Review the submitted work for this milestone</p>
             </div>
-            <button
-              onClick={() => onOpenChange(false)}
-              className="p-2 rounded-full hover:bg-white/5 text-muted-foreground hover:text-white transition-colors absolute top-4 right-4"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
 
           <div className="flex items-center gap-4 mt-6">
@@ -69,9 +63,9 @@ export function MilestoneReviewModal({
             </Avatar>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Badge className="bg-orange-500/90 hover:bg-orange-500 text-white border-0 text-[10px] px-2 py-0.5 rounded-full">
+                {/* <Badge className="bg-orange-500/90 hover:bg-orange-500 text-white border-0 text-[10px] px-2 py-0.5 rounded-full">
                   Fair Payer
-                </Badge>
+                </Badge> */}
               </div>
               <h3 className="text-lg font-bold text-white leading-none">
                 {applicant.firstName} {applicant.lastName}
@@ -128,12 +122,12 @@ export function MilestoneReviewModal({
           </div>
 
           {/* Rating Placeholder (Visual Only as per image) */}
-          <div className="flex justify-center py-2">
+          {/* <div className="flex justify-center py-2">
             <div className="flex gap-1">
               {[1, 2, 3, 4].map(i => <Star key={i} className="w-6 h-6 text-blue-500 fill-blue-500" />)}
               <Star className="w-6 h-6 text-blue-500" />
             </div>
-          </div>
+          </div> */}
 
         </div>
 
@@ -145,14 +139,15 @@ export function MilestoneReviewModal({
             disabled={isProcessing}
             className="flex-1 h-12 bg-transparent border-white/20 text-white hover:bg-white/5 hover:text-white"
           >
-            <span className="mr-2">💬</span> Send Revision
+            <MessageCircle className="mr-2" /> Send Revision
           </Button>
           <Button
             onClick={() => onApprove(feedback)}
             disabled={isProcessing}
             className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
           >
-            <span className="mr-2">✓</span> Approve
+            <CircleCheck className="mr-2" />
+            Approve
           </Button>
         </div>
 

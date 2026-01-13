@@ -56,6 +56,15 @@ export function useGetProjectMilestones(id: string) {
   })
 }
 
+// For fetching milestones associated with a specific application (Used by Owner to see Talkent's progress)
+export function useGetApplicationMilestones(applicationId: string) {
+  return useQuery({
+    queryKey: ['projects', 'applications', applicationId, 'milestones'],
+    queryFn: () => projectService.getMyApplicationMilestone(applicationId),
+    enabled: !!applicationId,
+  })
+}
+
 export function useGetMyMilestones(projectId: string) {
   return useQuery({
     queryKey: ['projects', projectId, 'milestones', 'my'],

@@ -24,6 +24,8 @@ export function ProjectDetailsSidebar(
       name: string;
       role: string;
       avatar: string;
+      rating?: string | number;
+      reviews?: number;
     };
     progress: number;
     paidAmount: string;
