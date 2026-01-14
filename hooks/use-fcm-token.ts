@@ -21,9 +21,10 @@ export const useFcmToken = () => {
       try {
         if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
           // Register the Service Worker
-          const registration = await navigator.serviceWorker.register(
-            '/firebase-messaging-sw.js'
-          )
+          await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+
+          // Wait for it to be ready
+          const registration = await navigator.serviceWorker.ready
 
           // Send config to SW
           if (registration.active) {
@@ -49,13 +50,18 @@ export const useFcmToken = () => {
             const currentToken = await fetchToken()
             if (currentToken) {
               setToken(currentToken)
+              console.log('[FCM] Token generated:', currentToken)
               // Register token with backend
               await notificationService.registerFcmToken({
                 token: currentToken,
-                deviceId: navigator.userAgent, // Or a better unique ID if available
+                deviceId: navigator.userAgent,
                 platform: 'web',
               })
+            } else {
+              console.log('[FCM] No token retrieved.')
             }
+          } else {
+            console.log('[FCM] Permission not granted.')
           }
         }
       } catch (error) {
