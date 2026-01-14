@@ -97,6 +97,9 @@ export function OwnerActiveWorks() {
 
   const filteredAndSortedWorks = activeWorksList
     .filter((work) => {
+      // Filter out non-active works
+      if (["Completed", "Closed", "Cancelled"].includes(work.status)) return false;
+
       // Type Filter
       if (filterType !== "All" && work.type !== filterType) return false;
 
