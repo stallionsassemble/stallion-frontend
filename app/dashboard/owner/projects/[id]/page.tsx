@@ -494,6 +494,7 @@ export default function ProjectDetailsPage() {
         onApprove={handleApproveMilestone}
         onRequestRevision={handleSendRevision} // Using same revision handler but via review modal's button/textarea
         isProcessing={isReviewingMilestone}
+        isReadOnly={selectedReviewMilestone?.status === "APPROVED" || selectedReviewMilestone?.status === "PAID"}
       />
 
       <RequestRevisionModal

@@ -1,15 +1,16 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ProjectMilestone } from "@/lib/types/project";
-import { CircleCheck, ExternalLink, MessageCircle, Star, X } from "lucide-react";
+import { CircleCheck, ExternalLink, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 interface MilestoneReviewModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ interface MilestoneReviewModalProps {
   onApprove: (reviewNote: string) => void;
   onRequestRevision: (reviewNote: string) => void;
   isProcessing?: boolean;
+  isReadOnly?: boolean;
 }
 
 export function MilestoneReviewModal({
@@ -32,9 +34,16 @@ export function MilestoneReviewModal({
   applicant,
   onApprove,
   onRequestRevision,
-  isProcessing = false
+  isProcessing = false,
+  isReadOnly = false
 }: MilestoneReviewModalProps) {
   const [feedback, setFeedback] = useState("");
+
+  useEffect(() => {
+    if (open && milestone) {
+      setFeedback(milestone.reviewNote || "");
+    }
+  }, [open, milestone]);
 
   if (!milestone || !applicant) return null;
 
@@ -113,8 +122,12 @@ export function MilestoneReviewModal({
             <Textarea
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Enter your feedback or audit findings here..."
-              className="min-h-[120px] bg-white/5 border-white/10 text-white placeholder:text-muted-foreground resize-none focus-visible:ring-primary/50"
+              placeholder={isReadOnly ? "No feedback provided." : "Enter your feedback or audit findings here..."}
+              disabled={isReadOnly}
+              className={cn(
+                "min-h-[120px] bg-white/5 border-white/10 text-white placeholder:text-muted-foreground resize-none focus-visible:ring-primary/50",
+                isReadOnly && "opacity-50 cursor-not-allowed"
+              )}
             />
           </div>
 
@@ -142,24 +155,26 @@ export function MilestoneReviewModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-6 pt-4 border-t border-white/10 bg-[#0A0A0B] flex gap-4">
-          <Button
-            variant="outline"
-            onClick={() => onRequestRevision(feedback)}
-            disabled={isProcessing}
-            className="flex-1 h-12 bg-transparent border-white/20 text-white hover:bg-white/5 hover:text-white"
-          >
-            <MessageCircle className="mr-2" /> Send Revision
-          </Button>
-          <Button
-            onClick={() => onApprove(feedback)}
-            disabled={isProcessing}
-            className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
-          >
-            <CircleCheck className="mr-2" />
-            Approve
-          </Button>
-        </div>
+        {!isReadOnly && (
+          <div className="p-6 pt-4 border-t border-white/10 bg-[#0A0A0B] flex gap-4">
+            <Button
+              variant="outline"
+              onClick={() => onRequestRevision(feedback)}
+              disabled={isProcessing}
+              className="flex-1 h-12 bg-transparent border-white/20 text-white hover:bg-white/5 hover:text-white"
+            >
+              <MessageCircle className="mr-2" /> Send Revision
+            </Button>
+            <Button
+              onClick={() => onApprove(feedback)}
+              disabled={isProcessing}
+              className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+            >
+              <CircleCheck className="mr-2" />
+              Approve
+            </Button>
+          </div>
+        )}
 
       </DialogContent>
     </Dialog>

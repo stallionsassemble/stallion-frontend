@@ -106,8 +106,8 @@ export function ProjectMilestoneCard({
               )}
             </div>
 
-            {/* Actions visible if talent is hired AND milestone is not yet Paid (covers Pending & Submitted) */}
-            {normalizedStatus !== "Paid" && hasHiredTalent && ( // Check against normalizedStatus
+            {/* Actions visible if talent is hired. View is always visible, but Approve/Review are hidden if Paid/Approved */}
+            {hasHiredTalent && (
               <div className="flex gap-2 mt-5 flex-wrap">
                 <Button
                   size="sm"
@@ -116,22 +116,27 @@ export function ProjectMilestoneCard({
                 >
                   <Eye className="w-3.5 h-3.5 mr-1.5" /> View Submissions
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={onApprove}
-                  className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent shrink-0"
-                >
-                  <Check className="w-3.5 h-3.5 mr-1.5" /> Approve
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={onRequestRevision}
-                  className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent shrink-0"
-                >
-                  <RefreshCcw className="w-3.5 h-3.5 mr-1.5" /> Request Revision
-                </Button>
+
+                {normalizedStatus !== "Paid" && normalizedStatus !== "Approved" && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onApprove}
+                      className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent shrink-0"
+                    >
+                      <Check className="w-3.5 h-3.5 mr-1.5" /> Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onRequestRevision}
+                      className="h-8 text-foreground hover:bg-accent hover:text-accent-foreground border-border bg-transparent shrink-0"
+                    >
+                      <RefreshCcw className="w-3.5 h-3.5 mr-1.5" /> Request Revision
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </div>
