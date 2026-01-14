@@ -18,6 +18,7 @@ interface SubmissionItemProps {
   winnerAmount?: number;
   currency?: string;
   onRemoveWinner?: () => void;
+  isCompleted?: boolean;
 }
 
 const POSITION_LABELS: Record<number, { medal: string; label: string }> = {
@@ -38,6 +39,7 @@ export function SubmissionItem({
   winnerAmount,
   currency = "USDC",
   onRemoveWinner,
+  isCompleted = false,
 }: SubmissionItemProps) {
 
   const isApiWinner = status === "Winner" || status === "WINNER" || status.includes("Runner-up");
@@ -108,8 +110,8 @@ export function SubmissionItem({
 
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-2 w-full">
-              {/* Show "Remove from Winners" for staged winners */}
-              {isStagedWinner && onRemoveWinner ? (
+              {/* Show "Remove from Winners" for staged winners - ONLY if not completed (bounties in completed state shouldn't have staged winners usually, but good safeguard) */}
+              {isStagedWinner && onRemoveWinner && !isCompleted ? (
                 <>
                   <Button
                     variant="default"
@@ -130,7 +132,7 @@ export function SubmissionItem({
                 </>
               ) : (
                 <>
-                  {!isWinner && (
+                  {!isWinner && !isCompleted && (
                     <Button
                       variant="stallion-outline"
                       size="sm"
@@ -150,7 +152,7 @@ export function SubmissionItem({
                     <Eye className="h-3 w-3 mr-2" /> View Submissions
                   </Button>
 
-                  {!isWinner && (
+                  {!isWinner && !isCompleted && (
                     <Button
                       variant="secondary"
                       size="sm"

@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetBounty, useGetSubmissions } from "@/lib/api/bounties/queries";
+import { useGetBounty, useGetBountyWinners, useGetSubmissions } from "@/lib/api/bounties/queries";
 import { useBountyWinners, Winner } from "@/lib/hooks/use-bounty-winners";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -34,9 +34,10 @@ export default function BountyDetailsPage() {
 
   const { data: bounty, isLoading: isLoadingBounty } = useGetBounty(params.id);
   const { data: submissions = [], isLoading: isLoadingSubmissions } = useGetSubmissions(params.id);
+  const { data: apiWinnersData } = useGetBountyWinners(params.id);
 
   // Winner management hook
-  const { winners, addWinner, removeWinner, clearWinners } = useBountyWinners(params.id);
+  const { winners: localWinners, addWinner, removeWinner, clearWinners } = useBountyWinners(params.id);
 
   if (isLoadingBounty) {
     return <div className="p-10 text-white">Loading Bounty...</div>;
@@ -46,23 +47,45 @@ export default function BountyDetailsPage() {
     return <div className="p-10 text-white">Bounty not found</div>;
   }
 
+  const isCompleted = bounty.status === 'COMPLETED' || bounty.status === 'CLOSED';
+
+  // Determine which winners list to use
+  let displayWinners: Winner[] = localWinners;
+
+  if (isCompleted && apiWinnersData?.winners) {
+    displayWinners = apiWinnersData.winners.map((w: any) => ({
+      submissionId: w.submissionId || "", // API winner DTO might need update if ID missing, but mapped usually by userId
+      userId: w.userId,
+      name: w.firstName ? `${w.firstName} ${w.lastName}` : w.username,
+      avatar: w.profilePicture,
+      position: w.position,
+      amount: w.amountWon,
+      currency: w.currency
+    }));
+  }
+
   // Get distribution data
   const distList = bounty.distribution || bounty.rewardDistribution || [];
   const totalReward = Number(bounty.reward || 0);
   const requiredPositions = distList.length;
-  const takenPositions = winners.map((w) => w.position);
-  const allPositionsFilled = winners.length >= requiredPositions && requiredPositions > 0;
+  const takenPositions = displayWinners.map((w) => w.position);
+  const allPositionsFilled = displayWinners.length >= requiredPositions && requiredPositions > 0;
 
-  // Get user IDs of staged winners
-  const stagedWinnerUserIds = new Set(winners.map((w) => w.userId));
+  // Get user IDs of staged/confirmed winners
+  const winnerUserIds = new Set(displayWinners.map((w) => w.userId));
 
   const filteredSubmissions = submissions.filter((sub: any) => {
     if (activeTab === "all") return true;
-    if (activeTab === "review") return sub.status === "PENDING" || sub.status === "UNDER_REVIEW";
+    if (activeTab === "review") {
+      // Exclude staged winners from review tab
+      const isPending = sub.status === "PENDING" || sub.status === "UNDER_REVIEW";
+      const isStaged = sub.user?.id && winnerUserIds.has(sub.user.id);
+      return isPending && !isStaged;
+    }
     if (activeTab === "winners") {
       // Include API-confirmed winners OR localStorage-staged winners
       const isApiWinner = sub.status === "ACCEPTED" || sub.status === "WINNER";
-      const isStagedWinner = sub.user?.id && stagedWinnerUserIds.has(sub.user.id);
+      const isStagedWinner = sub.user?.id && winnerUserIds.has(sub.user.id);
       return isApiWinner || isStagedWinner;
     }
     if (activeTab === "rejected") return sub.status === "REJECTED";
@@ -72,12 +95,17 @@ export default function BountyDetailsPage() {
   // Count staged winners for tab label
   const totalWinnersCount = submissions.filter((s: any) =>
     (s.status === "ACCEPTED" || s.status === "WINNER") ||
-    (s.user?.id && stagedWinnerUserIds.has(s.user.id))
+    (s.user?.id && winnerUserIds.has(s.user.id))
+  ).length;
+
+  const inReviewCount = submissions.filter((s: any) =>
+    (s.status === "PENDING" || s.status === "UNDER_REVIEW") &&
+    !(s.user?.id && winnerUserIds.has(s.user.id))
   ).length;
 
   const tabs = [
     { id: "all", label: `All Submission (${submissions.length})` },
-    { id: "review", label: `In Review (${submissions.filter((s: any) => s.status === "PENDING" || s.status === "UNDER_REVIEW").length})` },
+    { id: "review", label: `In Review (${inReviewCount})` },
     { id: "winners", label: `Winners (${totalWinnersCount})` },
   ];
 
@@ -112,6 +140,7 @@ export default function BountyDetailsPage() {
         onWinnerSelected={handleWinnerSelected}
         takenPositions={takenPositions}
         initialView={initialModalView}
+        isCompleted={isCompleted}
       />
 
       <ConfirmWinnersModal
@@ -120,7 +149,7 @@ export default function BountyDetailsPage() {
         bountyId={params.id}
         bountyTitle={bounty.title}
         currency={bounty.rewardCurrency}
-        winners={winners}
+        winners={localWinners}
         onConfirmed={handleWinnersConfirmed}
       />
 
@@ -310,7 +339,7 @@ export default function BountyDetailsPage() {
               {filteredSubmissions.length > 0 ? (
                 filteredSubmissions.map((submission: any) => {
                   // Check if this submission's user is a staged winner
-                  const stagedWinner = winners.find((w) => w.userId === submission.user?.id);
+                  const stagedWinner = displayWinners.find((w) => w.userId === submission.user?.id);
 
                   return (
                     <SubmissionItem
@@ -329,6 +358,7 @@ export default function BountyDetailsPage() {
                       winnerAmount={stagedWinner?.amount}
                       currency={bounty.rewardCurrency}
                       onRemoveWinner={stagedWinner ? () => removeWinner(stagedWinner.position) : undefined}
+                      isCompleted={isCompleted}
                     />
                   );
                 })
@@ -366,7 +396,7 @@ export default function BountyDetailsPage() {
                   const percentage = Array.isArray(dist.percentage) ? dist.percentage[1] : dist.percentage;
                   const amount = (percentage / 100) * totalReward;
                   const currencySymbol = bounty.rewardCurrency === 'XLM' ? '' : '$';
-                  const winner = winners.find((w) => w.position === idx + 1);
+                  const winner = displayWinners.find((w) => w.position === idx + 1);
 
                   return (
                     <div key={idx} className={cn(
@@ -394,7 +424,7 @@ export default function BountyDetailsPage() {
                 })}
 
                 {/* Confirm Winners Button */}
-                {allPositionsFilled && (
+                {allPositionsFilled && !isCompleted && (
                   <Button
                     variant="stallion"
                     className="w-full h-12 mt-4 font-bold flex items-center justify-center gap-2"

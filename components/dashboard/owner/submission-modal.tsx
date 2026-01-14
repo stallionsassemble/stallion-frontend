@@ -38,6 +38,7 @@ interface SubmissionModalProps {
   }) => void;
   takenPositions?: number[];
   initialView?: ModalView;
+  isCompleted?: boolean;
 }
 
 export function SubmissionModal({
@@ -50,7 +51,8 @@ export function SubmissionModal({
   currency = "USDC",
   onWinnerSelected,
   takenPositions = [],
-  initialView = 'details'
+  initialView = 'details',
+  isCompleted = false
 }: SubmissionModalProps) {
   const [modalView, setModalView] = useState<ModalView>(initialView);
 
@@ -418,31 +420,33 @@ export function SubmissionModal({
       </div>
 
       {/* Footer Actions */}
-      <div className="p-3 border-t border-white/10 bg-background grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Button
-          variant="stallion-outline"
-          className="h-12 p-2 border-primary hover:bg-background/60 w-full rounded-lg font-medium flex items-center justify-center gap-2"
-        >
-          <Check className="h-4 w-4 shrink-0" />
-          <span>Mark under review</span>
-        </Button>
-        <Button
-          variant="stallion"
-          className="h-12 w-full rounded-lg font-bold flex items-center justify-center gap-2 px-4"
-          onClick={() => setModalView('selectWinner')}
-        >
-          <Trophy className="h-4 w-4 shrink-0" />
-          <span>Confirm Winner</span>
-        </Button>
-        <Button
-          variant="stallion-outline"
-          className="h-12 border-primary hover:bg-background/60 w-full rounded-lg font-normal flex items-center justify-center gap-2 px-4"
-          onClick={() => setModalView('requestRevision')}
-        >
-          <MessageSquare className="h-4 w-4 shrink-0" />
-          <span>Request Revision</span>
-        </Button>
-      </div>
+      {!isCompleted && (
+        <div className="p-3 border-t border-white/10 bg-background grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Button
+            variant="stallion-outline"
+            className="h-12 p-2 border-primary hover:bg-background/60 w-full rounded-lg font-medium flex items-center justify-center gap-2"
+          >
+            <Check className="h-4 w-4 shrink-0" />
+            <span>Mark under review</span>
+          </Button>
+          <Button
+            variant="stallion"
+            className="h-12 w-full rounded-lg font-bold flex items-center justify-center gap-2 px-4"
+            onClick={() => setModalView('selectWinner')}
+          >
+            <Trophy className="h-4 w-4 shrink-0" />
+            <span>Confirm Winner</span>
+          </Button>
+          <Button
+            variant="stallion-outline"
+            className="h-12 border-primary hover:bg-background/60 w-full rounded-lg font-normal flex items-center justify-center gap-2 px-4"
+            onClick={() => setModalView('requestRevision')}
+          >
+            <MessageSquare className="h-4 w-4 shrink-0" />
+            <span>Request Revision</span>
+          </Button>
+        </div>
+      )}
     </>
   );
 
