@@ -76,10 +76,10 @@ export function ProjectsClient() {
       switch (sortBy) {
         case "oldest":
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        case "reward-high":
+        case "reward_desc":
           return (parseFloat(b.reward) || 0) - (parseFloat(a.reward) || 0)
-        case "reward-low":
-          return (parseFloat(a.reward) || 0) - (parseFloat(b.reward) || 0)
+        // case "reward-low": // PageFilters doesn't emit this yet, but keeping or removing fine.
+        //   return (parseFloat(a.reward) || 0) - (parseFloat(b.reward) || 0)
         case "newest":
         default:
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

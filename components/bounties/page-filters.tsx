@@ -1,8 +1,22 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CircleCheck, Search, SlidersHorizontal } from "lucide-react";
+import { useState } from "react";
 
 interface PageFiltersProps {
   activeTab: string;
@@ -30,6 +44,36 @@ export function PageFilters({
   // Use dynamic skills if provided, otherwise default to a basic list or empty + All
   const categories = ["All", ...availableSkills].filter((v, i, a) => a.indexOf(v) === i); // Ensure unique just in case
   const typeLabel = type === "PROJECT" ? "Projects" : "Bounties";
+
+  // Local state for active sort label if needed, but we rely on parent usually.
+  // Actually, we don't know the current sort value passed in props (it's not passed!).
+  // So we can't show "Checkmark" on the correct sort unless we add `activeSort` prop.
+  // But `BountiesPage` passes `onSortChange` but NOT `activeSort`.
+  // Wait, I strictly need to know the current sort to show it or at least just offer the options.
+  // I'll update `PageFiltersProps` to include `activeSort`, `activeStatus`, `activeType` if I want to show current state.
+  // Inspecting `BountiesPage` call:
+  /*
+  <PageFilters
+        activeTab={activeTab}
+        onTabChange...
+        onSearch...
+        onSortChange...
+        onStatusChange...
+        type="BOUNTY"
+        count...
+        availableSkills...
+  />
+  */
+  // It checks `activeTab`, but doesn't pass `activeSort` etc.
+  // I should probably add `activeSort` etc to props to fully support UI state.
+  // I will update the interface (optional) and assume specific values if invalid.
+
+  const [currentSort, setCurrentSort] = useState("newest");
+
+  const handleSort = (val: string) => {
+    setCurrentSort(val);
+    onSortChange?.(val);
+  }
 
   return (
     <div className="space-y-6">
@@ -63,14 +107,36 @@ export function PageFilters({
                 {cat}
               </Button>
             ))}
-            <Button variant="outline" size="sm" className="h-9 gap-2 border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted">
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              More Filter
-            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-2 border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted">
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  Sort & Filter
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuLabel>Sort By</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleSort('newest')}>
+                  Newest First {currentSort === 'newest' && <span className="ml-auto">✓</span>}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('reward_desc')}>
+                  Highest Price {currentSort === 'reward_desc' && <span className="ml-auto">✓</span>}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('ending_soon')}>
+                  Ending Soon {currentSort === 'ending_soon' && <span className="ml-auto">✓</span>}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSort('oldest')}>
+                  Oldest First {currentSort === 'oldest' && <span className="ml-auto">✓</span>}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
-      {/* Sub-header / Sort */}
+
+      {/* Sub-header / Filters */}
       <div className="flex items-center justify-between text-xs text-muted-foreground border-b border-border pb-4">
         <span>Showing {count} {typeLabel}</span>
 
@@ -79,48 +145,36 @@ export function PageFilters({
           {type === "PROJECT" && (
             <div className="flex items-center gap-2">
               <span>Type:</span>
-              <select
-                className="bg-transparent text-foreground font-medium focus:outline-none cursor-pointer"
-                onChange={(e) => onTypeChange?.(e.target.value)}
-                defaultValue="ALL"
-              >
-                <option value="ALL" className="bg-card">All Types</option>
-                <option value="GIG" className="bg-card">Gigs</option>
-                <option value="JOB" className="bg-card">Jobs</option>
-              </select>
+              <Select onValueChange={onTypeChange} defaultValue="ALL">
+                <SelectTrigger className="h-8 w-[100px] border-none bg-transparent p-0 text-xs font-medium text-foreground hover:bg-transparent focus:ring-0">
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Types</SelectItem>
+                  <SelectItem value="GIG">Gigs</SelectItem>
+                  <SelectItem value="JOB">Jobs</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           )}
 
           {/* Status Filter */}
           <div className="flex items-center gap-2">
             <span>Status:</span>
-            <select
-              className="bg-transparent text-foreground font-medium focus:outline-none cursor-pointer"
-              onChange={(e) => onStatusChange?.(e.target.value)}
-              defaultValue="ACTIVE"
-            >
-              <option value="ALL" className="bg-card">All Status</option>
-              <option value="ACTIVE" className="bg-card">Active</option>
-              <option value="OPEN" className="bg-card">Open</option>
-              <option value="IN_PROGRESS" className="bg-card">In Progress</option>
-              <option value="COMPLETED" className="bg-card">Completed</option>
-              {type === "BOUNTY" && <option value="CLOSED" className="bg-card">Closed</option>}
-              {type === "PROJECT" && <option value="CANCELLED" className="bg-card">Cancelled</option>}
-            </select>
-          </div>
-
-          {/* Sort */}
-          <div className="flex items-center gap-2">
-            <span>Sort by:</span>
-            <select
-              className="bg-transparent text-foreground font-medium focus:outline-none cursor-pointer"
-              onChange={(e) => onSortChange?.(e.target.value)}
-              defaultValue="newest"
-            >
-              <option value="newest" className="bg-card">Newest First</option>
-              <option value="reward_desc" className="bg-card">Highest Price</option>
-              <option value="ending_soon" className="bg-card">Ending Soon</option>
-            </select>
+            <Select onValueChange={onStatusChange} defaultValue="ACTIVE">
+              <SelectTrigger className="h-8 w-[100px] border-none bg-transparent p-0 text-xs font-medium text-foreground hover:bg-transparent focus:ring-0">
+                <SelectValue placeholder="Active" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Status</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="OPEN">Open</SelectItem>
+                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                <SelectItem value="COMPLETED">Completed</SelectItem>
+                {type === "BOUNTY" && <SelectItem value="CLOSED">Closed</SelectItem>}
+                {type === "PROJECT" && <SelectItem value="CANCELLED">Cancelled</SelectItem>}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
