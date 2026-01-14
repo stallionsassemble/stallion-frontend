@@ -27,7 +27,16 @@ import { toast } from 'sonner'
 export function LoginClient() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
-  const { login, passkeyAuthOptions, passkeyAuthVerify, setUser } = useAuth()
+  const { login, passkeyAuthOptions, passkeyAuthVerify, setUser, user } = useAuth()
+
+  // Redirect if already logged in
+  if (user) {
+    if (user.role === 'PROJECT_OWNER' || user.role === 'OWNER') {
+      router.push("/dashboard/owner")
+    } else {
+      router.push("/dashboard")
+    }
+  }
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),

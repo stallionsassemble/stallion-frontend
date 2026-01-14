@@ -12,6 +12,7 @@ interface ForumSidebarProps {
   categoryId?: string;
   currentThreadId?: string;
   author?: {
+    id?: string;
     username: string;
     firstName: string;
     lastName: string;
@@ -29,6 +30,7 @@ export function ForumSidebar({ categoryId, currentThreadId, author }: ForumSideb
 
   // Use passed author if available (for thread view), otherwise fallback to current user (for list view)
   const displayUser = author || currentUser;
+  const profileLink = displayUser?.id ? `/dashboard/profile/${displayUser.id}` : '#';
 
   // Fetch related threads if categoryId is provided, otherwise fetch recent threads (empty search)
   // Use useGetThreads instead of search
@@ -48,30 +50,32 @@ export function ForumSidebar({ categoryId, currentThreadId, author }: ForumSideb
       {displayUser && (
         <Card className="bg-card border-primary/50 py-[12.85px] border-[0.68px] px-[19.77px] rounded-[10px] w-full h-[177.81px] flex flex-col justify-between shadow-sm">
           <div className="flex flex-col items-start space-y-2">
-            <div className="h-[52px] w-[52px] rounded-full overflow-hidden border-2 border-primary/20 bg-primary/20">
-              <Image
-                src={displayUser.profilePicture || `https://avatar.vercel.sh/${displayUser.username || 'user'}`}
-                width={52}
-                height={52}
-                alt={displayUser.username || "User"}
-                className="object-cover"
-              />
-            </div>
-            <div className="space-y-0.5">
-              <h3 className="text-[16px] font-bold text-foreground leading-tight">
-                {displayUser.firstName} {displayUser.lastName}
-              </h3>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-muted-foreground">@{displayUser.username}</span>
-                {/* Only show Admin badge if we have role info (usually only available for current user or if added to author type) */}
-                {(displayUser as any).role === 'OWNER' && (
-                  <Badge variant="outline" className="text-[6px] h-4 px-2 bg-orange-700/30 text-foreground border-none flex items-center gap-1 rounded-full capitalize">
-                    <Users className="h-2.5 w-2.5" />
-                    Admin
-                  </Badge>
-                )}
+            <Link href={profileLink} className="group/profile flex flex-col items-start space-y-2 w-full hover:opacity-90 transition-opacity">
+              <div className="h-[52px] w-[52px] rounded-full overflow-hidden border-2 border-primary/20 bg-primary/20 group-hover/profile:border-primary transition-colors">
+                <Image
+                  src={displayUser.profilePicture || `https://avatar.vercel.sh/${displayUser.username || 'user'}`}
+                  width={52}
+                  height={52}
+                  alt={displayUser.username || "User"}
+                  className="object-cover"
+                />
               </div>
-            </div>
+              <div className="space-y-0.5">
+                <h3 className="text-[16px] font-bold text-foreground leading-tight group-hover/profile:text-primary transition-colors">
+                  {displayUser.firstName} {displayUser.lastName}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted-foreground">@{displayUser.username}</span>
+                  {/* Only show Admin badge if we have role info (usually only available for current user or if added to author type) */}
+                  {(displayUser as any).role === 'OWNER' && (
+                    <Badge variant="outline" className="text-[6px] h-4 px-2 bg-orange-700/30 text-foreground border-none flex items-center gap-1 rounded-full capitalize">
+                      <Users className="h-2.5 w-2.5" />
+                      Admin
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </Link>
           </div>
 
           <div className="grid grid-cols-3 gap-2 -mt-[15px]">

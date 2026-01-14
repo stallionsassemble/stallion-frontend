@@ -8,6 +8,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useGetAllBounties } from "@/lib/api/bounties/queries";
 import { useGetProjects } from "@/lib/api/projects/queries";
 import { formatDistanceToNow } from "date-fns";
@@ -99,6 +107,7 @@ const mockGrants = [
 export function OpportunityList({ title = "Browse Opportunities", type = "bounties" }: { title?: string, type?: "bounties" | "projects" | "grants" }) {
   const [activeTabs, setActiveTabs] = useState(["All"]);
   const [activeView, setActiveView] = useState(type === 'grants' ? "Grants" : "For you");
+  const [sortOrder, setSortOrder] = useState('newest');
 
   // Fetch Data
   const { data: bountiesData, isLoading: isLoadingBounties } = useGetAllBounties({});
@@ -151,7 +160,12 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
       dueDate: p.deadline,
       applicants: p.applications?.length || 0
     })) || [])
-  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  ].sort((a, b) => {
+    if (sortOrder === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortOrder === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortOrder === 'reward') return (Number(b.price) || 0) - (Number(a.price) || 0);
+    return 0;
+  });
 
   // Determine source based on prop type or active view
   const isGrantsSection = type === 'grants';
@@ -226,9 +240,28 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
             </>
           )}
         </div>
-        <Button variant="default" size="icon" className="hidden sm:flex text-muted-foreground bg-transparent hover:text-foreground">
-          <ListFilter className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                <ListFilter className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[180px]">
+              <DropdownMenuLabel>Sort By</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setSortOrder('newest')}>
+                Newest First {sortOrder === 'newest' && <span className="ml-auto text-xs">✓</span>}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOrder('oldest')}>
+                Oldest First {sortOrder === 'oldest' && <span className="ml-auto text-xs">✓</span>}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOrder('reward')}>
+                Highest Reward {sortOrder === 'reward' && <span className="ml-auto text-xs">✓</span>}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Categories Section */}

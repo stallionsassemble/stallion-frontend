@@ -77,6 +77,21 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   }, [conversation.participants, currentUser, isConnected, getOnlineStatus]);
 
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isSending, pendingAttachments]);
+
+  useEffect(() => {
+    // Immediate scroll on mount without smooth behavior for instant load feel?
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+  }, [conversation.id]);
+
   // Partner Logic
   const getPartner = (participants: ConversationSummary['participants']) => {
     if (!currentUser) return participants[0]?.user;
@@ -205,7 +220,7 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
 
     if (typingTimeoutRef.current) {
@@ -358,6 +373,7 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       ) : (
         <ScrollArea className="flex-1 min-h-0 p-6">
           <div className="flex flex-col-reverse space-y-4 space-y-reverse min-h-full">
+            <div ref={messagesEndRef} />
             {displayMessages.map((msg: Message) => (
               <MessageBubble
                 key={msg.id}
@@ -496,12 +512,13 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             <Paperclip className="h-[25px] w-[25px]" />
           </Button>
 
-          <Input
-            ref={inputRef}
+          <textarea
+            ref={inputRef as any}
             placeholder={
               editingMessageId ? 'Edit your message...' : (replyingTo ? 'Type your reply...' : 'Type Message')
             }
-            className="flex-1 bg-transparent border-none focus-visible:ring-0 px-2 h-10"
+            className="flex-1 bg-transparent border-none focus-visible:outline-none focus-visible:ring-0 px-2 min-h-[40px] max-h-[120px] resize-none py-2 text-sm"
+            rows={1}
             value={inputValue}
             onChange={handleInputChange}
             onKeyDown={(e) => {
