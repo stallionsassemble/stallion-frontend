@@ -47,6 +47,35 @@ const withdrawSchema = z.object({
       path: ["methodId"],
     });
   }
+
+  const amount = parseFloat(data.amount);
+  const currency = data.currency?.toLowerCase();
+
+  // Validate numeric amount
+  if (isNaN(amount) || amount <= 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please enter a valid amount greater than 0",
+      path: ["amount"],
+    });
+    return; // Exit if not a number
+  }
+
+  // Minimum withdrawal limits
+  if (currency === 'usdc' || currency === 'eurc') {
+    if (amount < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Minimum withdrawal for ${data.currency} is 1.00`,
+        path: ["amount"],
+      });
+    }
+  } else {
+    // Default limit for others (optional, keeping minimal as per request)
+    // If user didn't specify others, we can assume 1 or just > 0.
+    // Let's enforce 1 for consistency if safe, or just stick to the requested ones.
+    // Sticking to requested USDC/EURC specific check to be safe.
+  }
 });
 
 interface WithdrawFundsModalProps {
