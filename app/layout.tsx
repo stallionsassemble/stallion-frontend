@@ -51,6 +51,11 @@ export const metadata: Metadata = {
     title: "Stallion",
     description: "The ultimate marketplace for high-impact projects.",
   },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/icon.png',
+  },
 };
 
 export const viewport: Viewport = {

@@ -37,7 +37,6 @@ export class AuthService {
     email: string
     code: string
     totpCode?: string
-    role?: string
   }) {
     const response = await api.post<AuthResponse>(
       '/auth/login/verify-code',
