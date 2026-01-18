@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge } from "@/components/ui/badge";
 import { Briefcase, Clock, Gift, MessageSquare, Timer, Users } from "lucide-react";
 import Image from "next/image";

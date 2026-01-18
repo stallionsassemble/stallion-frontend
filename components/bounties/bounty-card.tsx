@@ -1,5 +1,4 @@
-"use client";
-
+import { BookmarkButton } from "@/components/common/bookmark-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -58,8 +57,14 @@ export function BountyCard({
         borderWidth: "0.8px",
       }}
     >
+      <BookmarkButton
+        id={id.toString()}
+        type={version === "BOUNTY" ? "bounty" : "project"}
+        className="absolute top-4 right-4 z-20"
+      />
+
       {/* 1. Header: Logo + Company */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 mr-8"> {/* Added mr-8 to avoid overlap with bookmark */}
         <div className="flex items-center gap-3">
           <div className="h-[48px] w-[48px] shrink-0 overflow-hidden rounded-full bg-background flex items-center justify-center">
             <Image

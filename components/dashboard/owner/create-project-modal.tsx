@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateProject, useUpdateProject } from "@/lib/api/projects/queries";
 import { uploadService } from "@/lib/api/upload";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
+import { useFormPersist } from "@/lib/hooks/use-form-persist";
 import { BountyAttachment } from "@/lib/types/bounties"; // Reusing attachment type
 import { CreateProjectPayload, Project } from "@/lib/types/project";
 import { cn } from "@/lib/utils";
@@ -81,6 +82,55 @@ export function CreateProjectModal({ children, existingProject, open: controlled
   const { mutate: updateProject, isPending: isUpdating } = useUpdateProject();
 
   const isPending = isCreating || isUpdating;
+
+  // Draft Persistence
+  const draftValues = {
+    title,
+    description,
+    requirements,
+    deliverables,
+    peopleNeeded,
+    budget,
+    currency,
+    deadline: deadline ? deadline.toISOString() : undefined,
+    projectType,
+    milestones,
+    startMilestoneTitle,
+    startMilestoneAmount,
+    startMilestoneDescription,
+    startMilestoneDueDate: startMilestoneDueDate ? startMilestoneDueDate.toISOString() : undefined,
+    selectedTags,
+    attachments
+  };
+
+  const { clearDraft } = useFormPersist(
+    "draft_project_create",
+    draftValues,
+    (data: any) => {
+      if (!existingProject) {
+        if (data.title) setTitle(data.title);
+        if (data.description) setDescription(data.description);
+        if (data.requirements) setRequirements(data.requirements);
+        if (data.deliverables) setDeliverables(data.deliverables);
+        if (data.peopleNeeded) setPeopleNeeded(data.peopleNeeded);
+        if (data.budget) setBudget(data.budget);
+        if (data.currency) setCurrency(data.currency);
+        if (data.deadline) setDeadline(new Date(data.deadline));
+        if (data.projectType) setProjectType(data.projectType);
+        if (data.milestones) setMilestones(data.milestones);
+        if (data.selectedTags) setSelectedTags(data.selectedTags);
+        if (data.attachments) setAttachments(data.attachments);
+
+        // Restore active milestone inputs too
+        if (data.startMilestoneTitle) setStartMilestoneTitle(data.startMilestoneTitle);
+        if (data.startMilestoneAmount) setStartMilestoneAmount(data.startMilestoneAmount);
+        if (data.startMilestoneDescription) setStartMilestoneDescription(data.startMilestoneDescription);
+        if (data.startMilestoneDueDate) setStartMilestoneDueDate(new Date(data.startMilestoneDueDate));
+
+        toast.info("Project draft restored");
+      }
+    }
+  );
 
   useEffect(() => {
     if (existingProject && isOpen) {
@@ -248,6 +298,7 @@ export function CreateProjectModal({ children, existingProject, open: controlled
 
       createProject(createPayload, {
         onSuccess: () => {
+          clearDraft();
           setOpen(false);
           // Reset
           setTitle("");
