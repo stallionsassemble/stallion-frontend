@@ -1,26 +1,18 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useBookmarks } from "@/lib/hooks/use-bookmarks";
-import { cn } from "@/lib/utils";
 import { ArrowLeft, Bookmark, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 
 interface DetailsNavigationProps {
-  id: string; // Added
-  type: "BOUNTY" | "PROJECT"; // Added
   backLink: string;
   backText: string;
   appliedUser?: string[]
 }
 
-export function DetailsNavigation({ id, type, backLink, backText, appliedUser = [] }: DetailsNavigationProps) {
-  const { isBookmarked, toggleBookmark } = useBookmarks();
-  const bookmarkType = type === "BOUNTY" ? "bounty" : "project";
-  const marked = isBookmarked(id, bookmarkType);
-
+export function DetailsNavigation({ backLink, backText, appliedUser = [] }: DetailsNavigationProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
       {/* Back Button */}
@@ -45,16 +37,9 @@ export function DetailsNavigation({ id, type, backLink, backText, appliedUser = 
           </div>
         )}
 
-        <Button
-          variant="outline"
-          className={cn(
-            "bg-card border border-border hover:bg-muted text-foreground text-sm h-10 px-4 rounded-xl gap-2 transition-colors",
-            marked && "text-primary border-primary/50"
-          )}
-          onClick={() => toggleBookmark(id, bookmarkType)}
-        >
-          <Bookmark className={cn("h-4 w-4", marked && "fill-current")} />
-          {marked ? "Bookmarked" : "Bookmark"}
+        <Button variant="outline" className="bg-card border border-border hover:bg-muted text-foreground text-sm h-10 px-4 rounded-xl gap-2">
+          <Bookmark className="h-4 w-4" />
+          Bookmark
         </Button>
 
         <Button
@@ -72,4 +57,3 @@ export function DetailsNavigation({ id, type, backLink, backText, appliedUser = 
     </div>
   );
 }
-

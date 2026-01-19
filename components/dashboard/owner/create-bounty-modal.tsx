@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateBounty, useUpdateBounty } from "@/lib/api/bounties/queries";
 import { uploadService } from "@/lib/api/upload";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
-import { useFormPersist } from "@/lib/hooks/use-form-persist";
 import { Bounty, BountyAttachment, CreateBountyDto } from "@/lib/types/bounties";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -75,47 +74,8 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
 
   const isPending = isCreating || isUpdating;
 
-  // Draft Persistence for NEW bounties
-  const draftValues = {
-    title,
-    description,
-    requirements,
-    deliverables,
-    budget,
-    currency,
-    deadline: deadline ? deadline.toISOString() : undefined,
-    announcementDate: announcementDate ? announcementDate.toISOString() : undefined,
-    prizeDistribution,
-    selectedTags,
-    attachments
-  };
-
-  const { clearDraft } = useFormPersist(
-    "draft_bounty_create",
-    draftValues,
-    (data: any) => {
-      // Only load if we are NOT editing an existing bounty
-      if (!existingBounty) {
-        if (data.title) setTitle(data.title);
-        if (data.description) setDescription(data.description);
-        if (data.requirements) setRequirements(data.requirements);
-        if (data.deliverables) setDeliverables(data.deliverables);
-        if (data.budget) setBudget(data.budget);
-        if (data.currency) setCurrency(data.currency);
-        if (data.deadline) setDeadline(new Date(data.deadline));
-        if (data.announcementDate) setAnnouncementDate(new Date(data.announcementDate));
-        if (data.prizeDistribution) setPrizeDistribution(data.prizeDistribution);
-        if (data.selectedTags) setSelectedTags(data.selectedTags);
-        if (data.attachments) setAttachments(data.attachments);
-        toast.info("Draft restored");
-      }
-    }
-  );
-
   useEffect(() => {
     if (existingBounty && isOpen) {
-      // ... existing load logic ...
-
       setTitle(existingBounty.title);
       setDescription(existingBounty.description);
 
@@ -326,7 +286,6 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
 
       createBounty(createPayload, {
         onSuccess: () => {
-          clearDraft();
           setOpen(false);
           // Reset form
           setTitle("");
