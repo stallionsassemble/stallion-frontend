@@ -4,32 +4,44 @@ import { BountyCard } from '@/components/bounties/bounty-card'
 import { BountyDetailsSidebar } from '@/components/bounties/bounty-details-sidebar'
 import { DetailsHeader } from '@/components/bounties/details-header'
 import { DetailsNavigation } from '@/components/bounties/details-navigation'
-import { DiscussionList } from '@/components/discussions/discussion-list'
+import { CreateBountyModal } from '@/components/dashboard/owner/create-bounty-modal'
 import { RichTextRenderer } from '@/components/shared/rich-text-renderer'
 import { Button } from '@/components/ui/button'
 import { useGetAllBounties, useGetBounty } from '@/lib/api/bounties/queries'
 import { useGetMyApplications } from '@/lib/api/projects/queries'
+import { useAuth } from '@/lib/store/use-auth'
 import { formatDistanceToNow } from 'date-fns'
 import {
   ChevronLeft,
   ChevronRight,
   Download,
+  Edit,
+  ExternalLink,
   FileText,
   FileUp,
   Gift,
   Info,
   Loader2
 } from 'lucide-react'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 export function BountyDetailsClient({ id }: { id: string }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [activeTab, setActiveTab] = useState("overview")
+  const { user } = useAuth()
 
   const { data: bounty, isLoading: isLoadingBounty } = useGetBounty(id)
-  console.log("Bounty", bounty)
   const { data: myApplications } = useGetMyApplications()
 
   const tags = bounty?.skills || []
+
+  // ... (keeping lines 39-98 implicit/unchanged, but tool requires contiguous block or I use multi-replace or just replace the header part)
+
+  // Actually, let's just replace the import block and the header block separately if possible, or do one big replace?
+  // Since I need to edit imports AND the render method, I should use MULTI_REPLACE.
+  // Wait, I can only use ReplaceFileContent for contiguous blocks. I should use correct tool or two calls.
+  // I will use `multi_replace_file_content`.
+
 
   // Fetch similar bounties
   const { data: similarData, isLoading: isLoadingSimilar } = useGetAllBounties({
@@ -90,17 +102,41 @@ export function BountyDetailsClient({ id }: { id: string }) {
   const deliverables = bounty.deliverables || []
   const attachments = bounty.attachments || []
 
+  const isOwner = user?.id === bounty.owner?.id;
+
   return (
     <div className='flex flex-col lg:flex-row gap-4 lg:gap-8 relative items-start w-full max-w-full lg:h-[calc(100vh-7rem)] overflow-x-hidden lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
       {/* Main Content Column */}
       <div className='flex flex-col min-w-0 flex-1 w-full max-w-full gap-4 lg:gap-6 lg:pr-2 xl:pr-4 overflow-x-hidden'>
-        {/* Top Navigation Bar */}
-        <DetailsNavigation
-          id={bounty.id}
-          type='BOUNTY'
-          backLink='/dashboard/bounties'
-          backText='Back to Bounties'
-        />
+        {/* Top Navigation Bar with Edit Button for Owner */}
+        <div className="flex items-center justify-between gap-4">
+          <DetailsNavigation
+            id={bounty.id}
+            type='BOUNTY'
+            backLink={isOwner ? '/dashboard/owner/bounties' : '/dashboard/bounties'}
+            backText={isOwner ? 'Back to My Bounties' : 'Back to Bounties'}
+          />
+          {isOwner && (
+            <div className="flex items-center gap-2">
+              {bounty.txHash && (
+                <a
+                  href={`https://stellar.expert/explorer/testnet/tx/${bounty.txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button size="sm" variant="outline" className="gap-2">
+                    <ExternalLink className="h-4 w-4" /> View Transaction
+                  </Button>
+                </a>
+              )}
+              <CreateBountyModal existingBounty={bounty}>
+                <Button size="sm" variant="outline" className="gap-2">
+                  <Edit className="h-4 w-4" /> Edit
+                </Button>
+              </CreateBountyModal>
+            </div>
+          )}
+        </div>
 
         {/* Bounty Details Content */}
         <div className='space-y-8 pb-20'>
@@ -115,13 +151,18 @@ export function BountyDetailsClient({ id }: { id: string }) {
               dueDate={bounty.submissionDeadline ? formatDistanceToNow(new Date(bounty.submissionDeadline), { addSuffix: true }) : "No deadline"}
               tags={tags}
               status={bounty.status === 'ACTIVE' ? 'Submission Open' : bounty.status}
-              commentsCount={0} // No comments data yet
+              commentsCount={0}
             />
           </section>
 
-          {/* Divider */}
-          <div className='h-px w-full bg-border' />
+          {/* <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="bg-muted/50 p-1 rounded-lg mb-6">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              {isOwner && <TabsTrigger value="submissions">Submissions</TabsTrigger>}
+              <TabsTrigger value="discussion">Discussion</TabsTrigger>
+            </TabsList> */}
 
+          {/* <TabsContent value="overview" className="space-y-6"> */}
           {/* Description */}
           <section className='space-y-3 rounded-xl border border-primary bg-card/30 p-4'>
             <h3 className='text-sm font-bold uppercase tracking-wider text-foreground flex items-center gap-2'>
@@ -261,11 +302,20 @@ export function BountyDetailsClient({ id }: { id: string }) {
               </div>
             </section>
           )}
+          {/* </TabsContent> */}
 
-          {/* Discussion Section */}
-          <section className='rounded-xl border border-primary bg-card/30 p-4 mt-8'>
-            <DiscussionList id={id} type="BOUNTY" />
-          </section>
+          {/* {isOwner && (
+              <TabsContent value="submissions">
+                <BountyManagementView bounty={bounty} />
+              </TabsContent>
+            )}
+
+            <TabsContent value="discussion">
+              <section className='rounded-xl border border-primary bg-card/30 p-4'>
+                <DiscussionList id={id} type="BOUNTY" />
+              </section>
+            </TabsContent>
+          </Tabs> */}
 
           {/* Mobile Footer Sidebar */}
           <div className='lg:hidden block mt-8 mb-8'>
