@@ -44,7 +44,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         }
       } else if (user && user.profileCompleted) {
         // Role-based route protection
-        if (user.role === 'PROJECT_OWNER' && pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/owner')) {
+        // Role-based route protection
+        if (user.role === 'PROJECT_OWNER' && pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/owner') && !pathname.startsWith('/dashboard/admin')) {
           router.replace('/dashboard/owner');
         } else if (user.role !== 'PROJECT_OWNER' && pathname.startsWith('/dashboard/owner')) {
           router.replace('/dashboard');

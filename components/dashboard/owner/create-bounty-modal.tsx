@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateBounty, useUpdateBounty } from "@/lib/api/bounties/queries";
 import { uploadService } from "@/lib/api/upload";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
+import { usePersistedState } from "@/lib/hooks/use-persisted-state";
 import { Bounty, BountyAttachment, CreateBountyDto } from "@/lib/types/bounties";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -17,9 +18,7 @@ import { CalendarIcon, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { InsufficientBalanceModal } from "./insufficient-balance-modal";
-// ... (imports remain)
 
-// ...
 
 
 interface CreateBountyModalProps {
@@ -38,29 +37,38 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
 
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
 
-  // Form State
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  // ... imports ...
 
-  const [requirements, setRequirements] = useState<string[]>([]);
+
+  // Form State - Persisted
+  const [title, setTitle] = usePersistedState("draft_bounty_title", "");
+  const [description, setDescription] = usePersistedState("draft_bounty_description", "");
+
+  const [requirements, setRequirements] = usePersistedState<string[]>("draft_bounty_requirements", []);
   const [requirementInput, setRequirementInput] = useState("");
-  const [deliverables, setDeliverables] = useState<string[]>([]);
+  const [deliverables, setDeliverables] = usePersistedState<string[]>("draft_bounty_deliverables", []);
   const [deliverableInput, setDeliverableInput] = useState("");
-  const [budget, setBudget] = useState("");
-  const [currency, setCurrency] = useState("USDC");
-  const [deadline, setDeadline] = useState<Date | undefined>(undefined);
-  const [announcementDate, setAnnouncementDate] = useState<Date | undefined>(undefined);
+  const [budget, setBudget] = usePersistedState("draft_bounty_budget", "");
+  const [currency, setCurrency] = usePersistedState("draft_bounty_currency", "USDC");
+
+  // Date handling: Persisted stores as string, so we need to parse back to Date if string
+  const [deadlineStr, setDeadlineStr] = usePersistedState<string | undefined>("draft_bounty_deadline", undefined);
+  const deadline = deadlineStr ? new Date(deadlineStr) : undefined;
+  const setDeadline = (date: Date | undefined) => setDeadlineStr(date ? date.toISOString() : undefined);
+
+  const [announcementDateStr, setAnnouncementDateStr] = usePersistedState<string | undefined>("draft_bounty_announcement", undefined);
+  const announcementDate = announcementDateStr ? new Date(announcementDateStr) : undefined;
+  const setAnnouncementDate = (date: Date | undefined) => setAnnouncementDateStr(date ? date.toISOString() : undefined);
 
   // Prize Pool
-  // Prize Pool
-  const [prizeDistribution, setPrizeDistribution] = useState<{ rank: number; amount: string }[]>([
+  const [prizeDistribution, setPrizeDistribution] = usePersistedState<{ rank: number; amount: string }[]>("draft_bounty_distribution", [
     { rank: 1, amount: "" },
     { rank: 2, amount: "" },
     { rank: 3, amount: "" },
   ]);
 
   // Tags
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = usePersistedState<string[]>("draft_bounty_tags", []);
   const [tagInput, setTagInput] = useState("");
 
   // Documents/Attachments
@@ -471,7 +479,7 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
               <div className="space-y-3">
                 {prizeDistribution.map((item, index) => (
                   <div key={index} className="grid grid-cols-[100px_1fr_40px] gap-4 items-center animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="bg-transparent border border-input rounded-md p-2 px-3 text-sm text-foreground flex items-center justify-center font-medium bg-secondary/20">
+                    <div className="border border-input rounded-md p-2 px-3 text-sm text-foreground flex items-center justify-center font-medium bg-secondary/20">
                       {index + 1}{index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th'}
                     </div>
                     <div className="relative">

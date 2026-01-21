@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateProject, useUpdateProject } from "@/lib/api/projects/queries";
 import { uploadService } from "@/lib/api/upload";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
+import { usePersistedState } from "@/lib/hooks/use-persisted-state";
 import { BountyAttachment } from "@/lib/types/bounties"; // Reusing attachment type
 import { CreateProjectPayload, Project } from "@/lib/types/project";
 import { cn } from "@/lib/utils";
@@ -18,9 +19,7 @@ import { CalendarIcon, Loader2, Plus, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { InsufficientBalanceModal } from "./insufficient-balance-modal";
-// ... (imports remain)
 
-// ...
 
 
 
@@ -47,28 +46,37 @@ export function CreateProjectModal({ children, existingProject, open: controlled
 
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
 
-  // Form State
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [requirements, setRequirements] = useState("");
-  const [deliverables, setDeliverables] = useState<string[]>([]);
+
+
+  // Form State - Persisted
+  const [title, setTitle] = usePersistedState("draft_project_title", "");
+  const [description, setDescription] = usePersistedState("draft_project_description", "");
+  const [requirements, setRequirements] = usePersistedState("draft_project_requirements", ""); // String in project
+  const [deliverables, setDeliverables] = usePersistedState<string[]>("draft_project_deliverables", []);
   const [deliverableInput, setDeliverableInput] = useState("");
-  const [peopleNeeded, setPeopleNeeded] = useState(1);
-  const [budget, setBudget] = useState("");
-  const [currency, setCurrency] = useState("USDC");
-  const [deadline, setDeadline] = useState<Date | undefined>(undefined);
-  const [projectType, setProjectType] = useState<"GIG" | "JOB">("GIG");
+  const [peopleNeeded, setPeopleNeeded] = usePersistedState("draft_project_people", 1);
+  const [budget, setBudget] = usePersistedState("draft_project_budget", "");
+  const [currency, setCurrency] = usePersistedState("draft_project_currency", "USDC");
 
-  // Milestones
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [startMilestoneTitle, setStartMilestoneTitle] = useState("");
-  const [startMilestoneAmount, setStartMilestoneAmount] = useState("");
-  const [startMilestoneDescription, setStartMilestoneDescription] = useState("");
-  const [startMilestoneDueDate, setStartMilestoneDueDate] = useState<Date | undefined>(undefined);
+  const [deadlineStr, setDeadlineStr] = usePersistedState<string | undefined>("draft_project_deadline", undefined);
+  const deadline = deadlineStr ? new Date(deadlineStr) : undefined;
+  const setDeadline = (date: Date | undefined) => setDeadlineStr(date ? date.toISOString() : undefined);
 
+  const [projectType, setProjectType] = usePersistedState<"GIG" | "JOB">("draft_project_type", "GIG");
+
+  // Milestones - Persisted
+  const [milestones, setMilestones] = usePersistedState<Milestone[]>("draft_project_milestones", []);
+
+  const [startMilestoneTitle, setStartMilestoneTitle] = usePersistedState("draft_project_ms_title", "");
+  const [startMilestoneAmount, setStartMilestoneAmount] = usePersistedState("draft_project_ms_amount", "");
+  const [startMilestoneDescription, setStartMilestoneDescription] = usePersistedState("draft_project_ms_desc", "");
+
+  const [startMilestoneDueDateStr, setStartMilestoneDueDateStr] = usePersistedState<string | undefined>("draft_project_ms_date", undefined);
+  const startMilestoneDueDate = startMilestoneDueDateStr ? new Date(startMilestoneDueDateStr) : undefined;
+  const setStartMilestoneDueDate = (date: Date | undefined) => setStartMilestoneDueDateStr(date ? date.toISOString() : undefined);
 
   // Tags
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = usePersistedState<string[]>("draft_project_tags", []);
   const [tagInput, setTagInput] = useState("");
 
   // Documents/Attachments
@@ -283,7 +291,7 @@ export function CreateProjectModal({ children, existingProject, open: controlled
           <div className="p-6 space-y-6">
             {/* Title & Type */}
             <div className="flex gap-4">
-              <div className="flex-[2] space-y-2">
+              <div className="flex-2 space-y-2">
                 <Label className="text-foreground">Project Title <span className="text-destructive">*</span></Label>
                 <Input
                   placeholder="e.g Bounty Hub"
