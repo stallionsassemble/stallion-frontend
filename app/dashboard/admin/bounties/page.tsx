@@ -41,7 +41,7 @@ import {
   MoreVertical,
   Search,
   SlidersHorizontal,
-  Trash2
+  Trash2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
@@ -90,7 +90,10 @@ export default function BountyManagementPage() {
   } = useGetAllBounties({
     page: currentPage,
     limit: rowsPerPage,
-    status: activeFilter !== 'All' ? activeFilter.toLowerCase() : undefined,
+    status:
+      activeFilter !== 'All'
+        ? (activeFilter.toUpperCase() as 'ACTIVE' | 'COMPLETED' | 'CLOSED')
+        : undefined,
     search: searchQuery || undefined,
   })
 
