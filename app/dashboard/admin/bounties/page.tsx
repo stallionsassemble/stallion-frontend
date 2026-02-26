@@ -98,32 +98,33 @@ export default function BountyManagementPage() {
   })
 
   const bounties = bountiesData?.data || []
-  const totalItems = bountiesData?.meta?.totalItems || 0
+  const totalItems = bountiesData?.meta?.total || 0
   const totalPages =
     bountiesData?.meta?.totalPages || Math.ceil(totalItems / rowsPerPage)
 
   // Calculate stats
   const stats = useMemo(() => {
+    const meta: any = bountiesData?.meta;
     return {
       active:
-        bountiesData?.meta?.activeCount ||
+        meta?.activeCount ||
         bounties.filter(
           (b: Bounty) =>
             b.status?.toLowerCase() === 'active' ||
             b.status?.toLowerCase() === 'open',
         ).length,
       completed:
-        bountiesData?.meta?.completedCount ||
+        meta?.completedCount ||
         bounties.filter(
           (b: Bounty) =>
             b.status?.toLowerCase() === 'completed' ||
             b.status?.toLowerCase() === 'closed',
         ).length,
       disputed:
-        bountiesData?.meta?.disputedCount ||
+        meta?.disputedCount ||
         bounties.filter((b: Bounty) => b.status?.toLowerCase() === 'disputed')
           .length,
-      escrowLocked: bountiesData?.meta?.escrowLocked || '0', // Could format this if it's a number
+      escrowLocked: meta?.escrowLocked || '0', // Could format this if it's a number
     }
   }, [bountiesData, bounties])
 
@@ -419,14 +420,14 @@ export default function BountyManagementPage() {
                   </TableCell>
                   <TableCell className='text-foreground text-sm font-medium'>
                     $
-                    {bounty.totalReward?.toLocaleString() ||
+                    {(bounty as any).totalReward?.toLocaleString() ||
                       bounty.reward ||
                       '0'}{' '}
-                    {bounty.currency || bounty.rewardCurrency || 'USDC'}
+                    {(bounty as any).currency || bounty.rewardCurrency || 'USDC'}
                   </TableCell>
                   <TableCell className='text-muted-foreground text-sm'>
                     {/* Using Reward as Escrow Proxy for now */}$
-                    {bounty.totalReward?.toLocaleString() ||
+                    {(bounty as any).totalReward?.toLocaleString() ||
                       bounty.reward ||
                       '0'}
                   </TableCell>
@@ -436,7 +437,7 @@ export default function BountyManagementPage() {
                       : 'No deadline'}
                   </TableCell>
                   <TableCell className='text-muted-foreground text-sm'>
-                    {bounty.submissionCount || bounty.applicantsCount || 0}
+                    {bounty.submissionCount || (bounty as any).applicantsCount || 0}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
