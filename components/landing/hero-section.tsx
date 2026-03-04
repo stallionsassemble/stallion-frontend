@@ -6,15 +6,13 @@ export function HeroSection() {
   return (
     <section className='container mx-auto py-10  justify-center items-center md:text-center text-foreground'>
       <h1 className='text-4xl text-nowrap md:text-8xl font-bold font-syne mb-4 text-foreground w-auto'>
-        Build the Future,
+        Powering the Global
         <br />
-        <p className='text-primary'>Get Paid Instantly</p>
+        <p className='text-primary'>Talent Pipeline on Stellar.</p>
       </h1>
 
-      <p className='text-[10px] md:text-xl text-muted-foreground font-normal font-inter mb-6 max-w-2xl mx-auto text-start md:text-center'>
-        The decentralized bounty platform connecting builders with opportunities
-        on Stellar. Create wallets, post bounties, and manage payments—all in
-        one place.
+      <p className='text-[12px] md:text-xl text-muted-foreground font-normal font-inter mb-6 max-w-2xl mx-auto text-start md:text-center'>
+        Join the decentralized pipeline where top talent meets elite Web3 projects. Get your skills verified on the Stellar blockchain and enjoy instant, borderless payouts.
       </p>
 
       <div className='flex justify-start md:justify-center gap-4'>

@@ -5,29 +5,48 @@ import { useState } from "react";
 
 const faqs = [
   {
-    question: "Is my data safe and secure?",
-    answer:
-      "Track Your Income and Expenses: With our app, you can easily track your income and expenses, so you always know where your money is going.",
+    question: "How does Stallion differ from traditional job or bounty boards?",
+    answer: (
+      <div className="space-y-2 text-left">
+        <p><strong>For Contributors:</strong> You aren't just "hunting"; you're building a verified career. Every task you complete creates an immutable, on-chain record of your skills.</p>
+        <p><strong>For Companies:</strong> We eliminate the "resume noise." Stallion is a decentralized vetting pipeline that ensures you only see work from qualified professionals, reducing your overhead for talent discovery.</p>
+      </div>
+    ),
   },
   {
-    question: "Can I sync my accounts from multiple banks?",
-    answer:
-      "Yes, we support syncing with thousands of financial institutions worldwide to keep all your accounts in one place.",
+    question: "How do payments and settlements work on the platform?",
+    answer: (
+      <div className="space-y-2 text-left">
+        <p><strong>For Contributors:</strong> No more chasing invoices. Once your submission is verified, smart contracts on the Stellar blockchain route funds directly to your wallet instantly.</p>
+        <p><strong>For Companies:</strong> You gain full transparency. Funds are held securely and released only when milestones are met, ensuring your budget is always tied to high-quality results.</p>
+      </div>
+    ),
   },
   {
-    question: "Is there a mobile app available?",
-    answer:
-      "Absolutely! Our mobile app is available for both iOS and Android devices, allowing you to manage your finances on the go.",
+    question: 'What is an "On-Chain CV," and why do I need one?',
+    answer: (
+      <div className="space-y-2 text-left">
+        <p><strong>For Contributors:</strong> It is your permanent proof of expertise. Unlike a PDF, your Stallion profile is verified by the blockchain, making your skills undeniable to future high-profile partners.</p>
+        <p><strong>For Companies:</strong> It provides a trust-layer. You can view a contributor's actual history of successful deliveries on-chain before you even hire them, significantly lowering the risk of bad actors.</p>
+      </div>
+    ),
   },
   {
-    question: "Can I cancel my subscription at any time?",
-    answer:
-      "Yes, you can cancel your subscription at any time without any hidden fees or penalties.",
+    question: "How do you ensure the quality of bounties and submissions?",
+    answer: (
+      <div className="space-y-2 text-left">
+        <p><strong>For Contributors:</strong> We filter out the spam. Stallion only hosts high-impact quests from visionary communities and verified projects, ensuring your time is spent on work that matters.</p>
+        <p><strong>For Companies:</strong> Our decentralized vetting pipeline is designed to "strip away the noise." By using intent-based execution and specific vetting criteria, we ensure that only top-tier solutions reach your desk.</p>
+      </div>
+    ),
   },
   {
-    question: "Do you offer customer support?",
-    answer:
-      "We offer 24/7 customer support via chat and email to assist you with any questions or issues you may have.",
+    question: "Is Stallion limited to the Stellar ecosystem?",
+    answer: (
+      <div className="space-y-2 text-left">
+        <p><strong>The Big Picture:</strong> While we are currently optimized for the Stellar network to provide the fastest, low-cost settlements, our roadmap includes cross-chain support.</p>
+      </div>
+    ),
   },
 ];
 

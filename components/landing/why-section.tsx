@@ -5,27 +5,27 @@ export function WhySection() {
   const features = [
     {
       icon: "/assets/icons/discovery.png",
-      title: "Discovery",
-      description: "We strip away the spam. Access a filtered stream of high-value quests from visionary communities. Don't waste time scrolling."
+      title: "Curated Discovery",
+      description: "We eliminate the noise. Access a filtered stream of high-value quests from verified Web3 ecosystems. Spend your time building, not scrolling through spam."
     },
     {
       icon: "/assets/icons/dollar.png",
-      title: "Instant settlement.",
-      description: "Frictionless payouts. Smart contracts route funds to your wallet the second your work is verified. No invoices, no chasing."
+      title: "Instant, Automated Payouts",
+      description: "Experience frictionless settlements. Funds are routed directly to your wallet the moment your work is verified—no invoices, no delays, and no chasing payments."
     },
     {
       icon: "/assets/icons/verifiable.png",
-      title: "Verifiable reputation.",
-      description: "Stop updating PDFs. Your completed bounties automatically generate an on-chain CV that proves your skill to future clients."
+      title: "Verifiable On-Chain Reputation",
+      description: "Retire the PDF resume. Every completed bounty automatically builds a permanent, on-chain CV that provides immutable proof of your expertise to future partners."
     }
   ];
 
   return (
     <section className="container mx-auto py-10 md:py-10 justify-center gap-1.5" id="why-us">
       <div className="text-center">
-        <h2 className="text-[45px] md:text-[64px] font-bold font-syne leading-[100%] mb-4 text-foreground tracking-[-1.4px]">Designed for High Impact.</h2>
+        <h2 className="text-[45px] md:text-[64px] font-bold font-syne leading-[100%] mb-4 text-foreground tracking-[-1.4px]">Built for High Impact. Engineered for Growth.</h2>
         <p className="text-[12px] sm:text-[16px] leading-[19.2px] font-normal font-inter mb-16 text-muted-foreground tracking-[-0.32px] align-middle">
-          Why Settle for Less? Before you dive in, let’s show you why our platform is the future of bounty hunting.
+          Stop settling for fragmented workflows. Discover why Stallion is the definitive ecosystem for elite contributors to build, earn, and scale.
         </p>
       </div>
 
