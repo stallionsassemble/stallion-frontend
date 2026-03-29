@@ -11,6 +11,7 @@ export function Header() {
   const menuItems = [
     { href: "/", label: "Home" },
     { href: "#why-us", label: "Why Us" },
+    { href: "/hackathons", label: "Hackathons" },
     { href: "#bounties", label: "Bounties" },
     { href: "#faqs", label: "FAQs" },
   ];

@@ -1,5 +1,3 @@
-'use client'
-
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -45,165 +43,28 @@ import {
   Search,
   SlidersHorizontal,
   Trash2,
-  X
+  X,
+  Loader2,
 } from 'lucide-react'
 import { useState } from 'react'
-
-// Types
-interface Payout {
-  id: string
-  contributor: {
-    name: string
-    wallet: string
-    avatar: string
-  }
-  bounty: {
-    title: string
-    milestone: string
-  }
-  amount: string
-  currency: string
-  status: 'Approved' | 'Pending' | 'Completed' | 'Failed' | 'Blocked'
-  requested: string
-  timeline?: string
-}
-
-interface AuditLogEntry {
-  timestamp: string
-  action: 'Failed' | 'Blocked' | 'Approved' | 'Completed'
-  payoutId: string
-  admin: string
-  amount: string
-  currency: string
-  details: string
-}
-
-// Mock Data for different tabs
-const transactionsPayouts: Payout[] = Array.from({ length: 68 }, (_, i) => ({
-  id: `TR0000${i + 2}`,
-  contributor: {
-    name: 'John Doe',
-    wallet: 'GDQP2...X7K9',
-    avatar: '/assets/icons/sdollar.png',
-  },
-  bounty: {
-    title: 'Smart Contract Security Audit',
-    milestone: 'Milestone 2: Code Review',
-  },
-  amount: '$30,000',
-  currency: 'USDC',
-  status: i % 3 === 0 ? 'Approved' : 'Pending',
-  requested: '2024-02-10',
-  timeline: '2024-01-15 14:30',
-}))
-
-const completedPayouts: Payout[] = Array.from({ length: 4 }, (_, i) => ({
-  id: `TR0000${i + 2}`,
-  contributor: {
-    name: 'John Doe',
-    wallet: 'GDQP2...X7K9',
-    avatar: '/assets/icons/sdollar.png',
-  },
-  bounty: {
-    title: 'Smart Contract Security Audit',
-    milestone: 'Milestone 2: Code Review',
-  },
-  amount: '$30,000',
-  currency: 'USDC',
-  status: 'Completed',
-  requested: '2024-02-10',
-  timeline: '2024-01-15 14:30',
-}))
-
-const issuesPayouts: Payout[] = [
-  {
-    id: 'TR00002',
-    contributor: {
-      name: 'John Doe',
-      wallet: 'GDQP2...X7K9',
-      avatar: '/assets/icons/sdollar.png',
-    },
-    bounty: {
-      title: 'Smart Contract Security Audit',
-      milestone: 'Milestone 2: Code Review',
-    },
-    amount: '$30,000',
-    currency: 'USDC',
-    status: 'Failed',
-    requested: '2024-02-10',
-    timeline: '2024-01-15 14:30',
-  },
-  {
-    id: 'TR00002',
-    contributor: {
-      name: 'John Doe',
-      wallet: 'GDQP2...X7K9',
-      avatar: '/assets/icons/sdollar.png',
-    },
-    bounty: {
-      title: 'Smart Contract Security Audit',
-      milestone: 'Milestone 2: Code Review',
-    },
-    amount: '$30,000',
-    currency: 'USDC',
-    status: 'Blocked',
-    requested: '2024-02-10',
-    timeline: '2024-01-15 14:30',
-  },
-]
-
-// Audit Log Data
-const auditLogData: AuditLogEntry[] = [
-  {
-    timestamp: '2024-01-15 14:35',
-    action: 'Failed',
-    payoutId: 'TR00002',
-    admin: 'John Doe',
-    amount: '$30,000',
-    currency: 'USDC',
-    details: 'Approved payout PAY-003 after verification',
-  },
-  {
-    timestamp: '2024-01-15 14:35',
-    action: 'Blocked',
-    payoutId: 'TR00002',
-    admin: 'John Doe',
-    amount: '$30,000',
-    currency: 'USDC',
-    details: 'Approved payout PAY-003 after verification',
-  },
-  {
-    timestamp: '2024-01-15 14:35',
-    action: 'Approved',
-    payoutId: 'TR00002',
-    admin: 'John Doe',
-    amount: '$30,000',
-    currency: 'USDC',
-    details: 'Approved payout PAY-003 after verification',
-  },
-  {
-    timestamp: '2024-01-15 14:35',
-    action: 'Completed',
-    payoutId: 'TR00002',
-    admin: 'John Doe',
-    amount: '$30,000',
-    currency: 'USDC',
-    details: 'Approved payout PAY-003 after verification',
-  },
-]
+import { useAdminPayouts, useAdminPayoutsStats } from '@/lib/api/admin/queries'
+import { adminService } from '@/lib/api/admin'
+import { StepUpModal } from '@/components/admin/step-up-modal'
+import { useAdminStore } from '@/lib/store/use-admin-store'
+import { toast } from 'sonner'
 
 // Status badge styling helper
 const getStatusBadgeClass = (status: string) => {
-  switch (status) {
-    case 'Approved':
+  switch (status?.toUpperCase()) {
+    case 'APPROVED':
       return 'bg-green-500/20 text-green-400 hover:bg-green-500/30 border-0'
-    case 'Pending':
+    case 'PENDING':
       return 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border-0'
-    case 'Completed':
+    case 'COMPLETED':
       return 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border-0'
-    case 'Failed':
+    case 'FAILED':
       return 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border-0'
-    case 'Blocked':
+    case 'BLOCKED':
       return 'bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 border-0'
     default:
       return 'bg-muted text-muted-foreground border-0'
@@ -215,36 +76,82 @@ export default function PayoutAdministrationPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [activeTab, setActiveTab] = useState<string>('Transactions')
   const [activeFilter, setActiveFilter] = useState<string>('All')
-  const [selectedPayout, setSelectedPayout] = useState<Payout | null>(null)
+  const [selectedPayout, setSelectedPayout] = useState<any>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
-  // Get data based on active tab
-  const getPayoutsForTab = () => {
+  // Admin Step-up State
+  const [stepUpOpen, setStepUpOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState<{ type: string; payoutId: string } | null>(null)
+  const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
+  const stepUpToken = useAdminStore((state) => state.stepUpToken)
+
+  const { data: stats } = useAdminPayoutsStats()
+  
+  // Map tab to status for API
+  const getStatusFromTab = () => {
     switch (activeTab) {
-      case 'Completed':
-        return completedPayouts
-      case 'Issues':
-        return issuesPayouts
-      default:
-        return transactionsPayouts
+      case 'Completed': return 'COMPLETED'
+      case 'Issues': return 'FAILED'
+      case 'Transactions': return undefined
+      default: return undefined
     }
   }
 
-  const currentPayouts = getPayoutsForTab()
-  const totalPages = Math.ceil(currentPayouts.length / rowsPerPage)
-  const startIndex = (currentPage - 1) * rowsPerPage
-  const paginatedPayouts = currentPayouts.slice(
-    startIndex,
-    startIndex + rowsPerPage,
-  )
+  const { 
+    data: payoutsData, 
+    isLoading,
+    refetch 
+  } = useAdminPayouts({
+    page: currentPage,
+    limit: rowsPerPage,
+    status: getStatusFromTab() as any,
+    search: searchQuery || undefined
+  })
 
-  const handleViewDetails = (payout: Payout) => {
+  const payouts = payoutsData?.data || []
+  const totalItems = payoutsData?.meta?.total || 0
+  const totalPages = payoutsData?.meta?.totalPages || 1
+
+  const handleRetryPayout = async (payoutId: string) => {
+    if (!isStepUpValid()) {
+      setPendingAction({ type: 'retry', payoutId })
+      setStepUpOpen(true)
+      return
+    }
+
+    const token = stepUpToken!
+    const toastId = toast.loading('Retrying payout...')
+    
+    try {
+      await adminService.retryPayout(payoutId, token)
+      toast.success('Payout retry initiated', { id: toastId })
+      refetch()
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to retry payout', { id: toastId })
+    }
+  }
+
+  const onStepUpSuccess = (token: string) => {
+    if (pendingAction?.type === 'retry') {
+      handleRetryPayout(pendingAction.payoutId)
+      setPendingAction(null)
+    }
+  }
+
+  const handleViewDetails = (payout: any) => {
     setSelectedPayout(payout)
     setIsDetailsModalOpen(true)
   }
 
   return (
     <div className='space-y-6'>
+      <StepUpModal 
+        open={stepUpOpen} 
+        onOpenChange={setStepUpOpen} 
+        onSuccess={onStepUpSuccess} 
+      />
+
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
@@ -274,7 +181,7 @@ export default function PayoutAdministrationPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              3
+              {stats?.pendingApproval || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Awaiting approval
@@ -292,7 +199,7 @@ export default function PayoutAdministrationPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              $156K
+              ${(stats?.pendingAmountUsd || 0).toLocaleString()}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Processing payouts
@@ -310,7 +217,7 @@ export default function PayoutAdministrationPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              $122K
+              ${(stats?.completed30dUsd || 0).toLocaleString()}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Last 30 days
@@ -328,7 +235,7 @@ export default function PayoutAdministrationPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              8
+              {stats?.issues || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Requiring attention
@@ -364,8 +271,13 @@ export default function PayoutAdministrationPage() {
         <div className='relative w-full sm:max-w-md'>
           <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
           <Input
-            placeholder='Search bounties'
+            placeholder='Search payouts'
             className='pl-10 bg-background border-border'
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setCurrentPage(1)
+            }}
           />
         </div>
         <div className='flex items-center gap-2 flex-wrap'>
@@ -398,60 +310,10 @@ export default function PayoutAdministrationPage() {
       {/* Payouts Table */}
       <div className='rounded-lg border border-border bg-card overflow-hidden'>
         {activeTab === 'Audit log' ? (
-          /* Audit Log Table */
-          <Table>
-            <TableHeader>
-              <TableRow className='border-border hover:bg-transparent'>
-                <TableHead className='text-muted-foreground font-medium'>
-                  Timestamp
-                </TableHead>
-                <TableHead className='text-muted-foreground font-medium'>
-                  Action
-                </TableHead>
-                <TableHead className='text-muted-foreground font-medium'>
-                  Payout ID
-                </TableHead>
-                <TableHead className='text-muted-foreground font-medium'>
-                  Admin
-                </TableHead>
-                <TableHead className='text-muted-foreground font-medium'>
-                  Amount
-                </TableHead>
-                <TableHead className='text-muted-foreground font-medium'>
-                  Details
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {auditLogData.map((entry, index) => (
-                <TableRow
-                  key={`audit-${index}`}
-                  className='border-border hover:bg-muted/30'
-                >
-                  <TableCell className='text-muted-foreground text-sm'>
-                    {entry.timestamp}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusBadgeClass(entry.action)}>
-                      {entry.action}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className='font-medium text-foreground text-sm'>
-                    {entry.payoutId}
-                  </TableCell>
-                  <TableCell className='text-foreground text-sm'>
-                    {entry.admin}
-                  </TableCell>
-                  <TableCell className='text-muted-foreground text-sm'>
-                    {entry.amount} {entry.currency}
-                  </TableCell>
-                  <TableCell className='text-muted-foreground text-sm'>
-                    {entry.details}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          /* Audit Log Table - Placeholder if not available in API */
+          <div className="p-12 text-center text-muted-foreground">
+            Audit logs are coming soon to the platform.
+          </div>
         ) : (
           /* Regular Payouts Table */
           <Table>
@@ -479,98 +341,110 @@ export default function PayoutAdministrationPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedPayouts.map((payout, index) => (
-                <TableRow
-                  key={`${payout.id}-${index}`}
-                  className='border-border hover:bg-muted/30'
-                >
-                  <TableCell className='font-medium text-foreground text-sm'>
-                    {payout.id}
-                  </TableCell>
-                  <TableCell>
-                    <div className='flex items-center gap-2'>
-                      <Avatar className='h-7 w-7'>
-                        <AvatarImage
-                          src={payout.contributor.avatar}
-                          alt={payout.contributor.name}
-                        />
-                        <AvatarFallback>
-                          {payout.contributor.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className='font-medium text-foreground text-sm'>
-                          {payout.contributor.name}
-                        </div>
-                        <div className='text-xs text-muted-foreground'>
-                          {payout.contributor.wallet}
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className='text-foreground text-sm'>
-                        {payout.bounty.title}
-                      </div>
-                      <div className='text-xs text-muted-foreground'>
-                        {payout.bounty.milestone}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className='text-muted-foreground text-sm'>
-                    {payout.amount} {payout.currency}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusBadgeClass(payout.status)}>
-                      {payout.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className='text-muted-foreground text-sm'>
-                    {payout.requested}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant='ghost'
-                          size='icon'
-                          className='h-8 w-8 text-muted-foreground hover:text-foreground'
-                        >
-                          <MoreVertical className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align='end'
-                        className='bg-popover border-border'
-                      >
-                        <DropdownMenuItem
-                          onClick={() => handleViewDetails(payout)}
-                          className='gap-2 cursor-pointer'
-                        >
-                          <Eye className='h-4 w-4' />
-                          View Details
-                        </DropdownMenuItem>
-                        {activeTab === 'Issues' ? (
-                          <DropdownMenuItem className='gap-2 cursor-pointer'>
-                            <RefreshCw className='h-4 w-4' />
-                            Retry
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem className='gap-2 cursor-pointer'>
-                            <CheckCircle className='h-4 w-4' />
-                            Approve
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem className='gap-2 cursor-pointer text-destructive focus:text-destructive'>
-                          <Trash2 className='h-4 w-4' />
-                          Delete Bounty
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className='text-center py-12'>
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : payouts.length > 0 ? (
+                payouts.map((payout: any) => (
+                  <TableRow
+                    key={payout.id}
+                    className='border-border hover:bg-muted/30'
+                  >
+                    <TableCell className='font-medium text-foreground text-sm'>
+                      {payout.id.slice(0, 8)}...
+                    </TableCell>
+                    <TableCell>
+                      <div className='flex items-center gap-2'>
+                        <Avatar className='h-7 w-7'>
+                          <AvatarImage
+                            src={payout.contributor?.profilePicture}
+                            alt={payout.contributor?.username}
+                          />
+                          <AvatarFallback>
+                            {(payout.contributor?.username || 'C').charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className='font-medium text-foreground text-sm'>
+                            {payout.contributor?.username || 'Unknown'}
+                          </div>
+                          <div className='text-xs text-muted-foreground font-mono'>
+                            {payout.contributor?.walletAddress?.slice(0, 6)}...{payout.contributor?.walletAddress?.slice(-4)}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className='text-foreground text-sm'>
+                          {payout.bounty?.title || 'Unknown Bounty'}
+                        </div>
+                        <div className='text-xs text-muted-foreground'>
+                          {payout.milestone?.title || 'No Milestone'}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className='text-muted-foreground text-sm font-medium'>
+                      ${payout.amountUsd?.toLocaleString() || payout.amount?.toLocaleString()} {payout.token || payout.currency || 'USDC'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusBadgeClass(payout.status)}>
+                        {payout.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className='text-muted-foreground text-sm'>
+                      {payout.createdAt ? new Date(payout.createdAt).toLocaleDateString() : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            className='h-8 w-8 text-muted-foreground hover:text-foreground'
+                          >
+                            <MoreVertical className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align='end'
+                          className='bg-popover border-border'
+                        >
+                          <DropdownMenuItem
+                            onClick={() => handleViewDetails(payout)}
+                            className='gap-2 cursor-pointer'
+                          >
+                            <Eye className='h-4 w-4' />
+                            View Details
+                          </DropdownMenuItem>
+                          {(payout.status === 'FAILED' || activeTab === 'Issues') && (
+                            <DropdownMenuItem 
+                              className='gap-2 cursor-pointer'
+                              onClick={() => handleRetryPayout(payout.id)}
+                            >
+                              <RefreshCw className='h-4 w-4' />
+                              Retry
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem className='gap-2 cursor-pointer text-destructive focus:text-destructive'>
+                            <Trash2 className='h-4 w-4' />
+                            Delete (Coming Soon)
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className='text-center py-8 text-muted-foreground'>
+                    No payouts found matching your criteria.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         )}
@@ -578,7 +452,7 @@ export default function PayoutAdministrationPage() {
         {/* Pagination */}
         <div className='flex items-center justify-between px-4 py-3 border-t border-border'>
           <div className='text-sm text-muted-foreground'>
-            0 of {currentPayouts.length} row(s) selected.
+            Showing {payouts.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0} to {Math.min(currentPage * rowsPerPage, totalItems)} of {totalItems} payouts
           </div>
           <div className='flex items-center gap-4'>
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
@@ -665,7 +539,7 @@ export default function PayoutAdministrationPage() {
                 <DialogTitle className='text-2xl font-bold text-foreground'>
                   Payout Details
                 </DialogTitle>
-                <p className='text-sm text-muted-foreground'>
+                <p className='text-sm text-muted-foreground font-mono'>
                   {selectedPayout?.id}
                 </p>
               </div>
@@ -686,19 +560,19 @@ export default function PayoutAdministrationPage() {
               <div className='flex items-center gap-3'>
                 <Avatar className='h-12 w-12'>
                   <AvatarImage
-                    src={selectedPayout.contributor.avatar}
-                    alt={selectedPayout.contributor.name}
+                    src={selectedPayout.contributor?.profilePicture}
+                    alt={selectedPayout.contributor?.username}
                   />
                   <AvatarFallback>
-                    {selectedPayout.contributor.name.charAt(0)}
+                    {(selectedPayout.contributor?.username || 'C').charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <div className='font-semibold text-foreground'>
-                    {selectedPayout.contributor.name}
+                    {selectedPayout.contributor?.username || 'Unknown'}
                   </div>
-                  <div className='text-sm text-muted-foreground'>
-                    {selectedPayout.contributor.wallet}
+                  <div className='text-sm text-muted-foreground font-mono'>
+                    {selectedPayout.contributor?.walletAddress}
                   </div>
                 </div>
               </div>
@@ -708,7 +582,7 @@ export default function PayoutAdministrationPage() {
                 <div>
                   <p className='text-xs text-muted-foreground mb-1'>Bounty</p>
                   <p className='text-sm text-foreground'>
-                    {selectedPayout.bounty.title}
+                    {selectedPayout.bounty?.title || 'Unknown'}
                   </p>
                 </div>
                 <div>
@@ -716,7 +590,7 @@ export default function PayoutAdministrationPage() {
                     Milestone
                   </p>
                   <p className='text-sm text-foreground'>
-                    {selectedPayout.bounty.milestone}
+                    {selectedPayout.milestone?.title || 'Unknown'}
                   </p>
                 </div>
               </div>
@@ -726,13 +600,13 @@ export default function PayoutAdministrationPage() {
                 <p className='text-xs text-muted-foreground mb-1'>Amount</p>
                 <div className='flex items-center gap-2'>
                   <span className='text-3xl font-bold text-foreground'>
-                    $3,500
+                    ${selectedPayout.amountUsd?.toLocaleString() || selectedPayout.amount?.toLocaleString()}
                   </span>
                   <Badge
                     variant='outline'
                     className='border-primary/30 text-primary text-xs'
                   >
-                    {selectedPayout.currency}
+                    {selectedPayout.token || selectedPayout.currency || 'USDC'}
                   </Badge>
                 </div>
               </div>
@@ -741,28 +615,33 @@ export default function PayoutAdministrationPage() {
               <div className='border-t border-border pt-4'>
                 <p className='text-xs text-muted-foreground mb-2'>Timeline</p>
                 <div className='flex justify-between text-sm'>
-                  <span className='text-muted-foreground'>Milestone One</span>
-                  <span className='text-foreground'>2024-01-15 14:30</span>
+                  <span className='text-muted-foreground'>Requested On</span>
+                  <span className='text-foreground'>{new Date(selectedPayout.createdAt).toLocaleString()}</span>
                 </div>
-                <div className='flex justify-between text-sm mt-1'>
-                  <span className='text-muted-foreground'></span>
-                  <span className='text-foreground'>2024-01-15 14:30</span>
-                </div>
+                {selectedPayout.processedAt && (
+                  <div className='flex justify-between text-sm mt-1'>
+                    <span className='text-muted-foreground'>Processed At</span>
+                    <span className='text-foreground'>{new Date(selectedPayout.processedAt).toLocaleString()}</span>
+                  </div>
+                )}
               </div>
 
               {/* Actions */}
               <div className='flex gap-3 pt-4 border-t border-primary/20'>
-                <Button
-                  variant='outline'
-                  className='flex-1 gap-2 border-border'
-                >
-                  <Ban className='h-4 w-4' />
-                  Block
-                </Button>
-                <Button className='flex-1 gap-2 bg-primary hover:bg-primary/90'>
-                  <CheckCircle className='h-4 w-4' />
-                  Approve
-                </Button>
+                {selectedPayout.status === 'FAILED' && (
+                  <Button 
+                    className='flex-1 gap-2 bg-primary hover:bg-primary/90'
+                    onClick={() => handleRetryPayout(selectedPayout.id)}
+                  >
+                    <RefreshCw className='h-4 w-4' />
+                    Retry Payout
+                  </Button>
+                )}
+                {selectedPayout.status === 'PENDING' && (
+                  <p className="text-sm text-muted-foreground text-center w-full italic">
+                    Payout is awaiting automatic processing or project owner action.
+                  </p>
+                )}
               </div>
             </div>
           )}

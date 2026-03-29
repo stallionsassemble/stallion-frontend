@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, Briefcase, DollarSign, Users } from 'lucide-react'
+import { AlertCircle, Briefcase, DollarSign, Users, Loader2 } from 'lucide-react'
 import {
   Bar,
   BarChart,
@@ -17,43 +17,60 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-
-// Mock Data
-const userGrowthData = [
-  { name: 'Jan', talents: 400, companies: 240 },
-  { name: 'Feb', talents: 300, companies: 139 },
-  { name: 'Mar', talents: 200, companies: 980 },
-  { name: 'Apr', talents: 278, companies: 390 },
-  { name: 'May', talents: 189, companies: 480 },
-  { name: 'Jun', talents: 239, companies: 380 },
-  { name: 'Jul', talents: 349, companies: 430 },
-]
-
-const workStatusData = [
-  { name: 'Active', value: 400, color: '#0088FE' },
-  { name: 'Completed', value: 300, color: '#00C49F' },
-  { name: 'Pending', value: 50, color: '#FFBB28' }, // Changed Disputed to Pending to match requirement
-  // { name: 'Cancelled', value: 100, color: '#FF8042' },
-]
-
-const payoutAnalyticsData = [
-  { name: 'July', USDC: 45, USGLO: 65, NGNC: 85 },
-  { name: 'Aug', USDC: 55, USGLO: 60, NGNC: 75 },
-  { name: 'Sep', USDC: 40, USGLO: 70, NGNC: 60 },
-  { name: 'Oct', USDC: 60, USGLO: 90, NGNC: 80 },
-  { name: 'Nov', USDC: 80, USGLO: 85, NGNC: 110 },
-  { name: 'Dec', USDC: 95, USGLO: 100, NGNC: 95 },
-  { name: 'Jan', USDC: 110, USGLO: 95, NGNC: 125 },
-]
-
-const jobPerformanceData = [
-  { name: 'Q1', Bounties: 40, Projects: 30 },
-  { name: 'Q2', Bounties: 60, Projects: 45 },
-  { name: 'Q3', Bounties: 80, Projects: 60 },
-  { name: 'Q4', Bounties: 95, Projects: 85 },
-]
+import { useAdminDashboardStats } from '@/lib/api/admin/queries'
+import { useMemo } from 'react'
 
 export default function AdminDashboardPage() {
+  const { data: stats, isLoading } = useAdminDashboardStats()
+
+  const userGrowthData = useMemo(() => {
+    if (!stats?.userGrowth?.currentMonthDailyRegistrations) return []
+    return Object.entries(stats.userGrowth.currentMonthDailyRegistrations).map(([date, count]) => ({
+      name: date.split('-').slice(2).join('/'), // Just Day/Month or similar
+      talents: count, // The API doesn't split by role in daily registrations yet, so we use count
+      fullDate: date
+    }))
+  }, [stats])
+
+  const workStatusData = useMemo(() => {
+    if (!stats?.workStatus?.normalized) return []
+    const normalized = stats.workStatus.normalized
+    return [
+      { name: 'Active', value: normalized.active, color: '#3b82f6' },
+      { name: 'Completed', value: normalized.completed, color: '#10b981' },
+      { name: 'Cancelled', value: normalized.cancelled, color: '#f43f5e' },
+      { name: 'Closed', value: normalized.closed, color: '#64748b' },
+    ]
+  }, [stats])
+
+  const payoutAnalyticsData = useMemo(() => {
+    if (!stats?.payoutAnalytics) return []
+    // Group by month
+    const months: Record<string, any> = {}
+    stats.payoutAnalytics.forEach(p => {
+      if (!months[p.month]) months[p.month] = { name: p.month }
+      months[p.month][p.token] = p.totalUsd
+    })
+    return Object.values(months)
+  }, [stats])
+
+  const jobPerformanceData = useMemo(() => {
+    if (!stats?.jobPerformance) return []
+    return stats.jobPerformance.map(p => ({
+      name: p.quarter,
+      Bounties: p.bountiesCreated,
+      Projects: p.projectsCreated
+    }))
+  }, [stats])
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
   return (
     <div className='space-y-6'>
       {/* Header */}
@@ -74,7 +91,7 @@ export default function AdminDashboardPage() {
             <Users className='h-4 w-4 text-primary' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-foreground'>481</div>
+            <div className='text-2xl font-bold text-foreground'>{stats?.totalUsers || 0}</div>
             <p className='text-xs text-muted-foreground'>Growing community</p>
           </CardContent>
         </Card>
@@ -86,7 +103,7 @@ export default function AdminDashboardPage() {
             <Briefcase className='h-4 w-4 text-primary' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-foreground'>20</div>
+            <div className='text-2xl font-bold text-foreground'>{stats?.activeWorks || 0}</div>
             <p className='text-xs text-muted-foreground'>
               Ongoing opportunities
             </p>
@@ -100,20 +117,22 @@ export default function AdminDashboardPage() {
             <DollarSign className='h-4 w-4 text-green-500' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-foreground'>$1K</div>
+            <div className='text-2xl font-bold text-foreground'>
+              ${(stats?.totalPayoutsUsd || 0).toLocaleString()}
+            </div>
             <p className='text-xs text-muted-foreground'>High engagement</p>
           </CardContent>
         </Card>
         <Card className='bg-card border-border'>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium text-muted-foreground'>
-              Active Disputes
+              Register Today
             </CardTitle>
-            <AlertCircle className='h-4 w-4 text-destructive' />
+            <AlertCircle className='h-4 w-4 text-primary' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-foreground'>0</div>
-            <p className='text-xs text-muted-foreground'>Low disputes</p>
+            <div className='text-2xl font-bold text-foreground'>{stats?.userGrowth?.today || 0}</div>
+            <p className='text-xs text-muted-foreground'>New signups</p>
           </CardContent>
         </Card>
       </div>
@@ -128,16 +147,14 @@ export default function AdminDashboardPage() {
                 User Growth
               </CardTitle>
               <p className='text-xs text-muted-foreground mt-1'>
-                Monthly new user registrations
+                Daily registrations this month
               </p>
-            </div>
-            <div className='px-3 py-1 text-xs border rounded cursor-pointer hover:bg-muted'>
-              View Report
             </div>
           </CardHeader>
           <CardContent>
             <div className='mb-4'>
-              <span className='text-3xl font-bold font-inter'>481</span>
+              <span className='text-3xl font-bold font-inter'>{stats?.userGrowth?.monthToDate || 0}</span>
+              <span className='text-xs text-muted-foreground ml-2'>MTD</span>
             </div>
             <ResponsiveContainer width='100%' height={250}>
               <LineChart data={userGrowthData}>
@@ -171,7 +188,6 @@ export default function AdminDashboardPage() {
                   itemStyle={{ color: '#fff' }}
                   cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
                 />
-                {/* Gradient definition would normally go here but simplified for Line */}
                 <Line
                   type='monotone'
                   dataKey='talents'
@@ -185,14 +201,6 @@ export default function AdminDashboardPage() {
                     strokeWidth: 2,
                   }}
                 />
-                <Line
-                  type='monotone'
-                  dataKey='companies'
-                  stroke='#ffffff'
-                  strokeWidth={1}
-                  dot={false}
-                  strokeOpacity={0.2}
-                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -205,7 +213,7 @@ export default function AdminDashboardPage() {
               Payout Analytics
             </CardTitle>
             <p className='text-xs text-muted-foreground mt-1'>
-              Monthly payouts by token
+              Monthly payouts by token (USD)
             </p>
           </CardHeader>
           <CardContent>
@@ -245,30 +253,20 @@ export default function AdminDashboardPage() {
                   verticalAlign='top'
                   wrapperStyle={{ paddingBottom: '20px', fontSize: '12px' }}
                 />
-                <Line
-                  type='monotone'
-                  dataKey='USDC'
-                  stroke='#3b82f6'
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-                <Line
-                  type='monotone'
-                  dataKey='USGLO'
-                  stroke='#9ca3af'
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-                <Line
-                  type='monotone'
-                  dataKey='NGNC'
-                  stroke='#60a5fa'
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
+                {stats?.payoutAnalytics?.reduce((acc: string[], curr) => {
+                  if (!acc.includes(curr.token)) acc.push(curr.token)
+                  return acc
+                }, []).map((token, index) => (
+                  <Line
+                    key={token}
+                    type='monotone'
+                    dataKey={token}
+                    stroke={index === 0 ? '#3b82f6' : index === 1 ? '#10b981' : '#f59e0b'}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4 }}
+                  />
+                ))}
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -281,7 +279,7 @@ export default function AdminDashboardPage() {
               Work Status
             </CardTitle>
             <p className='text-xs text-muted-foreground mt-1'>
-              Distribution by status
+              Distribution of curated bounties and projects
             </p>
           </CardHeader>
           <CardContent>
@@ -330,7 +328,7 @@ export default function AdminDashboardPage() {
               Job Performance
             </CardTitle>
             <p className='text-xs text-muted-foreground mt-1'>
-              Quarterly show of Bounties and Projects
+              Quarterly creation of Bounties and Projects
             </p>
           </CardHeader>
           <CardContent>

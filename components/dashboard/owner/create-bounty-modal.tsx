@@ -21,16 +21,27 @@ import { InsufficientBalanceModal } from "./insufficient-balance-modal";
 
 
 
+import { adminService } from "@/lib/api/admin";
+
 interface CreateBountyModalProps {
   children?: React.ReactNode;
   existingBounty?: Bounty;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  isAdmin?: boolean;
+  stepUpToken?: string;
 }
 
 const DEFAULT_TAGS = ["Frontend", "Backend", "Ui/UX Design", "Writing", "Digital Marketing", "Mobile", "Web3"];
 
-export function CreateBountyModal({ children, existingBounty, open: controlledOpen, onOpenChange: setControlledOpen }: CreateBountyModalProps) {
+export function CreateBountyModal({ 
+  children, 
+  existingBounty, 
+  open: controlledOpen, 
+  onOpenChange: setControlledOpen,
+  isAdmin,
+  stepUpToken
+}: CreateBountyModalProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = setControlledOpen !== undefined ? setControlledOpen : setInternalOpen;
@@ -265,16 +276,30 @@ export function CreateBountyModal({ children, existingBounty, open: controlledOp
     };
 
     if (existingBounty) {
-      // Update payload: Exclude immutable fields
-      const updatePayload: any = { // Partial<CreateBountyDto> ideally but structure varies slightly for update
+      // Update payload
+      const updatePayload: any = {
         ...basePayload,
       };
 
-      updateBounty({ id: existingBounty.id, payload: updatePayload }, {
-        onSuccess: () => {
-          setOpen(false);
-        }
-      });
+      if (isAdmin && stepUpToken) {
+        // Admin update with step-up
+        const toastId = toast.loading("Updating as admin...");
+        adminService.updateBounty(existingBounty.id, updatePayload, stepUpToken)
+          .then(() => {
+            toast.success("Bounty updated successfully", { id: toastId });
+            setOpen(false);
+          })
+          .catch((err) => {
+            toast.error(err.response?.data?.message || "Failed to update bounty", { id: toastId });
+          });
+      } else {
+        // Regular owner update
+        updateBounty({ id: existingBounty.id, payload: updatePayload }, {
+          onSuccess: () => {
+            setOpen(false);
+          }
+        });
+      }
     } else {
       // Create payload: Include immutable fields
       const createPayload: CreateBountyDto = {

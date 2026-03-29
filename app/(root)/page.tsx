@@ -6,6 +6,7 @@ import { HeroSection } from "@/components/landing/hero-section";
 import { RecentWins } from "@/components/landing/recent-wins-section";
 import { TestimonialsSection } from "@/components/landing/testimonials-section";
 import { WhySection } from "@/components/landing/why-section";
+import { FeaturedHackathons } from "@/components/landing/featured-hackathons";
 
 import { Metadata } from "next";
 
@@ -33,6 +34,10 @@ export default function Home() {
 
       <GsapWrapper>
         <CommunityHighlight />
+      </GsapWrapper>
+
+      <GsapWrapper>
+        <FeaturedHackathons />
       </GsapWrapper>
 
       <GsapWrapper>

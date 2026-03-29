@@ -1,5 +1,3 @@
-'use client'
-
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -53,67 +51,27 @@ import {
   Upload,
   Users,
   X,
+  Loader2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
-
-// Types
-interface Hackathon {
-  id: string
-  host: {
-    name: string
-    logo: string
-  }
-  title: string
-  description: string
-  status: 'Active' | 'Completed' | 'Reviewing'
-  duration: string
-  participants: number
-  prizePool: string
-}
-
-// Mock Data
-const mockHackathons: Hackathon[] = [
-  {
-    id: '1',
-    host: { name: 'Stellar', logo: '/assets/icons/sdollar.png' },
-    title: 'Smart Contract Security Audit',
-    description: 'Find and fix vulnerabilities in smart, Create innovati...',
-    status: 'Active',
-    duration: '2024-02-10 - 2024-02-10',
-    participants: 4000,
-    prizePool: '$30,000 USDC',
-  },
-  {
-    id: '2',
-    host: { name: 'Stellar', logo: '/assets/icons/sdollar.png' },
-    title: 'Smart Contract Security Audit',
-    description: 'Find and fix vulnerabilities in smart, Create innovati...',
-    status: 'Completed',
-    duration: '2024-02-10 - 2024-02-10',
-    participants: 4000,
-    prizePool: '$30,000 USDC',
-  },
-  {
-    id: '3',
-    host: { name: 'Stellar', logo: '/assets/icons/sdollar.png' },
-    title: 'Smart Contract Security Audit',
-    description: 'Find and fix vulnerabilities in smart, Create innovati...',
-    status: 'Reviewing',
-    duration: '2024-02-10 - 2024-02-10',
-    participants: 4000,
-    prizePool: '$30,000 USDC',
-  },
-]
+import { useAdminHackathons, useAdminHackathonsStats } from '@/lib/api/admin/queries'
+import { adminService } from '@/lib/api/admin'
+import { StepUpModal } from '@/components/admin/step-up-modal'
+import { useAdminStore } from '@/lib/store/use-admin-store'
+import { toast } from 'sonner'
 
 // Status badge styling helper
 const getStatusBadgeClass = (status: string) => {
-  switch (status) {
-    case 'Active':
+  switch (status?.toUpperCase()) {
+    case 'ACTIVE':
+    case 'OPEN':
       return 'bg-green-500/20 text-green-400 hover:bg-green-500/30 border-0'
-    case 'Completed':
+    case 'COMPLETED':
+    case 'CLOSED':
       return 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border-0'
-    case 'Reviewing':
+    case 'REVIEWING':
+    case 'IN_PROGRESS':
       return 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border-0'
     default:
       return 'bg-muted text-muted-foreground border-0'
@@ -125,11 +83,88 @@ export default function HackathonAdministrationPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [teamBasedParticipation, setTeamBasedParticipation] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
 
-  const totalPages = Math.ceil(mockHackathons.length / rowsPerPage)
+  // Admin Step-up State
+  const [stepUpOpen, setStepUpOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState<{ type: string; hackathonId: string } | null>(null)
+  const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
+  const stepUpToken = useAdminStore((state) => state.stepUpToken)
+
+  const { data: stats } = useAdminHackathonsStats()
+  const { 
+    data: hackathonsData, 
+    isLoading,
+    refetch 
+  } = useAdminHackathons({
+    page: currentPage,
+    limit: rowsPerPage,
+    search: searchQuery || undefined
+  })
+
+  const hackathons = hackathonsData?.data || []
+  const totalItems = hackathonsData?.meta?.total || 0
+  const totalPages = hackathonsData?.meta?.totalPages || 1
+
+  const handleCreateHackathon = () => {
+    if (!isStepUpValid()) {
+      setPendingAction({ type: 'create', hackathonId: 'new' })
+      setStepUpOpen(true)
+      return
+    }
+    setIsCreateModalOpen(true)
+  }
+
+  const handleEditHackathon = (hackathonId: string) => {
+    if (!isStepUpValid()) {
+      setPendingAction({ type: 'edit', hackathonId })
+      setStepUpOpen(true)
+      return
+    }
+    // For now, edit logic is just opening the modal with existing data if we had it
+    // But the current UI doesn't seem to have a separate edit modal or pre-filled create modal
+    // I'll just open the create modal for now as a placeholder for "edit"
+    setIsCreateModalOpen(true)
+  }
+
+  const handleDelete = async (hackathonId: string) => {
+    if (!isStepUpValid()) {
+      setPendingAction({ type: 'delete', hackathonId })
+      setStepUpOpen(true)
+      return
+    }
+
+    const token = stepUpToken!
+    const toastId = toast.loading('Deleting hackathon...')
+    
+    try {
+      await adminService.deleteHackathon(hackathonId, token)
+      toast.success('Hackathon deleted successfully', { id: toastId })
+      refetch()
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete hackathon', { id: toastId })
+    }
+  }
+
+  const onStepUpSuccess = (token: string) => {
+    if (pendingAction?.type === 'delete') {
+      handleDelete(pendingAction.hackathonId)
+    } else if (pendingAction?.type === 'create') {
+      setIsCreateModalOpen(true)
+    } else if (pendingAction?.type === 'edit') {
+      setIsCreateModalOpen(true)
+    }
+    setPendingAction(null)
+  }
 
   return (
     <div className='space-y-6'>
+      <StepUpModal 
+        open={stepUpOpen} 
+        onOpenChange={setStepUpOpen} 
+        onSuccess={onStepUpSuccess} 
+      />
+
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
@@ -142,9 +177,9 @@ export default function HackathonAdministrationPage() {
         </div>
         <Button
           className='gap-2 bg-primary hover:bg-primary/90'
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={handleCreateHackathon}
         >
-          <Download className='h-4 w-4' />
+          <Plus className='h-4 w-4' />
           Create Hackathon
         </Button>
       </div>
@@ -162,10 +197,10 @@ export default function HackathonAdministrationPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              2,420
+              {stats?.totalHackathons || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
-              1 currently active
+              {stats?.activeHackathons || 0} currently active
             </div>
           </div>
         </div>
@@ -180,7 +215,7 @@ export default function HackathonAdministrationPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              $145,000
+              ${(stats?.totalPrizePoolUsd || 0).toLocaleString()}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Across all hackathons
@@ -198,7 +233,7 @@ export default function HackathonAdministrationPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              357
+              {stats?.totalParticipants || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Registered participants
@@ -216,7 +251,7 @@ export default function HackathonAdministrationPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              104
+              {stats?.totalSubmissions || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Total project submissions
@@ -230,8 +265,13 @@ export default function HackathonAdministrationPage() {
         <div className='relative w-full sm:max-w-md'>
           <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
           <Input
-            placeholder='Search bounties'
+            placeholder='Search hackathons'
             className='pl-10 bg-background border-border'
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setCurrentPage(1)
+            }}
           />
         </div>
         <Button
@@ -262,7 +302,7 @@ export default function HackathonAdministrationPage() {
                 Duration
               </TableHead>
               <TableHead className='text-muted-foreground font-medium'>
-                Participant
+                Participants
               </TableHead>
               <TableHead className='text-muted-foreground font-medium'>
                 Prize Pool
@@ -271,97 +311,117 @@ export default function HackathonAdministrationPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockHackathons.map((hackathon, index) => (
-              <TableRow
-                key={`${hackathon.id}-${index}`}
-                className='border-border hover:bg-muted/30'
-              >
-                <TableCell>
-                  <div className='flex items-center gap-2'>
-                    <Avatar className='h-7 w-7'>
-                      <AvatarImage
-                        src={hackathon.host.logo}
-                        alt={hackathon.host.name}
-                      />
-                      <AvatarFallback>
-                        {hackathon.host.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className='text-foreground text-sm font-medium'>
-                      {hackathon.host.name}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div>
-                    <div className='text-foreground text-sm font-medium'>
-                      {hackathon.title}
-                    </div>
-                    <div className='text-xs text-muted-foreground'>
-                      {hackathon.description}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge className={getStatusBadgeClass(hackathon.status)}>
-                    {hackathon.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className='text-muted-foreground text-sm'>
-                  {hackathon.duration}
-                </TableCell>
-                <TableCell className='text-muted-foreground text-sm'>
-                  {hackathon.participants.toLocaleString()}
-                </TableCell>
-                <TableCell className='text-muted-foreground text-sm'>
-                  {hackathon.prizePool}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-8 w-8 text-muted-foreground hover:text-foreground'
-                      >
-                        <MoreVertical className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align='end'
-                      className='bg-popover border-border'
-                    >
-                      <DropdownMenuItem
-                        asChild
-                        className='gap-2 cursor-pointer'
-                      >
-                        <Link
-                          href={`/dashboard/admin/hackathons/${hackathon.id}`}
-                        >
-                          <Eye className='h-4 w-4' />
-                          View Details
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className='gap-2 cursor-pointer'>
-                        <Edit className='h-4 w-4' />
-                        Edit Hackathon
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className='gap-2 cursor-pointer text-destructive focus:text-destructive'>
-                        <StopCircle className='h-4 w-4' />
-                        Stop Hackathon
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className='text-center py-12'>
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                 </TableCell>
               </TableRow>
-            ))}
+            ) : hackathons.length > 0 ? (
+              hackathons.map((hackathon: any) => (
+                <TableRow
+                  key={hackathon.id}
+                  className='border-border hover:bg-muted/30'
+                >
+                  <TableCell>
+                    <div className='flex items-center gap-2'>
+                      <Avatar className='h-7 w-7'>
+                        <AvatarImage
+                          src={hackathon.hostLogo || hackathon.logo}
+                          alt={hackathon.hostName || hackathon.title}
+                        />
+                        <AvatarFallback>
+                          {(hackathon.hostName || hackathon.title || 'H').charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className='text-foreground text-sm font-medium'>
+                        {hackathon.hostName || 'Generic Host'}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <div className='text-foreground text-sm font-medium'>
+                        {hackathon.title}
+                      </div>
+                      <div className='text-xs text-muted-foreground line-clamp-1'>
+                        {hackathon.description?.replace(/<[^>]*>/g, '')}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={getStatusBadgeClass(hackathon.status)}>
+                      {hackathon.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className='text-muted-foreground text-sm'>
+                    {hackathon.startDate ? new Date(hackathon.startDate).toLocaleDateString() : 'N/A'} - {hackathon.endDate ? new Date(hackathon.endDate).toLocaleDateString() : 'N/A'}
+                  </TableCell>
+                  <TableCell className='text-muted-foreground text-sm'>
+                    {(hackathon.participantsCount || 0).toLocaleString()}
+                  </TableCell>
+                  <TableCell className='text-muted-foreground text-sm'>
+                    ${(hackathon.totalPrizePool || 0).toLocaleString()} {hackathon.currency || 'USDC'}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant='ghost'
+                          size='icon'
+                          className='h-8 w-8 text-muted-foreground hover:text-foreground'
+                        >
+                          <MoreVertical className='h-4 w-4' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align='end'
+                        className='bg-popover border-border'
+                      >
+                        <DropdownMenuItem
+                          asChild
+                          className='gap-2 cursor-pointer'
+                        >
+                          <Link
+                            href={`/dashboard/admin/hackathons/${hackathon.id}`}
+                          >
+                            <Eye className='h-4 w-4' />
+                            View Details
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className='gap-2 cursor-pointer'
+                          onClick={() => handleEditHackathon(hackathon.id)}
+                        >
+                          <Edit className='h-4 w-4' />
+                          Edit Hackathon
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className='gap-2 cursor-pointer text-destructive focus:text-destructive'
+                          onClick={() => handleDelete(hackathon.id)}
+                        >
+                          <StopCircle className='h-4 w-4' />
+                          Delete Hackathon
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className='text-center py-8 text-muted-foreground'>
+                  No hackathons found matching your criteria.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
 
         {/* Pagination */}
         <div className='flex items-center justify-between px-4 py-3 border-t border-border'>
           <div className='text-sm text-muted-foreground'>
-            0 of 68 row(s) selected.
+            Showing {hackathons.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0} to {Math.min(currentPage * rowsPerPage, totalItems)} of {totalItems} hackathons
           </div>
           <div className='flex items-center gap-4'>
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>
@@ -478,7 +538,7 @@ export default function HackathonAdministrationPage() {
               </Label>
               <Select>
                 <SelectTrigger className='bg-background border-border'>
-                  <SelectValue placeholder='https://x.com/shadcn' />
+                  <SelectValue placeholder='Select Type' />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value='online'>Online</SelectItem>
@@ -492,45 +552,31 @@ export default function HackathonAdministrationPage() {
             <div className='space-y-2'>
               <Label className='text-sm text-foreground'>Description *</Label>
               <Textarea
-                placeholder="Introduce yourself and explain why you're the best fit for this project. Include relevant experience, approach to the problem and what makes you stand out..."
+                placeholder="Introduce your hackathon..."
                 className='bg-background border-border min-h-[120px]'
               />
-            </div>
-
-            {/* Deliverables */}
-            <div className='space-y-2'>
-              <Label className='text-sm text-foreground'>Deliverables *</Label>
-              <div className='flex gap-2'>
-                <Input
-                  placeholder='Deliverables'
-                  className='bg-background border-border flex-1'
-                />
-                <Button size='icon' className='bg-primary hover:bg-primary/90'>
-                  <Plus className='h-4 w-4' />
-                </Button>
-              </div>
             </div>
 
             {/* Deadline & Announcement Date */}
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
-                <Label className='text-sm text-foreground'>Deadline *</Label>
+                <Label className='text-sm text-foreground'>Start Date *</Label>
                 <div className='relative'>
                   <Calendar className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
                   <Input
-                    placeholder='Select date'
+                    type="date"
                     className='bg-background border-border pl-10'
                   />
                 </div>
               </div>
               <div className='space-y-2'>
                 <Label className='text-sm text-foreground'>
-                  Announcement Date *
+                  End Date *
                 </Label>
                 <div className='relative'>
                   <Calendar className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
                   <Input
-                    placeholder='Select date'
+                    type="date"
                     className='bg-background border-border pl-10'
                   />
                 </div>
@@ -555,124 +601,6 @@ export default function HackathonAdministrationPage() {
                     <SelectItem value='xlm'>XLM</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-
-            {/* Prize Pool */}
-            <div className='space-y-2'>
-              <Label className='text-sm text-foreground'>
-                Prize Pool ($20,000) *
-              </Label>
-              <div className='space-y-2'>
-                <div className='flex gap-2'>
-                  <Input
-                    placeholder='1st Place'
-                    className='bg-background border-border flex-1'
-                  />
-                  <div className='flex items-center gap-2 flex-1'>
-                    <span className='text-primary'>$</span>
-                    <Input
-                      placeholder='10,000'
-                      className='bg-background border-border'
-                    />
-                  </div>
-                </div>
-                <div className='flex gap-2'>
-                  <Input
-                    placeholder='2nd Place'
-                    className='bg-background border-border flex-1'
-                  />
-                  <div className='flex items-center gap-2 flex-1'>
-                    <span className='text-primary'>$</span>
-                    <Input
-                      placeholder='7,000'
-                      className='bg-background border-border'
-                    />
-                  </div>
-                </div>
-                <div className='flex gap-2'>
-                  <Input
-                    placeholder='3rd Place'
-                    className='bg-background border-border flex-1'
-                  />
-                  <div className='flex items-center gap-2 flex-1'>
-                    <span className='text-primary'>$</span>
-                    <Input
-                      placeholder='3,000'
-                      className='bg-background border-border'
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Tags */}
-            <div className='space-y-2'>
-              <Label className='text-sm text-foreground'>Tags *</Label>
-              <Input
-                placeholder='Select Tags'
-                className='bg-background border-border'
-              />
-              <div className='flex flex-wrap gap-2 mt-2'>
-                {[
-                  'Frontend',
-                  'Backend',
-                  'UI/UX Design',
-                  'Writing',
-                  'Digital Marketing',
-                ].map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant='secondary'
-                    className='bg-muted text-muted-foreground gap-1'
-                  >
-                    {tag}
-                    <X className='h-3 w-3 cursor-pointer' />
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* Hackathon Document */}
-            <div className='space-y-2'>
-              <Label className='text-sm text-foreground'>
-                Hackathon Document *
-              </Label>
-              <div className='flex gap-2'>
-                <Input
-                  placeholder='Link title'
-                  className='bg-background border-border flex-1'
-                />
-                <Input
-                  placeholder='https://'
-                  className='bg-background border-border flex-1'
-                />
-                <Button size='icon' className='bg-primary hover:bg-primary/90'>
-                  <Plus className='h-4 w-4' />
-                </Button>
-              </div>
-            </div>
-
-            {/* Additional Attachments */}
-            <div className='space-y-2'>
-              <Label className='text-sm text-foreground'>
-                Additional Attachments (Optional)
-              </Label>
-              <p className='text-xs text-muted-foreground'>
-                Attach relevant documents, screenshots, or files (max 5 files)
-              </p>
-              <div className='border-2 border-dashed border-border rounded-lg p-6 text-center'>
-                <div className='flex flex-col items-center gap-2'>
-                  <div className='h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center'>
-                    <Upload className='h-5 w-5 text-primary' />
-                  </div>
-                  <p className='text-sm text-muted-foreground'>
-                    Choose or drag and drop media
-                  </p>
-                  <p className='text-xs text-muted-foreground'>
-                    Maximum size 5 MB
-                  </p>
-                </div>
               </div>
             </div>
 
@@ -717,70 +645,8 @@ export default function HackathonAdministrationPage() {
             {/* Company Logo */}
             <div className='space-y-2'>
               <Label className='text-sm text-foreground'>Company Logo *</Label>
-              <div className='border-2 border-dashed border-border rounded-lg p-6 text-center'>
-                <div className='flex flex-col items-center gap-2'>
-                  <div className='h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center'>
-                    <Upload className='h-5 w-5 text-primary' />
-                  </div>
-                  <p className='text-sm text-muted-foreground'>
-                    Choose or drag and drop media
-                  </p>
-                  <p className='text-xs text-muted-foreground'>
-                    Maximum size 5 MB
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Socials */}
-            <div className='space-y-4'>
-              <Label className='text-sm text-foreground'>Socials</Label>
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label className='text-xs text-muted-foreground'>
-                    X(Formerly Twitter) *
-                  </Label>
-                  <div className='relative'>
-                    <X className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                    <Input
-                      placeholder='Enter your X Username'
-                      className='bg-background border-border pl-10'
-                    />
-                  </div>
-                </div>
-                <div className='space-y-2'>
-                  <Label className='text-xs text-muted-foreground'>
-                    Website *
-                  </Label>
-                  <Input
-                    placeholder='Enter your website URL'
-                    className='bg-background border-border'
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label className='text-xs text-muted-foreground'>
-                    Linkedin
-                  </Label>
-                  <div className='relative'>
-                    <Linkedin className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                    <Input
-                      placeholder='Enter your Linkedin Username'
-                      className='bg-background border-border pl-10'
-                    />
-                  </div>
-                </div>
-                <div className='space-y-2'>
-                  <Label className='text-xs text-muted-foreground'>
-                    Instagram
-                  </Label>
-                  <div className='relative'>
-                    <Instagram className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                    <Input
-                      placeholder='Enter your Instagram Username'
-                      className='bg-background border-border pl-10'
-                    />
-                  </div>
-                </div>
+              <div className='border-2 border-dashed border-border rounded-lg p-6 text-center text-muted-foreground'>
+                Logo upload placeholder
               </div>
             </div>
           </div>
@@ -788,8 +654,8 @@ export default function HackathonAdministrationPage() {
           {/* Footer */}
           <div className='p-6 pt-0 sticky bottom-0 bg-card'>
             <Button className='w-full gap-2 bg-primary hover:bg-primary/90'>
-              <Download className='h-4 w-4' />
-              Create Bounty
+              <Plus className='h-4 w-4' />
+              Create Hackathon
             </Button>
           </div>
         </DialogContent>

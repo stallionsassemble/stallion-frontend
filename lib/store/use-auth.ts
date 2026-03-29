@@ -1,6 +1,7 @@
 import { authService } from '@/lib/api/auth'
 import { LoginValues } from '@/lib/schemas/auth'
 import { AuthResponse, User } from '@/lib/types'
+import { SocialAuthDto, SocialAuthResponse } from '@/lib/types/admin'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
@@ -27,6 +28,7 @@ interface AuthState {
 
   // Actions
   login: (data: LoginValues & { totpCode?: string }) => Promise<boolean>
+  socialAuth: (data: SocialAuthDto) => Promise<SocialAuthResponse>
   requestVerification: (data: { email: string; role?: string }) => Promise<void>
   verifyCode: (data: {
     email: string
@@ -88,6 +90,24 @@ export const useAuth = create<AuthState>()(
             mfaEnabled: response.mfaEnabled,
           })
           return !!response.mfaEnabled
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
+        }
+      },
+
+      socialAuth: async (data) => {
+        set({ isLoading: true })
+        try {
+          const response = await authService.socialAuth(data)
+          set({
+            user: response.user,
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            isAuthenticated: true,
+            isLoading: false,
+          })
+          return response
         } catch (error) {
           set({ isLoading: false })
           throw error

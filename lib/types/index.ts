@@ -15,7 +15,8 @@ export interface User {
     linkedin?: string
     instagram?: string
   }
-  role?: 'CONTRIBUTOR' | 'PROJECT_OWNER' | 'OWNER'
+  role?: 'CONTRIBUTOR' | 'PROJECT_OWNER' | 'OWNER' | 'ADMIN'
+  status?: 'ACTIVE' | 'SUSPENDED' | 'BANNED'
   companyName?: string | null
   entityName?: string | null
   phoneNumber?: string | null

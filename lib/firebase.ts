@@ -11,15 +11,21 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
+import { getAuth, GoogleAuthProvider, OAuthProvider } from 'firebase/auth'
+
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
+const auth = getAuth(app)
+
+const googleProvider = new GoogleAuthProvider()
+const appleProvider = new OAuthProvider('apple.com')
 
 const messaging = async () => {
   const supported = await isSupported()
   return supported ? getMessaging(app) : null
 }
 
-export { app, messaging }
+export { app, auth, googleProvider, appleProvider, messaging }
 
 export const fetchToken = async () => {
   try {

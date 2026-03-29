@@ -122,6 +122,11 @@ const adminSidebarItems = [
     icon: Wallet,
   },
   {
+    title: 'Funding',
+    href: '/dashboard/admin/funding',
+    icon: Shield,
+  },
+  {
     title: 'Settings',
     href: '/dashboard/admin/settings',
     icon: Settings,

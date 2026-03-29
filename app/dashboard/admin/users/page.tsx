@@ -39,77 +39,28 @@ import {
   Trash2,
   UserCheck,
   Users,
+  Loader2,
+  ShieldCheck,
+  KeyIcon,
+  UserPlus,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
-
-// Types
-interface User {
-  id: number
-  name: string
-  username: string
-  email: string
-  avatar: string
-  dateOpened: string
-  role: 'Contributor' | 'Project Owner' | 'Admin'
-  status: 'Active' | 'Flagged' | 'Suspended' | 'Banned'
-  reputation: number
-  bounties: number
-  earnings: string
-  lastActive: string
-}
-
-// Mock Data - Extended to match design
-const mockUsers: User[] = Array.from({ length: 68 }, (_, i) => ({
-  id: i + 1,
-  name: [
-    'Alex Chen',
-    'Jane Doe',
-    'John Smith',
-    'Sarah Williams',
-    'Mike Johnson',
-  ][i % 5],
-  username: ['@alexchen', '@janedoe', '@johnsmith', '@sarahw', '@mikej'][i % 5],
-  email: [
-    'alex@email.com',
-    'jane@email.com',
-    'john@email.com',
-    'sarah@email.com',
-    'mike@email.com',
-  ][i % 5],
-  avatar: '/assets/icons/sdollar.png',
-  dateOpened: '2024-02-10',
-  role: (['Contributor', 'Project Owner', 'Admin'] as const)[i % 3],
-  status:
-    i % 12 === 0
-      ? 'Banned'
-      : i % 7 === 0
-        ? 'Suspended'
-        : i % 5 === 0
-          ? 'Flagged'
-          : 'Active',
-  reputation: Number((3.5 + Math.random() * 1.5).toFixed(1)),
-  bounties: Math.floor(Math.random() * 50),
-  earnings: `$${(Math.random() * 50000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`,
-  lastActive: ['2 hours ago', '1 day ago', '3 days ago', '1 week ago'][i % 4],
-}))
-
-// Stats calculations
-const totalUsers = mockUsers.length
-const activeUsers = mockUsers.filter((u) => u.status === 'Active').length
-const suspendedUsers = mockUsers.filter((u) => u.status === 'Suspended').length
-const bannedUsers = mockUsers.filter((u) => u.status === 'Banned').length
+import { useState } from 'react'
+import { useAdminUsers, useAdminUsersStats } from '@/lib/api/admin/queries'
+import { adminService } from '@/lib/api/admin'
+import { StepUpModal } from '@/components/admin/step-up-modal'
+import { InviteUserModal } from '@/components/admin/invite-user-modal'
+import { useAdminStore } from '@/lib/store/use-admin-store'
+import { toast } from 'sonner'
 
 // Status badge styling helper
 const getStatusBadgeClass = (status: string) => {
   switch (status) {
-    case 'Active':
+    case 'ACTIVE':
       return 'bg-green-500/20 text-green-400 border-0'
-    case 'Flagged':
-      return 'bg-amber-500/20 text-amber-400 border-0'
-    case 'Suspended':
+    case 'SUSPENDED':
       return 'bg-orange-500/20 text-orange-400 border-0'
-    case 'Banned':
+    case 'BANNED':
       return 'bg-red-500/20 text-red-400 border-0'
     default:
       return 'bg-muted text-muted-foreground border-0'
@@ -121,54 +72,85 @@ export default function UserManagementPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [activeFilter, setActiveFilter] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  
+  // Admin Step-up State
+  const [stepUpOpen, setStepUpOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState<{ type: string; userId: string; data?: any } | null>(null)
+  const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
+  const stepUpToken = useAdminStore((state) => state.stepUpToken)
 
-  // Filter users based on role and search
-  const filteredUsers = useMemo(() => {
-    let result = mockUsers
-
-    // Filter by role
-    if (activeFilter === 'Talents') {
-      result = result.filter((u) => u.role === 'Contributor')
-    } else if (activeFilter === 'Project Owners') {
-      result = result.filter((u) => u.role === 'Project Owner')
-    } else if (activeFilter === 'Admins') {
-      result = result.filter((u) => u.role === 'Admin')
+  const handleInviteUser = () => {
+    if (!isStepUpValid()) {
+      setPendingAction({ type: 'invite', userId: 'new' })
+      setStepUpOpen(true)
+      return
     }
-
-    // Filter by search
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter(
-        (u) =>
-          u.name.toLowerCase().includes(query) ||
-          u.username.toLowerCase().includes(query) ||
-          u.email.toLowerCase().includes(query),
-      )
-    }
-
-    return result
-  }, [activeFilter, searchQuery])
-
-  const totalPages = Math.ceil(filteredUsers.length / rowsPerPage)
-  const startIndex = (currentPage - 1) * rowsPerPage
-  const paginatedUsers = filteredUsers.slice(
-    startIndex,
-    startIndex + rowsPerPage,
-  )
-
-  // Reset page when filter changes
-  const handleFilterChange = (filter: string) => {
-    setActiveFilter(filter)
-    setCurrentPage(1)
+    setIsInviteModalOpen(true)
   }
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query)
-    setCurrentPage(1)
+  const { data: stats, isLoading: statsLoading } = useAdminUsersStats()
+  
+  const roleFilter = activeFilter === 'Talents' ? 'CONTRIBUTOR' : 
+                     activeFilter === 'Project Owners' ? 'PROJECT_OWNER' : 
+                     activeFilter === 'Admins' ? 'ADMIN' : undefined
+
+  const { data: usersData, isLoading: usersLoading, refetch } = useAdminUsers({
+    page: currentPage,
+    limit: rowsPerPage,
+    role: roleFilter,
+    search: searchQuery || undefined
+  })
+
+  const users = usersData?.data || []
+  const meta = usersData?.meta
+  const totalPages = meta?.totalPages || 0
+
+  const handleAction = async (type: string, userId: string, data?: any) => {
+    if (!isStepUpValid()) {
+      setPendingAction({ type, userId, data })
+      setStepUpOpen(true)
+      return
+    }
+
+    const token = stepUpToken!
+    const toastId = toast.loading(`Performing action...`)
+    
+    try {
+      if (type === 'suspend') {
+        await adminService.suspendUser(userId, data || { reason: 'Administrative action' }, token)
+        toast.success('User suspended successfully', { id: toastId })
+      } else if (type === 'ban') {
+        await adminService.banUser(userId, data || { reason: 'Administrative action' }, token)
+        toast.success('User banned successfully', { id: toastId })
+      } else if (type === 'make-admin') {
+        await adminService.makeAdmin(userId, token)
+        toast.success('User role updated to Admin', { id: toastId })
+      } else if (type === 'reset-2fa') {
+        await adminService.reset2fa(userId, token)
+        toast.success('2FA reset successfully', { id: toastId })
+      }
+      refetch()
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Action failed', { id: toastId })
+    }
+  }
+
+  const onStepUpSuccess = (token: string) => {
+    if (pendingAction) {
+      handleAction(pendingAction.type, pendingAction.userId, pendingAction.data)
+      setPendingAction(null)
+    }
   }
 
   return (
     <div className='space-y-6'>
+      <StepUpModal 
+        open={stepUpOpen} 
+        onOpenChange={setStepUpOpen} 
+        onSuccess={onStepUpSuccess} 
+      />
+
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
@@ -179,11 +161,27 @@ export default function UserManagementPage() {
             Manage platform users, roles, and permissions
           </p>
         </div>
-        <Button className='gap-2 bg-primary hover:bg-primary/90'>
-          <Download className='h-4 w-4' />
-          Export Users
-        </Button>
+        <div className='flex items-center gap-3'>
+          <Button 
+            className='gap-2 bg-primary hover:bg-primary/90'
+            onClick={handleInviteUser}
+          >
+            <UserPlus className='h-4 w-4' />
+            Invite User
+          </Button>
+          <Button variant="outline" className='gap-2 border-border'>
+            <Download className='h-4 w-4' />
+            Export
+          </Button>
+        </div>
       </div>
+
+      <InviteUserModal 
+        open={isInviteModalOpen}
+        onOpenChange={setIsInviteModalOpen}
+        onSuccess={refetch}
+        stepUpToken={stepUpToken}
+      />
 
       {/* Stats Cards */}
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
@@ -198,7 +196,7 @@ export default function UserManagementPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              {totalUsers}
+              {stats?.totalUsers || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Platform registered users
@@ -216,7 +214,7 @@ export default function UserManagementPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              {activeUsers}
+              {stats?.activeUsers || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Currently active
@@ -234,7 +232,7 @@ export default function UserManagementPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              {suspendedUsers}
+              {stats?.suspendedUsers || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Temporarily restricted
@@ -252,7 +250,7 @@ export default function UserManagementPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              {bannedUsers}
+              {stats?.bannedUsers || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Permanently banned
@@ -269,7 +267,10 @@ export default function UserManagementPage() {
             placeholder='Search by name, username, or email'
             className='pl-10 bg-background border-border'
             value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(e) => {
+               setSearchQuery(e.target.value)
+               setCurrentPage(1)
+            }}
           />
         </div>
         <div className='flex items-center gap-2 flex-wrap'>
@@ -278,7 +279,10 @@ export default function UserManagementPage() {
               key={filter}
               variant={activeFilter === filter ? 'default' : 'outline'}
               size='sm'
-              onClick={() => handleFilterChange(filter)}
+              onClick={() => {
+                setActiveFilter(filter)
+                setCurrentPage(1)
+              }}
               className={
                 activeFilter === filter
                   ? 'bg-primary text-primary-foreground'
@@ -308,7 +312,7 @@ export default function UserManagementPage() {
                 Users
               </TableHead>
               <TableHead className='text-muted-foreground font-medium'>
-                Date Opened
+                Date Joined
               </TableHead>
               <TableHead className='text-muted-foreground font-medium'>
                 Role
@@ -332,8 +336,14 @@ export default function UserManagementPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedUsers.length > 0 ? (
-              paginatedUsers.map((user) => (
+            {usersLoading ? (
+               <TableRow>
+                 <TableCell colSpan={9} className="text-center py-10">
+                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                 </TableCell>
+               </TableRow>
+            ) : users.length > 0 ? (
+              users.map((user) => (
                 <TableRow
                   key={user.id}
                   className='border-border hover:bg-muted/30'
@@ -341,46 +351,46 @@ export default function UserManagementPage() {
                   <TableCell>
                     <div className='flex items-center gap-3'>
                       <Avatar className='h-9 w-9'>
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={user.profilePicture} alt={user.firstName} />
+                        <AvatarFallback>{(user.firstName || user.username || '?').charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className='font-medium text-foreground text-sm'>
-                          {user.name}
+                          {user.firstName} {user.lastName}
                         </div>
                         <div className='text-xs text-muted-foreground'>
-                          {user.username}
+                          @{user.username}
                         </div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className='text-muted-foreground text-sm'>
-                    {user.dateOpened}
+                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant='outline'
                       className='border-border text-muted-foreground font-normal'
                     >
-                      {user.role}
+                      {user.role || 'CONTRIBUTOR'}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusBadgeClass(user.status)}>
-                      {user.status}
+                    <Badge className={getStatusBadgeClass(user.status || 'ACTIVE')}>
+                      {user.status || 'ACTIVE'}
                     </Badge>
                   </TableCell>
                   <TableCell className='text-muted-foreground text-sm'>
-                    {user.reputation}
+                    {user.reputationRating || 0}
                   </TableCell>
                   <TableCell className='text-muted-foreground text-sm'>
-                    {user.bounties}
+                    {user.bountiesParticipated || 0}
                   </TableCell>
                   <TableCell className='text-muted-foreground text-sm'>
-                    {user.earnings}
+                    ${(user.earningsUsd || 0).toLocaleString()}
                   </TableCell>
                   <TableCell className='text-muted-foreground text-sm'>
-                    {user.lastActive}
+                    {user.lastActiveAt ? new Date(user.lastActiveAt).toLocaleDateString() : 'Never'}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -406,22 +416,43 @@ export default function UserManagementPage() {
                             View Profile
                           </Link>
                         </DropdownMenuItem>
-                        {user.status === 'Active' && (
-                          <DropdownMenuItem className='gap-2 cursor-pointer text-amber-500 focus:text-amber-500'>
+                        
+                        <DropdownMenuItem 
+                          className='gap-2 cursor-pointer'
+                          onClick={() => handleAction('reset-2fa', user.id)}
+                        >
+                           <KeyIcon className='h-4 w-4 text-amber-500' />
+                           Reset 2FA
+                        </DropdownMenuItem>
+
+                        {user.role !== 'ADMIN' && (
+                          <DropdownMenuItem 
+                            className='gap-2 cursor-pointer'
+                            onClick={() => handleAction('make-admin', user.id)}
+                          >
+                             <ShieldCheck className='h-4 w-4 text-blue-500' />
+                             Make Admin
+                          </DropdownMenuItem>
+                        )}
+
+                        {user.status === 'ACTIVE' && (
+                          <DropdownMenuItem 
+                            className='gap-2 cursor-pointer text-amber-500 focus:text-amber-500'
+                            onClick={() => handleAction('suspend', user.id)}
+                          >
                             <ShieldAlert className='h-4 w-4' />
                             Suspend User
                           </DropdownMenuItem>
                         )}
-                        {user.status !== 'Banned' && (
-                          <DropdownMenuItem className='gap-2 cursor-pointer text-destructive focus:text-destructive'>
+                        {(user.status as string) !== 'BANNED' && (
+                          <DropdownMenuItem 
+                            className='gap-2 cursor-pointer text-destructive focus:text-destructive'
+                            onClick={() => handleAction('ban', user.id)}
+                          >
                             <Ban className='h-4 w-4' />
                             Ban User
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem className='gap-2 cursor-pointer text-destructive focus:text-destructive'>
-                          <Trash2 className='h-4 w-4' />
-                          Delete User
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -443,9 +474,9 @@ export default function UserManagementPage() {
         {/* Pagination */}
         <div className='flex items-center justify-between px-4 py-3 border-t border-border'>
           <div className='text-sm text-muted-foreground'>
-            Showing {startIndex + 1} to{' '}
-            {Math.min(startIndex + rowsPerPage, filteredUsers.length)} of{' '}
-            {filteredUsers.length} users
+            Showing {((currentPage - 1) * rowsPerPage) + 1} to{' '}
+            {Math.min(currentPage * rowsPerPage, meta?.total || 0)} of{' '}
+            {meta?.total || 0} users
           </div>
           <div className='flex items-center gap-4'>
             <div className='flex items-center gap-2 text-sm text-muted-foreground'>

@@ -8,9 +8,15 @@ import {
   MFAVerifyResponse,
   User,
 } from '@/lib/types'
+import { SocialAuthDto, SocialAuthResponse } from '@/lib/types/admin'
 
 export class AuthService {
   // --- Auth & Verification ---
+
+  async socialAuth(data: SocialAuthDto) {
+    const response = await api.post<SocialAuthResponse>('/auth/social', data)
+    return response.data
+  }
 
   async login(data: LoginValues & { totpCode?: string }) {
     const response = await api.post<LoginResponse>('/auth/login', data)

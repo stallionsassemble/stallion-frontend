@@ -1,5 +1,3 @@
-'use client'
-
 import { CreateBountyModal } from '@/components/dashboard/owner/create-bounty-modal'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -26,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useGetAllBounties } from '@/lib/api/bounties/queries'
+import { useAdminBounties, useAdminBountiesStats } from '@/lib/api/admin/queries'
 import { Bounty } from '@/lib/types/bounties'
 import {
   AlertTriangle,
@@ -42,22 +40,27 @@ import {
   Search,
   SlidersHorizontal,
   Trash2,
+  Loader2,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
+import { adminService } from '@/lib/api/admin'
+import { StepUpModal } from '@/components/admin/step-up-modal'
+import { useAdminStore } from '@/lib/store/use-admin-store'
+import { toast } from 'sonner'
 
 // Status badge styling helper
 const getStatusBadgeClass = (status: string) => {
-  switch (status?.toLowerCase()) {
-    case 'active':
-    case 'open':
+  switch (status?.toUpperCase()) {
+    case 'ACTIVE':
+    case 'OPEN':
       return 'bg-green-500/20 text-green-400 border-0'
-    case 'completed':
-    case 'closed':
+    case 'COMPLETED':
+    case 'CLOSED':
       return 'bg-blue-500/20 text-blue-400 border-0'
-    case 'in_progress':
+    case 'IN_PROGRESS':
       return 'bg-amber-500/20 text-amber-400 border-0'
-    case 'disputed':
+    case 'DISPUTED':
       return 'bg-red-500/20 text-red-400 border-0'
     default:
       return 'bg-muted text-muted-foreground border-0'
@@ -76,74 +79,77 @@ export default function BountyManagementPage() {
   const [activeFilter, setActiveFilter] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Admin Step-up State
+  const [stepUpOpen, setStepUpOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState<{ type: string; bountyId: string } | null>(null)
+  const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
+  const stepUpToken = useAdminStore((state) => state.stepUpToken)
+
   // Edit State
   const [selectedBounty, setSelectedBounty] = useState<Bounty | undefined>(
     undefined,
   )
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
+  const { data: stats } = useAdminBountiesStats()
+
   // Fetch all bounties with pagination
   const {
     data: bountiesData,
     isLoading,
-    error,
-  } = useGetAllBounties({
+    refetch
+  } = useAdminBounties({
     page: currentPage,
     limit: rowsPerPage,
     status:
       activeFilter !== 'All'
-        ? (activeFilter.toUpperCase() as 'ACTIVE' | 'COMPLETED' | 'CLOSED')
+        ? (activeFilter.toUpperCase() as any)
         : undefined,
     search: searchQuery || undefined,
   })
 
   const bounties = bountiesData?.data || []
   const totalItems = bountiesData?.meta?.total || 0
-  const totalPages =
-    bountiesData?.meta?.totalPages || Math.ceil(totalItems / rowsPerPage)
+  const totalPages = bountiesData?.meta?.totalPages || 1
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    const meta: any = bountiesData?.meta;
-    return {
-      active:
-        meta?.activeCount ||
-        bounties.filter(
-          (b: Bounty) =>
-            b.status?.toLowerCase() === 'active' ||
-            b.status?.toLowerCase() === 'open',
-        ).length,
-      completed:
-        meta?.completedCount ||
-        bounties.filter(
-          (b: Bounty) =>
-            b.status?.toLowerCase() === 'completed' ||
-            b.status?.toLowerCase() === 'closed',
-        ).length,
-      disputed:
-        meta?.disputedCount ||
-        bounties.filter((b: Bounty) => b.status?.toLowerCase() === 'disputed')
-          .length,
-      escrowLocked: meta?.escrowLocked || '0', // Could format this if it's a number
+  const handleEditBounty = (bounty: Bounty) => {
+    if (!isStepUpValid()) {
+      setSelectedBounty(bounty)
+      setPendingAction({ type: 'edit', bountyId: bounty.id })
+      setStepUpOpen(true)
+      return
     }
-  }, [bountiesData, bounties])
-
-  // Handle filter change
-  const handleFilterChange = (filter: string) => {
-    setActiveFilter(filter)
-    setCurrentPage(1)
-  }
-
-  // Handle search
-  const handleSearch = (query: string) => {
-    setSearchQuery(query)
-    setCurrentPage(1)
-  }
-
-  // Handle Edit
-  const handleEdit = (bounty: Bounty) => {
     setSelectedBounty(bounty)
     setIsEditModalOpen(true)
+  }
+
+  const handleDelete = async (bountyId: string) => {
+    if (!isStepUpValid()) {
+      setPendingAction({ type: 'delete', bountyId })
+      setStepUpOpen(true)
+      return
+    }
+
+    const token = stepUpToken!
+    const toastId = toast.loading('Deleting bounty...')
+    
+    try {
+      await adminService.deleteBounty(bountyId, token)
+      toast.success('Bounty deleted successfully', { id: toastId })
+      refetch()
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete bounty', { id: toastId })
+    }
+  }
+
+  const onStepUpSuccess = (token: string) => {
+    if (pendingAction?.type === 'delete') {
+      handleDelete(pendingAction.bountyId)
+      setPendingAction(null)
+    } else if (pendingAction?.type === 'edit') {
+      setIsEditModalOpen(true)
+      setPendingAction(null)
+    }
   }
 
   // Handle Export
@@ -187,6 +193,12 @@ export default function BountyManagementPage() {
 
   return (
     <div className='space-y-6'>
+      <StepUpModal 
+        open={stepUpOpen} 
+        onOpenChange={setStepUpOpen} 
+        onSuccess={onStepUpSuccess} 
+      />
+
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
@@ -209,7 +221,6 @@ export default function BountyManagementPage() {
 
       {/* Stats Cards */}
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
-        {/* ... Stats cards remain same ... */}
         <div className='rounded-xl border border-border bg-card p-5 relative overflow-hidden group hover:border-primary/50 transition-colors'>
           <div className='flex justify-between items-start mb-4'>
             <h3 className='text-sm font-medium text-muted-foreground'>
@@ -221,7 +232,7 @@ export default function BountyManagementPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              {stats.active}
+              {stats?.active || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Active bounties
@@ -239,7 +250,7 @@ export default function BountyManagementPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              {stats.completed}
+              {stats?.completed || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Completed bounties
@@ -257,7 +268,7 @@ export default function BountyManagementPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              {stats.disputed}
+              {stats?.disputed || 0}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               In dispute
@@ -275,7 +286,7 @@ export default function BountyManagementPage() {
           </div>
           <div className='space-y-1'>
             <span className='text-2xl md:text-3xl font-bold text-foreground'>
-              {stats.escrowLocked}
+              {typeof stats?.escrowLocked === 'number' ? `$${stats.escrowLocked.toLocaleString()}` : stats?.escrowLocked || '$0'}
             </span>
             <div className='flex items-center gap-1 text-xs text-muted-foreground'>
               Total locked value
@@ -292,7 +303,10 @@ export default function BountyManagementPage() {
             placeholder='Search bounties by title or owner'
             className='pl-10 bg-background border-border'
             value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setCurrentPage(1)
+            }}
           />
         </div>
         <div className='flex items-center gap-2 flex-wrap'>
@@ -301,7 +315,10 @@ export default function BountyManagementPage() {
               key={filter}
               variant={activeFilter === filter ? 'default' : 'outline'}
               size='sm'
-              onClick={() => handleFilterChange(filter)}
+              onClick={() => {
+                setActiveFilter(filter)
+                setCurrentPage(1)
+              }}
               className={
                 activeFilter === filter
                   ? 'bg-primary text-primary-foreground'
@@ -356,18 +373,9 @@ export default function BountyManagementPage() {
               <TableRow>
                 <TableCell
                   colSpan={8}
-                  className='text-center py-8 text-muted-foreground'
+                  className='text-center py-12'
                 >
-                  Loading bounties...
-                </TableCell>
-              </TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className='text-center py-8 text-destructive'
-                >
-                  Error loading bounties. Please try again.
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
                 </TableCell>
               </TableRow>
             ) : bounties.length > 0 ? (
@@ -406,7 +414,7 @@ export default function BountyManagementPage() {
                           ).charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className='text-foreground text-sm'>
+                      <span className='text-foreground text-sm uppercase'>
                         {bounty.owner?.companyName ||
                           bounty.owner?.username ||
                           'Unknown'}
@@ -426,7 +434,7 @@ export default function BountyManagementPage() {
                     {(bounty as any).currency || bounty.rewardCurrency || 'USDC'}
                   </TableCell>
                   <TableCell className='text-muted-foreground text-sm'>
-                    {/* Using Reward as Escrow Proxy for now */}$
+                    $
                     {(bounty as any).totalReward?.toLocaleString() ||
                       bounty.reward ||
                       '0'}
@@ -456,7 +464,7 @@ export default function BountyManagementPage() {
                       >
                         <DropdownMenuItem
                           className='gap-2 cursor-pointer'
-                          onClick={() => handleEdit(bounty)}
+                          onClick={() => handleEditBounty(bounty)}
                         >
                           <Edit className='h-4 w-4' />
                           Edit Bounty
@@ -471,7 +479,10 @@ export default function BountyManagementPage() {
                           </Link>
                         </DropdownMenuItem>
 
-                        <DropdownMenuItem className='gap-2 cursor-pointer text-destructive focus:text-destructive'>
+                        <DropdownMenuItem 
+                          className='gap-2 cursor-pointer text-destructive focus:text-destructive'
+                          onClick={() => handleDelete(bounty.id)}
+                        >
                           <Trash2 className='h-4 w-4' />
                           Delete Bounty
                         </DropdownMenuItem>
@@ -493,7 +504,7 @@ export default function BountyManagementPage() {
           </TableBody>
         </Table>
 
-        {/* Pagination - Reuse existing pagination logic */}
+        {/* Pagination */}
         <div className='flex items-center justify-between px-4 py-3 border-t border-border'>
           <div className='text-sm text-muted-foreground'>
             Showing{' '}
@@ -579,6 +590,8 @@ export default function BountyManagementPage() {
           if (!open) setSelectedBounty(undefined)
         }}
         existingBounty={selectedBounty}
+        isAdmin={true}
+        stepUpToken={stepUpToken || undefined}
       />
     </div>
   )

@@ -17,17 +17,23 @@ import { loginSchema, LoginValues } from '@/lib/schemas/auth'
 import { useAuth } from '@/lib/store/use-auth'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { startAuthentication } from '@simplewebauthn/browser'
-import { Key } from 'lucide-react'
+import { Key, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { GoogleLogin } from '@react-oauth/google'
+import { appleAuthHelpers } from 'react-apple-signin-auth'
+import { RoleSelectionModal } from '@/components/auth/role-selection-modal'
 
 export function LoginClient() {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showRoleModal, setShowRoleModal] = useState(false)
+  const [socialPendingData, setSocialPendingData] = useState<{ provider: 'GOOGLE' | 'APPLE'; idToken: string } | null>(null)
+  
   const router = useRouter()
-  const { login, passkeyAuthOptions, passkeyAuthVerify, setUser, user } = useAuth()
+  const { login, socialAuth, passkeyAuthOptions, passkeyAuthVerify, setUser, user } = useAuth()
 
   // Redirect if already logged in
   if (user) {
@@ -88,6 +94,68 @@ export function LoginClient() {
     }
   }
 
+  // Google login functionality is handled via the <GoogleLogin /> component's onSuccess prop.
+
+  const handleAppleLogin = async () => {
+    try {
+      const response = await appleAuthHelpers.signIn({
+        authOptions: {
+          clientId: process.env.NEXT_PUBLIC_APPLE_CLIENT_ID || 'com.stallion.web',
+          scope: 'email name',
+          redirectURI: typeof window !== 'undefined' ? `${window.location.origin}/auth/login` : 'https://stallion.so/auth/login',
+          usePopup: true,
+        },
+        onError: (error: any) => {
+          console.error(error);
+          toast.error('Failed to sign in with Apple');
+        }
+      });
+      if (response && response.authorization && response.authorization.id_token) {
+        await processSocialAuth('APPLE', response.authorization.id_token);
+      }
+    } catch (error) {
+       toast.error('Apple login encountered an error');
+    }
+  };
+
+  async function processSocialAuth(provider: 'GOOGLE' | 'APPLE', idToken: string, role?: 'CONTRIBUTOR' | 'PROJECT_OWNER') {
+    setIsSubmitting(true)
+    const toastId = toast.loading(`Connecting to ${provider}...`)
+    
+    try {
+      const response = await socialAuth({
+        provider,
+        idToken,
+        role
+      })
+
+      if (response.isNewUser && !response.user.profileCompleted) {
+        toast.success("Welcome! Please complete your profile.", { id: toastId })
+        router.push("/auth/onboarding")
+      } else {
+        toast.success("Logged in successfully!", { id: toastId })
+        if (response.user.role === 'PROJECT_OWNER' || response.user.role === 'OWNER') {
+          router.push("/dashboard/owner")
+        } else {
+          router.push("/dashboard")
+        }
+      }
+      
+      setSocialPendingData(null)
+      setShowRoleModal(false)
+    } catch (error: any) {
+      if (error.response?.status === 400 && (error.response?.data?.message?.toLowerCase().includes("role is required") || error.response?.data?.message?.toLowerCase().includes("role selection required"))) {
+        setSocialPendingData({ provider, idToken })
+        setShowRoleModal(true)
+        toast.dismiss(toastId)
+      } else {
+        toast.error(error.response?.data?.message || `Failed to sign in with ${provider}`, { id: toastId })
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   async function onSubmit(data: LoginValues) {
     setIsSubmitting(true)
 
@@ -104,8 +172,20 @@ export function LoginClient() {
     }
   }
 
+  const handleRoleSelection = (role: 'CONTRIBUTOR' | 'PROJECT_OWNER') => {
+    if (socialPendingData) {
+      processSocialAuth(socialPendingData.provider, socialPendingData.idToken, role)
+    }
+  }
+
   return (
     <AuthSplitLayout rightContent={<AuthRightSection variant="bounties" />}>
+      <RoleSelectionModal 
+        open={showRoleModal} 
+        onOpenChange={setShowRoleModal} 
+        onSelect={handleRoleSelection}
+        isLoading={isSubmitting}
+      />
       <div className='space-y-2'>
         <h1 className='text-3xl font-medium tracking-tight text-white lg:text-4xl'>
           Sign in
@@ -118,19 +198,32 @@ export function LoginClient() {
       <div className='space-y-6 pt-4'>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
           <Button
+            type="button"
             variant='default'
             className='h-10 md:h-12 w-full rounded-full dark:bg-white dark:text-black hover:bg-gray-200 gap-2 border-none'
+            onClick={handleAppleLogin}
+            disabled={isSubmitting}
           >
             <AppleIcon className='h-5 w-5' />
             Continue with Apple
           </Button>
-          <Button
-            variant='default'
-            className='h-10 md:h-12 w-full rounded-full dark:bg-white dark:text-black hover:bg-gray-200 gap-2 border-none'
-          >
-            <GoogleIcon className='h-5 w-5' />
-            Continue with Google
-          </Button>
+          <div className="w-full h-[40px] md:h-[48px] overflow-hidden rounded-full">
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                if (credentialResponse.credential) {
+                  await processSocialAuth('GOOGLE', credentialResponse.credential);
+                }
+              }}
+              onError={() => {
+                toast.error('Failed to sign in with Google');
+              }}
+              theme="outline"
+              size="large"
+              shape="pill"
+              width="100%"
+              use_fedcm_for_prompt={true}
+            />
+          </div>
         </div>
 
         <div className='relative'>
@@ -167,7 +260,7 @@ export function LoginClient() {
               className='h-12 w-full rounded-lg bg-blue text-white hover:bg-[#0066CC]'
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Please wait' : 'Continue with Email'}
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continue with Email'}
             </Button>
 
             <div className="relative flex items-center justify-center text-xs uppercase tracking-widest text-muted-foreground my-4">

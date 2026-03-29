@@ -8,7 +8,7 @@ export function HeroSection() {
       <h1 className='text-4xl text-nowrap md:text-8xl font-bold font-syne mb-4 text-foreground w-auto'>
         Powering the Global
         <br />
-        <p className='text-primary'>Talent Pipeline on Stellar.</p>
+        <p className='text-primary text-pretty'>Talent Pipeline on Stellar.</p>
       </h1>
 
       <p className='text-[12px] md:text-xl text-muted-foreground font-normal font-inter mb-6 max-w-2xl mx-auto text-start md:text-center'>
