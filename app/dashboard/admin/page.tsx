@@ -65,8 +65,34 @@ export default function AdminDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className='space-y-6'>
+        <div className='flex items-center justify-between'>
+          <div className='h-8 w-48 animate-pulse rounded bg-muted' />
+        </div>
+        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className='bg-card border-border'>
+              <CardHeader className='pb-2'>
+                <div className='h-4 w-24 animate-pulse rounded bg-muted' />
+              </CardHeader>
+              <CardContent>
+                <div className='h-8 w-16 animate-pulse rounded bg-muted' />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className='grid gap-6 md:grid-cols-2'>
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className='bg-card border-border h-[350px]'>
+              <CardHeader>
+                <div className='h-4 w-32 animate-pulse rounded bg-muted' />
+              </CardHeader>
+              <CardContent className='flex items-center justify-center h-64'>
+                <Loader2 className="h-8 w-8 animate-spin text-primary/20" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     )
   }
@@ -156,53 +182,59 @@ export default function AdminDashboardPage() {
               <span className='text-3xl font-bold font-inter'>{stats?.userGrowth?.monthToDate || 0}</span>
               <span className='text-xs text-muted-foreground ml-2'>MTD</span>
             </div>
-            <ResponsiveContainer width='100%' height={250}>
-              <LineChart data={userGrowthData}>
-                <CartesianGrid
-                  strokeDasharray='3 3'
-                  vertical={false}
-                  stroke='rgba(255,255,255,0.05)'
-                />
-                <XAxis
-                  dataKey='name'
-                  stroke='#666'
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  dy={10}
-                />
-                <YAxis
-                  stroke='#666'
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  dx={-10}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#09090B',
-                    borderColor: '#333',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                  }}
-                  itemStyle={{ color: '#fff' }}
-                  cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
-                />
-                <Line
-                  type='monotone'
-                  dataKey='talents'
-                  stroke='#3b82f6'
-                  strokeWidth={3}
-                  dot={false}
-                  activeDot={{
-                    r: 6,
-                    fill: '#3b82f6',
-                    stroke: '#09090B',
-                    strokeWidth: 2,
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {userGrowthData.length > 0 ? (
+              <ResponsiveContainer width='100%' height={250}>
+                <LineChart data={userGrowthData}>
+                  <CartesianGrid
+                    strokeDasharray='3 3'
+                    vertical={false}
+                    stroke='rgba(255,255,255,0.05)'
+                  />
+                  <XAxis
+                    dataKey='name'
+                    stroke='#666'
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    dy={10}
+                  />
+                  <YAxis
+                    stroke='#666'
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    dx={-10}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#09090B',
+                      borderColor: '#333',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                    }}
+                    itemStyle={{ color: '#fff' }}
+                    cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
+                  />
+                  <Line
+                    type='monotone'
+                    dataKey='talents'
+                    stroke='#3b82f6'
+                    strokeWidth={3}
+                    dot={false}
+                    activeDot={{
+                      r: 6,
+                      fill: '#3b82f6',
+                      stroke: '#09090B',
+                      strokeWidth: 2,
+                    }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground italic border border-dashed border-border rounded-lg">
+                No registration data available for this month
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -217,58 +249,64 @@ export default function AdminDashboardPage() {
             </p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width='100%' height={300}>
-              <LineChart data={payoutAnalyticsData}>
-                <CartesianGrid
-                  strokeDasharray='3 3'
-                  vertical={false}
-                  stroke='rgba(255,255,255,0.05)'
-                />
-                <XAxis
-                  dataKey='name'
-                  stroke='#666'
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  dy={10}
-                />
-                <YAxis
-                  stroke='#666'
-                  fontSize={11}
-                  tickLine={false}
-                  axisLine={false}
-                  dx={-10}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#09090B',
-                    borderColor: '#333',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                  }}
-                />
-                <Legend
-                  iconType='square'
-                  align='right'
-                  verticalAlign='top'
-                  wrapperStyle={{ paddingBottom: '20px', fontSize: '12px' }}
-                />
-                {stats?.payoutAnalytics?.reduce((acc: string[], curr) => {
-                  if (!acc.includes(curr.token)) acc.push(curr.token)
-                  return acc
-                }, []).map((token, index) => (
-                  <Line
-                    key={token}
-                    type='monotone'
-                    dataKey={token}
-                    stroke={index === 0 ? '#3b82f6' : index === 1 ? '#10b981' : '#f59e0b'}
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 4 }}
+            {payoutAnalyticsData.length > 0 ? (
+              <ResponsiveContainer width='100%' height={300}>
+                <LineChart data={payoutAnalyticsData}>
+                  <CartesianGrid
+                    strokeDasharray='3 3'
+                    vertical={false}
+                    stroke='rgba(255,255,255,0.05)'
                   />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
+                  <XAxis
+                    dataKey='name'
+                    stroke='#666'
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    dy={10}
+                  />
+                  <YAxis
+                    stroke='#666'
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    dx={-10}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#09090B',
+                      borderColor: '#333',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                    }}
+                  />
+                  <Legend
+                    iconType='square'
+                    align='right'
+                    verticalAlign='top'
+                    wrapperStyle={{ paddingBottom: '20px', fontSize: '12px' }}
+                  />
+                  {stats?.payoutAnalytics?.reduce((acc: string[], curr) => {
+                    if (!acc.includes(curr.token)) acc.push(curr.token)
+                    return acc
+                  }, []).map((token, index) => (
+                    <Line
+                      key={token}
+                      type='monotone'
+                      dataKey={token}
+                      stroke={index === 0 ? '#3b82f6' : index === 1 ? '#10b981' : '#f59e0b'}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+                <div className="flex h-64 items-center justify-center text-sm text-muted-foreground italic border border-dashed border-border rounded-lg">
+                  No payout history available
+                </div>
+            )}
           </CardContent>
         </Card>
 

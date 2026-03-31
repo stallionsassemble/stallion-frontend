@@ -1,3 +1,5 @@
+"use client";
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -84,6 +86,20 @@ export default function HackathonAdministrationPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [teamBasedParticipation, setTeamBasedParticipation] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Form State
+  const [formData, setFormData] = useState({
+    title: '',
+    type: 'online',
+    description: '',
+    startDate: '',
+    endDate: '',
+    totalPrizePool: '',
+    currency: 'USDC',
+    maxTeamSize: '4',
+    hostName: '',
+  })
 
   // Admin Step-up State
   const [stepUpOpen, setStepUpOpen] = useState(false)
@@ -127,6 +143,40 @@ export default function HackathonAdministrationPage() {
     setIsCreateModalOpen(true)
   }
 
+  const handleCreateSubmit = async () => {
+    if (!formData.title || !formData.description || !formData.startDate || !formData.endDate || !formData.totalPrizePool) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    if (!isStepUpValid()) {
+      setPendingAction({ type: 'create', hackathonId: 'new' })
+      setStepUpOpen(true)
+      return
+    }
+
+    const token = stepUpToken!
+    setIsSubmitting(true)
+    const toastId = toast.loading('Creating hackathon...')
+    
+    try {
+      await adminService.createHackathon({
+        ...formData,
+        totalPrizePool: parseFloat(formData.totalPrizePool),
+        teamBasedParticipation,
+        maxTeamSize: teamBasedParticipation ? parseInt(formData.maxTeamSize) : 1
+      }, token)
+      
+      toast.success('Hackathon created successfully', { id: toastId })
+      setIsCreateModalOpen(false)
+      refetch()
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to create hackathon', { id: toastId })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const handleDelete = async (hackathonId: string) => {
     if (!isStepUpValid()) {
       setPendingAction({ type: 'delete', hackathonId })
@@ -149,10 +199,8 @@ export default function HackathonAdministrationPage() {
   const onStepUpSuccess = (token: string) => {
     if (pendingAction?.type === 'delete') {
       handleDelete(pendingAction.hackathonId)
-    } else if (pendingAction?.type === 'create') {
-      setIsCreateModalOpen(true)
-    } else if (pendingAction?.type === 'edit') {
-      setIsCreateModalOpen(true)
+    } else if (pendingAction?.type === 'create' || pendingAction?.type === 'edit') {
+      handleCreateSubmit()
     }
     setPendingAction(null)
   }
@@ -528,6 +576,8 @@ export default function HackathonAdministrationPage() {
               <Input
                 placeholder='e.g Bounty Hub'
                 className='bg-background border-border'
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               />
             </div>
 
@@ -536,7 +586,10 @@ export default function HackathonAdministrationPage() {
               <Label className='text-sm text-foreground'>
                 Hackathon Type *
               </Label>
-              <Select>
+              <Select 
+                value={formData.type} 
+                onValueChange={(v) => setFormData(prev => ({ ...prev, type: v }))}
+              >
                 <SelectTrigger className='bg-background border-border'>
                   <SelectValue placeholder='Select Type' />
                 </SelectTrigger>
@@ -554,6 +607,8 @@ export default function HackathonAdministrationPage() {
               <Textarea
                 placeholder="Introduce your hackathon..."
                 className='bg-background border-border min-h-[120px]'
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               />
             </div>
 
@@ -566,6 +621,8 @@ export default function HackathonAdministrationPage() {
                   <Input
                     type="date"
                     className='bg-background border-border pl-10'
+                    value={formData.startDate}
+                    onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
                   />
                 </div>
               </div>
@@ -590,15 +647,20 @@ export default function HackathonAdministrationPage() {
                 <Input
                   placeholder='20,000'
                   className='bg-background border-border flex-1'
+                  value={formData.totalPrizePool}
+                  onChange={(e) => setFormData(prev => ({ ...prev, totalPrizePool: e.target.value }))}
                 />
-                <Select defaultValue='usdc'>
+                <Select 
+                  value={formData.currency} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, currency: v }))}
+                >
                   <SelectTrigger className='w-24 bg-background border-border'>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='usdc'>USDC</SelectItem>
-                    <SelectItem value='usglo'>USGLO</SelectItem>
-                    <SelectItem value='xlm'>XLM</SelectItem>
+                    <SelectItem value='USDC'>USDC</SelectItem>
+                    <SelectItem value='USGLO'>USGLO</SelectItem>
+                    <SelectItem value='XLM'>XLM</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -629,6 +691,9 @@ export default function HackathonAdministrationPage() {
                 <Input
                   placeholder='Size'
                   className='bg-background border-border'
+                  type="number"
+                  value={formData.maxTeamSize}
+                  onChange={(e) => setFormData(prev => ({ ...prev, maxTeamSize: e.target.value }))}
                 />
               </div>
             )}
@@ -636,9 +701,11 @@ export default function HackathonAdministrationPage() {
             {/* Company Name */}
             <div className='space-y-2'>
               <Label className='text-sm text-foreground'>Company Name *</Label>
-              <Input
+               <Input
                 placeholder='Company Name'
                 className='bg-background border-border'
+                value={formData.hostName}
+                onChange={(e) => setFormData(prev => ({ ...prev, hostName: e.target.value }))}
               />
             </div>
 
@@ -653,8 +720,12 @@ export default function HackathonAdministrationPage() {
 
           {/* Footer */}
           <div className='p-6 pt-0 sticky bottom-0 bg-card'>
-            <Button className='w-full gap-2 bg-primary hover:bg-primary/90'>
-              <Plus className='h-4 w-4' />
+            <Button 
+              className='w-full gap-2 bg-primary hover:bg-primary/90'
+              disabled={isSubmitting}
+              onClick={handleCreateSubmit}
+            >
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className='h-4 w-4' />}
               Create Hackathon
             </Button>
           </div>

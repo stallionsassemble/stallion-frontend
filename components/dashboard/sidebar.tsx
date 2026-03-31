@@ -28,7 +28,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
-const talentSidebarItems = [
+interface SidebarItem {
+  title: string
+  href: string
+  icon: any
+  badge?: number | string
+}
+
+const talentSidebarItems: SidebarItem[] = [
   {
     title: 'Dashboard',
     href: '/dashboard',
@@ -89,7 +96,7 @@ const talentSidebarItems = [
   },
 ]
 
-const adminSidebarItems = [
+const adminSidebarItems: SidebarItem[] = [
   {
     title: 'Dashboard',
     href: '/dashboard/admin',
@@ -111,10 +118,14 @@ const adminSidebarItems = [
     icon: Trophy,
   },
   {
+    title: 'Projects',
+    href: '/dashboard/admin/projects',
+    icon: Briefcase,
+  },
+  {
     title: 'Messages',
     href: '/dashboard/admin/messages',
     icon: MessageSquare,
-    badge: 2, // Hardcoded as per screenshot implication or 2
   },
   {
     title: 'Payouts',
@@ -133,7 +144,7 @@ const adminSidebarItems = [
   },
 ]
 
-const ownerSidebarItems = [
+const ownerSidebarItems: SidebarItem[] = [
   {
     title: 'Dashboard',
     href: '/dashboard/owner',
@@ -208,7 +219,7 @@ function SidebarContent({
 
   const isAdminRoute = pathname.startsWith('/dashboard/admin')
   const isOwnerRoute = pathname.startsWith('/dashboard/owner')
-  const sidebarItems = isAdminRoute
+  const sidebarItems: SidebarItem[] = isAdminRoute
     ? adminSidebarItems
     : isOwnerRoute
       ? ownerSidebarItems
@@ -254,12 +265,8 @@ function SidebarContent({
             currentBadge = unreadNotificationsCount
           } else if (item.title === 'Notification') {
             currentBadge = undefined
-          } else if (item.title === 'Messages' && unreadMessagesCount > 0) {
-            // Only show message badge if we have logic for it.
-            // Currently using static '2' from the array or dynamic if available?
-            // For now adhering to existing logic:
-            currentBadge =
-              unreadMessagesCount > 0 ? unreadMessagesCount : item.badge
+          } else if (item.title === 'Messages') {
+            currentBadge = unreadMessagesCount > 0 ? unreadMessagesCount : undefined
           }
 
           return (

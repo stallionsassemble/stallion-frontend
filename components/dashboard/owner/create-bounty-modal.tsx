@@ -1,3 +1,5 @@
+"use client";
+
 import { RichTextEditor } from "@/components/shared/rich-text-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
