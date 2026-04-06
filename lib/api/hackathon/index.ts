@@ -1,77 +1,73 @@
-import { api } from '@/lib/api'
+import { getStallionBackendAPI } from '@/lib/api/generated/hackathons/hackathons-sdk'
+import type {
+  CreateHackathonDto,
+  CreateSubmissionDto,
+  HackathonSelectWinnersDto,
+  JudgeSubmissionDto,
+  UpdateHackathonDto,
+  UpdateSubmissionDto,
+} from '@/lib/api/generated/hackathons/model'
+
+const hackathonsSdk = getStallionBackendAPI()
 
 class HackathonService {
-  async createHackathon(payload: any) {
-    const response = await api.post('/hackathons', payload)
-    return response.data
+  async createHackathon(payload: CreateHackathonDto) {
+    return hackathonsSdk.hackathonsControllerCreateHackathon(payload)
   }
 
-  async getHackathons() {
-    const response = await api.get('/hackathons')
-    return response.data
+  async getHackathons(params?: Record<string, unknown>) {
+    return hackathonsSdk.hackathonsControllerGetHackathons(params)
   }
 
   async getHackathon(identifier: string) {
-    const response = await api.get(`/hackathons/${identifier}`)
-    return response.data
+    return hackathonsSdk.hackathonsControllerGetHackathon(identifier)
   }
 
-  async updateHackathon(id: string, payload: any) {
-    const response = await api.patch(`/hackathons/${id}`, payload)
-    return response.data
+  async updateHackathon(id: string, payload: UpdateHackathonDto) {
+    return hackathonsSdk.hackathonsControllerUpdateHackathon(id, payload)
   }
 
   async deleteHackathon(id: string) {
-    const response = await api.delete(`/hackathons/${id}`)
-    return response.data
+    return hackathonsSdk.hackathonsControllerDeleteHackathon(id)
   }
 
   async publishHackathon(id: string) {
-    const response = await api.post(`/hackathons/${id}/publish`)
-    return response.data
+    return hackathonsSdk.hackathonsControllerPublishHackathon(id)
   }
 
-  async createSubmission(payload: any) {
-    const response = await api.post('/hackathons/submissions', payload)
-    return response.data
+  async createSubmission(payload: CreateSubmissionDto) {
+    return hackathonsSdk.hackathonsControllerCreateSubmission(payload)
   }
 
-  async getSubmissions(hackathonId: string) {
-    const response = await api.get(`/hackathons/${hackathonId}/submissions`)
-    return response.data
+  async getSubmissions(
+    hackathonId: string,
+    params?: Record<string, unknown>
+  ) {
+    return hackathonsSdk.hackathonsControllerGetSubmissions(hackathonId, params)
   }
 
-  async getMySubmissions() {
-    const response = await api.get('/hackathons/submissions/my')
-    return response.data
+  async getMySubmissions(params?: Record<string, unknown>) {
+    return hackathonsSdk.hackathonsControllerGetMySubmissions(params)
   }
 
-  async updateSubmission(id: string, payload: any) {
-    const response = await api.patch(`/hackathons/submissions/${id}`, payload)
-    return response.data
+  async updateSubmission(id: string, payload: UpdateSubmissionDto) {
+    return hackathonsSdk.hackathonsControllerUpdateSubmission(id, payload)
   }
 
   async deleteSubmission(id: string) {
-    const response = await api.delete(`/hackathons/submissions/${id}`)
-    return response.data
+    return hackathonsSdk.hackathonsControllerDeleteSubmission(id)
   }
 
-  async judgeSubmission(id: string, payload: any) {
-    const response = await api.post(
-      `/hackathons/submissions/${id}/judge`,
-      payload
-    )
-    return response.data
+  async judgeSubmission(id: string, payload: JudgeSubmissionDto) {
+    return hackathonsSdk.hackathonsControllerJudgeSubmission(id, payload)
   }
 
-  async selectWinners(id: string, payload: any) {
-    const response = await api.post(`/hackathons/${id}/winners`, payload)
-    return response.data
+  async selectWinners(id: string, payload: HackathonSelectWinnersDto) {
+    return hackathonsSdk.hackathonsControllerSelectWinners(id, payload)
   }
 
-  async getWinners(hackathonId: string) {
-    const response = await api.get(`/hackathons/${hackathonId}/winners`)
-    return response.data
+  async getWinners(hackathonId: string, params?: Record<string, unknown>) {
+    return hackathonsSdk.hackathonsControllerGetWinners(hackathonId, params)
   }
 }
 

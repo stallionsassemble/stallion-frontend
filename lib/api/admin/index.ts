@@ -1,6 +1,7 @@
-import { api } from '@/lib/api'
 import { 
+  AdminBounty,
   AdminDashboardStats, 
+  AdminHackathon,
   AdminPaginatedResponse, 
   AdminUser, 
   BountyAdminStats, 
@@ -10,208 +11,186 @@ import {
   StepUpResponse,
   FundingWalletResponse
 } from '@/lib/types/admin'
+import { getStallionBackendAPI } from '@/lib/api/generated/admin/admin-sdk'
+import type {
+  AdminCreateHackathonDto,
+  AdminCreateUserDto,
+  AdminCreateUserDtoRole,
+  StepUpPasskeyVerifyDtoResponse,
+} from '@/lib/api/generated/admin/model'
+import type { AuthenticationResponseJSON, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser'
+
+type AdminListParams = Record<string, unknown>
+type AdminEntityPayload = Record<string, unknown>
+type PasskeyAuthenticationOptions = {
+  optionsJSON: PublicKeyCredentialRequestOptionsJSON
+  useBrowserAutofill?: boolean
+  verifyBrowserAutofillInput?: boolean
+}
+type PasskeyAuthenticationResponse = AuthenticationResponseJSON | StepUpPasskeyVerifyDtoResponse
+type AdminStepUpHeader = {
+  headers: {
+    'x-admin-step-up-token': string
+  }
+}
+
+const adminSdk = getStallionBackendAPI()
+
+const withStepUp = (stepUpToken: string): AdminStepUpHeader => ({
+  headers: { 'x-admin-step-up-token': stepUpToken }
+})
 
 class AdminService {
   // --- Dashboard ---
   async getDashboardStats() {
-    const response = await api.get<AdminDashboardStats>('/admin/dashboard')
-    return response.data
+    return adminSdk.adminControllerGetDashboard() as unknown as Promise<AdminDashboardStats>
   }
 
   // --- Users ---
   async getUsersStats() {
-    const response = await api.get<UserAdminStats>('/admin/users/stats')
-    return response.data
+    return adminSdk.adminControllerGetUserStats() as unknown as Promise<UserAdminStats>
   }
 
-  async getUsers(params: any) {
-    const response = await api.get<AdminPaginatedResponse<AdminUser>>('/admin/users', { params })
-    return response.data
+  async getUsers(params: AdminListParams) {
+    return adminSdk.adminControllerListUsers(params) as unknown as Promise<AdminPaginatedResponse<AdminUser>>
   }
 
   async createUser(data: { email: string; role: string; firstName?: string; lastName?: string; username?: string }, stepUpToken: string) {
-    const response = await api.post('/admin/users', data, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    const payload: AdminCreateUserDto = {
+      email: data.email,
+      role: data.role as AdminCreateUserDtoRole,
+    }
+
+    return adminSdk.adminControllerCreateUser(payload, withStepUp(stepUpToken))
   }
 
   async reset2fa(userId: string, stepUpToken: string) {
-    const response = await api.post(`/admin/users/${userId}/reset-2fa`, {}, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerResetUser2FA(userId, withStepUp(stepUpToken))
   }
 
   async makeAdmin(userId: string, stepUpToken: string) {
-    const response = await api.post(`/admin/users/${userId}/make-admin`, {}, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerMakeAdmin(userId, withStepUp(stepUpToken))
   }
 
   async suspendUser(userId: string, data: { indefinite?: boolean; durationHours?: number; reason: string }, stepUpToken: string) {
-    const response = await api.post(`/admin/users/${userId}/suspend`, data, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerSuspendUser(userId, data, withStepUp(stepUpToken))
   }
 
   async banUser(userId: string, data: { reason: string }, stepUpToken: string) {
-    const response = await api.post(`/admin/users/${userId}/ban`, data, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerBanUser(userId, data, withStepUp(stepUpToken))
   }
 
   // --- Bounties ---
   async getBountiesStats() {
-    const response = await api.get<BountyAdminStats>('/admin/bounties/stats')
-    return response.data
+    return adminSdk.adminControllerGetBountyStats() as unknown as Promise<BountyAdminStats>
   }
 
-  async getBounties(params: any) {
-    const response = await api.get<AdminPaginatedResponse<any>>('/admin/bounties', { params })
-    return response.data
+  async getBounties(params: AdminListParams) {
+    return adminSdk.adminControllerListBounties(params) as unknown as Promise<AdminPaginatedResponse<AdminBounty>>
   }
 
   async featureBounty(bountyId: string, isFeatured: boolean, stepUpToken: string) {
-    const response = await api.patch(`/admin/bounties/${bountyId}/feature`, { isFeatured }, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerToggleBountyFeature(
+      bountyId,
+      { isFeatured },
+      withStepUp(stepUpToken)
+    )
   }
 
-  async updateBounty(bountyId: string, data: any, stepUpToken: string) {
-    const response = await api.patch(`/admin/bounties/${bountyId}`, data, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+  async updateBounty(bountyId: string, data: AdminEntityPayload, stepUpToken: string) {
+    return adminSdk.adminControllerUpdateBounty(bountyId, data, withStepUp(stepUpToken))
   }
 
   async deleteBounty(bountyId: string, stepUpToken: string) {
-    const response = await api.delete(`/admin/bounties/${bountyId}`, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerDeleteBounty(bountyId, withStepUp(stepUpToken))
   }
 
   // --- Projects ---
   async getProjectsStats() {
-    const response = await api.get<BountyAdminStats>('/admin/projects/stats') // Reuses BountyAdminStats shape
-    return response.data
+    return adminSdk.adminControllerGetProjectStats() as unknown as Promise<BountyAdminStats>
   }
 
-  async getProjects(params: any) {
-    const response = await api.get<AdminPaginatedResponse<any>>('/admin/projects', { params })
-    return response.data
+  async getProjects(params: AdminListParams) {
+    return adminSdk.adminControllerListProjects(params) as unknown as Promise<AdminPaginatedResponse<unknown>>
   }
 
   async featureProject(projectId: string, isFeatured: boolean, stepUpToken: string) {
-    const response = await api.patch(`/admin/projects/${projectId}/feature`, { isFeatured }, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerToggleProjectFeature(
+      projectId,
+      { isFeatured },
+      withStepUp(stepUpToken)
+    )
   }
 
-  async updateProject(projectId: string, data: any, stepUpToken: string) {
-    const response = await api.patch(`/admin/projects/${projectId}`, data, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+  async updateProject(projectId: string, data: AdminEntityPayload, stepUpToken: string) {
+    return adminSdk.adminControllerUpdateProject(projectId, data, withStepUp(stepUpToken))
   }
 
   async deleteProject(projectId: string, stepUpToken: string) {
-    const response = await api.delete(`/admin/projects/${projectId}`, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerDeleteProject(projectId, withStepUp(stepUpToken))
   }
 
   // --- Payouts ---
   async getPayoutsStats() {
-    const response = await api.get<PayoutAdminStats>('/admin/payouts/stats')
-    return response.data
+    return adminSdk.adminControllerGetPayoutStats() as unknown as Promise<PayoutAdminStats>
   }
 
-  async getPayouts(params: any) {
-    const response = await api.get<AdminPaginatedResponse<any>>('/admin/payouts', { params })
-    return response.data
+  async getPayouts(params: AdminListParams) {
+    return adminSdk.adminControllerListPayouts(params) as unknown as Promise<AdminPaginatedResponse<unknown>>
   }
 
   async retryPayout(payoutId: string, stepUpToken: string) {
-    const response = await api.post(`/admin/payouts/${payoutId}/retry`, {}, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerRetryPayout(payoutId, withStepUp(stepUpToken))
   }
 
   // --- Hackathons ---
   async getHackathonsStats() {
-    const response = await api.get<HackathonAdminStats>('/admin/hackathons/stats')
-    return response.data
+    return adminSdk.adminControllerGetHackathonStats() as unknown as Promise<HackathonAdminStats>
   }
 
-  async getHackathons(params: any) {
-    const response = await api.get<AdminPaginatedResponse<any>>('/admin/hackathons', { params })
-    return response.data
+  async getHackathons(params: AdminListParams) {
+    return adminSdk.adminControllerListHackathons(params) as unknown as Promise<AdminPaginatedResponse<AdminHackathon>>
   }
 
-  async createHackathon(data: any, stepUpToken: string) {
-    const response = await api.post('/admin/hackathons', data, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+  async createHackathon(data: AdminCreateHackathonDto, stepUpToken: string) {
+    return adminSdk.adminControllerCreateHackathon(data, withStepUp(stepUpToken))
   }
 
-  async updateHackathon(hackathonId: string, data: any, stepUpToken: string) {
-    const response = await api.patch(`/admin/hackathons/${hackathonId}`, data, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+  async updateHackathon(hackathonId: string, data: AdminEntityPayload, stepUpToken: string) {
+    return adminSdk.adminControllerUpdateHackathon(hackathonId, data, withStepUp(stepUpToken))
   }
 
   async deleteHackathon(hackathonId: string, stepUpToken: string) {
-    const response = await api.delete(`/admin/hackathons/${hackathonId}`, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerDeleteHackathon(hackathonId, withStepUp(stepUpToken))
   }
 
   // --- Funding Wallet ---
   async getFundingWallet() {
-    const response = await api.get<FundingWalletResponse>('/admin/funding-wallet')
-    return response.data
+    return adminSdk.adminControllerGetFundingWallet() as unknown as Promise<FundingWalletResponse>
   }
 
   async updateFundingWallet(data: { fundingWalletId: string }, stepUpToken: string) {
-    const response = await api.put('/admin/funding-wallet', data, {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerSetFundingWallet(data, withStepUp(stepUpToken))
   }
 
   async deleteFundingWallet(stepUpToken: string) {
-    const response = await api.delete('/admin/funding-wallet', {
-      headers: { 'x-admin-step-up-token': stepUpToken }
-    })
-    return response.data
+    return adminSdk.adminControllerClearFundingWallet(withStepUp(stepUpToken))
   }
 
   // --- Step-Up ---
   async stepUpTotp(code: string) {
-    const response = await api.post<StepUpResponse>('/admin/security/step-up/totp', { code })
-    return response.data
+    return adminSdk.adminControllerVerifyTotpStepUp({ code }) as Promise<StepUpResponse>
   }
 
   async stepUpPasskeyOptions() {
-    const response = await api.post('/admin/security/step-up/passkey/options')
-    return response.data
+    return adminSdk.adminControllerGetPasskeyStepUpOptions() as unknown as Promise<PasskeyAuthenticationOptions>
   }
 
-  async stepUpPasskeyVerify(response_data: any) {
-    const response = await api.post<StepUpResponse>('/admin/security/step-up/passkey/verify', { response: response_data })
-    return response.data
+  async stepUpPasskeyVerify(response_data: PasskeyAuthenticationResponse) {
+    return adminSdk.adminControllerVerifyPasskeyStepUp(
+      { response: response_data as StepUpPasskeyVerifyDtoResponse },
+      undefined
+    ) as Promise<StepUpResponse>
   }
 }
 

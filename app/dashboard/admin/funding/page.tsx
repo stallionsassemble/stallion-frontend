@@ -13,6 +13,29 @@ import { toast } from 'sonner'
 
 import { FundingWalletResponse } from '@/lib/types/admin'
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'response' in error &&
+    error.response &&
+    typeof error.response === 'object' &&
+    'data' in error.response &&
+    error.response.data &&
+    typeof error.response.data === 'object' &&
+    'message' in error.response.data &&
+    typeof error.response.data.message === 'string'
+  ) {
+    return error.response.data.message
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+
+  return fallback
+}
+
 export default function FundingWalletPage() {
   const [loading, setLoading] = useState(true)
   const [fundingWallet, setFundingWallet] = useState<FundingWalletResponse | null>(null)
@@ -44,7 +67,7 @@ export default function FundingWalletPage() {
     fetchFundingWallet()
   }, [])
 
-  const handleSave = async () => {
+  const handleSave = async (stepUpTokenOverride?: string) => {
     if (!isStepUpValid()) {
       setPendingAction({ type: 'save' })
       setStepUpOpen(true)
@@ -56,7 +79,11 @@ export default function FundingWalletPage() {
       return
     }
 
-    const token = stepUpToken!
+    const token = stepUpTokenOverride || stepUpToken
+    if (!token) {
+      toast.error('Step-up verification required')
+      return
+    }
     setIsSaving(true)
     const toastId = toast.loading('Saving funding wallet...')
 
@@ -64,21 +91,25 @@ export default function FundingWalletPage() {
       await adminService.updateFundingWallet({ fundingWalletId: newWalletId }, token)
       toast.success('Funding wallet updated successfully', { id: toastId })
       fetchFundingWallet()
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update funding wallet', { id: toastId })
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to update funding wallet'), { id: toastId })
     } finally {
       setIsSaving(false)
     }
   }
 
-  const handleDelete = async () => {
+  const handleDelete = async (stepUpTokenOverride?: string) => {
     if (!isStepUpValid()) {
       setPendingAction({ type: 'delete' })
       setStepUpOpen(true)
       return
     }
 
-    const token = stepUpToken!
+    const token = stepUpTokenOverride || stepUpToken
+    if (!token) {
+      toast.error('Step-up verification required')
+      return
+    }
     setIsDeleting(true)
     const toastId = toast.loading('Deleting funding wallet...')
 
@@ -86,8 +117,8 @@ export default function FundingWalletPage() {
       await adminService.deleteFundingWallet(token)
       toast.success('Funding wallet configuration deleted', { id: toastId })
       fetchFundingWallet()
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete funding wallet', { id: toastId })
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to delete funding wallet'), { id: toastId })
     } finally {
       setIsDeleting(false)
     }
@@ -95,9 +126,9 @@ export default function FundingWalletPage() {
 
   const onStepUpSuccess = (token: string) => {
     if (pendingAction?.type === 'save') {
-      handleSave()
+      handleSave(token)
     } else if (pendingAction?.type === 'delete') {
-      handleDelete()
+      handleDelete(token)
     }
     setPendingAction(null)
   }
@@ -123,7 +154,7 @@ export default function FundingWalletPage() {
           Funding Wallet Configuration
         </h1>
         <p className='text-sm text-muted-foreground'>
-          Configure the platform's primary funding wallet for payouts and escrows
+          Configure the platform&apos;s primary funding wallet for payouts and escrows
         </p>
       </div>
 
@@ -170,7 +201,7 @@ export default function FundingWalletPage() {
             <Button
               variant="destructive"
               className="gap-2"
-              onClick={handleDelete}
+              onClick={() => void handleDelete()}
               disabled={isDeleting || !fundingWallet?.fundingWalletId || fundingWallet.source === 'none'}
             >
               {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
@@ -178,7 +209,7 @@ export default function FundingWalletPage() {
             </Button>
             <Button
               className="gap-2 bg-primary hover:bg-primary/90"
-              onClick={handleSave}
+              onClick={() => void handleSave()}
               disabled={isSaving || !newWalletId || newWalletId === fundingWallet?.fundingWalletId}
             >
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

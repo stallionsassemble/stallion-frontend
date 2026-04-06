@@ -96,14 +96,18 @@ export default function ProjectManagementPage() {
   const totalItems = projectsData?.meta?.total || 0
   const totalPages = projectsData?.meta?.totalPages || 1
 
-  const handleDelete = async (projectId: string) => {
+  const handleDelete = async (projectId: string, stepUpTokenOverride?: string) => {
     if (!isStepUpValid()) {
       setPendingAction({ type: 'delete', projectId })
       setStepUpOpen(true)
       return
     }
 
-    const token = stepUpToken!
+    const token = stepUpTokenOverride || stepUpToken
+    if (!token) {
+      toast.error('Step-up verification required')
+      return
+    }
     const toastId = toast.loading('Deleting project...')
     
     try {
@@ -115,14 +119,18 @@ export default function ProjectManagementPage() {
     }
   }
 
-  const handleFeature = async (projectId: string, isFeatured: boolean) => {
+  const handleFeature = async (projectId: string, isFeatured: boolean, stepUpTokenOverride?: string) => {
     if (!isStepUpValid()) {
       setPendingAction({ type: 'feature', projectId, data: { isFeatured } })
       setStepUpOpen(true)
       return
     }
 
-    const token = stepUpToken!
+    const token = stepUpTokenOverride || stepUpToken
+    if (!token) {
+      toast.error('Step-up verification required')
+      return
+    }
     const toastId = toast.loading(isFeatured ? 'Featuring project...' : 'Unfeaturing project...')
     
     try {
@@ -136,9 +144,9 @@ export default function ProjectManagementPage() {
 
   const onStepUpSuccess = (token: string) => {
     if (pendingAction?.type === 'delete') {
-      handleDelete(pendingAction.projectId)
+      handleDelete(pendingAction.projectId, token)
     } else if (pendingAction?.type === 'feature') {
-      handleFeature(pendingAction.projectId, pendingAction.data.isFeatured)
+      handleFeature(pendingAction.projectId, pendingAction.data.isFeatured, token)
     }
     setPendingAction(null)
   }
