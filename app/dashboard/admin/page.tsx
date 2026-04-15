@@ -22,6 +22,7 @@ import { useMemo } from 'react'
 
 export default function AdminDashboardPage() {
   const { data: stats, isLoading } = useAdminDashboardStats()
+  console.log("Admin Stats", stats)
 
   const userGrowthData = useMemo(() => {
     if (!stats?.userGrowth?.currentMonthDailyRegistrations) return []
@@ -303,9 +304,9 @@ export default function AdminDashboardPage() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-                <div className="flex h-64 items-center justify-center text-sm text-muted-foreground italic border border-dashed border-border rounded-lg">
-                  No payout history available
-                </div>
+              <div className="flex h-64 items-center justify-center text-sm text-muted-foreground italic border border-dashed border-border rounded-lg">
+                No payout history available
+              </div>
             )}
           </CardContent>
         </Card>
