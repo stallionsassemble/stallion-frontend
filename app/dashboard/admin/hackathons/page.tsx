@@ -39,18 +39,14 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  Download,
   Edit,
   Eye,
-  Instagram,
-  Linkedin,
   MoreVertical,
   Plus,
   Search,
   SlidersHorizontal,
   StopCircle,
   Trophy,
-  Upload,
   Users,
   X,
   Loader2,
@@ -62,9 +58,56 @@ import { adminService } from '@/lib/api/admin'
 import { StepUpModal } from '@/components/admin/step-up-modal'
 import { useAdminStore } from '@/lib/store/use-admin-store'
 import { toast } from 'sonner'
+import { useAuth } from '@/lib/store/use-auth'
+import { AdminHackathon } from '@/lib/types/admin'
+
+type HackathonAdminListItem = AdminHackathon
+
+type HackathonFormData = {
+  title: string
+  type: string
+  description: string
+  startDate: string
+  endDate: string
+  totalPrizePool: string
+  currency: string
+  maxTeamSize: string
+  hostName: string
+}
+
+type PendingHackathonAction =
+  | { type: 'open-create' }
+  | { type: 'open-edit'; hackathon: HackathonAdminListItem }
+  | { type: 'submit-create' }
+  | { type: 'submit-edit' }
+  | { type: 'delete'; hackathonId: string }
+  | null
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'response' in error &&
+    error.response &&
+    typeof error.response === 'object' &&
+    'data' in error.response &&
+    error.response.data &&
+    typeof error.response.data === 'object' &&
+    'message' in error.response.data &&
+    typeof error.response.data.message === 'string'
+  ) {
+    return error.response.data.message
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+
+  return fallback
+}
 
 // Status badge styling helper
-const getStatusBadgeClass = (status: string) => {
+const getStatusBadgeClass = (status?: string) => {
   switch (status?.toUpperCase()) {
     case 'ACTIVE':
     case 'OPEN':
@@ -81,15 +124,7 @@ const getStatusBadgeClass = (status: string) => {
 }
 
 export default function HackathonAdministrationPage() {
-  const [currentPage, setCurrentPage] = useState(1)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [teamBasedParticipation, setTeamBasedParticipation] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // Form State
-  const [formData, setFormData] = useState({
+  const defaultFormData: HackathonFormData = {
     title: '',
     type: 'online',
     description: '',
@@ -99,13 +134,25 @@ export default function HackathonAdministrationPage() {
     currency: 'USDC',
     maxTeamSize: '4',
     hostName: '',
-  })
+  }
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [teamBasedParticipation, setTeamBasedParticipation] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editingHackathon, setEditingHackathon] = useState<HackathonAdminListItem | null>(null)
+
+  // Form State
+  const [formData, setFormData] = useState(defaultFormData)
 
   // Admin Step-up State
   const [stepUpOpen, setStepUpOpen] = useState(false)
-  const [pendingAction, setPendingAction] = useState<{ type: string; hackathonId: string } | null>(null)
+  const [pendingAction, setPendingAction] = useState<PendingHackathonAction>(null)
   const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
   const stepUpToken = useAdminStore((state) => state.stepUpToken)
+  const { user } = useAuth()
 
   const { data: stats } = useAdminHackathonsStats()
   const { 
@@ -118,89 +165,184 @@ export default function HackathonAdministrationPage() {
     search: searchQuery || undefined
   })
 
-  const hackathons = hackathonsData?.data || []
+  const hackathons: HackathonAdminListItem[] = hackathonsData?.data || []
   const totalItems = hackathonsData?.meta?.total || 0
   const totalPages = hackathonsData?.meta?.totalPages || 1
 
+  const resetForm = () => {
+    setFormData(defaultFormData)
+    setTeamBasedParticipation(true)
+  }
+
+  const handleCreateModalOpenChange = (open: boolean) => {
+    setIsCreateModalOpen(open)
+    if (!open) {
+      setEditingHackathon(null)
+      resetForm()
+    }
+  }
+
+  const openCreateModal = () => {
+    setEditingHackathon(null)
+    resetForm()
+    setIsCreateModalOpen(true)
+  }
+
+  const openEditModal = (hackathon: HackathonAdminListItem) => {
+    setEditingHackathon(hackathon)
+    setFormData({
+      title: hackathon.title || '',
+      type: hackathon.type || 'online',
+      description: hackathon.description || '',
+      startDate: hackathon.startDate ? new Date(hackathon.startDate).toISOString().slice(0, 10) : '',
+      endDate: hackathon.endDate ? new Date(hackathon.endDate).toISOString().slice(0, 10) : '',
+      totalPrizePool: String(hackathon.totalPrizePool || hackathon.totalReward || ''),
+      currency: hackathon.currency || 'USDC',
+      maxTeamSize: String(hackathon.maxTeamSize || 4),
+      hostName: hackathon.hostName || '',
+    })
+    setTeamBasedParticipation(
+      typeof hackathon.teamBasedParticipation === 'boolean'
+        ? hackathon.teamBasedParticipation
+        : Number(hackathon.maxTeamSize || 1) > 1
+    )
+    setIsCreateModalOpen(true)
+  }
+
   const handleCreateHackathon = () => {
     if (!isStepUpValid()) {
-      setPendingAction({ type: 'create', hackathonId: 'new' })
+      setPendingAction({ type: 'open-create' })
       setStepUpOpen(true)
       return
     }
-    setIsCreateModalOpen(true)
+    openCreateModal()
   }
 
-  const handleEditHackathon = (hackathonId: string) => {
+  const handleEditHackathon = (hackathon: HackathonAdminListItem) => {
     if (!isStepUpValid()) {
-      setPendingAction({ type: 'edit', hackathonId })
+      setPendingAction({ type: 'open-edit', hackathon })
       setStepUpOpen(true)
       return
     }
-    // For now, edit logic is just opening the modal with existing data if we had it
-    // But the current UI doesn't seem to have a separate edit modal or pre-filled create modal
-    // I'll just open the create modal for now as a placeholder for "edit"
-    setIsCreateModalOpen(true)
+    openEditModal(hackathon)
   }
 
-  const handleCreateSubmit = async () => {
+  const buildHackathonPayload = () => ({
+    title: formData.title.trim(),
+    type: formData.type,
+    description: formData.description.trim(),
+    startDate: new Date(formData.startDate).toISOString(),
+    endDate: new Date(formData.endDate).toISOString(),
+    totalReward: parseFloat(formData.totalPrizePool),
+    totalPrizePool: parseFloat(formData.totalPrizePool),
+    currency: formData.currency,
+    teamBasedParticipation,
+    maxTeamSize: teamBasedParticipation ? parseInt(formData.maxTeamSize, 10) : 1,
+    hostName: formData.hostName.trim(),
+    tracks: [],
+  })
+
+  const handleCreateSubmit = async (stepUpTokenOverride?: string) => {
     if (!formData.title || !formData.description || !formData.startDate || !formData.endDate || !formData.totalPrizePool) {
       toast.error('Please fill in all required fields')
       return
     }
 
+    if (new Date(formData.startDate) > new Date(formData.endDate)) {
+      toast.error('End date must be after the start date')
+      return
+    }
+
     if (!isStepUpValid()) {
-      setPendingAction({ type: 'create', hackathonId: 'new' })
+      setPendingAction({ type: editingHackathon ? 'submit-edit' : 'submit-create' })
       setStepUpOpen(true)
       return
     }
 
-    const token = stepUpToken!
+    const token = stepUpTokenOverride || stepUpToken
+    if (!token) {
+      toast.error('Step-up verification required')
+      return
+    }
+
+    const ownerId = editingHackathon?.ownerId || user?.id
+    if (!editingHackathon && !ownerId) {
+      toast.error('Unable to determine the hackathon owner')
+      return
+    }
+
+    const payload = buildHackathonPayload()
     setIsSubmitting(true)
-    const toastId = toast.loading('Creating hackathon...')
+    const toastId = toast.loading(
+      editingHackathon ? 'Updating hackathon...' : 'Creating hackathon...'
+    )
     
     try {
-      await adminService.createHackathon({
-        ...formData,
-        totalPrizePool: parseFloat(formData.totalPrizePool),
-        teamBasedParticipation,
-        maxTeamSize: teamBasedParticipation ? parseInt(formData.maxTeamSize) : 1
-      }, token)
+      if (editingHackathon) {
+        await adminService.updateHackathon(editingHackathon.id, payload, token)
+      } else {
+        await adminService.createHackathon(
+          {
+            ownerId: ownerId as string,
+            payload,
+          },
+          token
+        )
+      }
       
-      toast.success('Hackathon created successfully', { id: toastId })
-      setIsCreateModalOpen(false)
+      toast.success(
+        editingHackathon ? 'Hackathon updated successfully' : 'Hackathon created successfully',
+        { id: toastId }
+      )
+      handleCreateModalOpenChange(false)
       refetch()
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create hackathon', { id: toastId })
+    } catch (error: unknown) {
+      toast.error(
+        getErrorMessage(
+          error,
+          editingHackathon ? 'Failed to update hackathon' : 'Failed to create hackathon'
+        ),
+        { id: toastId }
+      )
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const handleDelete = async (hackathonId: string) => {
+  const handleDelete = async (hackathonId: string, stepUpTokenOverride?: string) => {
     if (!isStepUpValid()) {
       setPendingAction({ type: 'delete', hackathonId })
       setStepUpOpen(true)
       return
     }
 
-    const token = stepUpToken!
+    const token = stepUpTokenOverride || stepUpToken
+    if (!token) {
+      toast.error('Step-up verification required')
+      return
+    }
     const toastId = toast.loading('Deleting hackathon...')
     
     try {
       await adminService.deleteHackathon(hackathonId, token)
       toast.success('Hackathon deleted successfully', { id: toastId })
       refetch()
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete hackathon', { id: toastId })
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Failed to delete hackathon'), { id: toastId })
     }
   }
 
   const onStepUpSuccess = (token: string) => {
-    if (pendingAction?.type === 'delete') {
-      handleDelete(pendingAction.hackathonId)
-    } else if (pendingAction?.type === 'create' || pendingAction?.type === 'edit') {
-      handleCreateSubmit()
+    if (!pendingAction) return
+
+    if (pendingAction.type === 'open-create') {
+      openCreateModal()
+    } else if (pendingAction.type === 'open-edit') {
+      openEditModal(pendingAction.hackathon)
+    } else if (pendingAction.type === 'submit-create' || pendingAction.type === 'submit-edit') {
+      handleCreateSubmit(token)
+    } else if (pendingAction.type === 'delete') {
+      handleDelete(pendingAction.hackathonId, token)
     }
     setPendingAction(null)
   }
@@ -366,7 +508,7 @@ export default function HackathonAdministrationPage() {
                 </TableCell>
               </TableRow>
             ) : hackathons.length > 0 ? (
-              hackathons.map((hackathon: any) => (
+              hackathons.map((hackathon) => (
                 <TableRow
                   key={hackathon.id}
                   className='border-border hover:bg-muted/30'
@@ -439,7 +581,7 @@ export default function HackathonAdministrationPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           className='gap-2 cursor-pointer'
-                          onClick={() => handleEditHackathon(hackathon.id)}
+                          onClick={() => handleEditHackathon(hackathon)}
                         >
                           <Edit className='h-4 w-4' />
                           Edit Hackathon
@@ -543,13 +685,13 @@ export default function HackathonAdministrationPage() {
       </div>
 
       {/* Create Hackathon Modal */}
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+      <Dialog open={isCreateModalOpen} onOpenChange={handleCreateModalOpenChange}>
         <DialogContent className='bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto p-0'>
           <DialogHeader className='p-6 pb-4 sticky top-0 bg-card z-10 border-b border-border'>
             <div className='flex items-center justify-between'>
               <div>
                 <DialogTitle className='text-xl font-bold text-foreground'>
-                  Create Hackathon
+                  {editingHackathon ? 'Edit Hackathon' : 'Create Hackathon'}
                 </DialogTitle>
                 <p className='text-xs text-muted-foreground mt-1'>
                   Configure all aspects of your hackathon including prizes,
@@ -559,7 +701,7 @@ export default function HackathonAdministrationPage() {
               <Button
                 variant='ghost'
                 size='icon'
-                onClick={() => setIsCreateModalOpen(false)}
+                onClick={() => handleCreateModalOpenChange(false)}
                 className='text-muted-foreground hover:text-foreground'
               >
                 <X className='h-5 w-5' />
@@ -635,6 +777,8 @@ export default function HackathonAdministrationPage() {
                   <Input
                     type="date"
                     className='bg-background border-border pl-10'
+                    value={formData.endDate}
+                    onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
                   />
                 </div>
               </div>
@@ -723,10 +867,10 @@ export default function HackathonAdministrationPage() {
             <Button 
               className='w-full gap-2 bg-primary hover:bg-primary/90'
               disabled={isSubmitting}
-              onClick={handleCreateSubmit}
+              onClick={() => void handleCreateSubmit()}
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className='h-4 w-4' />}
-              Create Hackathon
+              {editingHackathon ? 'Save Changes' : 'Create Hackathon'}
             </Button>
           </div>
         </DialogContent>

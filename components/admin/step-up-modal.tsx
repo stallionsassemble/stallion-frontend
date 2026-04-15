@@ -15,6 +15,36 @@ import { useAdminStore } from '@/lib/store/use-admin-store'
 import { toast } from 'sonner'
 import { KeyRound, ShieldCheck } from 'lucide-react'
 import { startAuthentication } from '@simplewebauthn/browser'
+import type { AuthenticationResponseJSON, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser'
+
+type PasskeyStartOptions = {
+  optionsJSON: PublicKeyCredentialRequestOptionsJSON
+  useBrowserAutofill?: boolean
+  verifyBrowserAutofillInput?: boolean
+}
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'response' in error &&
+    error.response &&
+    typeof error.response === 'object' &&
+    'data' in error.response &&
+    error.response.data &&
+    typeof error.response.data === 'object' &&
+    'message' in error.response.data &&
+    typeof error.response.data.message === 'string'
+  ) {
+    return error.response.data.message
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+
+  return fallback
+}
 
 interface StepUpModalProps {
   open: boolean
@@ -42,8 +72,8 @@ export function StepUpModal({ open, onOpenChange, onSuccess }: StepUpModalProps)
       onOpenChange(false)
       toast.success('Step-up verification successful')
       setTotpCode('')
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Verification failed')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Verification failed'))
     } finally {
       setIsSubmitting(false)
     }
@@ -53,16 +83,18 @@ export function StepUpModal({ open, onOpenChange, onSuccess }: StepUpModalProps)
     setIsSubmitting(true)
     try {
       const options = await adminService.stepUpPasskeyOptions()
-      const authResponse = await startAuthentication(options)
-      const { token, expiresInSeconds } = await adminService.stepUpPasskeyVerify(authResponse)
+      const authResponse = await startAuthentication(options as PasskeyStartOptions)
+      const { token, expiresInSeconds } = await adminService.stepUpPasskeyVerify(
+        authResponse as AuthenticationResponseJSON
+      )
       
       setStepUpToken(token, expiresInSeconds)
       onSuccess(token)
       onOpenChange(false)
       toast.success('Step-up verification successful')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error)
-      toast.error(error.response?.data?.message || 'Passkey verification failed')
+      toast.error(getErrorMessage(error, 'Passkey verification failed'))
     } finally {
       setIsSubmitting(false)
     }

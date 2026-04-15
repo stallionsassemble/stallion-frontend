@@ -106,14 +106,18 @@ export default function UserManagementPage() {
   const meta = usersData?.meta
   const totalPages = meta?.totalPages || 0
 
-  const handleAction = async (type: string, userId: string, data?: any) => {
+  const handleAction = async (type: string, userId: string, data?: any, stepUpTokenOverride?: string) => {
     if (!isStepUpValid()) {
       setPendingAction({ type, userId, data })
       setStepUpOpen(true)
       return
     }
 
-    const token = stepUpToken!
+    const token = stepUpTokenOverride || stepUpToken
+    if (!token) {
+      toast.error('Step-up verification required')
+      return
+    }
     const toastId = toast.loading(`Performing action...`)
     
     try {
@@ -137,10 +141,14 @@ export default function UserManagementPage() {
   }
 
   const onStepUpSuccess = (token: string) => {
-    if (pendingAction) {
-      handleAction(pendingAction.type, pendingAction.userId, pendingAction.data)
-      setPendingAction(null)
+    if (!pendingAction) return
+
+    if (pendingAction.type === 'invite') {
+      setIsInviteModalOpen(true)
+    } else {
+      handleAction(pendingAction.type, pendingAction.userId, pendingAction.data, token)
     }
+    setPendingAction(null)
   }
 
   return (

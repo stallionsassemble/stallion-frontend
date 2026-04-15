@@ -125,14 +125,18 @@ export default function BountyManagementPage() {
     setIsEditModalOpen(true)
   }
 
-  const handleDelete = async (bountyId: string) => {
+  const handleDelete = async (bountyId: string, stepUpTokenOverride?: string) => {
     if (!isStepUpValid()) {
       setPendingAction({ type: 'delete', bountyId })
       setStepUpOpen(true)
       return
     }
 
-    const token = stepUpToken!
+    const token = stepUpTokenOverride || stepUpToken
+    if (!token) {
+      toast.error('Step-up verification required')
+      return
+    }
     const toastId = toast.loading('Deleting bounty...')
     
     try {
@@ -146,7 +150,7 @@ export default function BountyManagementPage() {
 
   const onStepUpSuccess = (token: string) => {
     if (pendingAction?.type === 'delete') {
-      handleDelete(pendingAction.bountyId)
+      handleDelete(pendingAction.bountyId, token)
       setPendingAction(null)
     } else if (pendingAction?.type === 'edit') {
       setIsEditModalOpen(true)

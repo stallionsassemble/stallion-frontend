@@ -96,6 +96,26 @@ export interface AdminBounty extends Bounty {
   applicantCount: number
 }
 
+export interface AdminHackathon {
+  id: string
+  title: string
+  description?: string
+  status?: string
+  type?: string
+  startDate?: string
+  endDate?: string
+  totalPrizePool?: number
+  currency?: string
+  logo?: string
+  hostName?: string
+  hostLogo?: string
+  participantsCount?: number
+  teamBasedParticipation?: boolean
+  maxTeamSize?: number
+  totalReward?: number
+  ownerId?: string
+}
+
 export interface SocialAuthDto {
   provider: 'GOOGLE' | 'APPLE'
   idToken: string
