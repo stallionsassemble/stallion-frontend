@@ -67,28 +67,17 @@ export default function FundingWalletPage() {
     fetchFundingWallet()
   }, [])
 
-  const handleSave = async (stepUpTokenOverride?: string) => {
-    if (!isStepUpValid()) {
-      setPendingAction({ type: 'save' })
-      setStepUpOpen(true)
-      return
-    }
-
+  const handleSave = async () => {
     if (!newWalletId) {
       toast.error('Wallet ID cannot be empty')
       return
     }
 
-    const token = stepUpTokenOverride || stepUpToken
-    if (!token) {
-      toast.error('Step-up verification required')
-      return
-    }
     setIsSaving(true)
     const toastId = toast.loading('Saving funding wallet...')
 
     try {
-      await adminService.updateFundingWallet({ fundingWalletId: newWalletId }, token)
+      await adminService.updateFundingWallet({ fundingWalletId: newWalletId })
       toast.success('Funding wallet updated successfully', { id: toastId })
       fetchFundingWallet()
     } catch (error: unknown) {
@@ -98,23 +87,12 @@ export default function FundingWalletPage() {
     }
   }
 
-  const handleDelete = async (stepUpTokenOverride?: string) => {
-    if (!isStepUpValid()) {
-      setPendingAction({ type: 'delete' })
-      setStepUpOpen(true)
-      return
-    }
-
-    const token = stepUpTokenOverride || stepUpToken
-    if (!token) {
-      toast.error('Step-up verification required')
-      return
-    }
+  const handleDelete = async () => {
     setIsDeleting(true)
     const toastId = toast.loading('Deleting funding wallet...')
 
     try {
-      await adminService.deleteFundingWallet(token)
+      await adminService.deleteFundingWallet()
       toast.success('Funding wallet configuration deleted', { id: toastId })
       fetchFundingWallet()
     } catch (error: unknown) {

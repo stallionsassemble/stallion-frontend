@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { hackathonService } from './index'
 import { Hackathon } from '@/lib/types/hackathon'
 import { PagedResponse } from '@/lib/types'
@@ -43,5 +44,19 @@ export const useGetHackathonWinners = (hackathonId: string) => {
       return response
     },
     enabled: !!hackathonId,
+  })
+}
+
+export const useParticipateHackathon = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => hackathonService.participate(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['hackathons', id] })
+      toast.success('Successfully registered for hackathon!')
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to register for hackathon')
+    }
   })
 }

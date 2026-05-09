@@ -8,7 +8,8 @@ export interface Hackathon {
   shortDescription?: string
   heroImage?: string
   logo?: string
-  status: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'COMPLETED'
+  status: 'DRAFT' | 'PUBLISHED' | 'JUDGING' | 'COMPLETED' | 'CANCELLED'
+  type: 'OPEN_SOURCE' | 'CLOSED_SOURCE'
   priority?: 'LOW' | 'MEDIUM' | 'HIGH'
   
   // Dates
@@ -20,27 +21,32 @@ export interface Hackathon {
   // Prize Info
   totalPrizePool: number
   currency: string
-  prizeDistribution: PrizeDistribution[]
+  asset?: string
+  prizeDistribution?: PrizeDistribution[]
+  prizePool?: PrizeDistribution[]
   
+  tracks?: string[]
+  requirements?: string[]
+  deliverables?: string[]
   // Numbers
   participantCount: number
   submissionCount: number
   viewCount: number
   
-  // Relations
-  ownerId: string
-  owner?: User
-  tags: string[]
-  partners?: Partner[]
-  requirements?: string[]
+  totalReward?: number
+  ownerId?: string
+  tracks?: string[]
   deliverables?: string[]
+  tags?: string[]
+  partners?: Partner[]
   
   createdAt: string
   updatedAt: string
 }
 
 export interface PrizeDistribution {
-  rank: number
+  rank?: number
+  position?: number
   amount: number
   label?: string
 }

@@ -6,4 +6,4 @@
  * OpenAPI spec version: 2.0
  */
 
-export interface UpdateSubmissionDto { [key: string]: unknown }
+export type CreateSubmissionDtoSubmissionData = { [key: string]: unknown };

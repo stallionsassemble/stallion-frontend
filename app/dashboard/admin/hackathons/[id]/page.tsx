@@ -18,7 +18,6 @@ import {
   Trash2,
 } from 'lucide-react'
 
-import { StepUpModal } from '@/components/admin/step-up-modal'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -45,15 +44,15 @@ import {
   useGetHackathonSubmissions,
   useGetHackathonWinners,
 } from '@/lib/api/hackathon/queries'
-import { useAdminStore } from '@/lib/store/use-admin-store'
 import { useAuth } from '@/lib/store/use-auth'
 import { Hackathon } from '@/lib/types/hackathon'
 import { User } from '@/lib/types'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 type EditableHackathonForm = {
   title: string
-  type: string
+  type: 'OPEN_SOURCE' | 'CLOSED_SOURCE'
   description: string
   startDate: string
   endDate: string
@@ -63,14 +62,8 @@ type EditableHackathonForm = {
   hostName: string
 }
 
-type PendingAction =
-  | { type: 'open-edit' }
-  | { type: 'save-edit' }
-  | { type: 'delete' }
-  | null
-
 type HackathonView = Hackathon & {
-  type?: string
+  type?: 'OPEN_SOURCE' | 'CLOSED_SOURCE'
   ownerId?: string
   owner?: User
   hostName?: string
@@ -108,7 +101,7 @@ type WinnerView = {
 
 const defaultFormData: EditableHackathonForm = {
   title: '',
-  type: 'online',
+  type: 'OPEN_SOURCE',
   description: '',
   startDate: '',
   endDate: '',
@@ -121,17 +114,16 @@ const defaultFormData: EditableHackathonForm = {
 const getStatusBadgeClass = (status?: string) => {
   switch (status?.toUpperCase()) {
     case 'PUBLISHED':
-    case 'ONGOING':
-    case 'ACTIVE':
       return 'bg-green-500/20 text-green-400 border-0'
-    case 'DRAFT':
-      return 'bg-amber-500/20 text-amber-400 border-0'
-    case 'COMPLETED':
+    case 'JUDGING':
       return 'bg-blue-500/20 text-blue-400 border-0'
+    case 'COMPLETED':
+      return 'bg-purple-500/20 text-purple-400 border-0'
     case 'CANCELLED':
       return 'bg-red-500/20 text-red-400 border-0'
+    case 'DRAFT':
     default:
-      return 'bg-muted text-muted-foreground border-0'
+      return 'bg-gray-500/20 text-gray-400 border-0'
   }
 }
 
@@ -171,7 +163,7 @@ const getDisplayName = (user?: User) => {
 
 const mapHackathonToForm = (hackathon: HackathonView): EditableHackathonForm => ({
   title: hackathon.title || '',
-  type: hackathon.type || 'online',
+  type: hackathon.type || 'OPEN_SOURCE',
   description: hackathon.description || '',
   startDate: hackathon.startDate ? new Date(hackathon.startDate).toISOString().slice(0, 10) : '',
   endDate: hackathon.endDate ? new Date(hackathon.endDate).toISOString().slice(0, 10) : '',
@@ -192,12 +184,8 @@ export default function HackathonAdminDetailsPage() {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [teamBasedParticipation, setTeamBasedParticipation] = useState(true)
-  const [pendingAction, setPendingAction] = useState<PendingAction>(null)
-  const [stepUpOpen, setStepUpOpen] = useState(false)
   const [formData, setFormData] = useState<EditableHackathonForm>(defaultFormData)
 
-  const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
-  const stepUpToken = useAdminStore((state) => state.stepUpToken)
 
   const { data: hackathonData, isLoading: isHackathonLoading } =
     useGetHackathon(hackathonId)
@@ -237,24 +225,12 @@ export default function HackathonAdminDetailsPage() {
     })
   }
 
-  const handleDelete = async (stepUpTokenOverride?: string) => {
-    if (!isStepUpValid()) {
-      setPendingAction({ type: 'delete' })
-      setStepUpOpen(true)
-      return
-    }
-
-    const token = stepUpTokenOverride || stepUpToken
-    if (!token) {
-      toast.error('Step-up verification required')
-      return
-    }
-
+  const handleDelete = async () => {
     setIsSubmitting(true)
     const toastId = toast.loading('Deleting hackathon...')
 
     try {
-      await adminService.deleteHackathon(hackathonId, token)
+      await adminService.deleteHackathon(hackathonId)
       toast.success('Hackathon deleted successfully', { id: toastId })
       await invalidateHackathonQueries()
       router.push('/dashboard/admin/hackathons')
@@ -267,7 +243,7 @@ export default function HackathonAdminDetailsPage() {
     }
   }
 
-  const handleSave = async (stepUpTokenOverride?: string) => {
+  const handleSave = async () => {
     if (!hackathon) return
 
     if (
@@ -286,25 +262,13 @@ export default function HackathonAdminDetailsPage() {
       return
     }
 
-    if (!isStepUpValid()) {
-      setPendingAction({ type: 'save-edit' })
-      setStepUpOpen(true)
-      return
-    }
-
-    const token = stepUpTokenOverride || stepUpToken
-    if (!token) {
-      toast.error('Step-up verification required')
-      return
-    }
-
     const payload = {
       title: formData.title.trim(),
       type: formData.type,
       description: formData.description.trim(),
       startDate: new Date(formData.startDate).toISOString(),
       endDate: new Date(formData.endDate).toISOString(),
-      totalReward: parseFloat(formData.totalPrizePool),
+      totalBudget: parseFloat(formData.totalPrizePool),
       totalPrizePool: parseFloat(formData.totalPrizePool),
       currency: formData.currency,
       teamBasedParticipation,
@@ -317,7 +281,7 @@ export default function HackathonAdminDetailsPage() {
     const toastId = toast.loading('Saving hackathon changes...')
 
     try {
-      await adminService.updateHackathon(hackathonId, payload, token)
+      await adminService.updateHackathon(hackathonId, payload)
       toast.success('Hackathon updated successfully', { id: toastId })
       setIsEditOpen(false)
       await invalidateHackathonQueries()
@@ -330,19 +294,6 @@ export default function HackathonAdminDetailsPage() {
     }
   }
 
-  const onStepUpSuccess = (token: string) => {
-    if (!pendingAction) return
-
-    if (pendingAction.type === 'open-edit') {
-      openEditModal()
-    } else if (pendingAction.type === 'save-edit') {
-      void handleSave(token)
-    } else if (pendingAction.type === 'delete') {
-      void handleDelete(token)
-    }
-
-    setPendingAction(null)
-  }
 
   if (isHackathonLoading) {
     return (
@@ -378,11 +329,6 @@ export default function HackathonAdminDetailsPage() {
 
   return (
     <div className='space-y-6'>
-      <StepUpModal
-        open={stepUpOpen}
-        onOpenChange={setStepUpOpen}
-        onSuccess={onStepUpSuccess}
-      />
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className='max-w-2xl border-border bg-card'>
@@ -409,16 +355,15 @@ export default function HackathonAdminDetailsPage() {
               <Select
                 value={formData.type}
                 onValueChange={(value) =>
-                  setFormData((previous) => ({ ...previous, type: value }))
+                  setFormData((previous) => ({ ...previous, type: value as 'OPEN_SOURCE' | 'CLOSED_SOURCE' }))
                 }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='online'>Online</SelectItem>
-                  <SelectItem value='hybrid'>Hybrid</SelectItem>
-                  <SelectItem value='in-person'>In-Person</SelectItem>
+                  <SelectItem value='OPEN_SOURCE'>Open Source</SelectItem>
+                  <SelectItem value='CLOSED_SOURCE'>Closed Source</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -581,7 +526,7 @@ export default function HackathonAdminDetailsPage() {
               {hackathon.title}
             </h1>
             <Badge className={getStatusBadgeClass(hackathon.status)}>
-              {hackathon.status || 'UNKNOWN'}
+              {hackathon.status || 'DRAFT'}
             </Badge>
           </div>
           <p className='max-w-3xl text-sm text-muted-foreground'>
@@ -594,12 +539,6 @@ export default function HackathonAdminDetailsPage() {
             variant='outline'
             className='gap-2'
             onClick={() => {
-              if (!isStepUpValid()) {
-                setPendingAction({ type: 'open-edit' })
-                setStepUpOpen(true)
-                return
-              }
-
               openEditModal()
             }}
           >
@@ -695,6 +634,12 @@ export default function HackathonAdminDetailsPage() {
                     ? `Teams allowed up to ${hackathon.maxTeamSize} members`
                     : 'Solo participation only'}
                 </p>
+              </div>
+              <div>
+                <p className='font-medium text-foreground'>Type</p>
+                <Badge variant='outline' className='mt-1 capitalize'>
+                  {hackathon.type?.replace('_', ' ') || 'OPEN SOURCE'}
+                </Badge>
               </div>
             </div>
             {hackathon.tags?.length ? (

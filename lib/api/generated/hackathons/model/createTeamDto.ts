@@ -6,9 +6,6 @@
  * OpenAPI spec version: 2.0
  */
 
-export type HackathonsControllerGetWinnersParams = {
-/**
- * Filter by track ID
- */
-trackId?: string;
-};
+export interface CreateTeamDto {
+  name: string;
+}

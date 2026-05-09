@@ -1239,7 +1239,8 @@
               "type": "string",
               "enum": [
                 "BOUNTY_WIN",
-                "PROJECT_MILESTONE"
+                "PROJECT_MILESTONE",
+                "HACKATHON_WIN"
               ]
             }
           },
@@ -1394,7 +1395,6 @@
               "enum": [
                 "DRAFT",
                 "PUBLISHED",
-                "ONGOING",
                 "JUDGING",
                 "COMPLETED",
                 "CANCELLED"
@@ -6863,7 +6863,6 @@
     },
     "/api/hackathons": {
       "post": {
-        "description": "Create a new hackathon (requires project owner role)",
         "operationId": "HackathonsController_createHackathon",
         "parameters": [],
         "requestBody": {
@@ -6878,13 +6877,7 @@
         },
         "responses": {
           "201": {
-            "description": "Hackathon created successfully"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden - requires owner role"
+            "description": ""
           }
         },
         "security": [
@@ -6892,13 +6885,12 @@
             "JWT-auth": []
           }
         ],
-        "summary": "Create hackathon",
+        "summary": "Create hackathon (Admin only)",
         "tags": [
           "Hackathons"
         ]
       },
       "get": {
-        "description": "Retrieve hackathons with optional filters",
         "operationId": "HackathonsController_getHackathons",
         "parameters": [
           {
@@ -6911,7 +6903,6 @@
               "enum": [
                 "DRAFT",
                 "PUBLISHED",
-                "ONGOING",
                 "JUDGING",
                 "COMPLETED",
                 "CANCELLED"
@@ -6919,51 +6910,70 @@
             }
           },
           {
-            "name": "ownerId",
+            "name": "search",
             "required": false,
             "in": "query",
-            "description": "Filter by owner ID",
+            "description": "Search term for title or description",
             "schema": {
               "type": "string"
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of hackathons"
-          }
-        },
-        "summary": "Get hackathons",
-        "tags": [
-          "Hackathons"
-        ]
-      }
-    },
-    "/api/hackathons/{identifier}": {
-      "get": {
-        "description": "Retrieve hackathon by ID or slug",
-        "operationId": "HackathonsController_getHackathon",
-        "parameters": [
-          {
-            "name": "identifier",
-            "required": true,
-            "in": "path",
-            "description": "Hackathon ID or slug",
-            "schema": {
-              "example": "hackathon-uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Hackathon details"
           },
-          "404": {
-            "description": "Hackathon not found"
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by hackathon type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "VIRTUAL",
+                "PHYSICAL"
+              ]
+            }
+          },
+          {
+            "name": "tag",
+            "required": false,
+            "in": "query",
+            "description": "Filter by specific tag",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by company ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
           }
         },
-        "summary": "Get hackathon",
+        "summary": "Get hackathons list",
         "tags": [
           "Hackathons"
         ]
@@ -6971,14 +6981,13 @@
     },
     "/api/hackathons/{id}": {
       "patch": {
-        "description": "Update hackathon details (only by owner)",
         "operationId": "HackathonsController_updateHackathon",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "Hackathon ID",
+            "description": "Resource ID",
             "schema": {
               "example": "resource-uuid",
               "type": "string"
@@ -6997,16 +7006,7 @@
         },
         "responses": {
           "200": {
-            "description": "Hackathon updated successfully"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Hackathon not found"
+            "description": ""
           }
         },
         "security": [
@@ -7014,20 +7014,21 @@
             "JWT-auth": []
           }
         ],
-        "summary": "Update hackathon",
+        "summary": "Update hackathon (Admin only)",
         "tags": [
           "Hackathons"
         ]
-      },
-      "delete": {
-        "description": "Delete a hackathon (only by owner)",
-        "operationId": "HackathonsController_deleteHackathon",
+      }
+    },
+    "/api/hackathons/{id}/cancel": {
+      "post": {
+        "operationId": "HackathonsController_cancelHackathon",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "Hackathon ID",
+            "description": "Resource ID",
             "schema": {
               "example": "resource-uuid",
               "type": "string"
@@ -7035,14 +7036,8 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Hackathon deleted successfully"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
+          "201": {
+            "description": ""
           }
         },
         "security": [
@@ -7050,55 +7045,128 @@
             "JWT-auth": []
           }
         ],
-        "summary": "Delete hackathon",
+        "summary": "Cancel hackathon (Admin only)",
         "tags": [
           "Hackathons"
         ]
       }
     },
-    "/api/hackathons/{id}/publish": {
-      "post": {
-        "description": "Publish a draft hackathon to make it active",
-        "operationId": "HackathonsController_publishHackathon",
+    "/api/hackathons/{identifier}": {
+      "get": {
+        "operationId": "HackathonsController_getHackathon",
         "parameters": [
           {
-            "name": "id",
+            "name": "identifier",
             "required": true,
             "in": "path",
-            "description": "Hackathon ID",
+            "description": "Hackathon ID or slug",
             "schema": {
-              "example": "resource-uuid",
+              "example": "hackathon-uuid",
               "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Hackathon published successfully"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
+            "description": ""
           }
         },
-        "security": [
-          {
-            "JWT-auth": []
-          }
-        ],
-        "summary": "Publish hackathon",
+        "summary": "Get hackathon details",
         "tags": [
           "Hackathons"
         ]
       }
     },
-    "/api/hackathons/submissions": {
+    "/api/hackathons/{id}/submissions": {
+      "get": {
+        "operationId": "HackathonsController_getSubmissions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Resource ID",
+            "schema": {
+              "example": "resource-uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by project name or description",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "IN_REVIEW",
+                "WINNER",
+                "REJECTED",
+                "DISQUALIFIED"
+              ]
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Sort by recent or score",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get submissions for a hackathon",
+        "tags": [
+          "Hackathons"
+        ]
+      },
       "post": {
-        "description": "Submit a project to a hackathon (requires MFA)",
-        "operationId": "HackathonsController_createSubmission",
-        "parameters": [],
+        "operationId": "HackathonsController_submitProject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Resource ID",
+            "schema": {
+              "example": "resource-uuid",
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -7111,13 +7179,7 @@
         },
         "responses": {
           "201": {
-            "description": "Submission created successfully"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "MFA required"
+            "description": ""
           }
         },
         "security": [
@@ -7125,199 +7187,30 @@
             "JWT-auth": []
           }
         ],
-        "summary": "Create submission",
-        "tags": [
-          "Hackathons"
-        ]
-      },
-      "get": {
-        "description": "Retrieve submissions created by the authenticated user",
-        "operationId": "HackathonsController_getMySubmissions",
-        "parameters": [
-          {
-            "name": "trackId",
-            "required": false,
-            "in": "query",
-            "description": "Filter by track ID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of user submissions"
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        },
-        "security": [
-          {
-            "JWT-auth": []
-          }
-        ],
-        "summary": "Get my submissions",
+        "summary": "Submit a project",
         "tags": [
           "Hackathons"
         ]
       }
     },
-    "/api/hackathons/{hackathonId}/submissions": {
-      "get": {
-        "description": "Retrieve all submissions for a hackathon",
-        "operationId": "HackathonsController_getSubmissions",
-        "parameters": [
-          {
-            "name": "hackathonId",
-            "required": true,
-            "in": "path",
-            "description": "Hackathon ID",
-            "schema": {
-              "example": "hackathon-uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "trackId",
-            "required": false,
-            "in": "query",
-            "description": "Filter by track ID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of submissions"
-          }
-        },
-        "summary": "Get hackathon submissions",
-        "tags": [
-          "Hackathons"
-        ]
-      }
-    },
-    "/api/hackathons/submissions/{id}": {
-      "patch": {
-        "description": "Update a hackathon submission (only by submitter)",
-        "operationId": "HackathonsController_updateSubmission",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Submission ID",
-            "schema": {
-              "example": "resource-uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSubmissionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Submission updated successfully"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Submission not found"
-          }
-        },
-        "security": [
-          {
-            "JWT-auth": []
-          }
-        ],
-        "summary": "Update submission",
-        "tags": [
-          "Hackathons"
-        ]
-      },
-      "delete": {
-        "description": "Delete a hackathon submission (only by submitter)",
-        "operationId": "HackathonsController_deleteSubmission",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "description": "Submission ID",
-            "schema": {
-              "example": "resource-uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Submission deleted successfully"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Submission not found"
-          }
-        },
-        "security": [
-          {
-            "JWT-auth": []
-          }
-        ],
-        "summary": "Delete submission",
-        "tags": [
-          "Hackathons"
-        ]
-      }
-    },
-    "/api/hackathons/submissions/{id}/judge": {
+    "/api/hackathons/{id}/participate": {
       "post": {
-        "description": "Score and provide feedback on a submission (only by hackathon owner)",
-        "operationId": "HackathonsController_judgeSubmission",
+        "operationId": "HackathonsController_participate",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "Submission ID",
+            "description": "Resource ID",
             "schema": {
               "example": "resource-uuid",
               "type": "string"
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/JudgeSubmissionDto"
-              }
-            }
-          }
-        },
         "responses": {
-          "200": {
-            "description": "Submission judged successfully"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
+          "201": {
+            "description": ""
           }
         },
         "security": [
@@ -7325,22 +7218,21 @@
             "JWT-auth": []
           }
         ],
-        "summary": "Judge submission",
+        "summary": "Join hackathon as participant",
         "tags": [
           "Hackathons"
         ]
       }
     },
-    "/api/hackathons/{id}/winners": {
+    "/api/hackathons/{id}/teams": {
       "post": {
-        "description": "Select and announce hackathon winners (only by owner)",
-        "operationId": "HackathonsController_selectWinners",
+        "operationId": "HackathonsController_createTeam",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "Hackathon ID",
+            "description": "Resource ID",
             "schema": {
               "example": "resource-uuid",
               "type": "string"
@@ -7352,20 +7244,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/HackathonSelectWinnersDto"
+                "$ref": "#/components/schemas/CreateTeamDto"
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Winners selected successfully"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
+          "201": {
+            "description": ""
           }
         },
         "security": [
@@ -7373,43 +7259,223 @@
             "JWT-auth": []
           }
         ],
-        "summary": "Select winners",
+        "summary": "Create a team for a team-based hackathon",
         "tags": [
           "Hackathons"
         ]
       }
     },
-    "/api/hackathons/{hackathonId}/winners": {
-      "get": {
-        "description": "Retrieve hackathon winners",
-        "operationId": "HackathonsController_getWinners",
+    "/api/hackathons/{id}/teams/{teamId}/join": {
+      "post": {
+        "operationId": "HackathonsController_joinTeam",
         "parameters": [
           {
-            "name": "hackathonId",
+            "name": "id",
             "required": true,
             "in": "path",
-            "description": "Hackathon ID",
             "schema": {
-              "example": "hackathon-uuid",
               "type": "string"
             }
           },
           {
-            "name": "trackId",
-            "required": false,
-            "in": "query",
-            "description": "Filter by track ID",
+            "name": "teamId",
+            "required": true,
+            "in": "path",
             "schema": {
               "type": "string"
             }
           }
         ],
         "responses": {
-          "200": {
-            "description": "List of winners"
+          "201": {
+            "description": ""
           }
         },
-        "summary": "Get winners",
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Join an existing team",
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/api/hackathons/{id}/teams/leave": {
+      "post": {
+        "operationId": "HackathonsController_leaveTeam",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Leave your current team",
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/api/hackathons/{id}/manage/submissions/{sid}/review": {
+      "post": {
+        "operationId": "HackathonsController_reviewSubmission",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Set submission status to IN_REVIEW",
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/api/hackathons/{id}/manage/submissions/{sid}/select-winner": {
+      "post": {
+        "operationId": "HackathonsController_selectWinner",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectWinnerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Select submission as winner",
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/api/hackathons/{id}/manage/submissions/{sid}/remove-winner": {
+      "post": {
+        "operationId": "HackathonsController_removeWinner",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sid",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Remove winner status",
+        "tags": [
+          "Hackathons"
+        ]
+      }
+    },
+    "/api/hackathons/{id}/manage/publish-results": {
+      "post": {
+        "operationId": "HackathonsController_publishResults",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ],
+        "summary": "Publish results and trigger prize distribution",
         "tags": [
           "Hackathons"
         ]
@@ -12962,29 +13028,265 @@
           "userId"
         ]
       },
+      "HackathonPrizeDto": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "position",
+          "amount"
+        ]
+      },
       "CreateHackathonDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "VIRTUAL",
+              "PHYSICAL"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "deliverables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "deadline": {
+            "type": "string"
+          },
+          "announcementDate": {
+            "type": "string"
+          },
+          "totalBudget": {
+            "type": "number"
+          },
+          "token": {
+            "type": "string",
+            "description": "Token contract address for the prize pool"
+          },
+          "asset": {
+            "type": "string",
+            "description": "Asset identifier (e.g. XLM or USDC)"
+          },
+          "prizePool": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HackathonPrizeDto"
+            }
+          },
+          "documents": {
+            "type": "object",
+            "description": "Map of title to link",
+            "example": {
+              "title": "link"
+            }
+          },
+          "attachments": {
+            "type": "object",
+            "example": {
+              "title": "link"
+            }
+          },
+          "teamBased": {
+            "type": "boolean"
+          },
+          "maxTeamSize": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "string",
+            "description": "ID of the Project Owner who will act as judge"
+          }
+        },
+        "required": [
+          "title",
+          "slug",
+          "type",
+          "description",
+          "deliverables",
+          "tags",
+          "deadline",
+          "announcementDate",
+          "totalBudget",
+          "token",
+          "asset",
+          "prizePool",
+          "teamBased",
+          "companyId"
+        ]
       },
       "UpdateHackathonDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "VIRTUAL",
+              "PHYSICAL"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "deliverables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "deadline": {
+            "type": "string"
+          },
+          "announcementDate": {
+            "type": "string"
+          },
+          "totalBudget": {
+            "type": "number"
+          },
+          "token": {
+            "type": "string",
+            "description": "Token contract address for the prize pool"
+          },
+          "asset": {
+            "type": "string",
+            "description": "Asset identifier (e.g. XLM or USDC)"
+          },
+          "prizePool": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HackathonPrizeDto"
+            }
+          },
+          "documents": {
+            "type": "object",
+            "description": "Map of title to link",
+            "example": {
+              "title": "link"
+            }
+          },
+          "attachments": {
+            "type": "object",
+            "example": {
+              "title": "link"
+            }
+          },
+          "teamBased": {
+            "type": "boolean"
+          },
+          "maxTeamSize": {
+            "type": "number"
+          },
+          "companyId": {
+            "type": "string",
+            "description": "ID of the Project Owner who will act as judge"
+          }
+        }
+      },
+      "CreateTeamDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
       },
       "CreateSubmissionDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "submissionLink": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "submissionData": {
+            "type": "object",
+            "example": {
+              "title": "link"
+            }
+          },
+          "projectName": {
+            "type": "string"
+          },
+          "projectUrl": {
+            "type": "string"
+          },
+          "repositoryUrl": {
+            "type": "string"
+          },
+          "videoUrl": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "submissionLink"
+        ]
       },
-      "UpdateSubmissionDto": {
+      "SelectWinnerDto": {
         "type": "object",
-        "properties": {}
-      },
-      "JudgeSubmissionDto": {
-        "type": "object",
-        "properties": {}
-      },
-      "HackathonSelectWinnersDto": {
-        "type": "object",
-        "properties": {}
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "description": "ID of the submission to select as a winner"
+          },
+          "position": {
+            "type": "number",
+            "description": "Position in the prize pool (1st = 1, 2nd = 2)"
+          },
+          "feedback": {
+            "type": "string",
+            "description": "Optional feedback for the winner"
+          }
+        },
+        "required": [
+          "submissionId",
+          "position"
+        ]
       },
       "UpdateContributorProfileDto": {
         "type": "object",

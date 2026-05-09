@@ -12,7 +12,6 @@ export type AdminControllerListHackathonsStatus = typeof AdminControllerListHack
 export const AdminControllerListHackathonsStatus = {
   DRAFT: 'DRAFT',
   PUBLISHED: 'PUBLISHED',
-  ONGOING: 'ONGOING',
   JUDGING: 'JUDGING',
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',

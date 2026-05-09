@@ -14,7 +14,8 @@ interface HackathonCardProps {
 }
 
 export function HackathonCard({ hackathon, className }: HackathonCardProps) {
-  const isExpired = new Date(hackathon.endDate) < new Date();
+  const isExpired = hackathon.endDate ? new Date(hackathon.endDate) < new Date() : false;
+  const currency = hackathon.currency || hackathon.asset || "USDC";
   
   return (
     <Link 
@@ -34,16 +35,26 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
         />
         <div className="absolute inset-0 bg-linear-to-t from-[#09090B] via-transparent to-transparent" />
         
-        {/* Status Badge */}
-        <div className="absolute top-3 right-3">
+        {/* Status & Type Badges */}
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
           <Badge 
             variant="secondary" 
             className={cn(
               "border-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider",
-              isExpired ? "bg-red-500/20 text-red-400" : "bg-blue-500/20 text-blue-400"
+              hackathon.status === 'PUBLISHED' ? "bg-green-500/20 text-green-400" :
+              hackathon.status === 'JUDGING' ? "bg-blue-500/20 text-blue-400" :
+              hackathon.status === 'COMPLETED' ? "bg-purple-500/20 text-purple-400" :
+              hackathon.status === 'CANCELLED' ? "bg-red-500/20 text-red-400" :
+              "bg-gray-500/20 text-gray-400"
             )}
           >
-            {isExpired ? "Closed" : "Open"}
+            {hackathon.status?.toLowerCase() || 'draft'}
+          </Badge>
+          <Badge 
+            variant="outline"
+            className="bg-black/50 backdrop-blur-md border-white/10 rounded-full px-3 py-1 text-[9px] font-bold uppercase tracking-wider text-white"
+          >
+            {hackathon.type?.replace('_', ' ') || 'OPEN SOURCE'}
           </Badge>
         </div>
 
@@ -81,9 +92,9 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
               {tag}
             </Badge>
           ))}
-          {hackathon.tags?.length > 3 && (
+          {(hackathon.tags?.length || 0) > 3 && (
             <span className="text-[10px] text-muted-foreground self-center">
-              +{hackathon.tags.length - 3}
+              +{(hackathon.tags?.length || 0) - 3}
             </span>
           )}
         </div>
@@ -108,7 +119,7 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
             ${hackathon.totalPrizePool?.toLocaleString()}
           </span>
           <Badge className="bg-blue-600 hover:bg-blue-600 text-white border-0 text-[10px] px-2 py-0">
-            {hackathon.currency || "USD"}
+            {currency}
           </Badge>
         </div>
       </div>

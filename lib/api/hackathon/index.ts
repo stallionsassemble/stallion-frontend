@@ -2,10 +2,9 @@ import { getStallionBackendAPI } from '@/lib/api/generated/hackathons/hackathons
 import type {
   CreateHackathonDto,
   CreateSubmissionDto,
-  HackathonSelectWinnersDto,
-  JudgeSubmissionDto,
+  SelectWinnersDto,
+  SelectWinnerDto,
   UpdateHackathonDto,
-  UpdateSubmissionDto,
 } from '@/lib/api/generated/hackathons/model'
 
 const hackathonsSdk = getStallionBackendAPI()
@@ -28,15 +27,19 @@ class HackathonService {
   }
 
   async deleteHackathon(id: string) {
-    return hackathonsSdk.hackathonsControllerDeleteHackathon(id)
+    return hackathonsSdk.hackathonsControllerCancelHackathon(id)
   }
 
   async publishHackathon(id: string) {
-    return hackathonsSdk.hackathonsControllerPublishHackathon(id)
+    return hackathonsSdk.hackathonsControllerPublishResults(id)
   }
 
-  async createSubmission(payload: CreateSubmissionDto) {
-    return hackathonsSdk.hackathonsControllerCreateSubmission(payload)
+  async createSubmission(id: string, payload: CreateSubmissionDto) {
+    return hackathonsSdk.hackathonsControllerSubmitProject(id, payload)
+  }
+
+  async participate(id: string) {
+    return hackathonsSdk.hackathonsControllerParticipate(id)
   }
 
   async getSubmissions(
@@ -46,28 +49,16 @@ class HackathonService {
     return hackathonsSdk.hackathonsControllerGetSubmissions(hackathonId, params)
   }
 
-  async getMySubmissions(params?: Record<string, unknown>) {
-    return hackathonsSdk.hackathonsControllerGetMySubmissions(params)
+  async reviewSubmission(id: string, sid: string) {
+    return hackathonsSdk.hackathonsControllerReviewSubmission(id, sid)
   }
 
-  async updateSubmission(id: string, payload: UpdateSubmissionDto) {
-    return hackathonsSdk.hackathonsControllerUpdateSubmission(id, payload)
+  async selectWinner(id: string, sid: string, payload: SelectWinnerDto) {
+    return hackathonsSdk.hackathonsControllerSelectWinner(id, sid, payload)
   }
 
-  async deleteSubmission(id: string) {
-    return hackathonsSdk.hackathonsControllerDeleteSubmission(id)
-  }
-
-  async judgeSubmission(id: string, payload: JudgeSubmissionDto) {
-    return hackathonsSdk.hackathonsControllerJudgeSubmission(id, payload)
-  }
-
-  async selectWinners(id: string, payload: HackathonSelectWinnersDto) {
-    return hackathonsSdk.hackathonsControllerSelectWinners(id, payload)
-  }
-
-  async getWinners(hackathonId: string, params?: Record<string, unknown>) {
-    return hackathonsSdk.hackathonsControllerGetWinners(hackathonId, params)
+  async getWinners(hackathonId: string) {
+    return this.getSubmissions(hackathonId, { status: 'WINNER' as any })
   }
 }
 

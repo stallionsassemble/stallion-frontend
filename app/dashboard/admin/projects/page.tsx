@@ -96,22 +96,11 @@ export default function ProjectManagementPage() {
   const totalItems = projectsData?.meta?.total || 0
   const totalPages = projectsData?.meta?.totalPages || 1
 
-  const handleDelete = async (projectId: string, stepUpTokenOverride?: string) => {
-    if (!isStepUpValid()) {
-      setPendingAction({ type: 'delete', projectId })
-      setStepUpOpen(true)
-      return
-    }
-
-    const token = stepUpTokenOverride || stepUpToken
-    if (!token) {
-      toast.error('Step-up verification required')
-      return
-    }
+  const handleDelete = async (projectId: string) => {
     const toastId = toast.loading('Deleting project...')
     
     try {
-      await adminService.deleteProject(projectId, token)
+      await adminService.deleteProject(projectId)
       toast.success('Project deleted successfully', { id: toastId })
       refetch()
     } catch (error: any) {
@@ -119,22 +108,11 @@ export default function ProjectManagementPage() {
     }
   }
 
-  const handleFeature = async (projectId: string, isFeatured: boolean, stepUpTokenOverride?: string) => {
-    if (!isStepUpValid()) {
-      setPendingAction({ type: 'feature', projectId, data: { isFeatured } })
-      setStepUpOpen(true)
-      return
-    }
-
-    const token = stepUpTokenOverride || stepUpToken
-    if (!token) {
-      toast.error('Step-up verification required')
-      return
-    }
+  const handleFeature = async (projectId: string, isFeatured: boolean) => {
     const toastId = toast.loading(isFeatured ? 'Featuring project...' : 'Unfeaturing project...')
     
     try {
-      await adminService.featureProject(projectId, isFeatured, token)
+      await adminService.featureProject(projectId, isFeatured)
       toast.success(isFeatured ? 'Project featured' : 'Project unfeatured', { id: toastId })
       refetch()
     } catch (error: any) {

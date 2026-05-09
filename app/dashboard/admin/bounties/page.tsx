@@ -81,11 +81,6 @@ export default function BountyManagementPage() {
   const [activeFilter, setActiveFilter] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Admin Step-up State
-  const [stepUpOpen, setStepUpOpen] = useState(false)
-  const [pendingAction, setPendingAction] = useState<{ type: string; bountyId: string } | null>(null)
-  const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
-  const stepUpToken = useAdminStore((state) => state.stepUpToken)
 
   // Edit State
   const [selectedBounty, setSelectedBounty] = useState<Bounty | undefined>(
@@ -115,32 +110,15 @@ export default function BountyManagementPage() {
   const totalPages = bountiesData?.meta?.totalPages || 1
 
   const handleEditBounty = (bounty: Bounty) => {
-    if (!isStepUpValid()) {
-      setSelectedBounty(bounty)
-      setPendingAction({ type: 'edit', bountyId: bounty.id })
-      setStepUpOpen(true)
-      return
-    }
     setSelectedBounty(bounty)
     setIsEditModalOpen(true)
   }
 
-  const handleDelete = async (bountyId: string, stepUpTokenOverride?: string) => {
-    if (!isStepUpValid()) {
-      setPendingAction({ type: 'delete', bountyId })
-      setStepUpOpen(true)
-      return
-    }
-
-    const token = stepUpTokenOverride || stepUpToken
-    if (!token) {
-      toast.error('Step-up verification required')
-      return
-    }
+  const handleDelete = async (bountyId: string) => {
     const toastId = toast.loading('Deleting bounty...')
     
     try {
-      await adminService.deleteBounty(bountyId, token)
+      await adminService.deleteBounty(bountyId)
       toast.success('Bounty deleted successfully', { id: toastId })
       refetch()
     } catch (error: any) {
@@ -148,15 +126,6 @@ export default function BountyManagementPage() {
     }
   }
 
-  const onStepUpSuccess = (token: string) => {
-    if (pendingAction?.type === 'delete') {
-      handleDelete(pendingAction.bountyId, token)
-      setPendingAction(null)
-    } else if (pendingAction?.type === 'edit') {
-      setIsEditModalOpen(true)
-      setPendingAction(null)
-    }
-  }
 
   // Handle Export
   const handleExport = () => {
@@ -199,11 +168,6 @@ export default function BountyManagementPage() {
 
   return (
     <div className='space-y-6'>
-      <StepUpModal 
-        open={stepUpOpen} 
-        onOpenChange={setStepUpOpen} 
-        onSuccess={onStepUpSuccess} 
-      />
 
       {/* Header */}
       <div className='flex items-center justify-between'>
@@ -597,7 +561,6 @@ export default function BountyManagementPage() {
         }}
         existingBounty={selectedBounty}
         isAdmin={true}
-        stepUpToken={stepUpToken || undefined}
       />
     </div>
   )

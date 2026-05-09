@@ -99,13 +99,18 @@ export interface AdminBounty extends Bounty {
 export interface AdminHackathon {
   id: string
   title: string
+  slug: string
   description?: string
-  status?: string
-  type?: string
-  startDate?: string
+  status?: 'DRAFT' | 'PUBLISHED' | 'JUDGING' | 'COMPLETED' | 'CANCELLED'
+  type?: 'OPEN_SOURCE' | 'CLOSED_SOURCE'
+  startDate?: string // Maps to deadline
   endDate?: string
+  announcementDate?: string
+  totalBudget?: number
   totalPrizePool?: number
   currency?: string
+  token?: string
+  asset?: string
   logo?: string
   hostName?: string
   hostLogo?: string
@@ -114,6 +119,10 @@ export interface AdminHackathon {
   maxTeamSize?: number
   totalReward?: number
   ownerId?: string
+  tracks?: string[]
+  deliverables?: string[]
+  tags?: string[]
+  prizePool?: Array<{ position: number; amount: number }>
 }
 
 export interface SocialAuthDto {

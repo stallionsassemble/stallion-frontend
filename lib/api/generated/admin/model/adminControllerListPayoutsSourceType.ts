@@ -12,4 +12,5 @@ export type AdminControllerListPayoutsSourceType = typeof AdminControllerListPay
 export const AdminControllerListPayoutsSourceType = {
   BOUNTY_WIN: 'BOUNTY_WIN',
   PROJECT_MILESTONE: 'PROJECT_MILESTONE',
+  HACKATHON_WIN: 'HACKATHON_WIN',
 } as const;

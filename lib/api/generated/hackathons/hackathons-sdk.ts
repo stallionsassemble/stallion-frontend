@@ -8,14 +8,11 @@
 import type {
   CreateHackathonDto,
   CreateSubmissionDto,
-  HackathonSelectWinnersDto,
+  CreateTeamDto,
   HackathonsControllerGetHackathonsParams,
-  HackathonsControllerGetMySubmissionsParams,
   HackathonsControllerGetSubmissionsParams,
-  HackathonsControllerGetWinnersParams,
-  JudgeSubmissionDto,
-  UpdateHackathonDto,
-  UpdateSubmissionDto
+  SelectWinnerDto,
+  UpdateHackathonDto
 } from './model';
 
 import { customInstance } from '../../orval/mutator';
@@ -25,8 +22,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
   export const getStallionBackendAPI = () => {
 /**
- * Create a new hackathon (requires project owner role)
- * @summary Create hackathon
+ * @summary Create hackathon (Admin only)
  */
 const hackathonsControllerCreateHackathon = (
     createHackathonDto: BodyType<CreateHackathonDto>,
@@ -40,8 +36,7 @@ const hackathonsControllerCreateHackathon = (
     }
 
 /**
- * Retrieve hackathons with optional filters
- * @summary Get hackathons
+ * @summary Get hackathons list
  */
 const hackathonsControllerGetHackathons = (
     params?: HackathonsControllerGetHackathonsParams,
@@ -54,21 +49,7 @@ const hackathonsControllerGetHackathons = (
     }
 
 /**
- * Retrieve hackathon by ID or slug
- * @summary Get hackathon
- */
-const hackathonsControllerGetHackathon = (
-    identifier: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/hackathons/${identifier}`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * Update hackathon details (only by owner)
- * @summary Update hackathon
+ * @summary Update hackathon (Admin only)
  */
 const hackathonsControllerUpdateHackathon = (
     id: string,
@@ -83,40 +64,52 @@ const hackathonsControllerUpdateHackathon = (
     }
 
 /**
- * Delete a hackathon (only by owner)
- * @summary Delete hackathon
+ * @summary Cancel hackathon (Admin only)
  */
-const hackathonsControllerDeleteHackathon = (
+const hackathonsControllerCancelHackathon = (
     id: string,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
-      {url: `/api/hackathons/${id}`, method: 'DELETE'
+      {url: `/api/hackathons/${id}/cancel`, method: 'POST'
     },
       options);
     }
 
 /**
- * Publish a draft hackathon to make it active
- * @summary Publish hackathon
+ * @summary Get hackathon details
  */
-const hackathonsControllerPublishHackathon = (
-    id: string,
+const hackathonsControllerGetHackathon = (
+    identifier: string,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
-      {url: `/api/hackathons/${id}/publish`, method: 'POST'
+      {url: `/api/hackathons/${identifier}`, method: 'GET'
     },
       options);
     }
 
 /**
- * Submit a project to a hackathon (requires MFA)
- * @summary Create submission
+ * @summary Get submissions for a hackathon
  */
-const hackathonsControllerCreateSubmission = (
+const hackathonsControllerGetSubmissions = (
+    id: string,
+    params?: HackathonsControllerGetSubmissionsParams,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/hackathons/${id}/submissions`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * @summary Submit a project
+ */
+const hackathonsControllerSubmitProject = (
+    id: string,
     createSubmissionDto: BodyType<CreateSubmissionDto>,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
-      {url: `/api/hackathons/submissions`, method: 'POST',
+      {url: `/api/hackathons/${id}/submissions`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createSubmissionDto
     },
@@ -124,122 +117,124 @@ const hackathonsControllerCreateSubmission = (
     }
 
 /**
- * Retrieve submissions created by the authenticated user
- * @summary Get my submissions
+ * @summary Join hackathon as participant
  */
-const hackathonsControllerGetMySubmissions = (
-    params?: HackathonsControllerGetMySubmissionsParams,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/hackathons/submissions`, method: 'GET',
-        params
-    },
-      options);
-    }
-
-/**
- * Retrieve all submissions for a hackathon
- * @summary Get hackathon submissions
- */
-const hackathonsControllerGetSubmissions = (
-    hackathonId: string,
-    params?: HackathonsControllerGetSubmissionsParams,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/hackathons/${hackathonId}/submissions`, method: 'GET',
-        params
-    },
-      options);
-    }
-
-/**
- * Update a hackathon submission (only by submitter)
- * @summary Update submission
- */
-const hackathonsControllerUpdateSubmission = (
+const hackathonsControllerParticipate = (
     id: string,
-    updateSubmissionDto: BodyType<UpdateSubmissionDto>,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
-      {url: `/api/hackathons/submissions/${id}`, method: 'PATCH',
+      {url: `/api/hackathons/${id}/participate`, method: 'POST'
+    },
+      options);
+    }
+
+/**
+ * @summary Create a team for a team-based hackathon
+ */
+const hackathonsControllerCreateTeam = (
+    id: string,
+    createTeamDto: BodyType<CreateTeamDto>,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/hackathons/${id}/teams`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: updateSubmissionDto
+      data: createTeamDto
     },
       options);
     }
 
 /**
- * Delete a hackathon submission (only by submitter)
- * @summary Delete submission
+ * @summary Join an existing team
  */
-const hackathonsControllerDeleteSubmission = (
+const hackathonsControllerJoinTeam = (
     id: string,
+    teamId: string,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
-      {url: `/api/hackathons/submissions/${id}`, method: 'DELETE'
+      {url: `/api/hackathons/${id}/teams/${teamId}/join`, method: 'POST'
     },
       options);
     }
 
 /**
- * Score and provide feedback on a submission (only by hackathon owner)
- * @summary Judge submission
+ * @summary Leave your current team
  */
-const hackathonsControllerJudgeSubmission = (
+const hackathonsControllerLeaveTeam = (
     id: string,
-    judgeSubmissionDto: BodyType<JudgeSubmissionDto>,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
-      {url: `/api/hackathons/submissions/${id}/judge`, method: 'POST',
+      {url: `/api/hackathons/${id}/teams/leave`, method: 'POST'
+    },
+      options);
+    }
+
+/**
+ * @summary Set submission status to IN_REVIEW
+ */
+const hackathonsControllerReviewSubmission = (
+    id: string,
+    sid: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/hackathons/${id}/manage/submissions/${sid}/review`, method: 'POST'
+    },
+      options);
+    }
+
+/**
+ * @summary Select submission as winner
+ */
+const hackathonsControllerSelectWinner = (
+    id: string,
+    sid: string,
+    selectWinnerDto: BodyType<SelectWinnerDto>,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/hackathons/${id}/manage/submissions/${sid}/select-winner`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: judgeSubmissionDto
+      data: selectWinnerDto
     },
       options);
     }
 
 /**
- * Select and announce hackathon winners (only by owner)
- * @summary Select winners
+ * @summary Remove winner status
  */
-const hackathonsControllerSelectWinners = (
+const hackathonsControllerRemoveWinner = (
     id: string,
-    hackathonSelectWinnersDto: BodyType<HackathonSelectWinnersDto>,
+    sid: string,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
-      {url: `/api/hackathons/${id}/winners`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: hackathonSelectWinnersDto
+      {url: `/api/hackathons/${id}/manage/submissions/${sid}/remove-winner`, method: 'POST'
     },
       options);
     }
 
 /**
- * Retrieve hackathon winners
- * @summary Get winners
+ * @summary Publish results and trigger prize distribution
  */
-const hackathonsControllerGetWinners = (
-    hackathonId: string,
-    params?: HackathonsControllerGetWinnersParams,
+const hackathonsControllerPublishResults = (
+    id: string,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
-      {url: `/api/hackathons/${hackathonId}/winners`, method: 'GET',
-        params
+      {url: `/api/hackathons/${id}/manage/publish-results`, method: 'POST'
     },
       options);
     }
 
-return {hackathonsControllerCreateHackathon,hackathonsControllerGetHackathons,hackathonsControllerGetHackathon,hackathonsControllerUpdateHackathon,hackathonsControllerDeleteHackathon,hackathonsControllerPublishHackathon,hackathonsControllerCreateSubmission,hackathonsControllerGetMySubmissions,hackathonsControllerGetSubmissions,hackathonsControllerUpdateSubmission,hackathonsControllerDeleteSubmission,hackathonsControllerJudgeSubmission,hackathonsControllerSelectWinners,hackathonsControllerGetWinners}};
+return {hackathonsControllerCreateHackathon,hackathonsControllerGetHackathons,hackathonsControllerUpdateHackathon,hackathonsControllerCancelHackathon,hackathonsControllerGetHackathon,hackathonsControllerGetSubmissions,hackathonsControllerSubmitProject,hackathonsControllerParticipate,hackathonsControllerCreateTeam,hackathonsControllerJoinTeam,hackathonsControllerLeaveTeam,hackathonsControllerReviewSubmission,hackathonsControllerSelectWinner,hackathonsControllerRemoveWinner,hackathonsControllerPublishResults}};
 export type HackathonsControllerCreateHackathonResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerCreateHackathon']>>>
 export type HackathonsControllerGetHackathonsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerGetHackathons']>>>
-export type HackathonsControllerGetHackathonResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerGetHackathon']>>>
 export type HackathonsControllerUpdateHackathonResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerUpdateHackathon']>>>
-export type HackathonsControllerDeleteHackathonResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerDeleteHackathon']>>>
-export type HackathonsControllerPublishHackathonResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerPublishHackathon']>>>
-export type HackathonsControllerCreateSubmissionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerCreateSubmission']>>>
-export type HackathonsControllerGetMySubmissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerGetMySubmissions']>>>
+export type HackathonsControllerCancelHackathonResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerCancelHackathon']>>>
+export type HackathonsControllerGetHackathonResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerGetHackathon']>>>
 export type HackathonsControllerGetSubmissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerGetSubmissions']>>>
-export type HackathonsControllerUpdateSubmissionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerUpdateSubmission']>>>
-export type HackathonsControllerDeleteSubmissionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerDeleteSubmission']>>>
-export type HackathonsControllerJudgeSubmissionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerJudgeSubmission']>>>
-export type HackathonsControllerSelectWinnersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerSelectWinners']>>>
-export type HackathonsControllerGetWinnersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerGetWinners']>>>
+export type HackathonsControllerSubmitProjectResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerSubmitProject']>>>
+export type HackathonsControllerParticipateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerParticipate']>>>
+export type HackathonsControllerCreateTeamResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerCreateTeam']>>>
+export type HackathonsControllerJoinTeamResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerJoinTeam']>>>
+export type HackathonsControllerLeaveTeamResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerLeaveTeam']>>>
+export type HackathonsControllerReviewSubmissionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerReviewSubmission']>>>
+export type HackathonsControllerSelectWinnerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerSelectWinner']>>>
+export type HackathonsControllerRemoveWinnerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerRemoveWinner']>>>
+export type HackathonsControllerPublishResultsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getStallionBackendAPI>['hackathonsControllerPublishResults']>>>

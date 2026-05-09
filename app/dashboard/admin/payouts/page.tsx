@@ -115,22 +115,11 @@ export default function PayoutAdministrationPage() {
   const totalItems = payoutsData?.meta?.total || 0
   const totalPages = payoutsData?.meta?.totalPages || 1
 
-  const handleRetryPayout = async (payoutId: string, stepUpTokenOverride?: string) => {
-    if (!isStepUpValid()) {
-      setPendingAction({ type: 'retry', payoutId })
-      setStepUpOpen(true)
-      return
-    }
-
-    const token = stepUpTokenOverride || stepUpToken
-    if (!token) {
-      toast.error('Step-up verification required')
-      return
-    }
+  const handleRetryPayout = async (payoutId: string) => {
     const toastId = toast.loading('Retrying payout...')
     
     try {
-      await adminService.retryPayout(payoutId, token)
+      await adminService.retryPayout(payoutId)
       toast.success('Payout retry initiated', { id: toastId })
       refetch()
     } catch (error: any) {

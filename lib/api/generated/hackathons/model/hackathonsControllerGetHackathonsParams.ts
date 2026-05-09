@@ -6,6 +6,7 @@
  * OpenAPI spec version: 2.0
  */
 import type { HackathonsControllerGetHackathonsStatus } from './hackathonsControllerGetHackathonsStatus';
+import type { HackathonsControllerGetHackathonsType } from './hackathonsControllerGetHackathonsType';
 
 export type HackathonsControllerGetHackathonsParams = {
 /**
@@ -13,7 +14,27 @@ export type HackathonsControllerGetHackathonsParams = {
  */
 status?: HackathonsControllerGetHackathonsStatus;
 /**
- * Filter by owner ID
+ * Search term for title or description
  */
-ownerId?: string;
+search?: string;
+/**
+ * Filter by hackathon type
+ */
+type?: HackathonsControllerGetHackathonsType;
+/**
+ * Filter by specific tag
+ */
+tag?: string;
+/**
+ * Filter by company ID
+ */
+companyId?: string;
+/**
+ * Page number
+ */
+page?: number;
+/**
+ * Items per page
+ */
+limit?: number;
 };
