@@ -25,6 +25,7 @@ export function HackathonsClient() {
   // Filters
   const [techStack, setTechStack] = useState("all");
   const [status, setStatus] = useState("all");
+  const [type, setType] = useState("all");
 
   const { data, isLoading } = useGetHackathons({
     page: currentPage,
@@ -32,6 +33,7 @@ export function HackathonsClient() {
     search: debouncedSearch,
     tag: techStack === 'all' ? undefined : techStack,
     status: status === 'all' ? undefined : status as any,
+    type: type === 'all' ? undefined : type as any,
   });
 
   const hackathons = data?.data || [];
@@ -49,6 +51,7 @@ export function HackathonsClient() {
     setSearchQuery("");
     setTechStack("all");
     setStatus("all");
+    setType("all");
     setCurrentPage(1);
   };
 
@@ -59,7 +62,7 @@ export function HackathonsClient() {
     return Array.from(tags).sort();
   }, [hackathons]);
 
-  const isFiltered = searchQuery || techStack !== "all" || status !== "all";
+  const isFiltered = searchQuery || techStack !== "all" || status !== "all" || type !== "all";
 
   return (
     <div className="container mx-auto px-4 py-12 space-y-12">
@@ -111,6 +114,17 @@ export function HackathonsClient() {
               <SelectItem value="PUBLISHED">Open</SelectItem>
               <SelectItem value="JUDGING">Judging</SelectItem>
               <SelectItem value="COMPLETED">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={type} onValueChange={(v) => { setType(v); setCurrentPage(1); }}>
+            <SelectTrigger className="w-full md:w-[160px] bg-white/5 border-white/10 text-white h-11 rounded-lg">
+              <SelectValue placeholder="Format" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#18181B] border-white/10 text-white">
+              <SelectItem value="all">All Formats</SelectItem>
+              <SelectItem value="VIRTUAL">Virtual</SelectItem>
+              <SelectItem value="PHYSICAL">Physical</SelectItem>
             </SelectContent>
           </Select>
 

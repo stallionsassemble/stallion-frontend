@@ -54,7 +54,7 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
             variant="outline"
             className="bg-black/50 backdrop-blur-md border-white/10 rounded-full px-3 py-1 text-[9px] font-bold uppercase tracking-wider text-white"
           >
-            {hackathon.type?.replace('_', ' ') || 'OPEN SOURCE'}
+            {hackathon.type?.replace('_', ' ') || 'VIRTUAL'}
           </Badge>
         </div>
 

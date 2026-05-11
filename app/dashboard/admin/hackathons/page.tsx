@@ -87,7 +87,7 @@ type HackathonPrize = {
 type HackathonFormData = {
   title: string
   slug: string
-  type: 'OPEN_SOURCE' | 'CLOSED_SOURCE'
+  type: 'VIRTUAL' | 'PHYSICAL'
   description: string
   deadline: string
   totalBudget: string
@@ -149,7 +149,7 @@ export default function HackathonAdministrationPage() {
   const defaultFormData: HackathonFormData = {
     title: '',
     slug: '',
-    type: 'OPEN_SOURCE',
+    type: 'VIRTUAL',
     description: '',
     deadline: '',
     totalBudget: '',
@@ -243,7 +243,7 @@ export default function HackathonAdministrationPage() {
     setFormData({
       title: hackathon.title || '',
       slug: hackathon.slug || '',
-      type: (hackathon.type as any) || 'OPEN_SOURCE',
+      type: (hackathon.type as any) || 'VIRTUAL',
       description: hackathon.description || '',
       deadline: hackathon.submissionDeadline || hackathon.endDate ? new Date(hackathon.submissionDeadline || hackathon.endDate).toISOString().slice(0, 10) : '',
       totalBudget: String(hackathon.totalBudget || hackathon.totalPrizePool || hackathon.totalReward || ''),
@@ -704,14 +704,14 @@ export default function HackathonAdministrationPage() {
               <Label className='text-sm text-foreground'>Type *</Label>
               <Select 
                 value={formData.type} 
-                onValueChange={(v) => setFormData(prev => ({ ...prev, type: v as 'OPEN_SOURCE' | 'CLOSED_SOURCE' }))}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, type: v as 'VIRTUAL' | 'PHYSICAL' }))}
               >
                 <SelectTrigger className='bg-background border-border'>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='OPEN_SOURCE'>Open Source</SelectItem>
-                  <SelectItem value='CLOSED_SOURCE'>Closed Source</SelectItem>
+                  <SelectItem value='VIRTUAL'>Virtual</SelectItem>
+                  <SelectItem value='PHYSICAL'>Physical</SelectItem>
                 </SelectContent>
               </Select>
             </div>
