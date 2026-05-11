@@ -90,9 +90,7 @@ type HackathonFormData = {
   type: 'OPEN_SOURCE' | 'CLOSED_SOURCE'
   description: string
   deadline: string
-  announcementDate: string
   totalBudget: string
-  token: string
   asset: string
   deliverables: string
   tags: string
@@ -154,9 +152,7 @@ export default function HackathonAdministrationPage() {
     type: 'OPEN_SOURCE',
     description: '',
     deadline: '',
-    announcementDate: '',
     totalBudget: '',
-    token: '',
     asset: 'USDC',
     deliverables: '',
     tags: '',
@@ -250,9 +246,7 @@ export default function HackathonAdministrationPage() {
       type: (hackathon.type as any) || 'OPEN_SOURCE',
       description: hackathon.description || '',
       deadline: hackathon.submissionDeadline || hackathon.endDate ? new Date(hackathon.submissionDeadline || hackathon.endDate).toISOString().slice(0, 10) : '',
-      announcementDate: hackathon.announcementDate ? new Date(hackathon.announcementDate).toISOString().slice(0, 10) : '',
       totalBudget: String(hackathon.totalBudget || hackathon.totalPrizePool || hackathon.totalReward || ''),
-      token: hackathon.token || '',
       asset: hackathon.asset || hackathon.currency || 'USDC',
       deliverables: (hackathon.deliverables || []).join(', '),
       tags: (hackathon.tags || []).join(', '),
@@ -297,9 +291,7 @@ export default function HackathonAdministrationPage() {
       deliverables,
       tags,
       deadline: new Date(formData.deadline).toISOString(),
-      announcementDate: new Date(formData.announcementDate).toISOString(),
       totalBudget: parseFloat(formData.totalBudget),
-      token: formData.token.trim(),
       asset: formData.asset,
       prizePool: formData.prizePool,
       teamBased: teamBasedParticipation,
@@ -310,7 +302,7 @@ export default function HackathonAdministrationPage() {
   }
 
   const handleCreateSubmit = async (token?: string) => {
-    if (!formData.title || !formData.description || !formData.deadline || !formData.announcementDate || !formData.totalBudget) {
+    if (!formData.title || !formData.description || !formData.deadline || !formData.totalBudget) {
       toast.error('Please fill in all required fields')
       return
     }
@@ -754,28 +746,17 @@ export default function HackathonAdministrationPage() {
               </div>
             </div>
 
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label className='text-sm text-foreground'>Deadline *</Label>
-                <Input
-                  type="date"
-                  className='bg-background border-border'
-                  value={formData.deadline}
-                  onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label className='text-sm text-foreground'>Announcement Date *</Label>
-                <Input
-                  type="date"
-                  className='bg-background border-border'
-                  value={formData.announcementDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, announcementDate: e.target.value }))}
-                />
-              </div>
+            <div className='space-y-2'>
+              <Label className='text-sm text-foreground'>Deadline *</Label>
+              <Input
+                type="date"
+                className='bg-background border-border'
+                value={formData.deadline}
+                onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
+              />
             </div>
 
-            <div className='grid grid-cols-3 gap-4'>
+            <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
                 <Label className='text-sm text-foreground'>Total Budget *</Label>
                 <Input
@@ -791,15 +772,6 @@ export default function HackathonAdministrationPage() {
                   className='bg-background border-border'
                   value={formData.asset}
                   onChange={(e) => setFormData(prev => ({ ...prev, asset: e.target.value }))}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label className='text-sm text-foreground'>Token *</Label>
-                <Input
-                  placeholder='Contract Address'
-                  className='bg-background border-border'
-                  value={formData.token}
-                  onChange={(e) => setFormData(prev => ({ ...prev, token: e.target.value }))}
                 />
               </div>
             </div>
