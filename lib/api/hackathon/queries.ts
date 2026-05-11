@@ -60,3 +60,18 @@ export const useParticipateHackathon = () => {
     }
   })
 }
+
+export const useSubmitProject = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string, payload: any }) => 
+      hackathonService.createSubmission(id, payload),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['hackathons', id, 'submissions'] })
+      toast.success('Project submitted successfully!')
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to submit project')
+    }
+  })
+}

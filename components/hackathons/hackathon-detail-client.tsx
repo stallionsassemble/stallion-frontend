@@ -1,7 +1,7 @@
 "use client";
 
 import { useGetHackathon, useGetHackathonWinners, useParticipateHackathon } from "@/lib/api/hackathon/queries";
-import { useAuth } from "@/lib/hooks/use-auth";
+import { useAuth } from "@/lib/store/use-auth";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { SubmitHackathonModal } from "./submit-hackathon-modal";
+import { useState } from "react";
 
 const getAwardIcon = (rank: number) => {
   switch (rank) {
@@ -60,6 +62,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
   const { data: winners } = useGetHackathonWinners(id);
   const { user } = useAuth();
   const participateMutation = useParticipateHackathon();
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
 
   const handleRegister = () => {
     if (!user) {
@@ -121,9 +124,9 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
             </Badge>
             <Badge 
               variant="outline"
-              className="bg-white/5 border-white/10 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest text-white backdrop-blur-md"
+              className="bg-black/50 backdrop-blur-md border-white/10 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-white"
             >
-              {hackathon.type?.replace('_', ' ') || 'OPEN SOURCE'}
+              {hackathon.type?.replace('_', ' ') || 'VIRTUAL'}
             </Badge>
           </div>
           <div className="h-24 w-24 rounded-2xl bg-white/5 border border-white/10 p-4 flex items-center justify-center overflow-hidden shadow-2xl">
@@ -153,7 +156,16 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
         <div className="flex items-center gap-8 text-sm text-gray-400">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-primary" />
-            <span className="font-medium">{format(new Date(hackathon.startDate), "MMMM d, yyyy")}</span>
+            <span className="font-medium">
+              {(() => {
+                try {
+                  const date = hackathon.startDate ? new Date(hackathon.startDate) : null;
+                  return date && !isNaN(date.getTime()) ? format(date, "MMMM d, yyyy") : "TBA";
+                } catch (e) {
+                  return "TBA";
+                }
+              })()}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Globe className="h-4 w-4 text-primary" />
@@ -181,8 +193,15 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
           <Button 
             variant="outline" 
             className="bg-white/5 border-white/10 hover:bg-white/10 text-white rounded-full px-12 h-14 text-lg font-bold"
+            onClick={() => {
+              if (!user) {
+                toast.error("Please login to submit a project");
+                return;
+              }
+              setIsSubmitModalOpen(true);
+            }}
           >
-            Learn More
+            Submit Project
           </Button>
         </div>
       </div>
@@ -355,7 +374,14 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                     <span className="text-sm text-gray-400">Deadline</span>
                   </div>
                   <span className="text-lg font-bold text-white">
-                    {hackathon.registrationDeadline ? format(new Date(hackathon.registrationDeadline), "MMM d, yyyy") : "N/A"}
+                    {(() => {
+                      try {
+                        const date = hackathon.registrationDeadline ? new Date(hackathon.registrationDeadline) : null;
+                        return date && !isNaN(date.getTime()) ? format(date, "MMM d, yyyy") : "TBA";
+                      } catch (e) {
+                        return "TBA";
+                      }
+                    })()}
                   </span>
                 </div>
                 <div className="pt-4 flex items-center justify-between">
@@ -371,6 +397,19 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                   onClick={handleRegister}
                 >
                   {participateMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Apply Now"}
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white h-14 rounded-2xl text-lg font-bold border-dashed"
+                  onClick={() => {
+                    if (!user) {
+                      toast.error("Please login to submit a project");
+                      return;
+                    }
+                    setIsSubmitModalOpen(true);
+                  }}
+                >
+                  Submit Project
                 </Button>
                 <div className="flex flex-col gap-3 pt-2">
                   <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium uppercase tracking-wider">
@@ -392,6 +431,13 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
           </Button>
         </div>
       </div>
+
+      <SubmitHackathonModal
+        isOpen={isSubmitModalOpen}
+        onClose={() => setIsSubmitModalOpen(false)}
+        hackathonId={id}
+        hackathonTitle={hackathon.title}
+      />
     </div>
   );
 }
