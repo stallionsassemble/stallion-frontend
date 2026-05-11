@@ -108,7 +108,24 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
           <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
             <Calendar className="h-3.5 w-3.5 text-primary" />
             <span>
-              {format(new Date(hackathon.startDate), "MMM d")} - {format(new Date(hackathon.endDate), "MMM d, yyyy")}
+              {(() => {
+                try {
+                  const start = hackathon.startDate ? new Date(hackathon.startDate) : null;
+                  const end = hackathon.endDate ? new Date(hackathon.endDate) : null;
+                  
+                  const startStr = start && !isNaN(start.getTime()) 
+                    ? format(start, "MMM d") 
+                    : "TBA";
+                  
+                  const endStr = end && !isNaN(end.getTime()) 
+                    ? format(end, "MMM d, yyyy") 
+                    : "TBA";
+                  
+                  return `${startStr} - ${endStr}`;
+                } catch (e) {
+                  return "TBA - TBA";
+                }
+              })()}
             </span>
           </div>
         </div>
