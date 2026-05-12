@@ -115,7 +115,13 @@ export default function PayoutAdministrationPage() {
   const totalItems = payoutsData?.meta?.total || 0
   const totalPages = payoutsData?.meta?.totalPages || 1
 
-  const handleRetryPayout = async (payoutId: string) => {
+  const handleRetryPayout = async (payoutId: string, token?: string) => {
+    if (!isStepUpValid && !token) {
+      setPendingAction({ type: 'retry', payoutId })
+      setStepUpOpen(true)
+      return
+    }
+
     const toastId = toast.loading('Retrying payout...')
     
     try {
