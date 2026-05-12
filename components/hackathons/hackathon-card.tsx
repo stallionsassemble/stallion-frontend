@@ -25,8 +25,8 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
         className
       )}
     >
-      {/* Top Image Section */}
-      <div className="relative h-48 w-full overflow-hidden">
+      {/* Top Image Section removed as per request */}
+      {/* <div className="relative h-48 w-full overflow-hidden">
         <Image
           src={hackathon.heroImage || "/assets/dashboardMobile.png"}
           alt={hackathon.title}
@@ -35,7 +35,6 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
         />
         <div className="absolute inset-0 bg-linear-to-t from-[#09090B] via-transparent to-transparent" />
         
-        {/* Status & Type Badges */}
         <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
           <Badge 
             variant="secondary" 
@@ -58,7 +57,6 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
           </Badge>
         </div>
 
-        {/* Host Logo Overlay */}
         <div className="absolute -bottom-6 left-5 h-12 w-12 rounded-xl bg-[#18181B] border border-white/10 p-2 overflow-hidden flex items-center justify-center shadow-xl">
           <Image
             src={hackathon.logo || "/assets/icons/sdollar.png"}
@@ -68,10 +66,31 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
             className="object-contain"
           />
         </div>
-      </div>
+      </div> */}
 
       {/* Content Section */}
-      <div className="flex flex-col flex-1 p-5 pt-10 gap-4">
+      <div className="flex flex-col flex-1 p-5 gap-4">
+        <div className="flex items-center justify-between">
+          <Badge 
+            variant="secondary" 
+            className={cn(
+              "border-0 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider",
+              hackathon.status === 'PUBLISHED' ? "bg-green-500/20 text-green-400" :
+              hackathon.status === 'JUDGING' ? "bg-blue-500/20 text-blue-400" :
+              hackathon.status === 'COMPLETED' ? "bg-purple-500/20 text-purple-400" :
+              hackathon.status === 'CANCELLED' ? "bg-red-500/20 text-red-400" :
+              "bg-gray-500/20 text-gray-400"
+            )}
+          >
+            {hackathon.status?.toLowerCase() || 'draft'}
+          </Badge>
+          <Badge 
+            variant="outline"
+            className="bg-white/5 border-white/10 rounded-full px-3 py-1 text-[9px] font-bold uppercase tracking-wider text-white"
+          >
+            {hackathon.type?.replace('_', ' ') || 'VIRTUAL'}
+          </Badge>
+        </div>
         <div className="space-y-2">
           <h3 className="text-lg font-bold text-white line-clamp-1 group-hover:text-primary transition-colors">
             {hackathon.title}
@@ -111,7 +130,7 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
               {(() => {
                 try {
                   const start = hackathon.startDate ? new Date(hackathon.startDate) : null;
-                  const end = hackathon.endDate ? new Date(hackathon.endDate) : null;
+                  const end = (hackathon.submissionDeadline || hackathon.endDate) ? new Date(hackathon.submissionDeadline || hackathon.endDate) : null;
                   
                   const startStr = start && !isNaN(start.getTime()) 
                     ? format(start, "MMM d") 
@@ -130,10 +149,9 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
           </div>
         </div>
 
-        {/* Price Row */}
         <div className="flex items-center gap-2 mt-auto">
           <span className="text-xl font-bold text-white">
-            ${hackathon.totalPrizePool?.toLocaleString()}
+            ${((hackathon as any).totalPrizePool || (hackathon as any).totalBudget || (hackathon as any).totalReward || 0).toLocaleString()}
           </span>
           <Badge className="bg-blue-600 hover:bg-blue-600 text-white border-0 text-[10px] px-2 py-0">
             {currency}

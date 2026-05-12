@@ -105,7 +105,9 @@ export interface AdminHackathon {
   type?: 'OPEN_SOURCE' | 'CLOSED_SOURCE'
   startDate?: string // Maps to deadline
   endDate?: string
+  submissionDeadline?: string
   announcementDate?: string
+  location?: string
   totalBudget?: number
   totalPrizePool?: number
   currency?: string

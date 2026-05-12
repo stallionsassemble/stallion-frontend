@@ -90,7 +90,9 @@ type HackathonFormData = {
   type: 'VIRTUAL' | 'PHYSICAL'
   description: string
   deadline: string
+  announcementDate: string
   totalBudget: string
+  token: string
   asset: string
   deliverables: string
   tags: string
@@ -152,7 +154,9 @@ export default function HackathonAdministrationPage() {
     type: 'VIRTUAL',
     description: '',
     deadline: '',
+    announcementDate: new Date().toISOString().slice(0, 10),
     totalBudget: '',
+    token: '',
     asset: 'USDC',
     deliverables: '',
     tags: '',
@@ -245,8 +249,10 @@ export default function HackathonAdministrationPage() {
       slug: hackathon.slug || '',
       type: (hackathon.type as any) || 'VIRTUAL',
       description: hackathon.description || '',
-      deadline: hackathon.submissionDeadline || hackathon.endDate ? new Date(hackathon.submissionDeadline || hackathon.endDate).toISOString().slice(0, 10) : '',
+      deadline: (hackathon as any).submissionDeadline || hackathon.endDate ? new Date((hackathon as any).submissionDeadline || hackathon.endDate).toISOString().slice(0, 10) : '',
+      announcementDate: (hackathon as any).announcementDate ? new Date((hackathon as any).announcementDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
       totalBudget: String(hackathon.totalBudget || hackathon.totalPrizePool || hackathon.totalReward || ''),
+      token: (hackathon as any).token || '',
       asset: hackathon.asset || hackathon.currency || 'USDC',
       deliverables: (hackathon.deliverables || []).join(', '),
       tags: (hackathon.tags || []).join(', '),
@@ -291,7 +297,9 @@ export default function HackathonAdministrationPage() {
       deliverables,
       tags,
       deadline: new Date(formData.deadline).toISOString(),
+      announcementDate: new Date(formData.announcementDate).toISOString(),
       totalBudget: parseFloat(formData.totalBudget),
+      token: formData.token.trim() || 'native',
       asset: formData.asset,
       prizePool: formData.prizePool,
       teamBased: teamBasedParticipation,
@@ -746,17 +754,28 @@ export default function HackathonAdministrationPage() {
               </div>
             </div>
 
-            <div className='space-y-2'>
-              <Label className='text-sm text-foreground'>Deadline *</Label>
-              <Input
-                type="date"
-                className='bg-background border-border'
-                value={formData.deadline}
-                onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
-              />
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label className='text-sm text-foreground'>Deadline *</Label>
+                <Input
+                  type="date"
+                  className='bg-background border-border'
+                  value={formData.deadline}
+                  onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label className='text-sm text-foreground'>Announcement Date *</Label>
+                <Input
+                  type="date"
+                  className='bg-background border-border'
+                  value={formData.announcementDate}
+                  onChange={(e) => setFormData(prev => ({ ...prev, announcementDate: e.target.value }))}
+                />
+              </div>
             </div>
 
-            <div className='grid grid-cols-2 gap-4'>
+            <div className='grid grid-cols-3 gap-4'>
               <div className='space-y-2'>
                 <Label className='text-sm text-foreground'>Total Budget *</Label>
                 <Input
@@ -772,6 +791,15 @@ export default function HackathonAdministrationPage() {
                   className='bg-background border-border'
                   value={formData.asset}
                   onChange={(e) => setFormData(prev => ({ ...prev, asset: e.target.value }))}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label className='text-sm text-foreground'>Token Address *</Label>
+                <Input
+                  placeholder='Contract address'
+                  className='bg-background border-border'
+                  value={formData.token}
+                  onChange={(e) => setFormData(prev => ({ ...prev, token: e.target.value }))}
                 />
               </div>
             </div>
@@ -825,7 +853,7 @@ export default function HackathonAdministrationPage() {
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 border-border bg-card">
+                <PopoverContent className="w-(--radix-popover-trigger-width) p-0 border-border bg-card">
                   <Command className="bg-card">
                     <CommandInput placeholder="Search project owners..." className="h-9" />
                     <CommandList>

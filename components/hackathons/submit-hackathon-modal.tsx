@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Send, Plus, X } from "lucide-react";
 import { useSubmitProject } from "@/lib/api/hackathon/queries";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 interface SubmitHackathonModalProps {
   isOpen: boolean;
@@ -23,9 +24,9 @@ export function SubmitHackathonModal({
   hackathonId,
   hackathonTitle,
 }: SubmitHackathonModalProps) {
-  const [teamName, setTeamName] = useState("");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [projectUrl, setProjectUrl] = useState("");
+  const [submissionLink, setSubmissionLink] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [member, setMember] = useState("");
@@ -45,7 +46,7 @@ export function SubmitHackathonModal({
   };
 
   const handleSubmit = async () => {
-    if (!teamName || !description || !projectUrl) {
+    if (!title || !description || !submissionLink) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -53,12 +54,12 @@ export function SubmitHackathonModal({
     submitMutation.mutate({
       id: hackathonId,
       payload: {
-        teamName,
+        title,
         description,
-        projectUrl,
-        githubUrl: githubUrl || undefined,
+        submissionLink,
+        repositoryUrl: githubUrl || undefined,
         videoUrl: videoUrl || undefined,
-        members: members.length > 0 ? members : undefined,
+        // members: members.length > 0 ? members : undefined, // Backend doesn't seem to support members in this DTO yet
       },
     }, {
       onSuccess: () => {
@@ -69,9 +70,9 @@ export function SubmitHackathonModal({
   };
 
   const resetForm = () => {
-    setTeamName("");
+    setTitle("");
     setDescription("");
-    setProjectUrl("");
+    setSubmissionLink("");
     setGithubUrl("");
     setVideoUrl("");
     setMembers([]);
@@ -91,12 +92,12 @@ export function SubmitHackathonModal({
 
         <div className="space-y-6 py-4">
           <div className="space-y-2">
-            <Label htmlFor="teamName" className="text-foreground">Team Name / Project Name *</Label>
+            <Label htmlFor="title" className="text-foreground">Project Title *</Label>
             <Input
-              id="teamName"
-              placeholder="Enter your team or project name"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
+              id="title"
+              placeholder="Enter your project title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="bg-background border-border"
             />
           </div>
@@ -114,12 +115,12 @@ export function SubmitHackathonModal({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="projectUrl" className="text-foreground">Project URL / Demo Link *</Label>
+              <Label htmlFor="submissionLink" className="text-foreground">Project URL / Demo Link *</Label>
               <Input
-                id="projectUrl"
+                id="submissionLink"
                 placeholder="https://..."
-                value={projectUrl}
-                onChange={(e) => setProjectUrl(e.target.value)}
+                value={submissionLink}
+                onChange={(e) => setSubmissionLink(e.target.value)}
                 className="bg-background border-border"
               />
             </div>

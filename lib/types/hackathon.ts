@@ -16,10 +16,15 @@ export interface Hackathon {
   startDate: string
   endDate: string
   registrationDeadline: string
-  submissionDeadline: string
+  submissionDeadline?: string
+  announcementDate?: string
+  location?: string
+  token?: string
   
   // Prize Info
   totalPrizePool: number
+  totalBudget?: number
+  totalReward?: number
   currency: string
   asset?: string
   prizeDistribution?: PrizeDistribution[]
@@ -33,10 +38,7 @@ export interface Hackathon {
   submissionCount: number
   viewCount: number
   
-  totalReward?: number
   ownerId?: string
-  tracks?: string[]
-  deliverables?: string[]
   tags?: string[]
   partners?: Partner[]
   

@@ -129,15 +129,16 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
               {hackathon.type?.replace('_', ' ') || 'VIRTUAL'}
             </Badge>
           </div>
-          <div className="h-24 w-24 rounded-2xl bg-white/5 border border-white/10 p-4 flex items-center justify-center overflow-hidden shadow-2xl">
-            <Image
-              src={hackathon.logo || "/assets/icons/sdollar.png"}
-              alt="Logo"
-              width={80}
-              height={80}
-              className="object-contain"
-            />
-          </div>
+        {/* Logo container removed as per request */}
+        {/* <div className="h-24 w-24 rounded-2xl bg-white/5 border border-white/10 p-4 flex items-center justify-center overflow-hidden shadow-2xl">
+          <Image
+            src={hackathon.logo || "/assets/icons/sdollar.png"}
+            alt="Logo"
+            width={80}
+            height={80}
+            className="object-contain"
+          />
+        </div> */}
         </div>
         
         <div className="space-y-4">
@@ -167,15 +168,17 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
               })()}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Globe className="h-4 w-4 text-primary" />
-            <span className="font-medium">Region: Online/Global</span>
-          </div>
+          {(hackathon as any).location && (
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-primary" />
+              <span className="font-medium">Region: {(hackathon as any).location}</span>
+            </div>
+          )}
         </div>
 
         <div className="space-y-2 py-4">
           <p className="text-5xl md:text-7xl font-bold text-blue-500 font-inter tracking-tighter">
-            ${hackathon.totalPrizePool?.toLocaleString()} <span className="text-2xl text-blue-500/50">{currency}</span>
+            ${((hackathon as any).totalPrizePool || (hackathon as any).totalBudget || (hackathon as any).totalReward || 0).toLocaleString()} <span className="text-2xl text-blue-500/50">{currency}</span>
           </p>
           <p className="text-gray-500 uppercase tracking-widest text-xs font-bold font-inter">In Total Prizes</p>
         </div>
@@ -207,7 +210,8 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
       </div>
 
       {/* Main Image Section */}
-      <div className="relative aspect-[21/9] w-full max-w-6xl mx-auto rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+      {/* Hero image removed as per request */}
+      {/* <div className="relative aspect-[21/9] w-full max-w-6xl mx-auto rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
         <Image
           src={hackathon.heroImage || "/assets/dashboardMobile.png"}
           alt={hackathon.title}
@@ -216,7 +220,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
           priority
         />
         <div className="absolute inset-0 bg-linear-to-t from-[#09090B]/80 via-transparent to-transparent" />
-      </div>
+      </div> */}
 
       {/* Content Grid */}
       <div className="grid lg:grid-cols-[1fr_380px] gap-12 max-w-6xl mx-auto">
@@ -231,8 +235,8 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
             </div>
           </section>
 
-          {/* Partners Section */}
-          <section className="space-y-8">
+          {/* Partners section removed as per request */}
+          {/* <section className="space-y-8">
             <div className="space-y-2">
               <h2 className="text-3xl font-bold text-white">Partners</h2>
               <p className="text-gray-500 text-sm">Industry leaders supporting the hackathon</p>
@@ -256,7 +260,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                 </>
               )}
             </div>
-          </section>
+          </section> */}
 
           {/* Requirements Section */}
           <section className="space-y-8">
@@ -276,14 +280,14 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
           </section>
 
           {/* Winners Section (Visible if winners exist) */}
-          {winners?.length > 0 && (
+          {(winners as any)?.length > 0 && (
             <section className="space-y-8">
               <h2 className="text-3xl font-bold text-white flex items-center gap-3">
                 <Trophy className="h-8 w-8 text-amber-400" />
                 Winners
               </h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {winners.map((winner: any, i: number) => (
+                {(winners as any[]).map((winner: any, i: number) => (
                   <Card key={i} className="bg-primary/5 border-primary/20 group hover:border-primary/50 transition-all overflow-hidden rounded-2xl shadow-xl">
                     <div className="bg-primary/10 p-4 border-b border-primary/20 flex items-center justify-between">
                       <span className="text-2xl">{getAwardIcon(winner.rank)}</span>
@@ -376,7 +380,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                   <span className="text-lg font-bold text-white">
                     {(() => {
                       try {
-                        const date = hackathon.registrationDeadline ? new Date(hackathon.registrationDeadline) : null;
+                        const date = (hackathon.submissionDeadline || hackathon.registrationDeadline || hackathon.endDate) ? new Date(hackathon.submissionDeadline || hackathon.registrationDeadline || hackathon.endDate) : null;
                         return date && !isNaN(date.getTime()) ? format(date, "MMM d, yyyy") : "TBA";
                       } catch (e) {
                         return "TBA";
@@ -386,7 +390,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                 </div>
                 <div className="pt-4 flex items-center justify-between">
                   <span className="text-sm text-gray-400">Total Pool</span>
-                  <span className="text-2xl font-bold text-white">${hackathon.totalPrizePool?.toLocaleString()}</span>
+                  <span className="text-2xl font-bold text-white">${((hackathon as any).totalPrizePool || (hackathon as any).totalBudget || (hackathon as any).totalReward || 0).toLocaleString()}</span>
                 </div>
               </div>
 
