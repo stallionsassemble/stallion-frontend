@@ -106,6 +106,7 @@ export interface AdminHackathon {
   startDate?: string // Maps to deadline
   endDate?: string
   submissionDeadline?: string
+  deadline?: string
   announcementDate?: string
   location?: string
   totalBudget?: number

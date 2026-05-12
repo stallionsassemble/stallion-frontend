@@ -130,7 +130,7 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
               {(() => {
                 try {
                   const start = hackathon.startDate ? new Date(hackathon.startDate) : null;
-                  const end = (hackathon.submissionDeadline || hackathon.endDate) ? new Date(hackathon.submissionDeadline || hackathon.endDate) : null;
+                  const end = ((hackathon as any).deadline || (hackathon as any).submissionDeadline || hackathon.endDate) ? new Date((hackathon as any).deadline || (hackathon as any).submissionDeadline || hackathon.endDate) : null;
                   
                   const startStr = start && !isNaN(start.getTime()) 
                     ? format(start, "MMM d") 

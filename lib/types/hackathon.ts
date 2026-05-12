@@ -17,6 +17,7 @@ export interface Hackathon {
   endDate: string
   registrationDeadline: string
   submissionDeadline?: string
+  deadline?: string
   announcementDate?: string
   location?: string
   token?: string

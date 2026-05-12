@@ -380,7 +380,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                   <span className="text-lg font-bold text-white">
                     {(() => {
                       try {
-                        const date = (hackathon.submissionDeadline || hackathon.registrationDeadline || hackathon.endDate) ? new Date(hackathon.submissionDeadline || hackathon.registrationDeadline || hackathon.endDate) : null;
+                        const date = ((hackathon as any).deadline || (hackathon as any).submissionDeadline || (hackathon as any).registrationDeadline || (hackathon as any).endDate) ? new Date((hackathon as any).deadline || (hackathon as any).submissionDeadline || (hackathon as any).registrationDeadline || (hackathon as any).endDate) : null;
                         return date && !isNaN(date.getTime()) ? format(date, "MMM d, yyyy") : "TBA";
                       } catch (e) {
                         return "TBA";
