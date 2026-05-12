@@ -101,7 +101,13 @@ export default function UserManagementPage() {
   const meta = usersData?.meta
   const totalPages = meta?.totalPages || 0
 
-  const handleAction = async (type: string, userId: string, data?: any) => {
+  const handleAction = async (type: string, userId: string, data?: any, token?: string) => {
+    if (!isStepUpValid && !token) {
+      setPendingAction({ type, userId, data })
+      setStepUpOpen(true)
+      return
+    }
+
     const toastId = toast.loading(`Performing action...`)
     
     try {

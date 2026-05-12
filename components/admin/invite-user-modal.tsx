@@ -26,12 +26,14 @@ interface InviteUserModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  stepUpToken?: string | null
 }
 
 export function InviteUserModal({
   open,
   onOpenChange,
   onSuccess,
+  stepUpToken,
 }: InviteUserModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -55,7 +57,7 @@ export function InviteUserModal({
     const toastId = toast.loading('Creating user...')
 
     try {
-      await adminService.createUser(formData)
+      await adminService.createUser(formData, stepUpToken || undefined)
       toast.success('User invited successfully', { id: toastId })
       onSuccess()
       onOpenChange(false)

@@ -96,7 +96,13 @@ export default function ProjectManagementPage() {
   const totalItems = projectsData?.meta?.total || 0
   const totalPages = projectsData?.meta?.totalPages || 1
 
-  const handleDelete = async (projectId: string) => {
+  const handleDelete = async (projectId: string, token?: string) => {
+    if (!isStepUpValid && !token) {
+      setPendingAction({ type: 'delete', projectId })
+      setStepUpOpen(true)
+      return
+    }
+
     const toastId = toast.loading('Deleting project...')
     
     try {
@@ -108,7 +114,13 @@ export default function ProjectManagementPage() {
     }
   }
 
-  const handleFeature = async (projectId: string, isFeatured: boolean) => {
+  const handleFeature = async (projectId: string, isFeatured: boolean, token?: string) => {
+    if (!isStepUpValid && !token) {
+      setPendingAction({ type: 'feature', projectId, data: { isFeatured } })
+      setStepUpOpen(true)
+      return
+    }
+
     const toastId = toast.loading(isFeatured ? 'Featuring project...' : 'Unfeaturing project...')
     
     try {
