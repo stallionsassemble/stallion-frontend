@@ -67,9 +67,15 @@ export default function FundingWalletPage() {
     fetchFundingWallet()
   }, [])
 
-  const handleSave = async () => {
+  const handleSave = async (token?: string) => {
     if (!newWalletId) {
       toast.error('Wallet ID cannot be empty')
+      return
+    }
+
+    if (!isStepUpValid && !token) {
+      setPendingAction({ type: 'save' })
+      setStepUpOpen(true)
       return
     }
 
@@ -87,7 +93,13 @@ export default function FundingWalletPage() {
     }
   }
 
-  const handleDelete = async () => {
+  const handleDelete = async (token?: string) => {
+    if (!isStepUpValid && !token) {
+      setPendingAction({ type: 'delete' })
+      setStepUpOpen(true)
+      return
+    }
+
     setIsDeleting(true)
     const toastId = toast.loading('Deleting funding wallet...')
 
