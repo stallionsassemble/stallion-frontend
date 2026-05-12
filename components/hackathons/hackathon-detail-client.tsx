@@ -174,11 +174,19 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
               <span className="font-medium">Region: {(hackathon as any).location}</span>
             </div>
           )}
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            <span className="font-medium">{(hackathon as any)._count?.participants || hackathon.participantCount || 0} participants signed up</span>
+          </div>
         </div>
 
         <div className="space-y-2 py-4">
           <p className="text-5xl md:text-7xl font-bold text-blue-500 font-inter tracking-tighter">
-            ${((hackathon as any).totalPrizePool || (hackathon as any).totalBudget || (hackathon as any).totalReward || 0).toLocaleString()} <span className="text-2xl text-blue-500/50">{currency}</span>
+            ${(
+              Number((hackathon as any).totalPrizePool || 0) || 
+              Number((hackathon as any).totalBudget || 0) || 
+              Number((hackathon as any).totalReward || 0)
+            ).toLocaleString()} <span className="text-2xl text-blue-500/50">{currency}</span>
           </p>
           <p className="text-gray-500 uppercase tracking-widest text-xs font-bold font-inter">In Total Prizes</p>
         </div>
@@ -363,14 +371,14 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                     <Users className="h-5 w-5 text-primary" />
                     <span className="text-sm text-gray-400">Participants</span>
                   </div>
-                  <span className="text-lg font-bold text-white">{hackathon.participantCount || 0}</span>
+                  <span className="text-lg font-bold text-white">{(hackathon as any)._count?.participants || hackathon.participantCount || 0}</span>
                 </div>
                 <div className="flex items-center justify-between py-4 border-b border-white/5">
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-primary" />
                     <span className="text-sm text-gray-400">Submissions</span>
                   </div>
-                  <span className="text-lg font-bold text-white">{hackathon.submissionCount || 0}</span>
+                  <span className="text-lg font-bold text-white">{(hackathon as any)._count?.submissions || hackathon.submissionCount || 0}</span>
                 </div>
                 <div className="flex items-center justify-between py-4 border-b border-white/5">
                   <div className="flex items-center gap-3">
@@ -390,7 +398,13 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                 </div>
                 <div className="pt-4 flex items-center justify-between">
                   <span className="text-sm text-gray-400">Total Pool</span>
-                  <span className="text-2xl font-bold text-white">${((hackathon as any).totalPrizePool || (hackathon as any).totalBudget || (hackathon as any).totalReward || 0).toLocaleString()}</span>
+                  <span className="text-2xl font-bold text-white">
+                    ${(
+                      Number((hackathon as any).totalPrizePool || 0) || 
+                      Number((hackathon as any).totalBudget || 0) || 
+                      Number((hackathon as any).totalReward || 0)
+                    ).toLocaleString()}
+                  </span>
                 </div>
               </div>
 

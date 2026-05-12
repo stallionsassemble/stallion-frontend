@@ -45,6 +45,11 @@ export interface Hackathon {
   
   createdAt: string
   updatedAt: string
+  _count?: {
+    submissions: number
+    participants: number
+    teams: number
+  }
 }
 
 export interface PrizeDistribution {

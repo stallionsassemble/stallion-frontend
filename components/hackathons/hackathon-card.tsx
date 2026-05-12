@@ -122,7 +122,7 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
         <div className="flex items-center gap-4 py-2 border-y border-white/5">
           <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
             <Users className="h-3.5 w-3.5 text-primary" />
-            <span>{hackathon.participantCount || 0}</span>
+            <span>{(hackathon as any)._count?.participants || hackathon.participantCount || 0}</span>
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
             <Calendar className="h-3.5 w-3.5 text-primary" />
@@ -151,7 +151,11 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
 
         <div className="flex items-center gap-2 mt-auto">
           <span className="text-xl font-bold text-white">
-            ${((hackathon as any).totalPrizePool || (hackathon as any).totalBudget || (hackathon as any).totalReward || 0).toLocaleString()}
+            ${(
+              Number((hackathon as any).totalPrizePool || 0) || 
+              Number((hackathon as any).totalBudget || 0) || 
+              Number((hackathon as any).totalReward || 0)
+            ).toLocaleString()}
           </span>
           <Badge className="bg-blue-600 hover:bg-blue-600 text-white border-0 text-[10px] px-2 py-0">
             {currency}
