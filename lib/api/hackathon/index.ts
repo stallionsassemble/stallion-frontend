@@ -5,6 +5,7 @@ import type {
   SelectWinnersDto,
   SelectWinnerDto,
   UpdateHackathonDto,
+  CreateTeamDto,
 } from '@/lib/api/generated/hackathons/model'
 
 const hackathonsSdk = getStallionBackendAPI()
@@ -49,16 +50,36 @@ class HackathonService {
     return hackathonsSdk.hackathonsControllerGetSubmissions(hackathonId, params)
   }
 
-  async reviewSubmission(id: string, sid: string) {
-    return hackathonsSdk.hackathonsControllerReviewSubmission(id, sid)
+  async reviewSubmission(id: string, sid: string, options?: any) {
+    return hackathonsSdk.hackathonsControllerReviewSubmission(id, sid, options)
   }
 
-  async selectWinner(id: string, sid: string, payload: SelectWinnerDto) {
-    return hackathonsSdk.hackathonsControllerSelectWinner(id, sid, payload)
+  async selectWinner(id: string, sid: string, payload: SelectWinnerDto, options?: any) {
+    return hackathonsSdk.hackathonsControllerSelectWinner(id, sid, payload, options)
+  }
+
+  async removeWinner(id: string, sid: string, options?: any) {
+    return hackathonsSdk.hackathonsControllerRemoveWinner(id, sid, options)
   }
 
   async getWinners(hackathonId: string) {
     return this.getSubmissions(hackathonId, { status: 'WINNER' as any })
+  }
+
+  async publishResults(id: string, options?: any) {
+    return hackathonsSdk.hackathonsControllerPublishResults(id, options)
+  }
+
+  async createTeam(id: string, payload: CreateTeamDto) {
+    return hackathonsSdk.hackathonsControllerCreateTeam(id, payload)
+  }
+
+  async joinTeam(id: string, teamId: string) {
+    return hackathonsSdk.hackathonsControllerJoinTeam(id, teamId)
+  }
+
+  async leaveTeam(id: string) {
+    return hackathonsSdk.hackathonsControllerLeaveTeam(id)
   }
 }
 

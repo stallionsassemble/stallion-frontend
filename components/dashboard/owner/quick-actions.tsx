@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Blocks, FileStack, Gift } from "lucide-react";
+import { ArrowRight, Blocks, FileStack, Gift, Trophy } from "lucide-react";
 import Link from "next/link";
 
 import { useGetMyBounties } from "@/lib/api/bounties/queries";
@@ -80,10 +80,10 @@ export function QuickActions() {
           onClick={() => setOpenProjectModal(true)}
         />
         <ActionCard
-          title={`Review Submissions ${totalSubmissions > 0 ? `(${totalSubmissions})` : ''}`}
-          description="Check received submissions"
-          icon={FileStack}
-          href="/dashboard/owner/bounties"
+          title="Manage Hackathons"
+          description="Select winners & manage entries"
+          icon={Trophy}
+          href="/dashboard/owner/hackathons"
         />
       </div>
 

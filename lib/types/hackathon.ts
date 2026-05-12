@@ -42,14 +42,40 @@ export interface Hackathon {
   ownerId?: string
   tags?: string[]
   partners?: Partner[]
+  teamBased?: boolean
+  maxTeamSize?: number
   
   createdAt: string
   updatedAt: string
+  isParticipant?: boolean
+  userTeam?: {
+    id: string
+    name: string
+  }
+  myTeam?: {
+    id: string
+    name: string
+  }
+  participation?: {
+    id: string
+    status: string
+    teamId?: string
+    team?: {
+      id: string
+      name: string
+    }
+    submission?: HackathonSubmission
+  }
+  team?: {
+    id: string
+    name: string
+  }
   _count?: {
     submissions: number
     participants: number
     teams: number
   }
+  userSubmission?: HackathonSubmission
 }
 
 export interface PrizeDistribution {

@@ -17,13 +17,15 @@ import {
   FileText,
   Loader2,
   ChevronLeft,
-  ShieldCheck
+  ShieldCheck,
+  Check
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SubmitHackathonModal } from "./submit-hackathon-modal";
+import { HackathonTeamManagement } from "./hackathon-team-management";
 import { useState } from "react";
 
 const getAwardIcon = (rank: number) => {
@@ -69,7 +71,8 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
       toast.error("Please login to register for hackathons");
       return;
     }
-    participateMutation.mutate(id);
+    if (!hackathon) return;
+    participateMutation.mutate(hackathon.id);
   };
 
   if (isLoading) {
@@ -94,6 +97,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
   const isExpired = hackathon.registrationDeadline ? new Date(hackathon.registrationDeadline) < new Date() : false;
   const prizes = hackathon.prizePool || hackathon.prizeDistribution || [];
   const currency = hackathon.currency || hackathon.asset || "USDC";
+  const hasSubmitted = !!(hackathon.userSubmission || hackathon.participation?.submission);
 
   return (
     <div className="container mx-auto px-4 py-12 space-y-12">
@@ -191,30 +195,60 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
           <p className="text-gray-500 uppercase tracking-widest text-xs font-bold font-inter">In Total Prizes</p>
         </div>
 
-        <div className="flex items-center gap-4 pt-4">
-          <Button 
-            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-12 h-14 text-lg font-bold shadow-2xl shadow-primary/20"
-            disabled={isExpired || participateMutation.isPending}
-            onClick={handleRegister}
-          >
-            {participateMutation.isPending ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : isExpired ? "Registration Closed" : "Register Now"}
-          </Button>
-          <Button 
-            variant="outline" 
-            className="bg-white/5 border-white/10 hover:bg-white/10 text-white rounded-full px-12 h-14 text-lg font-bold"
-            onClick={() => {
-              if (!user) {
-                toast.error("Please login to submit a project");
-                return;
-              }
-              setIsSubmitModalOpen(true);
-            }}
-          >
-            Submit Project
-          </Button>
-        </div>
+        {(() => {
+          const isJoined = !!(hackathon.isParticipant || hackathon.userTeam || hackathon.myTeam || hackathon.team || hackathon.participation);
+          const hasSubmitted = !!(hackathon.userSubmission || hackathon.participation?.submission);
+          
+          return (
+            <div className="flex items-center gap-4 pt-4">
+              <Button 
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-12 h-14 text-lg font-bold shadow-2xl shadow-primary/20"
+                disabled={isExpired || participateMutation.isPending || isJoined}
+                onClick={() => handleRegister()}
+              >
+                {participateMutation.isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : isExpired ? (
+                  "Registration Closed"
+                ) : isJoined ? (
+                  "Joined"
+                ) : (
+                  "Register Now"
+                )}
+              </Button>
+              <Button 
+                variant="outline" 
+                className={cn(
+                  "rounded-full px-12 h-14 text-lg font-bold transition-all",
+                  hasSubmitted 
+                    ? "bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20" 
+                    : "bg-white/5 border-white/10 hover:bg-white/10 text-white"
+                )}
+                onClick={() => {
+                  if (!user) {
+                    toast.error("Please login to submit a project");
+                    return;
+                  }
+                  if (hasSubmitted) {
+                    toast.info("You have already submitted a project for this hackathon.");
+                    return;
+                  }
+                  setIsSubmitModalOpen(true);
+                }}
+                disabled={hasSubmitted}
+              >
+                {hasSubmitted ? (
+                  <>
+                    <CheckCircle2 className="h-5 w-5 mr-2" />
+                    Submitted
+                  </>
+                ) : (
+                  "Submit Project"
+                )}
+              </Button>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Main Image Section */}
@@ -233,6 +267,36 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
       {/* Content Grid */}
       <div className="grid lg:grid-cols-[1fr_380px] gap-12 max-w-6xl mx-auto">
         <div className="space-y-12">
+          {/* Participation & Team Section */}
+          {(hackathon.teamBased || (hackathon as any).teamBasedParticipation) ? (
+            user && (
+              <section className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-white font-syne">Team Formation</h2>
+                  {hackathon.isParticipant && !hackathon.userTeam && !hackathon.myTeam && !hackathon.participation?.team && (
+                    <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary">Required</Badge>
+                  )}
+                </div>
+                <HackathonTeamManagement 
+                  hackathonId={hackathon.id} 
+                  userTeam={hackathon.userTeam || hackathon.myTeam || hackathon.participation?.team} 
+                />
+              </section>
+            )
+          ) : (
+            (hackathon.isParticipant || hackathon.participation) && (
+              <section className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md flex items-center gap-4">
+                <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                  <Check className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold">You're Registered</h3>
+                  <p className="text-gray-500 text-sm">Individual participation confirmed</p>
+                </div>
+              </section>
+            )
+          )}
+
           {/* About Section */}
           <section className="space-y-6">
             <h2 className="text-3xl font-bold text-white flex items-center gap-3">
@@ -295,7 +359,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                 Winners
               </h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(winners as any[]).map((winner: any, i: number) => (
+                {(winners as unknown as any[]).map((winner: any, i: number) => (
                   <Card key={i} className="bg-primary/5 border-primary/20 group hover:border-primary/50 transition-all overflow-hidden rounded-2xl shadow-xl">
                     <div className="bg-primary/10 p-4 border-b border-primary/20 flex items-center justify-between">
                       <span className="text-2xl">{getAwardIcon(winner.rank)}</span>
@@ -453,8 +517,10 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
       <SubmitHackathonModal
         isOpen={isSubmitModalOpen}
         onClose={() => setIsSubmitModalOpen(false)}
-        hackathonId={id}
+        hackathonId={hackathon.id}
         hackathonTitle={hackathon.title}
+        isTeamBased={!!(hackathon.teamBased || (hackathon as any).teamBasedParticipation)}
+        initialTeamId={hackathon.userTeam?.id || hackathon.myTeam?.id || hackathon.team?.id || hackathon.participation?.team?.id || hackathon.participation?.teamId}
       />
     </div>
   );
