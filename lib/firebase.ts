@@ -14,13 +14,19 @@ const firebaseConfig = {
 import { getAuth, GoogleAuthProvider, OAuthProvider } from 'firebase/auth'
 
 // Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
-const auth = getAuth(app)
+let app: any;
+let auth: any;
 
-const googleProvider = new GoogleAuthProvider()
-const appleProvider = new OAuthProvider('apple.com')
+if (firebaseConfig.apiKey) {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
+  auth = getAuth(app)
+}
+
+const googleProvider = firebaseConfig.apiKey ? new GoogleAuthProvider() : null
+const appleProvider = firebaseConfig.apiKey ? new OAuthProvider('apple.com') : null
 
 const messaging = async () => {
+  if (!app) return null
   const supported = await isSupported()
   return supported ? getMessaging(app) : null
 }
@@ -28,6 +34,7 @@ const messaging = async () => {
 export { app, auth, googleProvider, appleProvider, messaging }
 
 export const fetchToken = async () => {
+  if (!app) return null
   try {
     const msg = await messaging()
     if (!msg) return null
