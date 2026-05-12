@@ -5,5 +5,31 @@
  * Bounty platform backend with wallet management, points system, and Soroban integration
  * OpenAPI spec version: 2.0
  */
+import type { CreateHackathonDtoAttachments } from './createHackathonDtoAttachments';
+import type { CreateHackathonDtoDocuments } from './createHackathonDtoDocuments';
+import type { CreateHackathonDtoType } from './createHackathonDtoType';
+import type { HackathonPrizeDto } from './hackathonPrizeDto';
 
-export interface CreateHackathonDto { [key: string]: unknown }
+export interface CreateHackathonDto {
+  title: string;
+  slug: string;
+  type: CreateHackathonDtoType;
+  description: string;
+  deliverables: string[];
+  tags: string[];
+  deadline: string;
+  announcementDate: string;
+  totalBudget: number;
+  /** Token contract address for the prize pool */
+  token: string;
+  /** Asset identifier (e.g. XLM or USDC) */
+  asset: string;
+  prizePool: HackathonPrizeDto[];
+  /** Map of title to link */
+  documents?: CreateHackathonDtoDocuments;
+  attachments?: CreateHackathonDtoAttachments;
+  teamBased: boolean;
+  maxTeamSize?: number;
+  /** ID of the Project Owner who will act as judge */
+  companyId: string;
+}

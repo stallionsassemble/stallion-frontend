@@ -31,7 +31,6 @@ interface CreateBountyModalProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   isAdmin?: boolean;
-  stepUpToken?: string;
 }
 
 const DEFAULT_TAGS = ["Frontend", "Backend", "Ui/UX Design", "Writing", "Digital Marketing", "Mobile", "Web3"];
@@ -42,7 +41,6 @@ export function CreateBountyModal({
   open: controlledOpen, 
   onOpenChange: setControlledOpen,
   isAdmin,
-  stepUpToken
 }: CreateBountyModalProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
@@ -283,10 +281,10 @@ export function CreateBountyModal({
         ...basePayload,
       };
 
-      if (isAdmin && stepUpToken) {
-        // Admin update with step-up
+      if (isAdmin) {
+        // Admin update with automatic step-up from service
         const toastId = toast.loading("Updating as admin...");
-        adminService.updateBounty(existingBounty.id, updatePayload, stepUpToken)
+        adminService.updateBounty(existingBounty.id, updatePayload)
           .then(() => {
             toast.success("Bounty updated successfully", { id: toastId });
             setOpen(false);

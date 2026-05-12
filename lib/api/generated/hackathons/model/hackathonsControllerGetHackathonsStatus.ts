@@ -12,7 +12,6 @@ export type HackathonsControllerGetHackathonsStatus = typeof HackathonsControlle
 export const HackathonsControllerGetHackathonsStatus = {
   DRAFT: 'DRAFT',
   PUBLISHED: 'PUBLISHED',
-  ONGOING: 'ONGOING',
   JUDGING: 'JUDGING',
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',

@@ -5,5 +5,16 @@
  * Bounty platform backend with wallet management, points system, and Soroban integration
  * OpenAPI spec version: 2.0
  */
+import type { CreateSubmissionDtoSubmissionData } from './createSubmissionDtoSubmissionData';
 
-export interface CreateSubmissionDto { [key: string]: unknown }
+export interface CreateSubmissionDto {
+  title: string;
+  submissionLink: string;
+  description?: string;
+  submissionData?: CreateSubmissionDtoSubmissionData;
+  projectName?: string;
+  projectUrl?: string;
+  repositoryUrl?: string;
+  videoUrl?: string;
+  teamId?: string;
+}

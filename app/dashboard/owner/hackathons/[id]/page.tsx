@@ -19,7 +19,6 @@ import {
   CheckCircle2,
   AlertCircle,
   MoreVertical,
-  Trash2,
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
@@ -42,7 +41,6 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import { adminService } from '@/lib/api/admin'
 import {
   useGetHackathon,
   useGetHackathonSubmissions,
@@ -52,6 +50,7 @@ import {
   useRemoveWinner,
   usePublishHackathon,
 } from '@/lib/api/hackathon/queries'
+import { hackathonService } from '@/lib/api/hackathon'
 import { useAuth } from '@/lib/store/use-auth'
 import { Hackathon } from '@/lib/types/hackathon'
 import { User } from '@/lib/types'
@@ -60,7 +59,7 @@ import { cn } from '@/lib/utils'
 
 type EditableHackathonForm = {
   title: string
-  type: 'OPEN_SOURCE' | 'CLOSED_SOURCE'
+  type: 'VIRTUAL' | 'PHYSICAL'
   description: string
   startDate: string
   endDate: string
@@ -113,7 +112,7 @@ type WinnerView = {
 
 const defaultFormData: EditableHackathonForm = {
   title: '',
-  type: 'OPEN_SOURCE',
+  type: 'VIRTUAL',
   description: '',
   startDate: '',
   endDate: '',
@@ -175,7 +174,7 @@ const getDisplayName = (user?: User) => {
 
 const mapHackathonToForm = (hackathon: HackathonView): EditableHackathonForm => ({
   title: hackathon.title || '',
-  type: hackathon.type || 'OPEN_SOURCE',
+  type: (hackathon as any).type === 'PHYSICAL' ? 'PHYSICAL' : 'VIRTUAL',
   description: hackathon.description || '',
   startDate: hackathon.startDate ? new Date(hackathon.startDate).toISOString().slice(0, 10) : '',
   endDate: hackathon.endDate ? new Date(hackathon.endDate).toISOString().slice(0, 10) : '',
@@ -185,7 +184,7 @@ const mapHackathonToForm = (hackathon: HackathonView): EditableHackathonForm => 
   hostName: hackathon.hostName || hackathon.owner?.companyName || '',
 })
 
-export default function HackathonAdminDetailsPage() {
+export default function OwnerHackathonDetailsPage() {
   const params = useParams<{ id: string | string[] }>()
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -221,13 +220,10 @@ export default function HackathonAdminDetailsPage() {
   const submissions = unwrapList<SubmissionView>(submissionsData)
   const winners = unwrapList<WinnerView>(winnersData)
   
-  // Debug log to see the structure of the data
-  console.log('Hackathon Data:', hackathonData)
-
   const participantCount =
-    hackathon?.participantCount || hackathon?.participantsCount || 0
+    hackathon?.participantCount || (hackathon as any)?.participantsCount || 0
   const submissionCount = hackathon?.submissionCount || submissions.length
-  const totalPrizePool = hackathon?.totalPrizePool || hackathon?.totalReward || 0
+  const totalPrizePool = hackathon?.totalPrizePool || (hackathon as any)?.totalReward || 0
 
   const openEditModal = () => {
     if (!hackathon) return
@@ -243,24 +239,6 @@ export default function HackathonAdminDetailsPage() {
 
   const invalidateHackathonQueries = async () => {
     await queryClient.invalidateQueries({ queryKey: ['hackathons'] })
-  }
-
-  const handleDelete = async () => {
-    setIsSubmitting(true)
-    const toastId = toast.loading('Deleting hackathon...')
-
-    try {
-      await adminService.deleteHackathon(hackathonId)
-      toast.success('Hackathon deleted successfully', { id: toastId })
-      await invalidateHackathonQueries()
-      router.push('/dashboard/admin/hackathons')
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to delete hackathon'
-      toast.error(message, { id: toastId })
-    } finally {
-      setIsSubmitting(false)
-    }
   }
 
   const handleSave = async () => {
@@ -294,14 +272,13 @@ export default function HackathonAdminDetailsPage() {
       teamBasedParticipation,
       maxTeamSize: teamBasedParticipation ? parseInt(formData.maxTeamSize, 10) : 1,
       hostName: formData.hostName.trim(),
-      ownerId: hackathon.ownerId || user?.id,
-    }
+    } as any
 
     setIsSubmitting(true)
     const toastId = toast.loading('Saving hackathon changes...')
 
     try {
-      await adminService.updateHackathon(hackathonId, payload)
+      await hackathonService.updateHackathon(hackathonId, payload)
       toast.success('Hackathon updated successfully', { id: toastId })
       setIsEditOpen(false)
       await invalidateHackathonQueries()
@@ -317,7 +294,7 @@ export default function HackathonAdminDetailsPage() {
   const handleReview = async (submissionId: string) => {
     const toastId = toast.loading('Marking submission as in review...')
     try {
-      await reviewMutation.mutateAsync({ id: hackathonId, sid: submissionId })
+      await reviewMutation.mutateAsync({ id: hackathon?.id || hackathonId, sid: submissionId })
       toast.success('Submission marked as in review', { id: toastId })
       await invalidateHackathonQueries()
     } catch (error: any) {
@@ -352,7 +329,7 @@ export default function HackathonAdminDetailsPage() {
   const handleRemoveWinner = async (submissionId: string) => {
     const toastId = toast.loading('Removing winner status...')
     try {
-      await removeWinnerMutation.mutateAsync({ id: hackathonId, sid: submissionId })
+      await removeWinnerMutation.mutateAsync({ id: hackathon?.id || hackathonId, sid: submissionId })
       toast.success('Winner status removed', { id: toastId })
       await invalidateHackathonQueries()
     } catch (error: any) {
@@ -367,7 +344,7 @@ export default function HackathonAdminDetailsPage() {
     
     const toastId = toast.loading('Publishing results and triggering payouts...')
     try {
-      await publishMutation.mutateAsync(hackathonId)
+      await publishMutation.mutateAsync(hackathon?.id || hackathonId)
       toast.success('Results published and payouts triggered successfully!', { id: toastId })
       await invalidateHackathonQueries()
     } catch (error: any) {
@@ -388,11 +365,11 @@ export default function HackathonAdminDetailsPage() {
     return (
       <div className='space-y-4'>
         <Link
-          href='/dashboard/admin/hackathons'
+          href='/dashboard/owner/hackathons'
           className='inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground'
         >
           <ArrowLeft className='h-4 w-4' />
-          Back to Hackathons
+          Back to My Hackathons
         </Link>
         <Card className='border-border bg-card'>
           <CardContent className='py-16 text-center'>
@@ -400,7 +377,7 @@ export default function HackathonAdminDetailsPage() {
               Hackathon not found
             </p>
             <p className='mt-2 text-sm text-muted-foreground'>
-              This hackathon may have been deleted or the route is invalid.
+              ID: {hackathonId}
             </p>
           </CardContent>
         </Card>
@@ -410,7 +387,6 @@ export default function HackathonAdminDetailsPage() {
 
   return (
     <div className='space-y-6'>
-
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className='max-w-2xl border-border bg-card'>
           <DialogHeader>
@@ -429,24 +405,6 @@ export default function HackathonAdminDetailsPage() {
                   }))
                 }
               />
-            </div>
-
-            <div className='space-y-2'>
-              <Label>Hackathon Type</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value) =>
-                  setFormData((previous) => ({ ...previous, type: value as 'OPEN_SOURCE' | 'CLOSED_SOURCE' }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='OPEN_SOURCE'>Open Source</SelectItem>
-                  <SelectItem value='CLOSED_SOURCE'>Closed Source</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className='space-y-2'>
@@ -492,86 +450,6 @@ export default function HackathonAdminDetailsPage() {
               </div>
             </div>
 
-            <div className='grid gap-4 sm:grid-cols-[1fr_120px]'>
-              <div className='space-y-2'>
-                <Label>Total Prize Pool</Label>
-                <Input
-                  value={formData.totalPrizePool}
-                  onChange={(event) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      totalPrizePool: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>Currency</Label>
-                <Select
-                  value={formData.currency}
-                  onValueChange={(value) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      currency: value,
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='USDC'>USDC</SelectItem>
-                    <SelectItem value='USGLO'>USGLO</SelectItem>
-                    <SelectItem value='XLM'>XLM</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className='flex items-center justify-between rounded-lg border border-border px-4 py-3'>
-              <div>
-                <p className='text-sm font-medium text-foreground'>
-                  Team-Based Participation
-                </p>
-                <p className='text-xs text-muted-foreground'>
-                  Allow participants to join as teams
-                </p>
-              </div>
-              <Switch
-                checked={teamBasedParticipation}
-                onCheckedChange={setTeamBasedParticipation}
-              />
-            </div>
-
-            {teamBasedParticipation ? (
-              <div className='space-y-2'>
-                <Label>Maximum Team Size</Label>
-                <Input
-                  type='number'
-                  value={formData.maxTeamSize}
-                  onChange={(event) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      maxTeamSize: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-            ) : null}
-
-            <div className='space-y-2'>
-              <Label>Host Name</Label>
-              <Input
-                value={formData.hostName}
-                onChange={(event) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    hostName: event.target.value,
-                  }))
-                }
-              />
-            </div>
-
             <div className='flex justify-end gap-3 pt-2'>
               <Button
                 variant='outline'
@@ -596,11 +474,11 @@ export default function HackathonAdminDetailsPage() {
       <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
         <div className='space-y-2'>
           <Link
-            href='/dashboard/admin/hackathons'
+            href='/dashboard/owner/hackathons'
             className='inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground'
           >
             <ArrowLeft className='h-4 w-4' />
-            Back to Hackathons
+            Back to My Hackathons
           </Link>
           <div className='flex flex-wrap items-center gap-3'>
             <h1 className='text-2xl font-bold text-foreground'>
@@ -610,8 +488,27 @@ export default function HackathonAdminDetailsPage() {
               {hackathon.status || 'DRAFT'}
             </Badge>
           </div>
-          <p className='max-w-3xl text-sm text-muted-foreground'>
-            {hackathon.description || 'No description provided for this hackathon yet.'}
+          
+          {hackathon.status === 'PUBLISHED' && (
+            <div className="mt-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center gap-3 text-sm text-blue-400">
+              <Calendar className="h-4 w-4" />
+              <span>
+                <strong>Submission Phase:</strong> Judging will open once the submission period ends on {formatDate(hackathon.endDate || hackathon.submissionDeadline || hackathon.deadline)}.
+              </span>
+            </div>
+          )}
+
+          {hackathon.status === 'JUDGING' && (
+            <div className="mt-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center gap-3 text-sm text-amber-400">
+              <Trophy className="h-4 w-4" />
+              <span>
+                <strong>Judging Phase:</strong> You can now review submissions and select winners.
+              </span>
+            </div>
+          )}
+
+          <p className='max-w-3xl text-sm text-muted-foreground line-clamp-2 mt-2'>
+            {hackathon.description || 'No description provided.'}
           </p>
         </div>
 
@@ -619,17 +516,21 @@ export default function HackathonAdminDetailsPage() {
           <Button
             variant='outline'
             className='gap-2'
-            onClick={() => {
-              openEditModal()
-            }}
+            onClick={openEditModal}
           >
             <Edit className='h-4 w-4' />
             Edit
           </Button>
           <Button
             className='gap-2'
-            onClick={() => void handlePublishResults()}
-            disabled={publishMutation.isPending || hackathon.status === 'COMPLETED'}
+            onClick={() => {
+              if (hackathon.status !== 'JUDGING') {
+                toast.error('You can only publish results when the hackathon is in the JUDGING phase and winners have been selected.')
+                return
+              }
+              void handlePublishResults()
+            }}
+            disabled={publishMutation.isPending || hackathon.status === 'COMPLETED' || hackathon.status === 'PUBLISHED'}
           >
             {publishMutation.isPending ? (
               <Loader2 className='h-4 w-4 animate-spin' />
@@ -637,19 +538,6 @@ export default function HackathonAdminDetailsPage() {
               <ShieldCheck className='h-4 w-4' />
             )}
             Publish Results
-          </Button>
-          <Button
-            variant='destructive'
-            className='gap-2'
-            onClick={() => void handleDelete()}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <Loader2 className='h-4 w-4 animate-spin' />
-            ) : (
-              <Trash2 className='h-4 w-4' />
-            )}
-            Delete
           </Button>
         </div>
       </div>
@@ -682,7 +570,7 @@ export default function HackathonAdminDetailsPage() {
             <div>
               <p className='text-sm text-muted-foreground'>Prize Pool</p>
               <p className='text-2xl font-bold text-foreground'>
-                ${totalPrizePool.toLocaleString()}
+                {totalPrizePool.toLocaleString()} {hackathon.currency || 'USDC'}
               </p>
             </div>
             <Trophy className='h-5 w-5 text-primary' />
@@ -704,53 +592,96 @@ export default function HackathonAdminDetailsPage() {
       <div className='grid gap-6 lg:grid-cols-[1.5fr_1fr]'>
         <Card className='border-border bg-card'>
           <CardHeader>
-            <CardTitle>Hackathon Overview</CardTitle>
+            <CardTitle>Submissions</CardTitle>
           </CardHeader>
-          <CardContent className='space-y-4 text-sm text-muted-foreground'>
-            {/* console.log('Hackathon Data:', hackathon) */}
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <div>
-                <p className='font-medium text-foreground'>Owner</p>
-                <p>{getDisplayName(hackathon?.owner || (hackathon as any)?.createdBy || (hackathon as any)?.creator || (hackathonData as any)?.owner || (hackathonData as any)?.createdBy)}</p>
+          <CardContent className='space-y-3'>
+            {isSubmissionsLoading ? (
+              <div className='flex justify-center py-8'>
+                <Loader2 className='h-6 w-6 animate-spin text-primary' />
               </div>
-              <div>
-                <p className='font-medium text-foreground'>Host</p>
-                <p>{hackathon?.hostName || (hackathon as any)?.host || (hackathonData as any)?.hostName || (hackathon as any)?.title || 'Not set'}</p>
-              </div>
-              <div>
-                <p className='font-medium text-foreground'>Currency</p>
-                <p>{hackathon.currency || 'USDC'}</p>
-              </div>
-              <div>
-                <p className='font-medium text-foreground'>Team Rules</p>
-                <p>
-                  {hackathon.maxTeamSize && hackathon.maxTeamSize > 1
-                    ? `Teams allowed up to ${hackathon.maxTeamSize} members`
-                    : 'Solo participation only'}
-                </p>
-              </div>
-              <div>
-                <p className='font-medium text-foreground'>Type</p>
-                <Badge variant='outline' className='mt-1 capitalize'>
-                  {hackathon.type?.replace('_', ' ') || 'OPEN SOURCE'}
-                </Badge>
-              </div>
-            </div>
-            {hackathon.tags?.length ? (
-              <div className='flex flex-wrap gap-2 pt-2'>
-                {hackathon.tags.map((tag) => (
-                  <Badge key={tag} variant='secondary'>
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            ) : null}
+            ) : submissions.length ? (
+              submissions.map((submission) => (
+                <div
+                  key={submission.id}
+                  className='rounded-lg border border-border p-4 hover:bg-muted/50 transition-colors'
+                >
+                  <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+                    <div className='space-y-1'>
+                      <div className='flex items-center gap-2'>
+                        <p className='font-bold text-foreground'>
+                          {submission.teamName || submission.projectName || submission.title || 'Untitled Project'}
+                        </p>
+                        <Badge variant='outline' className='text-[10px] h-4'>
+                          {submission.status}
+                        </Badge>
+                      </div>
+                      <p className='text-xs text-muted-foreground line-clamp-1'>
+                        By {getDisplayName(submission.user)} • {formatDate(submission.createdAt)}
+                      </p>
+                    </div>
+
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        onClick={() => setSelectedSubmission(submission)}
+                      >
+                        View Details
+                      </Button>
+                      {submission.status !== 'IN_REVIEW' && submission.status !== 'WINNER' && (
+                        <Button 
+                          size='sm' 
+                          variant='secondary' 
+                          onClick={() => handleReview(submission.id)}
+                          disabled={reviewMutation.isPending}
+                        >
+                          Mark Review
+                        </Button>
+                      )}
+                      {submission.status !== 'WINNER' && (
+                        <Button 
+                          size='sm' 
+                          className={cn(
+                            'bg-amber-600 hover:bg-amber-700 text-white',
+                            hackathon.status !== 'JUDGING' && 'opacity-50 cursor-not-allowed'
+                          )}
+                          onClick={() => {
+                            if (hackathon.status !== 'JUDGING') {
+                              toast.error('Judging phase has not started yet. You can only select winners when the status is JUDGING.')
+                              return
+                            }
+                            setSelectedSubmissionId(submission.id)
+                            setIsWinnerModalOpen(true)
+                          }}
+                        >
+                          Select Winner
+                        </Button>
+                      )}
+                      {submission.status === 'WINNER' && (
+                        <Button 
+                          size='sm' 
+                          variant='destructive'
+                          onClick={() => handleRemoveWinner(submission.id)}
+                          disabled={removeWinnerMutation.isPending}
+                        >
+                          Remove Winner
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className='text-sm text-muted-foreground'>
+                No submissions yet for this hackathon.
+              </p>
+            )}
           </CardContent>
         </Card>
 
-        <Card className='border-border bg-card'>
+        <Card className='border-border bg-card h-fit'>
           <CardHeader>
-            <CardTitle>Winners</CardTitle>
+            <CardTitle>Winners List</CardTitle>
           </CardHeader>
           <CardContent className='space-y-3'>
             {isWinnersLoading ? (
@@ -761,25 +692,25 @@ export default function HackathonAdminDetailsPage() {
               winners.map((winner, index) => (
                 <div
                   key={winner.id || winner.submission?.id || index}
-                  className='rounded-lg border border-border px-4 py-3'
+                  className='rounded-lg border border-border px-4 py-3 bg-primary/5'
                 >
                   <div className='flex items-center justify-between gap-4'>
                     <div>
-                      <p className='font-medium text-foreground'>
+                      <p className='font-bold text-foreground'>
                         {winner.teamName ||
                           winner.submission?.teamName ||
                           getDisplayName(winner.user || winner.submission?.user)}
                       </p>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className='text-xs text-muted-foreground'>
                         Rank #{winner.rank || index + 1}
                       </p>
                     </div>
-                    <p className='font-semibold text-foreground'>
-                      $
+                    <div className='flex items-center gap-1 text-primary font-bold'>
+                      <Trophy className='h-4 w-4' />
                       {Number(
                         winner.prizeAmount || winner.amount || winner.submission?.prizeAmount || 0
                       ).toLocaleString()}
-                    </p>
+                    </div>
                   </div>
                 </div>
               ))
@@ -792,144 +723,7 @@ export default function HackathonAdminDetailsPage() {
         </Card>
       </div>
 
-      <Card className='border-border bg-card'>
-        <CardHeader>
-          <CardTitle>Submissions</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-3'>
-          {isSubmissionsLoading ? (
-            <div className='flex justify-center py-10'>
-              <Loader2 className='h-6 w-6 animate-spin text-primary' />
-            </div>
-          ) : submissions.length ? (
-            submissions.map((submission) => (
-              <div
-                key={submission.id}
-                className='rounded-lg border border-border p-4'
-              >
-                <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
-                  <div className='space-y-2'>
-                    <div className='flex flex-wrap items-center gap-2'>
-                      <p className='font-medium text-foreground'>
-                        {submission.teamName || submission.projectName || submission.title || getDisplayName(submission.user)}
-                      </p>
-                      <Badge variant='secondary'>
-                        {submission.status || 'UNKNOWN'}
-                      </Badge>
-                    </div>
-                    <p className='text-sm text-muted-foreground'>
-                      Submitted by {getDisplayName(submission.user)} on{' '}
-                      {formatDate(submission.createdAt)}
-                    </p>
-                    {submission.description ? (
-                      <p className='text-sm text-muted-foreground'>
-                        {submission.description}
-                      </p>
-                    ) : null}
-                    {submission.feedback ? (
-                      <p className='text-sm text-muted-foreground'>
-                        Feedback: {submission.feedback}
-                      </p>
-                    ) : null}
-                    {submission.members?.length ? (
-                      <p className='text-sm text-muted-foreground'>
-                        Team members: {submission.members.length}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div className='flex flex-wrap gap-2'>
-                    {(submission.projectUrl || submission.submissionLink) ? (
-                      <Button asChild size='sm' variant='outline'>
-                        <a
-                          href={submission.projectUrl || submission.submissionLink}
-                          target='_blank'
-                          rel='noreferrer'
-                        >
-                          Project
-                          <ExternalLink className='ml-2 h-4 w-4' />
-                        </a>
-                      </Button>
-                    ) : null}
-                    {(submission.githubUrl || submission.repositoryUrl) ? (
-                      <Button asChild size='sm' variant='outline'>
-                        <a
-                          href={submission.githubUrl || submission.repositoryUrl}
-                          target='_blank'
-                          rel='noreferrer'
-                        >
-                          GitHub
-                          <ExternalLink className='ml-2 h-4 w-4' />
-                        </a>
-                      </Button>
-                    ) : null}
-                    {submission.videoUrl ? (
-                      <Button asChild size='sm' variant='outline'>
-                        <a
-                          href={submission.videoUrl}
-                          target='_blank'
-                          rel='noreferrer'
-                        >
-                          Demo
-                          <ExternalLink className='ml-2 h-4 w-4' />
-                        </a>
-                      </Button>
-                    ) : null}
-                    <Button 
-                      size='sm' 
-                      variant='ghost'
-                      onClick={() => setSelectedSubmission(submission)}
-                    >
-                      View Details
-                    </Button>
-                    
-                    {submission.status !== 'WINNER' && (
-                      <>
-                        {submission.status !== 'IN_REVIEW' && (
-                          <Button 
-                            size='sm' 
-                            variant='secondary' 
-                            onClick={() => handleReview(submission.id)}
-                            disabled={reviewMutation.isPending}
-                          >
-                            Mark Review
-                          </Button>
-                        )}
-                        <Button 
-                          size='sm' 
-                          className='bg-amber-600 hover:bg-amber-700 text-white'
-                          onClick={() => {
-                            setSelectedSubmissionId(submission.id)
-                            setIsWinnerModalOpen(true)
-                          }}
-                        >
-                          Select Winner
-                        </Button>
-                      </>
-                    )}
-                    
-                    {submission.status === 'WINNER' && (
-                      <Button 
-                        size='sm' 
-                        variant='destructive'
-                        onClick={() => handleRemoveWinner(submission.id)}
-                        disabled={removeWinnerMutation.isPending}
-                      >
-                        Remove Winner
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className='text-sm text-muted-foreground'>
-              No submissions yet for this hackathon.
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
+      {/* Winner Selection Modal */}
       <Dialog open={isWinnerModalOpen} onOpenChange={setIsWinnerModalOpen}>
         <DialogContent className='border-border bg-card'>
           <DialogHeader>
@@ -975,6 +769,8 @@ export default function HackathonAdminDetailsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Submission Detail Modal */}
       <Dialog open={!!selectedSubmission} onOpenChange={(open) => !open && setSelectedSubmission(null)}>
         <DialogContent className="bg-card border-border sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1031,13 +827,6 @@ export default function HackathonAdminDetailsPage() {
                   )}
                 </div>
               </div>
-
-              {selectedSubmission.feedback && (
-                <div className="bg-muted/50 p-4 rounded-xl">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Admin Feedback</p>
-                  <p className="text-sm italic mt-1">"{selectedSubmission.feedback}"</p>
-                </div>
-              )}
 
               <div className="flex justify-end gap-3 pt-4 border-t border-border">
                 <Button variant="outline" onClick={() => setSelectedSubmission(null)}>Close</Button>

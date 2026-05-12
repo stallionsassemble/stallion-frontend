@@ -6,4 +6,4 @@
  * OpenAPI spec version: 2.0
  */
 
-export interface HackathonSelectWinnersDto { [key: string]: unknown }
+export type CreateHackathonDtoAttachments = { [key: string]: unknown };

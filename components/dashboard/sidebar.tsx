@@ -156,6 +156,11 @@ const ownerSidebarItems: SidebarItem[] = [
     icon: Trophy,
   },
   {
+    title: 'Hackathons',
+    href: '/dashboard/owner/hackathons',
+    icon: Trophy,
+  },
+  {
     title: 'Projects',
     href: '/dashboard/owner/projects',
     icon: Briefcase,

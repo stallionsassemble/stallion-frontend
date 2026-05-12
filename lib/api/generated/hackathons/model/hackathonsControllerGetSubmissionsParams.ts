@@ -5,10 +5,24 @@
  * Bounty platform backend with wallet management, points system, and Soroban integration
  * OpenAPI spec version: 2.0
  */
+import type { HackathonsControllerGetSubmissionsStatus } from './hackathonsControllerGetSubmissionsStatus';
 
 export type HackathonsControllerGetSubmissionsParams = {
 /**
- * Filter by track ID
+ * Search by project name or description
  */
-trackId?: string;
+search?: string;
+status?: HackathonsControllerGetSubmissionsStatus;
+/**
+ * Sort by recent or score
+ */
+sortBy?: string;
+/**
+ * Page number
+ */
+page?: number;
+/**
+ * Items per page
+ */
+limit?: number;
 };

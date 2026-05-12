@@ -8,39 +8,79 @@ export interface Hackathon {
   shortDescription?: string
   heroImage?: string
   logo?: string
-  status: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'COMPLETED'
+  status: 'DRAFT' | 'PUBLISHED' | 'JUDGING' | 'COMPLETED' | 'CANCELLED'
+  type: 'OPEN_SOURCE' | 'CLOSED_SOURCE'
   priority?: 'LOW' | 'MEDIUM' | 'HIGH'
   
   // Dates
   startDate: string
   endDate: string
   registrationDeadline: string
-  submissionDeadline: string
+  submissionDeadline?: string
+  deadline?: string
+  announcementDate?: string
+  location?: string
+  token?: string
   
   // Prize Info
   totalPrizePool: number
+  totalBudget?: number
+  totalReward?: number
   currency: string
-  prizeDistribution: PrizeDistribution[]
+  asset?: string
+  prizeDistribution?: PrizeDistribution[]
+  prizePool?: PrizeDistribution[]
   
+  tracks?: string[]
+  requirements?: string[]
+  deliverables?: string[]
   // Numbers
   participantCount: number
   submissionCount: number
   viewCount: number
   
-  // Relations
-  ownerId: string
-  owner?: User
-  tags: string[]
+  ownerId?: string
+  tags?: string[]
   partners?: Partner[]
-  requirements?: string[]
-  deliverables?: string[]
+  teamBased?: boolean
+  maxTeamSize?: number
   
   createdAt: string
   updatedAt: string
+  isParticipant?: boolean
+  userTeam?: {
+    id: string
+    name: string
+  }
+  myTeam?: {
+    id: string
+    name: string
+  }
+  participation?: {
+    id: string
+    status: string
+    teamId?: string
+    team?: {
+      id: string
+      name: string
+    }
+    submission?: HackathonSubmission
+  }
+  team?: {
+    id: string
+    name: string
+  }
+  _count?: {
+    submissions: number
+    participants: number
+    teams: number
+  }
+  userSubmission?: HackathonSubmission
 }
 
 export interface PrizeDistribution {
-  rank: number
+  rank?: number
+  position?: number
   amount: number
   label?: string
 }

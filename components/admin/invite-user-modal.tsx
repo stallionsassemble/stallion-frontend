@@ -26,14 +26,12 @@ interface InviteUserModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
-  stepUpToken: string | null
 }
 
 export function InviteUserModal({
   open,
   onOpenChange,
   onSuccess,
-  stepUpToken,
 }: InviteUserModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -47,10 +45,6 @@ export function InviteUserModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!stepUpToken) {
-      toast.error('Step-up verification required')
-      return
-    }
 
     if (!formData.email || !formData.role) {
       toast.error('Email and Role are required')
@@ -61,7 +55,7 @@ export function InviteUserModal({
     const toastId = toast.loading('Creating user...')
 
     try {
-      await adminService.createUser(formData, stepUpToken)
+      await adminService.createUser(formData)
       toast.success('User invited successfully', { id: toastId })
       onSuccess()
       onOpenChange(false)

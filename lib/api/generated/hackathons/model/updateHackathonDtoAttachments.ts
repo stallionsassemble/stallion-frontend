@@ -6,4 +6,4 @@
  * OpenAPI spec version: 2.0
  */
 
-export interface JudgeSubmissionDto { [key: string]: unknown }
+export type UpdateHackathonDtoAttachments = { [key: string]: unknown };

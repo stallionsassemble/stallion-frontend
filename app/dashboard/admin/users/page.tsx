@@ -81,11 +81,6 @@ export default function UserManagementPage() {
   const stepUpToken = useAdminStore((state) => state.stepUpToken)
 
   const handleInviteUser = () => {
-    if (!isStepUpValid()) {
-      setPendingAction({ type: 'invite', userId: 'new' })
-      setStepUpOpen(true)
-      return
-    }
     setIsInviteModalOpen(true)
   }
 
@@ -106,32 +101,21 @@ export default function UserManagementPage() {
   const meta = usersData?.meta
   const totalPages = meta?.totalPages || 0
 
-  const handleAction = async (type: string, userId: string, data?: any, stepUpTokenOverride?: string) => {
-    if (!isStepUpValid()) {
-      setPendingAction({ type, userId, data })
-      setStepUpOpen(true)
-      return
-    }
-
-    const token = stepUpTokenOverride || stepUpToken
-    if (!token) {
-      toast.error('Step-up verification required')
-      return
-    }
+  const handleAction = async (type: string, userId: string, data?: any) => {
     const toastId = toast.loading(`Performing action...`)
     
     try {
       if (type === 'suspend') {
-        await adminService.suspendUser(userId, data || { reason: 'Administrative action' }, token)
+        await adminService.suspendUser(userId, data || { reason: 'Administrative action' })
         toast.success('User suspended successfully', { id: toastId })
       } else if (type === 'ban') {
-        await adminService.banUser(userId, data || { reason: 'Administrative action' }, token)
+        await adminService.banUser(userId, data || { reason: 'Administrative action' })
         toast.success('User banned successfully', { id: toastId })
       } else if (type === 'make-admin') {
-        await adminService.makeAdmin(userId, token)
+        await adminService.makeAdmin(userId)
         toast.success('User role updated to Admin', { id: toastId })
       } else if (type === 'reset-2fa') {
-        await adminService.reset2fa(userId, token)
+        await adminService.reset2fa(userId)
         toast.success('2FA reset successfully', { id: toastId })
       }
       refetch()

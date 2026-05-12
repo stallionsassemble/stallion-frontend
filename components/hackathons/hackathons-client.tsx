@@ -25,12 +25,15 @@ export function HackathonsClient() {
   // Filters
   const [techStack, setTechStack] = useState("all");
   const [status, setStatus] = useState("all");
+  const [type, setType] = useState("all");
 
   const { data, isLoading } = useGetHackathons({
     page: currentPage,
     limit: Number(rowsPerPage),
     search: debouncedSearch,
-    // Add other filters if the API supports them
+    tag: techStack === 'all' ? undefined : techStack,
+    status: status === 'all' ? undefined : status as any,
+    type: type === 'all' ? undefined : type as any,
   });
 
   const hackathons = data?.data || [];
@@ -44,12 +47,22 @@ export function HackathonsClient() {
     }
   };
 
+  const clearFilters = () => {
+    setSearchQuery("");
+    setTechStack("all");
+    setStatus("all");
+    setType("all");
+    setCurrentPage(1);
+  };
+
   // Derive unique tags for filters
   const allTags = useMemo(() => {
     const tags = new Set<string>();
     hackathons.forEach(h => h.tags?.forEach(t => tags.add(t)));
     return Array.from(tags).sort();
   }, [hackathons]);
+
+  const isFiltered = searchQuery || techStack !== "all" || status !== "all" || type !== "all";
 
   return (
     <div className="container mx-auto px-4 py-12 space-y-12">
@@ -72,12 +85,15 @@ export function HackathonsClient() {
             placeholder="Search Hackathons..."
             className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus-visible:ring-primary h-11"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <Select value={techStack} onValueChange={setTechStack}>
+          <Select value={techStack} onValueChange={(v) => { setTechStack(v); setCurrentPage(1); }}>
             <SelectTrigger className="w-full md:w-[160px] bg-white/5 border-white/10 text-white h-11 rounded-lg">
               <SelectValue placeholder="Tech Stack" />
             </SelectTrigger>
@@ -89,16 +105,38 @@ export function HackathonsClient() {
             </SelectContent>
           </Select>
 
-          <Select value={status} onValueChange={setStatus}>
+          <Select value={status} onValueChange={(v) => { setStatus(v); setCurrentPage(1); }}>
             <SelectTrigger className="w-full md:w-[160px] bg-white/5 border-white/10 text-white h-11 rounded-lg">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent className="bg-[#18181B] border-white/10 text-white">
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="OPEN">Open</SelectItem>
-              <SelectItem value="CLOSED">Closed</SelectItem>
+              <SelectItem value="PUBLISHED">Open</SelectItem>
+              <SelectItem value="JUDGING">Judging</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select value={type} onValueChange={(v) => { setType(v); setCurrentPage(1); }}>
+            <SelectTrigger className="w-full md:w-[160px] bg-white/5 border-white/10 text-white h-11 rounded-lg">
+              <SelectValue placeholder="Format" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#18181B] border-white/10 text-white">
+              <SelectItem value="all">All Formats</SelectItem>
+              <SelectItem value="VIRTUAL">Virtual</SelectItem>
+              <SelectItem value="PHYSICAL">Physical</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {isFiltered && (
+            <Button 
+              variant="ghost" 
+              onClick={clearFilters}
+              className="text-muted-foreground hover:text-white"
+            >
+              Clear All
+            </Button>
+          )}
 
           <Button variant="outline" className="w-full md:w-auto bg-white/5 border-white/10 text-white h-11 rounded-lg gap-2">
             More Filters
