@@ -46,7 +46,7 @@ export function Footer() {
           <p className="font-inter text-sm font-normal text-white tracking-[-0.32px] flex items-center justify-center gap-2 border border-[#71717A] rounded-[8px] w-[200px] h-[48px]">
             <Mail className="w-4 h-4" />
             <span className="font-bold">Mail Us</span>
-            <span className="text-[10px]">info@earnstallion.com</span>
+            <span className="text-[10px]">admin@stallion.so</span>
           </p>
         </div>
       </div>
