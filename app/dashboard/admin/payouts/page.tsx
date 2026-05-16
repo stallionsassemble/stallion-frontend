@@ -134,9 +134,6 @@ export default function PayoutAdministrationPage() {
     }
   }
 
-    }
-  }
-
   const onStepUpSuccess = (token: string) => {
     if (pendingAction?.type === 'retry') {
       handleRetryPayout(pendingAction.payoutId, token)
@@ -148,7 +145,7 @@ export default function PayoutAdministrationPage() {
     if (!payouts.length) return
 
     exportToCSV(
-      payouts,
+      payouts as any[],
       [
         { header: 'ID', key: 'id' },
         { header: 'Contributor', key: (p: any) => p.contributor?.username || 'Unknown' },

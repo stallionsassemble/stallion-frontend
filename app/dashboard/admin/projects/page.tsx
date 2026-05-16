@@ -146,7 +146,7 @@ export default function ProjectManagementPage() {
     if (!projects.length) return
 
     exportToCSV(
-      projects,
+      projects as any[],
       [
         { header: 'Title', key: 'title' },
         { header: 'Owner', key: (p: any) => p.owner?.username ? `@${p.owner.username}` : 'Unknown' },
