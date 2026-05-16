@@ -39,6 +39,7 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Download,
   Edit,
   Eye,
   MoreVertical,
@@ -60,6 +61,7 @@ import { adminService } from '@/lib/api/admin'
 import { StepUpModal } from '@/components/admin/step-up-modal'
 import { useAdminStore } from '@/lib/store/use-admin-store'
 import { toast } from 'sonner'
+import { exportToCSV } from '@/lib/csv'
 import { useAuth } from '@/lib/store/use-auth'
 import { AdminHackathon } from '@/lib/types/admin'
 import { cn } from "@/lib/utils"
@@ -389,6 +391,26 @@ export default function HackathonAdministrationPage() {
     }
   }
 
+  const handleExport = () => {
+    if (!hackathons.length) return
+
+    exportToCSV(
+      hackathons,
+      [
+        { header: 'Title', key: 'title' },
+        { header: 'Slug', key: 'slug' },
+        { header: 'Type', key: 'type' },
+        { header: 'Status', key: 'status' },
+        { header: 'Participants', key: (h) => h.participantsCount || 0 },
+        { header: 'Submissions', key: (h: any) => h.submissionsCount || 0 },
+        { header: 'Prize Pool', key: (h) => h.totalPrizePool || h.totalBudget || 0 },
+        { header: 'Currency', key: (h) => h.asset || h.currency || 'USDC' },
+        { header: 'Deadline', key: (h: any) => h.submissionDeadline || h.endDate ? new Date((h as any).submissionDeadline || h.endDate).toLocaleDateString() : 'N/A' },
+      ],
+      'hackathons_export'
+    )
+  }
+
   return (
     <div className='space-y-6'>
       <StepUpModal 
@@ -407,13 +429,24 @@ export default function HackathonAdministrationPage() {
             Create, configure, and manage hackathons and competitions
           </p>
         </div>
-        <Button
-          className='gap-2 bg-primary hover:bg-primary/90'
-          onClick={handleCreateHackathon}
-        >
-          <Plus className='h-4 w-4' />
-          Create Hackathon
-        </Button>
+        <div className='flex items-center gap-3'>
+          <Button
+            variant='outline'
+            className='gap-2 border-border'
+            onClick={handleExport}
+            disabled={!hackathons.length}
+          >
+            <Download className='h-4 w-4' />
+            Export
+          </Button>
+          <Button
+            className='gap-2 bg-primary hover:bg-primary/90'
+            onClick={handleCreateHackathon}
+          >
+            <Plus className='h-4 w-4' />
+            Create Hackathon
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}

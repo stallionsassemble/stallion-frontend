@@ -48,6 +48,7 @@ import { adminService } from '@/lib/api/admin'
 import { StepUpModal } from '@/components/admin/step-up-modal'
 import { useAdminStore } from '@/lib/store/use-admin-store'
 import { toast } from 'sonner'
+import { exportToCSV } from '@/lib/csv'
 
 // Status badge styling helper
 const getStatusBadgeClass = (status: string) => {
@@ -141,6 +142,24 @@ export default function ProjectManagementPage() {
     setPendingAction(null)
   }
 
+  const handleExport = () => {
+    if (!projects.length) return
+
+    exportToCSV(
+      projects,
+      [
+        { header: 'Title', key: 'title' },
+        { header: 'Owner', key: (p: any) => p.owner?.username ? `@${p.owner.username}` : 'Unknown' },
+        { header: 'Status', key: 'status' },
+        { header: 'Reward', key: (p: any) => p.reward || 0 },
+        { header: 'Currency', key: (p: any) => p.rewardCurrency || 'USDC' },
+        { header: 'Deadline', key: (p: any) => p.deadline ? new Date(p.deadline).toLocaleDateString() : 'N/A' },
+        { header: 'Is Featured', key: (p: any) => p.isFeatured ? 'Yes' : 'No' },
+      ],
+      'projects_export'
+    )
+  }
+
   return (
     <div className='space-y-6'>
       <StepUpModal 
@@ -161,7 +180,8 @@ export default function ProjectManagementPage() {
         </div>
         <Button
           className='gap-2 bg-primary hover:bg-primary/90'
-          onClick={() => toast.info('Exporting...')}
+          onClick={handleExport}
+          disabled={!projects.length}
         >
           <Download className='h-4 w-4' />
           Export
