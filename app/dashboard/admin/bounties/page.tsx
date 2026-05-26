@@ -50,6 +50,7 @@ import { adminService } from '@/lib/api/admin'
 import { StepUpModal } from '@/components/admin/step-up-modal'
 import { useAdminStore } from '@/lib/store/use-admin-store'
 import { toast } from 'sonner'
+import { exportToCSV } from '@/lib/csv'
 
 // Status badge styling helper
 const getStatusBadgeClass = (status: string) => {
@@ -131,39 +132,34 @@ export default function BountyManagementPage() {
   const handleExport = () => {
     if (!bounties.length) return
 
-    const headers = [
-      'Title',
-      'Owner',
-      'Status',
-      'Reward',
-      'Currency',
-      'Deadline',
-      'Applicants',
-    ]
-    const csvContent = [
-      headers.join(','),
-      ...bounties.map((b) =>
-        [
-          `"${(b.title || '').replace(/"/g, '""')}"`,
-          `"${(b.owner?.username || b.owner?.companyName || '').replace(/"/g, '""')}"`,
-          b.status,
-          b.reward,
-          b.rewardCurrency,
-          b.submissionDeadline,
-          b.submissionCount || 0,
-        ].join(','),
-      ),
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', 'bounties_export.csv')
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    exportToCSV(
+      bounties,
+      [
+        { header: 'Title', key: 'title' },
+        { 
+          header: 'Owner', 
+          key: (b) => b.owner?.companyName || b.owner?.username || 'Unknown' 
+        },
+        { header: 'Status', key: 'status' },
+        { 
+          header: 'Reward', 
+          key: (b: any) => b.totalReward || b.reward || 0 
+        },
+        { 
+          header: 'Currency', 
+          key: (b: any) => b.currency || b.rewardCurrency || 'USDC' 
+        },
+        { 
+          header: 'Deadline', 
+          key: (b) => b.submissionDeadline ? new Date(b.submissionDeadline).toLocaleDateString() : 'No deadline' 
+        },
+        { 
+          header: 'Applicants', 
+          key: (b: any) => b.submissionCount || b.applicantsCount || 0 
+        },
+      ],
+      'bounties_export'
+    )
   }
 
   return (

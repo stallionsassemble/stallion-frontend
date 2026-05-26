@@ -52,6 +52,7 @@ import { StepUpModal } from '@/components/admin/step-up-modal'
 import { InviteUserModal } from '@/components/admin/invite-user-modal'
 import { useAdminStore } from '@/lib/store/use-admin-store'
 import { toast } from 'sonner'
+import { exportToCSV } from '@/lib/csv'
 
 // Status badge styling helper
 const getStatusBadgeClass = (status: string) => {
@@ -141,6 +142,27 @@ export default function UserManagementPage() {
     setPendingAction(null)
   }
 
+  const handleExport = () => {
+    if (!users.length) return
+
+    exportToCSV(
+      users,
+      [
+        { header: 'Name', key: (u: any) => `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'N/A' },
+        { header: 'Username', key: (u: any) => u.username ? `@${u.username}` : 'N/A' },
+        { header: 'Email', key: 'email' },
+        { header: 'Role', key: (u: any) => u.role || 'CONTRIBUTOR' },
+        { header: 'Status', key: (u: any) => u.status || 'ACTIVE' },
+        { header: 'Reputation', key: 'reputationRating' },
+        { header: 'Bounties Participated', key: 'bountiesParticipated' },
+        { header: 'Earnings (USD)', key: 'earningsUsd' },
+        { header: 'Last Active', key: (u: any) => u.lastActiveAt ? new Date(u.lastActiveAt).toLocaleDateString() : 'Never' },
+        { header: 'Date Joined', key: (u: any) => u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A' },
+      ],
+      'users_export'
+    )
+  }
+
   return (
     <div className='space-y-6'>
       <StepUpModal 
@@ -167,7 +189,12 @@ export default function UserManagementPage() {
             <UserPlus className='h-4 w-4' />
             Invite User
           </Button>
-          <Button variant="outline" className='gap-2 border-border'>
+          <Button 
+            variant="outline" 
+            className='gap-2 border-border'
+            onClick={handleExport}
+            disabled={!users.length}
+          >
             <Download className='h-4 w-4' />
             Export
           </Button>

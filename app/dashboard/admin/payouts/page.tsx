@@ -54,6 +54,7 @@ import { adminService } from '@/lib/api/admin'
 import { StepUpModal } from '@/components/admin/step-up-modal'
 import { useAdminStore } from '@/lib/store/use-admin-store'
 import { toast } from 'sonner'
+import { exportToCSV } from '@/lib/csv'
 
 // Status badge styling helper
 const getStatusBadgeClass = (status: string) => {
@@ -140,6 +141,26 @@ export default function PayoutAdministrationPage() {
     }
   }
 
+  const handleExport = () => {
+    if (!payouts.length) return
+
+    exportToCSV(
+      payouts as any[],
+      [
+        { header: 'ID', key: 'id' },
+        { header: 'Contributor', key: (p: any) => p.contributor?.username || 'Unknown' },
+        { header: 'Bounty', key: (p: any) => p.bounty?.title || 'N/A' },
+        { header: 'Milestone', key: (p: any) => p.milestone?.title || 'N/A' },
+        { header: 'Amount (USD)', key: (p: any) => p.amountUsd || p.amount || 0 },
+        { header: 'Token', key: (p: any) => p.token || p.currency || 'USDC' },
+        { header: 'Status', key: 'status' },
+        { header: 'Requested Date', key: (p: any) => p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'N/A' },
+        { header: 'Processed Date', key: (p: any) => p.processedAt ? new Date(p.processedAt).toLocaleDateString() : 'N/A' },
+      ],
+      'payouts_export'
+    )
+  }
+
   const handleViewDetails = (payout: any) => {
     setSelectedPayout(payout)
     setIsDetailsModalOpen(true)
@@ -163,7 +184,11 @@ export default function PayoutAdministrationPage() {
             Manage payouts, approve transactions, and audit financial activity
           </p>
         </div>
-        <Button className='gap-2 bg-primary hover:bg-primary/90'>
+        <Button 
+          className='gap-2 bg-primary hover:bg-primary/90'
+          onClick={handleExport}
+          disabled={!payouts.length}
+        >
           <Download className='h-4 w-4' />
           Export
         </Button>
