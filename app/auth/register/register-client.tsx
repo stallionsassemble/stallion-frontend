@@ -66,7 +66,11 @@ export function RegisterClient(props: { searchParamsPromise: Promise<{ role?: st
 
       if (response.isNewUser && !response.user.profileCompleted) {
         toast.success("Welcome! Please complete your profile.", { id: toastId })
-        router.push("/auth/onboarding")
+        if (response.user.role === 'PROJECT_OWNER' || response.user.role === 'OWNER') {
+          router.push("/auth/onboarding/owner")
+        } else {
+          router.push("/auth/onboarding/talent")
+        }
       } else {
         toast.success("Joined successfully!", { id: toastId })
         if (response.user.role === 'PROJECT_OWNER' || response.user.role === 'OWNER') {

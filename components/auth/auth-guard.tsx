@@ -36,7 +36,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
         // Only redirect if NOT already on an onboarding page
         if (!isOwnerOnboarding && !isTalentOnboarding) {
-          if (user.role === 'OWNER') {
+          if (user.role === 'PROJECT_OWNER' || user.role === 'OWNER') {
             router.push("/auth/onboarding/owner")
           } else {
             router.push("/auth/onboarding/talent")
@@ -44,10 +44,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         }
       } else if (user && user.profileCompleted) {
         // Role-based route protection
-        // Role-based route protection
-        if (user.role === 'PROJECT_OWNER' && pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/owner') && !pathname.startsWith('/dashboard/admin')) {
+        if ((user.role === 'PROJECT_OWNER' || user.role === 'OWNER') && pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/owner') && !pathname.startsWith('/dashboard/admin')) {
           router.replace('/dashboard/owner');
-        } else if (user.role !== 'PROJECT_OWNER' && pathname.startsWith('/dashboard/owner')) {
+        } else if (user.role !== 'PROJECT_OWNER' && user.role !== 'OWNER' && pathname.startsWith('/dashboard/owner')) {
           router.replace('/dashboard');
         }
       }
