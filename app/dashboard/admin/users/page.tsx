@@ -74,6 +74,7 @@ export default function UserManagementPage() {
   const [activeFilter, setActiveFilter] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   
   // Admin Step-up State
   const [stepUpOpen, setStepUpOpen] = useState(false)
@@ -142,25 +143,47 @@ export default function UserManagementPage() {
     setPendingAction(null)
   }
 
-  const handleExport = () => {
-    if (!users.length) return
+  const handleExport = async () => {
+    try {
+      setIsExporting(true)
+      const toastId = toast.loading('Preparing export...')
+      
+      const response = await adminService.getUsers({
+        page: 1,
+        limit: 100000,
+        role: roleFilter,
+        search: searchQuery || undefined
+      })
 
-    exportToCSV(
-      users,
-      [
-        { header: 'Name', key: (u: any) => `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'N/A' },
-        { header: 'Username', key: (u: any) => u.username ? `@${u.username}` : 'N/A' },
-        { header: 'Email', key: 'email' },
-        { header: 'Role', key: (u: any) => u.role || 'CONTRIBUTOR' },
-        { header: 'Status', key: (u: any) => u.status || 'ACTIVE' },
-        { header: 'Reputation', key: 'reputationRating' },
-        { header: 'Bounties Participated', key: 'bountiesParticipated' },
-        { header: 'Earnings (USD)', key: 'earningsUsd' },
-        { header: 'Last Active', key: (u: any) => u.lastActiveAt ? new Date(u.lastActiveAt).toLocaleDateString() : 'Never' },
-        { header: 'Date Joined', key: (u: any) => u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A' },
-      ],
-      'users_export'
-    )
+      const allData = response.data || []
+      
+      if (!allData.length) {
+        toast.error('No data found to export', { id: toastId })
+        return
+      }
+
+      exportToCSV(
+        allData,
+        [
+          { header: 'Name', key: (u: any) => `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'N/A' },
+          { header: 'Username', key: (u: any) => u.username ? `@${u.username}` : 'N/A' },
+          { header: 'Email', key: 'email' },
+          { header: 'Role', key: (u: any) => u.role || 'CONTRIBUTOR' },
+          { header: 'Status', key: (u: any) => u.status || 'ACTIVE' },
+          { header: 'Reputation', key: 'reputationRating' },
+          { header: 'Bounties Participated', key: 'bountiesParticipated' },
+          { header: 'Earnings (USD)', key: 'earningsUsd' },
+          { header: 'Last Active', key: (u: any) => u.lastActiveAt ? new Date(u.lastActiveAt).toLocaleDateString() : 'Never' },
+          { header: 'Date Joined', key: (u: any) => u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A' },
+        ],
+        'users_export'
+      )
+      toast.success('Export downloaded successfully', { id: toastId })
+    } catch (error) {
+      toast.error('Failed to export data')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -193,9 +216,9 @@ export default function UserManagementPage() {
             variant="outline" 
             className='gap-2 border-border'
             onClick={handleExport}
-            disabled={!users.length}
+            disabled={!users.length || isExporting}
           >
-            <Download className='h-4 w-4' />
+            {isExporting ? <Loader2 className='h-4 w-4 animate-spin' /> : <Download className='h-4 w-4' />}
             Export
           </Button>
         </div>

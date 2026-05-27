@@ -81,6 +81,7 @@ export default function BountyManagementPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [activeFilter, setActiveFilter] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isExporting, setIsExporting] = useState(false)
 
 
   // Edit State
@@ -129,37 +130,62 @@ export default function BountyManagementPage() {
 
 
   // Handle Export
-  const handleExport = () => {
-    if (!bounties.length) return
+  const handleExport = async () => {
+    try {
+      setIsExporting(true)
+      const toastId = toast.loading('Preparing export...')
+      
+      const response = await adminService.getBounties({
+        page: 1,
+        limit: 100000,
+        status:
+          activeFilter !== 'All'
+            ? (activeFilter.toUpperCase() as any)
+            : undefined,
+        search: searchQuery || undefined,
+      })
 
-    exportToCSV(
-      bounties,
-      [
-        { header: 'Title', key: 'title' },
-        { 
-          header: 'Owner', 
-          key: (b) => b.owner?.companyName || b.owner?.username || 'Unknown' 
-        },
-        { header: 'Status', key: 'status' },
-        { 
-          header: 'Reward', 
-          key: (b: any) => b.totalReward || b.reward || 0 
-        },
-        { 
-          header: 'Currency', 
-          key: (b: any) => b.currency || b.rewardCurrency || 'USDC' 
-        },
-        { 
-          header: 'Deadline', 
-          key: (b) => b.submissionDeadline ? new Date(b.submissionDeadline).toLocaleDateString() : 'No deadline' 
-        },
-        { 
-          header: 'Applicants', 
-          key: (b: any) => b.submissionCount || b.applicantsCount || 0 
-        },
-      ],
-      'bounties_export'
-    )
+      const allData = response.data || []
+      
+      if (!allData.length) {
+        toast.error('No data found to export', { id: toastId })
+        return
+      }
+
+      exportToCSV(
+        allData,
+        [
+          { header: 'Title', key: 'title' },
+          { 
+            header: 'Owner', 
+            key: (b: any) => b.owner?.companyName || b.owner?.username || 'Unknown' 
+          },
+          { header: 'Status', key: 'status' },
+          { 
+            header: 'Reward', 
+            key: (b: any) => b.totalReward || b.reward || 0 
+          },
+          { 
+            header: 'Currency', 
+            key: (b: any) => b.currency || b.rewardCurrency || 'USDC' 
+          },
+          { 
+            header: 'Deadline', 
+            key: (b: any) => b.submissionDeadline ? new Date(b.submissionDeadline).toLocaleDateString() : 'No deadline' 
+          },
+          { 
+            header: 'Applicants', 
+            key: (b: any) => b.submissionCount || b.applicantsCount || 0 
+          },
+        ],
+        'bounties_export'
+      )
+      toast.success('Export downloaded successfully', { id: toastId })
+    } catch (error) {
+      toast.error('Failed to export data')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -178,9 +204,9 @@ export default function BountyManagementPage() {
         <Button
           className='gap-2 bg-primary hover:bg-primary/90'
           onClick={handleExport}
-          disabled={!bounties.length}
+          disabled={!bounties.length || isExporting}
         >
-          <Download className='h-4 w-4' />
+          {isExporting ? <Loader2 className='h-4 w-4 animate-spin' /> : <Download className='h-4 w-4' />}
           Export
         </Button>
       </div>

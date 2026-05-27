@@ -73,6 +73,7 @@ export default function ProjectManagementPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [activeFilter, setActiveFilter] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isExporting, setIsExporting] = useState(false)
 
   // Admin Step-up State
   const [stepUpOpen, setStepUpOpen] = useState(false)
@@ -142,22 +143,44 @@ export default function ProjectManagementPage() {
     setPendingAction(null)
   }
 
-  const handleExport = () => {
-    if (!projects.length) return
+  const handleExport = async () => {
+    try {
+      setIsExporting(true)
+      const toastId = toast.loading('Preparing export...')
+      
+      const response = await adminService.getProjects({
+        page: 1,
+        limit: 100000,
+        status: activeFilter !== 'All' ? activeFilter.toUpperCase() : undefined,
+        search: searchQuery || undefined,
+      })
 
-    exportToCSV(
-      projects as any[],
-      [
-        { header: 'Title', key: 'title' },
-        { header: 'Owner', key: (p: any) => p.owner?.username ? `@${p.owner.username}` : 'Unknown' },
-        { header: 'Status', key: 'status' },
-        { header: 'Reward', key: (p: any) => p.reward || 0 },
-        { header: 'Currency', key: (p: any) => p.rewardCurrency || 'USDC' },
-        { header: 'Deadline', key: (p: any) => p.deadline ? new Date(p.deadline).toLocaleDateString() : 'N/A' },
-        { header: 'Is Featured', key: (p: any) => p.isFeatured ? 'Yes' : 'No' },
-      ],
-      'projects_export'
-    )
+      const allData = response.data || []
+      
+      if (!allData.length) {
+        toast.error('No data found to export', { id: toastId })
+        return
+      }
+
+      exportToCSV(
+        allData as any[],
+        [
+          { header: 'Title', key: 'title' },
+          { header: 'Owner', key: (p: any) => p.owner?.username ? `@${p.owner.username}` : 'Unknown' },
+          { header: 'Status', key: 'status' },
+          { header: 'Reward', key: (p: any) => p.reward || 0 },
+          { header: 'Currency', key: (p: any) => p.rewardCurrency || 'USDC' },
+          { header: 'Deadline', key: (p: any) => p.deadline ? new Date(p.deadline).toLocaleDateString() : 'N/A' },
+          { header: 'Is Featured', key: (p: any) => p.isFeatured ? 'Yes' : 'No' },
+        ],
+        'projects_export'
+      )
+      toast.success('Export downloaded successfully', { id: toastId })
+    } catch (error) {
+      toast.error('Failed to export data')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -181,9 +204,9 @@ export default function ProjectManagementPage() {
         <Button
           className='gap-2 bg-primary hover:bg-primary/90'
           onClick={handleExport}
-          disabled={!projects.length}
+          disabled={!projects.length || isExporting}
         >
-          <Download className='h-4 w-4' />
+          {isExporting ? <Loader2 className='h-4 w-4 animate-spin' /> : <Download className='h-4 w-4' />}
           Export
         </Button>
       </div>

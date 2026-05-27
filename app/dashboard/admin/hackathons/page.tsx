@@ -179,6 +179,7 @@ export default function HackathonAdministrationPage() {
   const [teamBasedParticipation, setTeamBasedParticipation] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [editingHackathon, setEditingHackathon] = useState<HackathonAdminListItem | null>(null)
 
   // Admin Step-up State
@@ -391,24 +392,45 @@ export default function HackathonAdministrationPage() {
     }
   }
 
-  const handleExport = () => {
-    if (!hackathons.length) return
+  const handleExport = async () => {
+    try {
+      setIsExporting(true)
+      const toastId = toast.loading('Preparing export...')
+      
+      const response = await adminService.getHackathons({
+        page: 1,
+        limit: 100000,
+        search: searchQuery || undefined
+      })
 
-    exportToCSV(
-      hackathons,
-      [
-        { header: 'Title', key: 'title' },
-        { header: 'Slug', key: 'slug' },
-        { header: 'Type', key: 'type' },
-        { header: 'Status', key: 'status' },
-        { header: 'Participants', key: (h) => h.participantsCount || 0 },
-        { header: 'Submissions', key: (h: any) => h.submissionsCount || 0 },
-        { header: 'Prize Pool', key: (h) => h.totalPrizePool || h.totalBudget || 0 },
-        { header: 'Currency', key: (h) => h.asset || h.currency || 'USDC' },
-        { header: 'Deadline', key: (h: any) => h.submissionDeadline || h.endDate ? new Date((h as any).submissionDeadline || h.endDate).toLocaleDateString() : 'N/A' },
-      ],
-      'hackathons_export'
-    )
+      const allData = response.data || []
+      
+      if (!allData.length) {
+        toast.error('No data found to export', { id: toastId })
+        return
+      }
+
+      exportToCSV(
+        allData as any[],
+        [
+          { header: 'Title', key: 'title' },
+          { header: 'Slug', key: 'slug' },
+          { header: 'Type', key: 'type' },
+          { header: 'Status', key: 'status' },
+          { header: 'Participants', key: (h: any) => h.participantsCount || 0 },
+          { header: 'Submissions', key: (h: any) => h.submissionsCount || 0 },
+          { header: 'Prize Pool', key: (h: any) => h.totalPrizePool || h.totalBudget || 0 },
+          { header: 'Currency', key: (h: any) => h.asset || h.currency || 'USDC' },
+          { header: 'Deadline', key: (h: any) => h.submissionDeadline || h.endDate ? new Date((h as any).submissionDeadline || h.endDate).toLocaleDateString() : 'N/A' },
+        ],
+        'hackathons_export'
+      )
+      toast.success('Export downloaded successfully', { id: toastId })
+    } catch (error) {
+      toast.error('Failed to export data')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -434,9 +456,9 @@ export default function HackathonAdministrationPage() {
             variant='outline'
             className='gap-2 border-border'
             onClick={handleExport}
-            disabled={!hackathons.length}
+            disabled={!hackathons.length || isExporting}
           >
-            <Download className='h-4 w-4' />
+            {isExporting ? <Loader2 className='h-4 w-4 animate-spin' /> : <Download className='h-4 w-4' />}
             Export
           </Button>
           <Button

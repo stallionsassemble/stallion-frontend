@@ -82,6 +82,7 @@ export default function PayoutAdministrationPage() {
   const [selectedPayout, setSelectedPayout] = useState<any>(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isExporting, setIsExporting] = useState(false)
 
   // Admin Step-up State
   const [stepUpOpen, setStepUpOpen] = useState(false)
@@ -141,24 +142,46 @@ export default function PayoutAdministrationPage() {
     }
   }
 
-  const handleExport = () => {
-    if (!payouts.length) return
+  const handleExport = async () => {
+    try {
+      setIsExporting(true)
+      const toastId = toast.loading('Preparing export...')
+      
+      const response = await adminService.getPayouts({
+        page: 1,
+        limit: 100000,
+        status: getStatusFromTab() as any,
+        search: searchQuery || undefined
+      })
 
-    exportToCSV(
-      payouts as any[],
-      [
-        { header: 'ID', key: 'id' },
-        { header: 'Contributor', key: (p: any) => p.contributor?.username || 'Unknown' },
-        { header: 'Bounty', key: (p: any) => p.bounty?.title || 'N/A' },
-        { header: 'Milestone', key: (p: any) => p.milestone?.title || 'N/A' },
-        { header: 'Amount (USD)', key: (p: any) => p.amountUsd || p.amount || 0 },
-        { header: 'Token', key: (p: any) => p.token || p.currency || 'USDC' },
-        { header: 'Status', key: 'status' },
-        { header: 'Requested Date', key: (p: any) => p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'N/A' },
-        { header: 'Processed Date', key: (p: any) => p.processedAt ? new Date(p.processedAt).toLocaleDateString() : 'N/A' },
-      ],
-      'payouts_export'
-    )
+      const allData = response.data || []
+      
+      if (!allData.length) {
+        toast.error('No data found to export', { id: toastId })
+        return
+      }
+
+      exportToCSV(
+        allData as any[],
+        [
+          { header: 'ID', key: 'id' },
+          { header: 'Contributor', key: (p: any) => p.contributor?.username || 'Unknown' },
+          { header: 'Bounty', key: (p: any) => p.bounty?.title || 'N/A' },
+          { header: 'Milestone', key: (p: any) => p.milestone?.title || 'N/A' },
+          { header: 'Amount (USD)', key: (p: any) => p.amountUsd || p.amount || 0 },
+          { header: 'Token', key: (p: any) => p.token || p.currency || 'USDC' },
+          { header: 'Status', key: 'status' },
+          { header: 'Requested Date', key: (p: any) => p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'N/A' },
+          { header: 'Processed Date', key: (p: any) => p.processedAt ? new Date(p.processedAt).toLocaleDateString() : 'N/A' },
+        ],
+        'payouts_export'
+      )
+      toast.success('Export downloaded successfully', { id: toastId })
+    } catch (error) {
+      toast.error('Failed to export data')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   const handleViewDetails = (payout: any) => {
@@ -187,9 +210,9 @@ export default function PayoutAdministrationPage() {
         <Button 
           className='gap-2 bg-primary hover:bg-primary/90'
           onClick={handleExport}
-          disabled={!payouts.length}
+          disabled={!payouts.length || isExporting}
         >
-          <Download className='h-4 w-4' />
+          {isExporting ? <Loader2 className='h-4 w-4 animate-spin' /> : <Download className='h-4 w-4' />}
           Export
         </Button>
       </div>
