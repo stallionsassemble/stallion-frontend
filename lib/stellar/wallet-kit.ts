@@ -4,7 +4,7 @@
  * because it relies on browser APIs / wallet extensions.
  */
 
-import { StellarWalletsKit } from '@creit-tech/stellar-wallets-kit/sdk'
+import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit'
 
 let _initialized = false
 
@@ -12,8 +12,8 @@ export async function initStellarWalletsKit(): Promise<void> {
   if (_initialized) return
   _initialized = true
 
-  const { StellarWalletsKit } = await import('@creit-tech/stellar-wallets-kit/sdk')
-  const { defaultModules } = await import('@creit-tech/stellar-wallets-kit/modules/utils')
+  const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit')
+  const { defaultModules } = await import('@creit.tech/stellar-wallets-kit/modules/utils')
 
   StellarWalletsKit.init({ modules: defaultModules() })
 }
