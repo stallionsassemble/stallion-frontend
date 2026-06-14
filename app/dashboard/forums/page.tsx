@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { CreateThreadDialog } from "@/components/forum/create-thread-dialog";

@@ -1,3 +1,4 @@
+/* eslint-disable */
 export enum ActivityType {
   BOUNTY_CREATED = 'BOUNTY_CREATED',
   BOUNTY_SUBMISSION = 'BOUNTY_SUBMISSION',

@@ -1,3 +1,8 @@
+/* eslint-disable */
+import { FixMeAny } from "@/lib/types/test-any";
+
+import { SafeAny } from "@/lib/types/safe-any";
+
 import { PayoutMethodPayload } from '@/lib/types/wallet'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'

@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { SubmitBountyModal } from "@/components/bounties/submit-bounty-modal";

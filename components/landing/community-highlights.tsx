@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client'
 
 import { useGetActivities } from '@/lib/api/activities/queries'

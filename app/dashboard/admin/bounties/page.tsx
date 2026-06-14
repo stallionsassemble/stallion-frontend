@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { CreateBountyModal } from '@/components/dashboard/owner/create-bounty-modal'

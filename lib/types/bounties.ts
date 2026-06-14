@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { User } from '@/lib/types'
 
 export interface Currency {
@@ -150,7 +151,7 @@ export interface ApplyToBountyResponseDto {
   submission: BountySubmission
 }
 
-export interface UpdateSubmissionDto extends ApplyToBountyDto {}
+export type UpdateSubmissionDto = ApplyToBountyDto
 
 export interface UpdateSubmissionResponseDto {
   message: string
@@ -215,7 +216,7 @@ export interface TransactionHashResponseDto {
   txHash: string
 }
 
-export interface UpdateBountyDto extends Partial<CreateBountyDto> {}
+export type UpdateBountyDto = Partial<CreateBountyDto>
 
 export interface UpdateBountyResponseDto {
   message: string

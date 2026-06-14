@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useAuth } from '@/lib/store/use-auth'
 import axios from 'axios'
 

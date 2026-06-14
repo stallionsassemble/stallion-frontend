@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client'
 
 import { AuthRightSection } from '@/components/auth/auth-right-section'

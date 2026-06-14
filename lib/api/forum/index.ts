@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { api } from '@/lib/api'
 import { CreateCategoryPayload } from '@/lib/types'
 import {

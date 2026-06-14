@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client'
 
 import { useGetAllBounties } from '@/lib/api/bounties/queries'

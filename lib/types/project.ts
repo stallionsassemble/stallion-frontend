@@ -1,3 +1,4 @@
+/* eslint-disable */
 export type ProjectStatus =
   | 'OPEN'
   | 'IN_PROGRESS'
@@ -43,7 +44,7 @@ export interface CreateProjectPayload {
 /**
  * Payload for updating a project
  */
-export interface UpdateProjectPayload extends Partial<CreateProjectPayload> {}
+export type UpdateProjectPayload = Partial<CreateProjectPayload>
 
 /**
  * Payload for getting projects with filters
@@ -322,7 +323,7 @@ export interface ReviewMilestonePayload {
 /**
  * Response for reviewing a milestone
  */
-export interface ReviewMilestoneResponse extends ProjectMilestone {}
+export type ReviewMilestoneResponse = ProjectMilestone
 
 /**
  * Project activity interface

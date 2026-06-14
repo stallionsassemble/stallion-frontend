@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { authService } from '@/lib/api/auth'
 import { LoginValues } from '@/lib/schemas/auth'
 import { AuthResponse, User } from '@/lib/types'

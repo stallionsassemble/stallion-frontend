@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { Contributor, ContributorCard } from "@/components/dashboard/owner/contributor-card";

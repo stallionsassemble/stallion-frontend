@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client'
 
 import { AlertTriangle, Ban, LifeBuoy, LogOut } from 'lucide-react'

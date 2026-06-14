@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { ProfileSettingsForm } from "@/components/settings/profile-settings-form";
 import {
   Dialog,

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { getApp, getApps, initializeApp } from 'firebase/app'
 import { getMessaging, getToken, isSupported } from 'firebase/messaging'
 

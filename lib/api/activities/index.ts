@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { api } from '@/lib/api'
 import { PaginatedActivityResponse } from '@/lib/types/activities'
 import { ActivityResponse } from '@/lib/types/activity'

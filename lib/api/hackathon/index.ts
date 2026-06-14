@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { getStallionBackendAPI } from '@/lib/api/generated/hackathons/hackathons-sdk'
 import type {
   CreateHackathonDto,

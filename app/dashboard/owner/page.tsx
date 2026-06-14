@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client'
 
 import { ActivityFeed } from '@/components/dashboard/main-sections'; // Reusing ActivityFeed

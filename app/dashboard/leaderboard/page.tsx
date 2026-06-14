@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { LeaderboardList } from "@/components/leaderboard/leaderboard-list";

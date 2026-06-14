@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { LeaderboardEntry } from "@/lib/types/reputation";

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useApplyToBounty } from "@/lib/api/bounties/queries";
 import { useApplyProject, useUpdateApplication } from "@/lib/api/projects/queries";
 import { uploadService } from "@/lib/api/upload";

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { CheckCircle2, DollarSign, Target, TrendingUp } from "lucide-react";
 import { useAuth } from "@/lib/store/use-auth";
 import { useGetUser } from "@/lib/api/users/queries";

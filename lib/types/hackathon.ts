@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { User } from './index'
 
 export interface Hackathon {

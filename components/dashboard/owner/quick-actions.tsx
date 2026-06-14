@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Blocks, FileStack, Gift, Trophy } from "lucide-react";

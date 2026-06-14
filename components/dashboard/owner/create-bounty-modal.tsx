@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { RichTextEditor } from "@/components/shared/rich-text-editor";

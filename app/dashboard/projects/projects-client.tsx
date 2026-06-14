@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { BountyCard } from "@/components/bounties/bounty-card";

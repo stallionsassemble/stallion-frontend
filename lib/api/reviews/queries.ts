@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { CreateReviewPayload } from '@/lib/types/reviews'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'

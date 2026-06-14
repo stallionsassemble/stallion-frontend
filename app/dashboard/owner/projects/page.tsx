@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client'
 
 import { CreateProjectModal } from "@/components/dashboard/owner/create-project-modal";

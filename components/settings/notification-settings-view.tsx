@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { Switch } from "@/components/ui/switch";

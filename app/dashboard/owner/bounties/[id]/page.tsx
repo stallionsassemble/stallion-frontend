@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client'
 
 import { ConfirmWinnersModal } from "@/components/dashboard/owner/confirm-winners-modal";

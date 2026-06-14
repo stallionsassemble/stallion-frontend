@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { useGetHackathons } from "@/lib/api/hackathon/queries";

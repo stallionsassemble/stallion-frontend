@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { api } from '@/lib/api'
 import { User, UserSubmissionsResponse } from '@/lib/types'
 

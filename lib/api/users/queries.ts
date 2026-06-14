@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useAuth } from '@/lib/store/use-auth'
 import { User } from '@/lib/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'

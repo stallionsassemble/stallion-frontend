@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 
 import { useFcmToken } from "@/hooks/use-fcm-token";

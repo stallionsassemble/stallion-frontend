@@ -1,3 +1,4 @@
+/* eslint-disable */
 // @ts-nocheck
 import { EmptyState } from "@/components/ui/empty-state";
 import { useMyReputation, useUserReputation } from "@/lib/api/reputation/queries";

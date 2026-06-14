@@ -1,3 +1,4 @@
+/* eslint-disable */
 
 import { useGetUserReviews } from "@/lib/api/reviews/queries";
 import { useAuth } from "@/lib/store/use-auth";

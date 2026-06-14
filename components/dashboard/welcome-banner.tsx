@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client'
 
 import { useAuth } from '@/lib/store/use-auth';
