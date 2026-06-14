@@ -13,6 +13,7 @@ import {
   Bell,
   Briefcase,
   CircleHelp,
+  FileCode2,
   LayoutDashboard,
   Menu,
   MessageSquare,
@@ -142,6 +143,11 @@ const adminSidebarItems: SidebarItem[] = [
     title: 'Settings',
     href: '/dashboard/admin/settings',
     icon: Settings,
+  },
+  {
+    title: 'Contract',
+    href: '/dashboard/admin/contract',
+    icon: FileCode2,
   },
 ]
 

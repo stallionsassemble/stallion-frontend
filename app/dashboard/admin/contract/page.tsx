@@ -10,9 +10,7 @@ import {
   CheckCheck,
   LogOut,
   ShieldCheck,
-  ShieldAlert,
   AlertTriangle,
-  ExternalLink,
   Loader2,
   Settings,
   ChevronRight,
@@ -29,7 +27,6 @@ import { ContractActionConfirmDialog } from '@/components/admin/contract-action-
 import { useStellarWallet } from '@/lib/store/use-stellar-wallet'
 import {
   connectWallet,
-  getConnectedAddress,
   signTransaction as signTx,
 } from '@/lib/stellar/wallet-kit'
 import {
