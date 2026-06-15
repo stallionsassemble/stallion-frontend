@@ -1,4 +1,3 @@
-/* eslint-disable */
 'use client'
 
 import { useState } from 'react'
@@ -17,9 +16,6 @@ import {
   Trophy,
   Users,
   ShieldCheck,
-  CheckCircle2,
-  AlertCircle,
-  MoreVertical,
   Trash2,
 } from 'lucide-react'
 
@@ -221,9 +217,6 @@ export default function HackathonAdminDetailsPage() {
   const hackathon = (hackathonData || null) as HackathonView | null
   const submissions = unwrapList<SubmissionView>(submissionsData)
   const winners = unwrapList<WinnerView>(winnersData)
-  
-  // Debug log to see the structure of the data
-  console.log('Hackathon Data:', hackathonData)
 
   const participantCount =
     hackathon?.participantCount || hackathon?.participantsCount || 0
@@ -708,8 +701,7 @@ export default function HackathonAdminDetailsPage() {
             <CardTitle>Hackathon Overview</CardTitle>
           </CardHeader>
           <CardContent className='space-y-4 text-sm text-muted-foreground'>
-            {/* console.log('Hackathon Data:', hackathon) */}
-            <div className='grid gap-4 sm:grid-cols-2'>
+          <div className='grid gap-4 sm:grid-cols-2'>
               <div>
                 <p className='font-medium text-foreground'>Owner</p>
                 <p>{getDisplayName(hackathon?.owner || (hackathon as any)?.createdBy || (hackathon as any)?.creator || (hackathonData as any)?.owner || (hackathonData as any)?.createdBy)}</p>

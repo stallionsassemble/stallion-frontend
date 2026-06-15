@@ -27,10 +27,6 @@ export default function OwnerHackathonsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(6)
 
   const hackathons = hackathonsData?.data || []
-  console.log('DEBUG: OwnerHackathonsPage - Hackathons fetched:', hackathons.length)
-  if (hackathons.length > 0) {
-    console.log('DEBUG: First Hackathon:', { id: hackathons[0].id, slug: hackathons[0].slug })
-  }
 
   // Filter Logic
   const filteredHackathons = hackathons.filter((h) => {

@@ -1,23 +1,26 @@
-/* eslint-disable */
 "use client"
 
 import { useAuth } from "@/lib/store/use-auth"
 import { Loader2 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useSyncExternalStore } from "react"
+
+// Returns false on the server (pre-hydration) and true on the client.
+// useSyncExternalStore is the recommended React API for this pattern —
+// it avoids calling setState inside an effect body, which causes cascading renders.
+function useIsHydrated() {
+  return useSyncExternalStore(
+    () => () => {}, // no-op subscribe — state never changes after initial render
+    () => true,     // client snapshot: we are hydrated
+    () => false,    // server snapshot: not yet hydrated
+  )
+}
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading, checkAuth } = useAuth()
-  console.log(user)
   const router = useRouter()
   const pathname = usePathname()
-  const [hydrated, setHydrated] = useState(false)
-
-  // eslint-disable-next-line
-  useEffect(() => {
-    // Wait for Zustand persist to hydrate state from localStorage
-    setHydrated(true)
-  }, [])
+  const hydrated = useIsHydrated()
 
   // Refresh user data on mount/hydration
   useEffect(() => {

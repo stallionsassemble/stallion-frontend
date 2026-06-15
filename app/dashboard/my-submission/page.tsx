@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client";
 
 import { SubmissionCard } from "@/components/submissions/submission-card";
@@ -25,7 +24,6 @@ export default function MySubmissionsPage() {
 
   // Fetch Data
   const { data: submissionsData, isLoading } = useGetUserSubmissions();
-  console.log("Submission", submissionsData)
 
   const allSubmissions = useMemo(() => {
     if (!submissionsData?.data) return [];
@@ -113,7 +111,6 @@ export default function MySubmissionsPage() {
 
   const totalPages = Math.ceil(filteredAndSortedSubmissions.length / Number(rowsPerPage)) || 1;
   const paginatedSubmissions = filteredAndSortedSubmissions.slice((currentPage - 1) * Number(rowsPerPage), currentPage * Number(rowsPerPage));
-  console.log("Paginated Submissions", paginatedSubmissions)
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {

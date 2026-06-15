@@ -50,7 +50,7 @@ export const useFcmToken = () => {
             const currentToken = await fetchToken()
             if (currentToken) {
               setToken(currentToken)
-              console.log('[FCM] Token generated:', currentToken)
+              console.log('[FCM] Token generated')
               // Register token with backend
               await notificationService.registerFcmToken({
                 token: currentToken,
@@ -81,7 +81,6 @@ export const useFcmToken = () => {
       if (!msg) return
 
       const unsubscribe = onMessage(msg, (payload) => {
-        console.log('Foreground message received:', payload)
         toast.info(payload.notification?.title || 'New Notification', {
           description: payload.notification?.body,
         })

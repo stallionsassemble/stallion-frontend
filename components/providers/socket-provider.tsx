@@ -47,18 +47,14 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     socketInstance.on('connect', () => {
-      console.log('[Socket] Connected to chat server:', socketInstance.id);
       setIsConnected(true);
     });
 
-    socketInstance.on('authenticated', (data: AuthenticatedEvent) => {
-      console.log('[Socket] Authenticated successfully');
-      console.log('[Socket] Pending messages:', data.pendingMessages);
+    socketInstance.on('authenticated', (_data: AuthenticatedEvent) => {
       setIsAuthenticated(true);
     });
 
-    socketInstance.on('disconnect', (reason) => {
-      console.log('[Socket] Disconnected:', reason);
+    socketInstance.on('disconnect', () => {
       setIsConnected(false);
       setIsAuthenticated(false);
     });

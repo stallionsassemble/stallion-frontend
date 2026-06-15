@@ -1,4 +1,3 @@
-/* eslint-disable */
 'use client'
 
 import { BountyCard } from '@/components/bounties/bounty-card'
@@ -30,7 +29,6 @@ export default function BountyDetailsPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const { data: bounty, isLoading: isLoadingBounty } = useGetBounty(id)
-  console.log("Bounty", bounty)
   const { data: myApplications } = useGetMyApplications()
 
   const tags = bounty?.skills || []

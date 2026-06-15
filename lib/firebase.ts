@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { getApp, getApps, initializeApp } from 'firebase/app'
 import { getMessaging, getToken, isSupported } from 'firebase/messaging'
 
@@ -47,13 +46,9 @@ export const fetchToken = async () => {
     if (currentToken) {
       return currentToken
     } else {
-      console.log(
-        'No registration token available. Request permission to generate one.'
-      )
       return null
     }
-  } catch (err) {
-    console.log('An error occurred while retrieving token. ', err)
+  } catch {
     return null
   }
 }

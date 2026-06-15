@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -183,7 +182,7 @@ export function OwnerProfileSettingsForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit, (errors) => console.log("Form Errors:", errors))} className="space-y-6 md:space-y-10 max-w-4xl animate-in fade-in duration-500">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:space-y-10 max-w-4xl animate-in fade-in duration-500">
 
         {/* ABOUT YOU SECTION */}
         <div className="space-y-6">

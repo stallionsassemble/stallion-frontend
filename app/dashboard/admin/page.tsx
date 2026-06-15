@@ -23,7 +23,6 @@ import { useMemo } from 'react'
 
 export default function AdminDashboardPage() {
   const { data: stats, isLoading } = useAdminDashboardStats()
-  console.log("Admin Stats", stats)
 
   const userGrowthData = useMemo(() => {
     if (!stats?.userGrowth?.currentMonthDailyRegistrations) return []

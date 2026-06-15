@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client";
 
 import { CreateProjectModal } from "@/components/dashboard/owner/create-project-modal";
@@ -43,9 +42,7 @@ export default function ProjectDetailsPage() {
     Otherwise, we use the generic *Project Milestones* (definitions only).
   */
   const acceptedTalent = projectApplications?.find((a: any) => a.status === "ACCEPTED");
-  console.log("Accepted Talent", acceptedTalent)
   const { data: applicationMilestones, isLoading: applicationMilestonesLoading } = useGetApplicationMilestones(acceptedTalent?.id || "");
-  console.log("Accepted Milestones", applicationMilestones)
 
   // Use application milestones if available (hired), otherwise fallback to generic project milestones
   const displayMilestones = acceptedTalent ? applicationMilestones : projectMilestones;

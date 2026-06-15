@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,15 +39,6 @@ export function OwnerActiveWorks() {
   const { data: ownerProjects, isLoading: isProjectsLoading } = useGetProjects({ ownerId: user?.id || '' })
 
   const isLoading = isBountiesLoading || isProjectsLoading;
-
-  console.log('DEBUG: OwnerActiveWorks', {
-    userId: user?.id,
-    ownerBounties,
-    ownerProjects,
-    isBountiesLoading,
-    isProjectsLoading,
-    activeWorksListLength: ownerBounties?.length
-  });
 
   const [filterType, setFilterType] = useState<"All" | "Project" | "Bounty">("All");
   const [filterCategory, setFilterCategory] = useState<string>("All");

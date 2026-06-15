@@ -1,4 +1,3 @@
-/* eslint-disable */
 'use client'
 
 import { BountyCard } from '@/components/bounties/bounty-card'
@@ -37,7 +36,6 @@ export default function BountyDetailsPage() {
 
   // 1. Fetch Project Details
   const { data: project, isLoading: isProjectLoading, isError } = useGetProject(id!)
-  console.log("Project Details", project)
 
   // 2. Fetch Milestones
   const { data: projectMilestones, isLoading: isMilestonesLoading } = useGetProjectMilestones(id!)
@@ -97,7 +95,6 @@ export default function BountyDetailsPage() {
   const appliedUser = (project.applications || [])
     .filter((a) => a.userId !== user?.id && a.user)
     .map((a) => a.user.profilePicture || '/assets/icons/sdollar.png')
-  console.log("Applied", appliedUser)
 
   return (
     <div className='flex flex-col lg:flex-row gap-4 lg:gap-8 relative items-start w-full max-w-full lg:h-[calc(100vh-7rem)] overflow-x-hidden lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>

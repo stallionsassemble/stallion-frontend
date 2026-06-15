@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { hackathonService } from './index'
@@ -28,9 +27,6 @@ export const useGetMyHackathons = () => {
       const rawData = (response as any).data || response
       const items = Array.isArray(rawData) ? rawData : []
       
-      console.log('DEBUG: useGetMyHackathons - All hackathons fetched:', items.length)
-      console.log('DEBUG: useGetMyHackathons - Current User ID:', user?.id)
-      
       if (!user) return { data: [], total: 0 } as unknown as PagedResponse<Hackathon>
       
       const myHackathons = items.filter(h => {
@@ -43,8 +39,6 @@ export const useGetMyHackathons = () => {
           
         return isMatch
       })
-      
-      console.log('DEBUG: useGetMyHackathons - Filtered hackathons:', myHackathons.length)
       
       return {
         data: myHackathons,

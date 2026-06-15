@@ -39,7 +39,6 @@ export const useChatSocket = (conversationId?: string) => {
     if (!socket || !isConnected || !isAuthenticated) return
 
     const handleNewMessage = (message: Message) => {
-      console.log('[Chat] New message received:', message)
 
       queryClient.setQueryData<Message[]>(
         chatKeys.messages(message.conversationId),
@@ -55,7 +54,6 @@ export const useChatSocket = (conversationId?: string) => {
     }
 
     const handleMessageUpdated = (data: MessageUpdatedEvent) => {
-      console.log('[Chat] Message updated:', data)
 
       queryClient.setQueryData<Message[]>(
         chatKeys.messages(data.conversationId),
@@ -75,7 +73,6 @@ export const useChatSocket = (conversationId?: string) => {
     }
 
     const handleMessageDeleted = (data: MessageDeletedEvent) => {
-      console.log('[Chat] Message deleted:', data)
 
       queryClient.setQueryData<Message[]>(
         chatKeys.messages(data.conversationId),
@@ -92,7 +89,6 @@ export const useChatSocket = (conversationId?: string) => {
     }
 
     const handleMessageDelivered = (data: MessageDeliveredEvent) => {
-      console.log('[Chat] Message delivered:', data)
 
       queryClient.setQueryData<Message[]>(
         chatKeys.messages(data.conversationId),
@@ -111,7 +107,6 @@ export const useChatSocket = (conversationId?: string) => {
     }
 
     const handleMessageRead = (data: MessageReadEvent) => {
-      console.log('[Chat] Message read:', data)
 
       queryClient.setQueryData<Message[]>(
         chatKeys.messages(data.conversationId),
@@ -129,18 +124,15 @@ export const useChatSocket = (conversationId?: string) => {
       )
     }
 
-    const handleNewConversation = (conversation: NewConversationEvent) => {
-      console.log('[Chat] New conversation:', conversation)
+    const handleNewConversation = (_conversation: NewConversationEvent) => {
       queryClient.invalidateQueries({ queryKey: chatKeys.conversations() })
     }
 
-    const handleConversationUpdated = (data: ConversationUpdatedEvent) => {
-      console.log('[Chat] Conversation updated:', data)
+    const handleConversationUpdated = (_data: ConversationUpdatedEvent) => {
       queryClient.invalidateQueries({ queryKey: chatKeys.conversations() })
     }
 
     const handleUserStatusChanged = (data: UserStatusChangedEvent) => {
-      console.log('[Chat] User status changed:', data)
       setUserStatuses((prev) => ({
         ...prev,
         [data.userId]: {
@@ -204,8 +196,6 @@ export const useChatSocket = (conversationId?: string) => {
 
         socket.emit('sendMessage', payload, (response: SendMessageResponse) => {
           if (response.success) {
-            console.log('[Chat] Message sent successfully:', response.message)
-
             // Manually update cache for the sender
             queryClient.setQueryData<Message[]>(
               chatKeys.messages(response.message.conversationId),
@@ -241,8 +231,6 @@ export const useChatSocket = (conversationId?: string) => {
           payload,
           (response: UpdateMessageResponse) => {
             if (response.success) {
-              console.log('[Chat] Message updated successfully')
-
               // Manually update cache
               if (conversationId) {
                 queryClient.setQueryData<Message[]>(
@@ -285,8 +273,6 @@ export const useChatSocket = (conversationId?: string) => {
           payload,
           (response: DeleteMessageResponse) => {
             if (response.success) {
-              console.log('[Chat] Message deleted successfully')
-
               // Manually update cache
               if (conversationId) {
                 queryClient.setQueryData<Message[]>(
@@ -327,7 +313,6 @@ export const useChatSocket = (conversationId?: string) => {
 
         socket.emit('markAsRead', payload, (response: MarkAsReadResponse) => {
           if (response.success) {
-            console.log('[Chat] Messages marked as read')
             resolve(response)
           } else {
             console.error('[Chat] Failed to mark as read:', response.error)
@@ -370,7 +355,6 @@ export const useChatSocket = (conversationId?: string) => {
         payload,
         (response: GetOnlineStatusResponse) => {
           if (response.success) {
-            console.log('[Chat] Online status received:', response.statuses)
             const statusMap: Record<string, UserStatus> = {}
             response.statuses.forEach((status) => {
               statusMap[status.userId] = status
