@@ -102,7 +102,7 @@ export default function TalentOnboardingPage() {
       skills: data.skills,
       profilePicture: profilePictureUrl || "https://github.com/shadcn.png",
       socials: {
-        "twitter": data.twitter ? (data.twitter.startsWith('http') ? data.twitter : `https://twitter.com/${data.twitter}`) : "",
+        "twitter": data.twitter ? (data.twitter.startsWith('http') ? data.twitter : `https://x.com/${data.twitter}`) : "",
         "website": data.website || "",
         "github": data.github ? (data.github.startsWith('http') ? data.github : `https://github.com/${data.github}`) : "",
         "discord": data.discord || "",

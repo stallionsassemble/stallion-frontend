@@ -105,7 +105,7 @@ export default function OwnerOnboardingPage() {
       profilePicture: data.profilePicture || "https://github.com/shadcn.png", // Fallback
       socials: {
         "linkedin": data.linkedin ? (data.linkedin.startsWith('http') ? data.linkedin : `https://linkedin.com/in/${data.linkedin}`) : "",
-        "twitter": data.twitter ? (data.twitter.startsWith('http') ? data.twitter : `https://twitter.com/${data.twitter}`) : "",
+        "twitter": data.twitter ? (data.twitter.startsWith('http') ? data.twitter : `https://x.com/${data.twitter}`) : "",
         "website": data.website || "",
         "instagram": data.instagram ? (data.instagram.startsWith('http') ? data.instagram : `https://instagram.com/${data.instagram}`) : "",
       },

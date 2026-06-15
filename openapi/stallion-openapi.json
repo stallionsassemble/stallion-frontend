@@ -11405,7 +11405,7 @@
             "example": {
               "linkedin": "https://linkedin.com/in/johndoe",
               "github": "https://github.com/johndoe",
-              "twitter": "https://twitter.com/johndoe",
+              "twitter": "https://x.com/johndoe",
               "website": "https://johndoe.com"
             }
           },
@@ -11473,7 +11473,7 @@
             "type": "object",
             "example": {
               "linkedin": "https://linkedin.com/company/acme",
-              "twitter": "https://twitter.com/acmecorp",
+              "twitter": "https://x.com/acmecorp",
               "website": "https://acme.com"
             }
           },
@@ -13340,7 +13340,7 @@
             "example": {
               "linkedin": "https://linkedin.com/in/johndoe",
               "github": "https://github.com/johndoe",
-              "twitter": "https://twitter.com/johndoe"
+              "twitter": "https://x.com/johndoe"
             }
           },
           "gender": {
@@ -13438,7 +13438,7 @@
             "example": {
               "linkedin": "https://linkedin.com/company/acme",
               "github": "https://github.com/acme",
-              "twitter": "https://twitter.com/acme",
+              "twitter": "https://x.com/acme",
               "website": "https://acme.com"
             }
           },
