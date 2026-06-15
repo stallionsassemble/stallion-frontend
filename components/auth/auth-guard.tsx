@@ -71,5 +71,26 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // If hydrated and not authenticated (and not loading), we are redirecting, so return null
   if (!isAuthenticated) return null
 
+  // Prevent rendering while redirecting based on role/profile status
+  if (user && !user.profileCompleted) {
+    const isOwnerOnboarding = pathname.includes("/auth/onboarding/owner")
+    const isTalentOnboarding = pathname.includes("/auth/onboarding/talent")
+    if (!isOwnerOnboarding && !isTalentOnboarding) {
+      return null
+    }
+  }
+
+  if (user && user.profileCompleted) {
+    if (pathname.startsWith('/dashboard/admin') && user.role !== 'ADMIN') {
+      return null
+    }
+    if ((user.role === 'PROJECT_OWNER' || user.role === 'OWNER') && pathname.startsWith('/dashboard') && !pathname.startsWith('/dashboard/owner') && !pathname.startsWith('/dashboard/admin')) {
+      return null
+    }
+    if (user.role !== 'PROJECT_OWNER' && user.role !== 'OWNER' && pathname.startsWith('/dashboard/owner')) {
+      return null
+    }
+  }
+
   return <>{children}</>
 }
