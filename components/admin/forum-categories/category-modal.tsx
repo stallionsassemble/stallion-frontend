@@ -19,7 +19,7 @@ import {
 } from '@/lib/api/forum/queries'
 import { Category, CreateCategoryPayload } from '@/lib/types/forum'
 import { useEffect } from 'react'
-import { useForm, Controller } from 'react-form-hooks' // Oh wait, I don't know if react-hook-form is used. I'll just use regular state for simplicity if I'm not sure, but let me check if they use react-hook-form. Let me just use standard React state to be safe.
+
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
 
