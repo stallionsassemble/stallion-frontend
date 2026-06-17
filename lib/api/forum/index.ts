@@ -45,6 +45,21 @@ class ForumService {
     return response.data
   }
 
+  async updateCategory(id: string, payload: Partial<CreateCategoryPayload>) {
+    const response = await api.patch<CreateCategoryResponse>(
+      `/forum/categories/${id}`,
+      payload
+    )
+    return response.data
+  }
+
+  async deleteCategory(id: string) {
+    const response = await api.delete<{ message: string }>(
+      `/forum/categories/${id}`
+    )
+    return response.data
+  }
+
   async getStats() {
     const response = await api.get<ForumStatistics>('/forum/stats')
     return response.data

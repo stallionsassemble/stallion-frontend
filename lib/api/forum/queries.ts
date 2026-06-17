@@ -50,6 +50,37 @@ export function useCreateCategory() {
   })
 }
 
+export function useUpdateCategory() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<CreateCategoryPayload> }) =>
+      forumService.updateCategory(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['forum', 'categories'] })
+      toast.success('Category updated successfully')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update category')
+    },
+  })
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => forumService.deleteCategory(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['forum', 'categories'] })
+      toast.success('Category deleted successfully')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete category')
+    },
+  })
+}
+
 // Threads
 export function useGetThreads(
   categoryId?: string,

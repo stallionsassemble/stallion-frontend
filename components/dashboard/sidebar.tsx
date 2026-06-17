@@ -130,6 +130,11 @@ const adminSidebarItems: SidebarItem[] = [
     icon: MessageSquare,
   },
   {
+    title: 'Forum Categories',
+    href: '/dashboard/admin/forum-categories',
+    icon: MessageSquare,
+  },
+  {
     title: 'Payouts',
     href: '/dashboard/admin/payouts',
     icon: Wallet,
