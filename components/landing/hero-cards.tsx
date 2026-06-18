@@ -18,7 +18,7 @@ const cards = [
     zIndex: 10,
   },
   {
-    src: "/assets/hero-person-1.jpg",
+    src: "/assets/hero-person-1-v3.jpg",
     alt: "Contributor",
     marginLeft: "-318px", // Center - 180 - 138
     initialTop: "30px",
@@ -34,7 +34,7 @@ const cards = [
     zIndex: 30,
   },
   {
-    src: "/assets/hero-person-2.png",
+    src: "/assets/hero-person-2-v3.jpg",
     alt: "Contributor",
     marginLeft: "42px", // Center + 180 - 138
     initialTop: "30px",
@@ -115,7 +115,7 @@ const HeroCards = () => {
             src={card.src}
             alt={card.alt}
             fill
-            className="object-contain pointer-events-none"
+            className={`pointer-events-none ${card.src.includes('person') ? 'object-cover object-top' : 'object-contain'}`}
             priority={index === 2}
             loading={index === 2 ? undefined : "lazy"}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
