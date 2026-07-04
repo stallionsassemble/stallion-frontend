@@ -85,12 +85,6 @@ export function SecuritySettingsView() {
     }
   };
 
-  // Update handleConfirmPasskeyName to refresh list
-  // ... inside handleConfirmPasskeyName success block:
-  // fetchPasskeys();
-
-  // ... rest of component
-
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [qrCodeData, setQrCodeData] = useState<string | null>(null);
   const [totpSecret, setTotpSecret] = useState<string | null>(null);
@@ -98,6 +92,11 @@ export function SecuritySettingsView() {
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [showBackupCodes, setShowBackupCodes] = useState(false);
   const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
+
+  // Disable MFA dialog state
+  const [isDisableMfaOpen, setIsDisableMfaOpen] = useState(false);
+  const [disableOtp, setDisableOtp] = useState(["", "", "", "", "", ""]);
+  const [isDisabling, setIsDisabling] = useState(false);
 
   const handleSwitchChange = async (checked: boolean) => {
     if (checked) {
@@ -115,13 +114,53 @@ export function SecuritySettingsView() {
         toast.dismiss(toastId);
       } catch (error: any) {
         toast.error(error.response?.data?.message || "Failed to setup MFA", { id: toastId });
-        //setTwoFactorEnabled(false);
       } finally {
         setIsLoading(false);
       }
     } else {
-      //setTwoFactorEnabled(false);
-      // Ideally call API to disable MFA here if needed
+      // Open confirmation dialog requiring current TOTP code
+      setDisableOtp(["", "", "", "", "", ""]);
+      setIsDisableMfaOpen(true);
+    }
+  };
+
+  const handleDisableOtpChange = (index: number, value: string) => {
+    if (value.length > 1) return;
+    if (isNaN(Number(value))) return;
+    const newOtp = [...disableOtp];
+    newOtp[index] = value;
+    setDisableOtp(newOtp);
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`disable-otp-${index + 1}`);
+      nextInput?.focus();
+    }
+  };
+
+  const handleDisableOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !disableOtp[index] && index > 0) {
+      const prevInput = document.getElementById(`disable-otp-${index - 1}`);
+      prevInput?.focus();
+    }
+  };
+
+  const handleDisableMfa = async () => {
+    const code = disableOtp.join("");
+    if (code.length !== 6) {
+      toast.error("Please enter the complete 6-digit code from your authenticator app");
+      return;
+    }
+    setIsDisabling(true);
+    const toastId = toast.loading("Disabling 2FA...");
+    try {
+      await authService.disableMfa(code);
+      toast.success("Two-Factor Authentication disabled successfully", { id: toastId });
+      if (user) setUser({ ...user, mfaEnabled: false });
+      setMfaEnabled(false);
+      setIsDisableMfaOpen(false);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to disable 2FA", { id: toastId });
+    } finally {
+      setIsDisabling(false);
     }
   };
 
@@ -529,6 +568,58 @@ export function SecuritySettingsView() {
               )}
             </div>
           </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Disable MFA Confirmation Dialog */}
+      <Dialog open={isDisableMfaOpen} onOpenChange={(open) => {
+        if (!open) setDisableOtp(["", "", "", "", "", ""]);
+        setIsDisableMfaOpen(open);
+      }}>
+        <DialogContent className="bg-background w-[95%] max-w-md rounded-xl p-6">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-xl font-bold font-inter text-foreground">Disable Two-Factor Authentication</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground font-inter">
+              To confirm, enter the 6-digit code from your authenticator app. This will remove 2FA from your account.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            <div className="flex items-center justify-center gap-1 sm:gap-2">
+              {disableOtp.map((digit, index) => (
+                <div key={index} className="flex items-center">
+                  <Input
+                    id={`disable-otp-${index}`}
+                    value={digit}
+                    onChange={(e) => handleDisableOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleDisableOtpKeyDown(index, e)}
+                    className="w-10 h-10 sm:w-11 sm:h-11 text-center text-lg bg-transparent border-white/20 rounded-md focus:border-destructive focus:ring-1 focus:ring-destructive"
+                    maxLength={1}
+                    disabled={isDisabling}
+                  />
+                  {index === 2 && <span className="text-white/20 mx-1">-</span>}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setIsDisableMfaOpen(false)}
+                disabled={isDisabling}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDisableMfa}
+                disabled={isDisabling || disableOtp.join("").length !== 6}
+              >
+                {isDisabling ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Disable 2FA
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

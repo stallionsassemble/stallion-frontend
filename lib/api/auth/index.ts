@@ -112,6 +112,14 @@ export class AuthService {
     return response.data
   }
 
+  async disableMfa(totpCode: string) {
+    const response = await api.post<{ message: string }>(
+      '/auth/disable-mfa',
+      { totpCode }
+    )
+    return response.data
+  }
+
   // --- Profile Completion ---
 
   async completeProfileContributor(data: any) {
