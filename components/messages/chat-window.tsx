@@ -18,9 +18,10 @@ import { MessageBubble } from './message-bubble';
 interface ChatWindowProps {
   conversation: Conversation;
   onBack?: () => void;
+  onClose?: () => void;
 }
 
-export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
+export function ChatWindow({ conversation, onBack, onClose }: ChatWindowProps) {
   const { user: currentUser } = useAuth();
 
   const { data: messages = [], isLoading } = useMessages(conversation.id);
@@ -336,17 +337,29 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
           </div>
         </div>
 
-        {/* Header Actions */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setShowSearch(!showSearch)}
-          className={
-            showSearch ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
-          }
-        >
-          <Search className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowSearch(!showSearch)}
+            className={
+              showSearch ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
+            }
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+          
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Search Bar (Conditional) */}

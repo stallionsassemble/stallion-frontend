@@ -21,7 +21,7 @@ import { startAuthentication } from '@simplewebauthn/browser'
 import { Key, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { GoogleLogin } from '@react-oauth/google'
@@ -37,13 +37,15 @@ export function LoginClient() {
   const { login, socialAuth, passkeyAuthOptions, passkeyAuthVerify, setUser, user } = useAuth()
 
   // Redirect if already logged in
-  if (user) {
-    if (user.role === 'PROJECT_OWNER' || user.role === 'OWNER') {
-      router.push("/dashboard/owner")
-    } else {
-      router.push("/dashboard")
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'PROJECT_OWNER' || user.role === 'OWNER') {
+        router.push("/dashboard/owner")
+      } else {
+        router.push("/dashboard")
+      }
     }
-  }
+  }, [user, router])
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),

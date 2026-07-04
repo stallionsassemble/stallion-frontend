@@ -2,6 +2,7 @@ import { AuthGuard } from '@/components/auth/auth-guard'
 import { Header } from '@/components/dashboard/header'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { SocketProvider } from '@/components/providers/socket-provider'
+import { FloatingAdminChat } from '@/components/messages/floating-admin-chat'
 
 export default function DashboardLayout({
   children,
@@ -32,6 +33,7 @@ export default function DashboardLayout({
             </main>
           </div>
         </div>
+        <FloatingAdminChat />
       </SocketProvider>
     </AuthGuard>
   )

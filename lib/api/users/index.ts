@@ -13,6 +13,11 @@ export class UserService {
     return response.data
   }
 
+  async getUserByEmail(email: string) {
+    const response = await api.get<User>(`/users/email/${email}`)
+    return response.data
+  }
+
   async updateContributorProfile(data: Partial<User>) {
     const response = await api.patch<{ message: string }>(
       `/settings/profile/contributor`,

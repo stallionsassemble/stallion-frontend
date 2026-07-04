@@ -21,6 +21,14 @@ export function useGetUserByUsername(username: string) {
   })
 }
 
+export function useGetUserByEmail(email: string) {
+  return useQuery({
+    queryKey: ['user', 'email', email],
+    queryFn: () => userService.getUserByEmail(email),
+    enabled: !!email,
+  })
+}
+
 export function useUpdateContributorProfile() {
   const queryClient = useQueryClient()
 
