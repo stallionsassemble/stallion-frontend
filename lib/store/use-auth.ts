@@ -107,6 +107,7 @@ export const useAuth = create<AuthState>()(
             refreshToken: response.refreshToken,
             isAuthenticated: true,
             isLoading: false,
+            mfaEnabled: response.user.mfaEnabled ?? false,
           })
           return response
         } catch (error) {
@@ -161,6 +162,7 @@ export const useAuth = create<AuthState>()(
             refreshToken: response.refreshToken,
             isAuthenticated: true,
             isLoading: false,
+            mfaEnabled: response.mfaEnabled ?? response.user.mfaEnabled ?? false,
           })
           return response.user
         } catch (error) {
@@ -181,6 +183,7 @@ export const useAuth = create<AuthState>()(
             refreshToken: null,
             isAuthenticated: false,
             isLoading: false,
+            mfaEnabled: false,
           })
         }
       },
@@ -198,7 +201,11 @@ export const useAuth = create<AuthState>()(
 
         try {
           const user = await authService.profile()
-          set({ user, isAuthenticated: true })
+          set({
+            user,
+            isAuthenticated: true,
+            mfaEnabled: user.mfaEnabled ?? get().mfaEnabled,
+          })
         } catch (error) {
           // If we fail to fetch profile (e.g. token expired), we should probably logout or just leave state as is?
           // For now, let's just log it and potentially clear auth if strictly 401 vs network error
