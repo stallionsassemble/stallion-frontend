@@ -60,7 +60,14 @@ export const ownerOnboardingSchema = z.object({
   // About Company
   companyName: z.string().min(2, 'Company name is required'),
   entityName: z.string().min(2, 'Entity name is required'),
-  phoneNumber: z.string().min(5, 'Please enter a valid phone number'), // Basic length check
+  phoneNumber: z
+    .string()
+    .min(4, 'Please enter a valid phone number')
+    .regex(/[0-9]/, 'Please enter a valid phone number'),
+  country: z
+    .string()
+    .length(2, 'Please select a country')
+    .toUpperCase(),
   industry: z.string().min(1, 'Please select an industry'),
   companyLogo: z.string().optional(),
   companyBio: z

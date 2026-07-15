@@ -21,6 +21,7 @@ export interface User {
   companyName?: string | null
   entityName?: string | null
   phoneNumber?: string | null
+  country?: string | null
   industry?: string | null
   bio?: string | null
   companyBio?: string | null

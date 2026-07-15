@@ -10,27 +10,21 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { authService } from "@/lib/api/auth";
+import { useCountries } from "@/lib/api/countries/queries";
 import { uploadService } from "@/lib/api/upload";
 import { useUpdateOwnerProfile } from "@/lib/api/users/queries";
 import { ownerOnboardingSchema, OwnerOnboardingValues } from "@/lib/schemas/auth";
 import { useAuth } from "@/lib/store/use-auth";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { countries as countriesData } from "countries-list";
 import { Check, ChevronsUpDown, Globe, Instagram, Linkedin, Loader2, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
-const countries = Object.values(countriesData)
-  .map((country) => ({
-    label: country.name,
-    value: country.name,
-  }))
-  .sort((a, b) => a.label.localeCompare(b.label));
 
 export function OwnerProfileSettingsForm() {
   const { user, setUser } = useAuth();
@@ -40,6 +34,7 @@ export function OwnerProfileSettingsForm() {
   const [locationOpen, setLocationOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const { data: countries = [] } = useCountries();
 
   const form = useForm<OwnerOnboardingValues>({
     resolver: zodResolver(ownerOnboardingSchema),
@@ -52,6 +47,7 @@ export function OwnerProfileSettingsForm() {
       companyName: "",
       entityName: "",
       phoneNumber: "",
+      country: "",
       industry: "",
       companyLogo: "",
       companyBio: "",
@@ -75,6 +71,7 @@ export function OwnerProfileSettingsForm() {
         companyName: user.companyName || "",
         entityName: user.entityName || "",
         phoneNumber: user.phoneNumber || "",
+        country: user.country || "",
         industry: user.industry || "",
         companyLogo: user.companyLogo || "",
         companyBio: user.companyBio || "",
@@ -133,6 +130,7 @@ export function OwnerProfileSettingsForm() {
       companyName: data.companyName,
       entityName: data.entityName,
       phoneNumber: data.phoneNumber,
+      country: data.country,
       industry: data.industry,
       companyBio: data.companyBio,
       companyLogo: data.companyLogo,
@@ -267,9 +265,12 @@ export function OwnerProfileSettingsForm() {
                           )}
                         >
                           {field.value
-                            ? countries.find(
-                              (country) => country.value === field.value
-                            )?.label || field.value
+                            ? (() => {
+                              const match = countries.find(
+                                (country) => country.name === field.value
+                              );
+                              return match ? `${match.flag} ${match.name}` : field.value;
+                            })()
                             : "Select Location"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -288,34 +289,35 @@ export function OwnerProfileSettingsForm() {
                       <div className="max-h-[300px] overflow-y-auto p-1">
                         {countries
                           .filter((country) =>
-                            country.label.toLowerCase().includes(searchQuery.toLowerCase())
+                            country.name.toLowerCase().includes(searchQuery.toLowerCase())
                           )
                           .map((country) => (
                             <div
-                              key={country.value}
+                              key={country.iso2}
                               onClick={() => {
-                                form.setValue("location", country.value);
+                                form.setValue("location", country.name);
                                 setLocationOpen(false);
                                 setSearchQuery("");
                               }}
                               className={cn(
-                                "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-white/10 text-gray-300",
-                                country.value === field.value && "bg-white/10 text-white"
+                                "relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-white/10 text-gray-300",
+                                country.name === field.value && "bg-white/10 text-white"
                               )}
                             >
                               <Check
                                 className={cn(
-                                  "mr-2 h-4 w-4",
-                                  country.value === field.value
+                                  "h-4 w-4 shrink-0",
+                                  country.name === field.value
                                     ? "opacity-100"
                                     : "opacity-0"
                                 )}
                               />
-                              {country.label}
+                              <span className="text-base leading-none">{country.flag}</span>
+                              {country.name}
                             </div>
                           ))}
                         {countries.filter((country) =>
-                          country.label.toLowerCase().includes(searchQuery.toLowerCase())
+                          country.name.toLowerCase().includes(searchQuery.toLowerCase())
                         ).length === 0 && (
                             <div className="py-6 text-center text-sm text-muted-foreground">
                               No country found.
@@ -408,9 +410,21 @@ export function OwnerProfileSettingsForm() {
                 <FormItem>
                   <FormLabel className="font-medium text-white text-sm">Phone Number <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <Input placeholder="Phone Number" className="h-10 md:h-12 w-full rounded-lg border-[1.19px] border-[#E5E5E5] bg-transparent px-4 text-sm text-white placeholder:text-gray-600 focus:border-blue-500 focus:outline-none" {...field} />
+                    <PhoneInput
+                      placeholder="Phone Number"
+                      value={{ country: form.watch("country"), phoneNumber: field.value }}
+                      onChange={(v) => {
+                        form.setValue("country", v.country, { shouldValidate: true });
+                        field.onChange(v.phoneNumber);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
+                  {form.formState.errors.country && (
+                    <p className="text-sm font-medium text-red-500">
+                      {form.formState.errors.country.message}
+                    </p>
+                  )}
                 </FormItem>
               )}
             />
