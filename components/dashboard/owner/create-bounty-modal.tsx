@@ -223,6 +223,11 @@ export function CreateBountyModal({
       return;
     }
 
+    if (announcementDate && deadline && announcementDate < deadline) {
+      toast.error("Winner announcement date cannot be before submission deadline");
+      return;
+    }
+
     const totalBudget = Number(budget.replace(/,/g, ''));
     if (isNaN(totalBudget) || totalBudget <= 0) {
       toast.error("Invalid budget amount");
@@ -337,7 +342,7 @@ export function CreateBountyModal({
     <>
       <Dialog open={isOpen} onOpenChange={setOpen}>
         {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-        <DialogContent className="bg-card border-border sm:max-w-[800px] max-h-[90vh] overflow-y-auto p-0 gap-0">
+        <DialogContent className="bg-card border-border w-full max-w-[calc(100vw-2rem)] sm:max-w-[min(800px,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto overflow-x-hidden p-0 gap-0">
           <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-card z-10">
             <div>
               <h2 className="text-2xl font-bold text-foreground">
@@ -456,32 +461,61 @@ export function CreateBountyModal({
             </div>
 
             {/* Dates */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-foreground">Deadline <span className="text-destructive">*</span></Label>
+                <Label className="text-foreground">Submission Deadline <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">Date when submissions from contributors close.</p>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !deadline && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {deadline ? format(deadline, "PPP") : "Select date"}
+                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                      <span className="truncate">{deadline ? format(deadline, "PPP") : "Select submission deadline"}</span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-card border-border">
-                    <Calendar mode="single" selected={deadline} onSelect={setDeadline} initialFocus className="bg-card text-foreground" />
+                  <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={deadline}
+                      onSelect={(date) => {
+                        setDeadline(date);
+                        if (date && announcementDate && announcementDate < date) {
+                          setAnnouncementDate(undefined);
+                        }
+                      }}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date < today;
+                      }}
+                      initialFocus
+                      className="bg-card text-foreground"
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
               <div className="space-y-2">
-                <Label className="text-foreground">Announcement Date <span className="text-destructive">*</span></Label>
+                <Label className="text-foreground">Winner Announcement Date <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">Date when judging ends and winners are announced.</p>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !announcementDate && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {announcementDate ? format(announcementDate, "PPP") : "Select date"}
+                      <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                      <span className="truncate">{announcementDate ? format(announcementDate, "PPP") : "Select announcement date"}</span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-card border-border">
-                    <Calendar mode="single" selected={announcementDate} onSelect={setAnnouncementDate} initialFocus className="bg-card text-foreground" />
+                  <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={announcementDate}
+                      onSelect={setAnnouncementDate}
+                      disabled={(date) => {
+                        const minDate = deadline ? new Date(deadline) : new Date();
+                        minDate.setHours(0, 0, 0, 0);
+                        return date < minDate;
+                      }}
+                      initialFocus
+                      className="bg-card text-foreground"
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
