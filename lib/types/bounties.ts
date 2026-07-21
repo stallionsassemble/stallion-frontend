@@ -46,9 +46,11 @@ export interface Bounty {
   createdAt: string
   updatedAt: string
 
-  // Deadlines
-  submissionDeadline: string
-  judgingDeadline: string
+  // Deadlines & Dates
+  submissionDeadline?: string
+  judgingDeadline?: string
+  startDate?: string
+  endDate?: string
 
   // Extended fields
   requirements?: string[]
@@ -81,8 +83,10 @@ export interface CreateBountyDto {
   attachments?: BountyAttachment[]
 
   distribution: BountyDistribution[]
-  submissionDeadline: string // ISO date-time
-  judgingDeadline: string // ISO date-time
+  startDate?: string
+  endDate?: string
+  submissionDeadline?: string // ISO date-time
+  judgingDeadline?: string // ISO date-time
 }
 
 export interface CreateBountyResponseDto {

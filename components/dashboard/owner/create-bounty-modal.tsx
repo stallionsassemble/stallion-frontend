@@ -21,9 +21,6 @@ import { CalendarIcon, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { InsufficientBalanceModal } from "./insufficient-balance-modal";
-
-
-
 import { adminService } from "@/lib/api/admin";
 
 interface CreateBountyModalProps {
@@ -49,9 +46,6 @@ export function CreateBountyModal({
 
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
 
-  // ... imports ...
-
-
   // Form State - Persisted
   const [title, setTitle] = usePersistedState("draft_bounty_title", "");
   const [description, setDescription] = usePersistedState("draft_bounty_description", "");
@@ -63,14 +57,14 @@ export function CreateBountyModal({
   const [budget, setBudget] = usePersistedState("draft_bounty_budget", "");
   const [currency, setCurrency] = usePersistedState("draft_bounty_currency", "USDC");
 
-  // Date handling: Persisted stores as string, so we need to parse back to Date if string
-  const [deadlineStr, setDeadlineStr] = usePersistedState<string | undefined>("draft_bounty_deadline", undefined);
-  const deadline = deadlineStr ? new Date(deadlineStr) : undefined;
-  const setDeadline = (date: Date | undefined) => setDeadlineStr(date ? date.toISOString() : undefined);
+  // Date handling: Start Date & End Date
+  const [startDateStr, setStartDateStr] = usePersistedState<string | undefined>("draft_bounty_start_date", undefined);
+  const startDate = startDateStr ? new Date(startDateStr) : undefined;
+  const setStartDate = (date: Date | undefined) => setStartDateStr(date ? date.toISOString() : undefined);
 
-  const [announcementDateStr, setAnnouncementDateStr] = usePersistedState<string | undefined>("draft_bounty_announcement", undefined);
-  const announcementDate = announcementDateStr ? new Date(announcementDateStr) : undefined;
-  const setAnnouncementDate = (date: Date | undefined) => setAnnouncementDateStr(date ? date.toISOString() : undefined);
+  const [endDateStr, setEndDateStr] = usePersistedState<string | undefined>("draft_bounty_end_date", undefined);
+  const endDate = endDateStr ? new Date(endDateStr) : undefined;
+  const setEndDate = (date: Date | undefined) => setEndDateStr(date ? date.toISOString() : undefined);
 
   // Prize Pool
   const [prizeDistribution, setPrizeDistribution] = usePersistedState<{ rank: number; amount: string }[]>("draft_bounty_distribution", [
@@ -103,29 +97,25 @@ export function CreateBountyModal({
       setDeliverables(existingBounty.deliverables || []);
       setBudget(existingBounty.reward);
       setCurrency(existingBounty.rewardCurrency);
-      setDeadline(existingBounty.submissionDeadline ? new Date(existingBounty.submissionDeadline) : undefined);
-      setAnnouncementDate(existingBounty.judgingDeadline ? new Date(existingBounty.judgingDeadline) : undefined);
+
+      const existingStart = existingBounty.startDate
+        ? new Date(existingBounty.startDate)
+        : existingBounty.createdAt
+        ? new Date(existingBounty.createdAt)
+        : undefined;
+
+      const existingEnd = existingBounty.endDate
+        ? new Date(existingBounty.endDate)
+        : existingBounty.submissionDeadline
+        ? new Date(existingBounty.submissionDeadline)
+        : undefined;
+
+      setStartDate(existingStart);
+      setEndDate(existingEnd);
       setSelectedTags(existingBounty.skills || []);
 
-      // Distro
       const distList = existingBounty.distribution || existingBounty.rewardDistribution;
       if (distList) {
-        const distro = distList.map((d, i) => {
-          let percentage = 0;
-          if (Array.isArray(d.percentage)) {
-            percentage = d.percentage.length > 1 ? d.percentage[1] : d.percentage[0];
-          } else {
-            percentage = Number(d.percentage);
-          }
-
-          return {
-            rank: i + 1, // Force 1-based ranking based on index
-            amount: ((percentage / 100) * Number(existingBounty.reward)).toString(),
-          };
-        }); // Removed .sort because we trust the index order now, or we sort properly then re-map? 
-        // Better: sort first then map to index.
-        // Actually, if distList is unordered, mapping index to rank might be wrong if we don't sort first.
-
         const sortedDistList = [...distList].sort((a, b) => Number(a.rank) - Number(b.rank));
 
         const finalDistro = sortedDistList.map((d, i) => {
@@ -180,7 +170,7 @@ export function CreateBountyModal({
 
   const handleRemovePrize = (index: number) => {
     const newDistro = prizeDistribution.filter((_, i) => i !== index)
-      .map((item, i) => ({ ...item, rank: i + 1 })); // Recalculate ranks
+      .map((item, i) => ({ ...item, rank: i + 1 }));
     setPrizeDistribution(newDistro);
   };
 
@@ -215,16 +205,15 @@ export function CreateBountyModal({
     }
   };
 
-
   const handleSubmit = () => {
     // Validation
-    if (!title || !description || !budget || !deadline) {
-      toast.error("Please fill in all required fields");
+    if (!title || !description || !budget || !startDate || !endDate) {
+      toast.error("Please fill in all required fields (including Start Date & End Date)");
       return;
     }
 
-    if (announcementDate && deadline && announcementDate < deadline) {
-      toast.error("Winner announcement date cannot be before submission deadline");
+    if (endDate < startDate) {
+      toast.error("End date cannot be before start date");
       return;
     }
 
@@ -237,16 +226,11 @@ export function CreateBountyModal({
     // Check Balance
     const balance = walletData?.balances.find(b => b.currency === currency)?.availableBalance || 0;
 
-    // For update, we might not strictly need full balance if already escrowed, 
-    // but simplifying to always check for now or maybe only for CREATE?
-    // Let's assume Create needs full balance. Update might need difference? 
-    // For MVP, lets enforce balance check on Create.
     if (!existingBounty && balance < totalBudget) {
       setShowInsufficientBalance(true);
       return;
     }
 
-    // Prepare distribution
     // Prepare distribution
     const distroTotal = prizeDistribution.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
@@ -256,19 +240,21 @@ export function CreateBountyModal({
     }
 
     // Calculate percentages
-    // Calculate percentages
     const distribution = prizeDistribution
       .map((p, i) => ({
-        rank: i + 1, // Ensure strictly 1-based sequential
+        rank: i + 1,
         percentage: (Number(p.amount) / totalBudget) * 100
       }))
       .filter(d => d.percentage > 0);
 
-    // Ensure deadline is end of day to avoid "past" issues for today's date
-    const submissionDate = new Date(deadline);
-    submissionDate.setHours(23, 59, 59, 999);
+    // Format dates to ISO
+    const startIso = startDate.toISOString();
 
-    // Base payload with common fields
+    const endFormatted = new Date(endDate);
+    endFormatted.setHours(23, 59, 59, 999);
+    const endIso = endFormatted.toISOString();
+
+    // Base payload with Start Date and End Date
     const basePayload = {
       title,
       shortDescription: description.replace(/<[^>]*>/g, '').substring(0, 150),
@@ -276,19 +262,18 @@ export function CreateBountyModal({
       requirements,
       deliverables,
       skills: selectedTags,
-      submissionDeadline: submissionDate.toISOString(),
-      distribution: distribution, // Use calculated distribution
+      startDate: startIso,
+      endDate: endIso,
+      distribution: distribution,
       attachments: attachments.map(a => ({ filename: a.filename, url: a.url, size: a.size, mimetype: a.mimetype })),
     };
 
     if (existingBounty) {
-      // Update payload
       const updatePayload: any = {
         ...basePayload,
       };
 
       if (isAdmin) {
-        // Admin update with automatic step-up from service
         const toastId = toast.loading("Updating as admin...");
         adminService.updateBounty(existingBounty.id, updatePayload)
           .then(() => {
@@ -299,7 +284,6 @@ export function CreateBountyModal({
             toast.error(err.response?.data?.message || "Failed to update bounty", { id: toastId });
           });
       } else {
-        // Regular owner update
         updateBounty({ id: existingBounty.id, payload: updatePayload }, {
           onSuccess: () => {
             setOpen(false);
@@ -307,7 +291,6 @@ export function CreateBountyModal({
         });
       }
     } else {
-      // Create payload: Include immutable fields
       const createPayload: CreateBountyDto = {
         title: basePayload.title,
         shortDescription: basePayload.shortDescription,
@@ -315,12 +298,12 @@ export function CreateBountyModal({
         requirements: basePayload.requirements,
         deliverables: basePayload.deliverables,
         skills: basePayload.skills,
-        submissionDeadline: basePayload.submissionDeadline,
+        startDate: basePayload.startDate,
+        endDate: basePayload.endDate,
         distribution: basePayload.distribution,
         attachments: basePayload.attachments,
-        reward: totalBudget, // number is allowed by DTO
+        reward: totalBudget,
         rewardCurrency: currency,
-        judgingDeadline: announcementDate?.toISOString() || new Date(deadline.getTime() + 86400000 * 7).toISOString(),
       };
 
       createBounty(createPayload, {
@@ -332,6 +315,8 @@ export function CreateBountyModal({
           setBudget("");
           setRequirements([]);
           setDeliverables([]);
+          setStartDate(undefined);
+          setEndDate(undefined);
           setPrizeDistribution([{ rank: 1, amount: "" }, { rank: 2, amount: "" }, { rank: 3, amount: "" }]);
         }
       });
@@ -342,8 +327,8 @@ export function CreateBountyModal({
     <>
       <Dialog open={isOpen} onOpenChange={setOpen}>
         {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-        <DialogContent className="bg-card border-border w-full max-w-[calc(100vw-2rem)] sm:max-w-[min(800px,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto overflow-x-hidden p-0 gap-0">
-          <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-card z-10">
+        <DialogContent className="bg-card border-border w-full max-w-[calc(100vw-2rem)] sm:max-w-[720px] md:max-w-[780px] max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden shadow-2xl">
+          <div className="flex items-center justify-between p-6 border-b border-border bg-card shrink-0">
             <div>
               <h2 className="text-2xl font-bold text-foreground">
                 {existingBounty ? "Edit Bounty" : "Create New Bounty"}
@@ -352,38 +337,38 @@ export function CreateBountyModal({
                 {existingBounty ? "Update bounty details." : "Launch a competition where contributors submit solutions."}
               </p>
             </div>
-            {/* Close button handled by Dialog primitive usually, but we can have custom one if needed */}
           </div>
 
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-6 overflow-y-auto overflow-x-hidden flex-1 min-w-0 max-w-full">
             {/* Title */}
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <Label className="text-foreground">Bounty Title <span className="text-destructive">*</span></Label>
               <Input
                 placeholder="e.g Bounty Hub"
-                className="bg-transparent border-input text-foreground placeholder:text-muted-foreground"
+                className="bg-transparent border-input text-foreground placeholder:text-muted-foreground w-full min-w-0"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
             </div>
 
             {/* Description */}
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0 max-w-full">
               <Label className="text-foreground">Description<span className="text-destructive">*</span></Label>
               <RichTextEditor
                 value={description}
                 onChange={setDescription}
                 placeholder="Introduce yourself and explain why you're the best fit for this project. Include relevant experience, approach to the problem and what makes you stand out..."
+                className="w-full max-w-full"
               />
             </div>
 
             {/* Requirements */}
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <Label className="text-foreground">Requirements <span className="text-destructive">*</span></Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 min-w-0">
                 <Input
                   placeholder="Add a requirement"
-                  className="bg-transparent border-input text-foreground"
+                  className="bg-transparent border-input text-foreground flex-1 min-w-0"
                   value={requirementInput}
                   onChange={(e) => setRequirementInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -392,16 +377,16 @@ export function CreateBountyModal({
                     }
                   }}
                 />
-                <Button variant="secondary" onClick={handleAddRequirement} className="bg-secondary hover:bg-secondary/80 border border-input">
+                <Button variant="secondary" onClick={handleAddRequirement} className="bg-secondary hover:bg-secondary/80 border border-input shrink-0">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
               {requirements.length > 0 && (
-                <div className="flex flex-col gap-2 mt-2">
+                <div className="flex flex-col gap-2 mt-2 min-w-0">
                   {requirements.map((r, i) => (
-                    <Badge key={i} variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/80 gap-2 justify-between py-2 px-3 w-full">
-                      <span className="truncate">{r}</span>
-                      <X className="h-3 w-3 cursor-pointer shrink-0" onClick={() => setRequirements(prev => prev.filter((_, idx) => idx !== i))} />
+                    <Badge key={i} variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/80 gap-2 justify-between py-2 px-3 w-full min-w-0">
+                      <span className="truncate flex-1 min-w-0 text-left">{r}</span>
+                      <X className="h-3 w-3 cursor-pointer shrink-0 ml-1" onClick={() => setRequirements(prev => prev.filter((_, idx) => idx !== i))} />
                     </Badge>
                   ))}
                 </div>
@@ -409,24 +394,25 @@ export function CreateBountyModal({
             </div>
 
             {/* Deliverables */}
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <Label className="text-foreground">Deliverables <span className="text-destructive">*</span></Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 min-w-0">
                 <Input
                   placeholder="Link title"
-                  className="bg-transparent border-input text-foreground"
+                  className="bg-transparent border-input text-foreground flex-1 min-w-0"
                   value={deliverableInput}
                   onChange={(e) => setDeliverableInput(e.target.value)}
                 />
-                <Button variant="secondary" onClick={handleAddDeliverable} className="bg-secondary hover:bg-secondary/80 border border-input">
+                <Button variant="secondary" onClick={handleAddDeliverable} className="bg-secondary hover:bg-secondary/80 border border-input shrink-0">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
               {deliverables.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-2 max-w-full">
                   {deliverables.map((d, i) => (
-                    <Badge key={i} variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/80 gap-2">
-                      {d} <X className="h-3 w-3 cursor-pointer" onClick={() => setDeliverables(prev => prev.filter((_, idx) => idx !== i))} />
+                    <Badge key={i} variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/80 gap-2 max-w-full">
+                      <span className="truncate max-w-[200px]">{d}</span>
+                      <X className="h-3 w-3 cursor-pointer shrink-0" onClick={() => setDeliverables(prev => prev.filter((_, idx) => idx !== i))} />
                     </Badge>
                   ))}
                 </div>
@@ -434,21 +420,21 @@ export function CreateBountyModal({
             </div>
 
             {/* Budget */}
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <Label className="text-foreground">Total Budget <span className="text-destructive">*</span></Label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
+              <div className="flex gap-2 min-w-0">
+                <div className="relative flex-1 min-w-0">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                   <Input
                     placeholder="20,000"
-                    className="bg-transparent border-input text-foreground pl-7"
+                    className="bg-transparent border-input text-foreground pl-7 w-full min-w-0"
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
                     type="number"
                   />
                 </div>
                 <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger className="w-[100px] bg-transparent border-input text-foreground">
+                  <SelectTrigger className="w-[100px] shrink-0 bg-transparent border-input text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border text-foreground">
@@ -460,32 +446,27 @@ export function CreateBountyModal({
               </div>
             </div>
 
-            {/* Dates */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-foreground">Submission Deadline <span className="text-destructive">*</span></Label>
-                <p className="text-xs text-muted-foreground">Date when submissions from contributors close.</p>
+            {/* Start Date & End Date */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
+              <div className="space-y-2 min-w-0">
+                <Label className="text-foreground">Start Date <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">Date when the bounty opens for submissions.</p>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !deadline && "text-muted-foreground")}>
+                    <Button variant="outline" className={cn("w-full min-w-0 justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !startDate && "text-muted-foreground")}>
                       <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                      <span className="truncate">{deadline ? format(deadline, "PPP") : "Select submission deadline"}</span>
+                      <span className="truncate">{startDate ? format(startDate, "PPP") : "Select start date"}</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
                     <Calendar
                       mode="single"
-                      selected={deadline}
+                      selected={startDate}
                       onSelect={(date) => {
-                        setDeadline(date);
-                        if (date && announcementDate && announcementDate < date) {
-                          setAnnouncementDate(undefined);
+                        setStartDate(date);
+                        if (date && endDate && endDate < date) {
+                          setEndDate(undefined);
                         }
-                      }}
-                      disabled={(date) => {
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        return date < today;
                       }}
                       initialFocus
                       className="bg-card text-foreground"
@@ -493,23 +474,24 @@ export function CreateBountyModal({
                   </PopoverContent>
                 </Popover>
               </div>
-              <div className="space-y-2">
-                <Label className="text-foreground">Winner Announcement Date <span className="text-destructive">*</span></Label>
-                <p className="text-xs text-muted-foreground">Date when judging ends and winners are announced.</p>
+
+              <div className="space-y-2 min-w-0">
+                <Label className="text-foreground">End Date <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">Date when the bounty closes for submissions.</p>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !announcementDate && "text-muted-foreground")}>
+                    <Button variant="outline" className={cn("w-full min-w-0 justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !endDate && "text-muted-foreground")}>
                       <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                      <span className="truncate">{announcementDate ? format(announcementDate, "PPP") : "Select announcement date"}</span>
+                      <span className="truncate">{endDate ? format(endDate, "PPP") : "Select end date"}</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
                     <Calendar
                       mode="single"
-                      selected={announcementDate}
-                      onSelect={setAnnouncementDate}
+                      selected={endDate}
+                      onSelect={setEndDate}
                       disabled={(date) => {
-                        const minDate = deadline ? new Date(deadline) : new Date();
+                        const minDate = startDate ? new Date(startDate) : new Date();
                         minDate.setHours(0, 0, 0, 0);
                         return date < minDate;
                       }}
@@ -522,31 +504,33 @@ export function CreateBountyModal({
             </div>
 
             {/* Prize Pool */}
-            <div className="space-y-4">
+            <div className="space-y-4 min-w-0">
               <div className="flex items-center justify-between">
-                <Label className="text-foreground">Prize Pool ({Number(budget).toLocaleString()} {currency}) <span className="text-destructive">*</span></Label>
+                <Label className="text-foreground truncate pr-2">
+                  Prize Pool ({Number(budget).toLocaleString()} {currency}) <span className="text-destructive">*</span>
+                </Label>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={handleAddPrize}
-                  className="h-8 text-primary hover:text-primary hover:bg-primary/10"
+                  className="h-8 text-primary hover:text-primary hover:bg-primary/10 shrink-0"
                 >
                   <Plus className="h-4 w-4 mr-1" /> Add Position
                 </Button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 min-w-0">
                 {prizeDistribution.map((item, index) => (
-                  <div key={index} className="grid grid-cols-[100px_1fr_40px] gap-4 items-center animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="border border-input rounded-md p-2 px-3 text-sm text-foreground flex items-center justify-center font-medium bg-secondary/20">
+                  <div key={index} className="grid grid-cols-[75px_1fr_40px] sm:grid-cols-[90px_1fr_40px] gap-2 sm:gap-4 items-center min-w-0">
+                    <div className="border border-input rounded-md p-2 text-sm text-foreground flex items-center justify-center font-medium bg-secondary/20 truncate">
                       {index + 1}{index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th'}
                     </div>
-                    <div className="relative">
+                    <div className="relative min-w-0">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                       <Input
                         placeholder="Amount"
-                        className="bg-transparent border-input text-foreground pl-7"
+                        className="bg-transparent border-input text-foreground pl-7 w-full min-w-0"
                         value={item.amount}
                         onChange={(e) => handleUpdatePrize(index, e.target.value)}
                         type="number"
@@ -557,7 +541,7 @@ export function CreateBountyModal({
                       variant="ghost"
                       size="icon"
                       onClick={() => handleRemovePrize(index)}
-                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-10 w-10"
+                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-10 w-10 shrink-0"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -573,7 +557,7 @@ export function CreateBountyModal({
             </div>
 
             {/* Tags */}
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <Label className="text-foreground">Tags <span className="text-destructive">*</span></Label>
               <Input
                 placeholder="Select Tags"
@@ -584,15 +568,16 @@ export function CreateBountyModal({
                     handleAddTag(tagInput);
                   }
                 }}
-                className="bg-transparent border-input text-foreground"
+                className="bg-transparent border-input text-foreground w-full min-w-0"
               />
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2 mt-2 max-w-full">
                 {DEFAULT_TAGS.map(tag => (
                   <button
                     key={tag}
+                    type="button"
                     onClick={() => handleAddTag(tag)}
                     className={cn(
-                      "text-xs px-3 py-1 rounded-full border transition-colors",
+                      "text-xs px-3 py-1 rounded-full border transition-colors shrink-0",
                       selectedTags.includes(tag)
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-transparent text-foreground border-input hover:border-foreground/50"
@@ -604,8 +589,9 @@ export function CreateBountyModal({
                 {selectedTags.filter(t => !DEFAULT_TAGS.includes(t)).map(tag => (
                   <button
                     key={tag}
+                    type="button"
                     onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}
-                    className="bg-primary text-primary-foreground border-primary text-xs px-3 py-1 rounded-full border transition-colors"
+                    className="bg-primary text-primary-foreground border-primary text-xs px-3 py-1 rounded-full border transition-colors shrink-0"
                   >
                     {tag} -
                   </button>
@@ -614,9 +600,9 @@ export function CreateBountyModal({
             </div>
 
             {/* Document Upload */}
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <Label className="text-foreground">Bounty Document</Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 min-w-0">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -629,21 +615,21 @@ export function CreateBountyModal({
                   variant="secondary"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
-                  className="bg-secondary hover:bg-secondary/80 border border-input flex-1"
+                  className="bg-secondary hover:bg-secondary/80 border border-input flex-1 min-w-0"
                 >
                   {isUploading ? (
-                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin shrink-0" /> Uploading...</>
                   ) : (
-                    <><Upload className="h-4 w-4 mr-2" /> Upload Document</>
+                    <><Upload className="h-4 w-4 mr-2 shrink-0" /> Upload Document</>
                   )}
                 </Button>
               </div>
               {attachments.length > 0 && (
-                <div className="space-y-1 mt-2">
+                <div className="space-y-1 mt-2 min-w-0">
                   {attachments.map((attachment, i) => (
-                    <div key={i} className="text-sm bg-muted/50 px-3 py-2 rounded-md flex items-center justify-between">
-                      <span className="text-foreground truncate flex-1">{attachment.filename}</span>
-                      <X className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground" onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} />
+                    <div key={i} className="text-sm bg-muted/50 px-3 py-2 rounded-md flex items-center justify-between min-w-0">
+                      <span className="text-foreground truncate flex-1 min-w-0">{attachment.filename}</span>
+                      <X className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground shrink-0 ml-2" onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} />
                     </div>
                   ))}
                 </div>
@@ -654,7 +640,7 @@ export function CreateBountyModal({
             <Button
               onClick={handleSubmit}
               disabled={isPending}
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-base rounded-lg mt-4"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-base rounded-lg mt-4 shrink-0"
             >
               {isPending ? <Loader2 className="animate-spin mr-2" /> : <Plus className="mr-2 h-4 w-4" />}
               {existingBounty ? "Update Bounty" : "Create Bounty"}
