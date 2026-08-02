@@ -51,9 +51,11 @@ export function BountiesClient() {
   // Only use URL ownerId parameter if present
   const filterOwnerId = urlOwnerId || undefined;
 
+  const isClientSidePagination = activeStatus === "COMPLETED" || activeStatus === "CLOSED";
+
   const { data, isLoading } = useGetAllBounties({
-    page: currentPage,
-    limit: Number(rowsPerPage),
+    page: isClientSidePagination ? 1 : currentPage,
+    limit: isClientSidePagination ? 100 : Number(rowsPerPage),
     skills: activeTab !== "All" ? activeTab : undefined,
     search: debouncedSearch,
     sortBy,
@@ -70,8 +72,7 @@ export function BountiesClient() {
 
   const bounties = data?.data || [];
   const meta = data?.meta;
-  const totalPages = meta?.totalPages || 1;
-
+  
   const displayedBounties = useMemo(() => {
     let list = bounties;
     if (activeStatus === "ACTIVE") {
@@ -92,6 +93,20 @@ export function BountiesClient() {
     }
     return list;
   }, [bounties, activeStatus]);
+
+  const totalPages = isClientSidePagination
+    ? Math.ceil(displayedBounties.length / Number(rowsPerPage)) || 1
+    : meta?.totalPages || 1;
+
+  const paginatedBounties = useMemo(() => {
+    if (isClientSidePagination) {
+      return displayedBounties.slice(
+        (currentPage - 1) * Number(rowsPerPage),
+        currentPage * Number(rowsPerPage)
+      );
+    }
+    return displayedBounties;
+  }, [displayedBounties, isClientSidePagination, currentPage, rowsPerPage]);
 
   // Derive unique skills from ALL fetched bounties (not just filtered ones)
   const uniqueSkills = useMemo(() => {
@@ -146,7 +161,7 @@ export function BountiesClient() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {displayedBounties.map((bounty: any) => (
+          {paginatedBounties.map((bounty: any) => (
             <BountyCard
               key={bounty.id}
               id={bounty.id}
