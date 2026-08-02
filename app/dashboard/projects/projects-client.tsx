@@ -90,9 +90,20 @@ export function ProjectsClient() {
     return result
   }, [projects, searchQuery, sortBy, activeTab])
 
+  const displayedProjects = useMemo(() => {
+    let result = filteredProjects
+    if (filterStatus === "OPEN" || filterStatus === "ACTIVE") {
+      result = result.filter((project: any) => {
+        const isExpired = project.deadline ? new Date(project.deadline).getTime() < Date.now() : false
+        return !isExpired && project.status !== 'COMPLETED' && project.status !== 'CLOSED'
+      })
+    }
+    return result
+  }, [filteredProjects, filterStatus])
+
   // Pagination
-  const totalPages = Math.ceil(filteredProjects.length / Number(rowsPerPage))
-  const paginatedBounties = filteredProjects.slice(
+  const totalPages = Math.ceil(displayedProjects.length / Number(rowsPerPage))
+  const paginatedBounties = displayedProjects.slice(
     (currentPage - 1) * Number(rowsPerPage),
     currentPage * Number(rowsPerPage)
   )
@@ -119,7 +130,7 @@ export function ProjectsClient() {
         onStatusChange={(status) => { setFilterStatus(status); setCurrentPage(1); }}
         onTypeChange={(type) => { setFilterType(type); setCurrentPage(1); }}
         type="PROJECT"
-        count={filteredProjects.length}
+        count={displayedProjects.length}
         availableSkills={uniqueSkills}
       />
 
@@ -160,6 +171,7 @@ export function ProjectsClient() {
                 dueDate={`${formatDistanceToNow(new Date(project.deadline))}`}
                 className="w-full min-w-0 md:w-full md:min-w-0"
                 version="PROJECT"
+                status={project.status === 'OPEN' ? (project.deadline && new Date(project.deadline).getTime() < Date.now() ? 'Completed' : 'Active') : project.status}
               />
             ))}
           </div>

@@ -293,6 +293,7 @@ export default function BountyDetailsPage() {
           applicationId={application?.id}
           winnerAnnouncement={project.winnerAnnouncement}
           currentApplication={application}
+          status={project.status}
         />
       </div>
 
@@ -313,6 +314,7 @@ export default function BountyDetailsPage() {
           applicationId={application?.id}
           winnerAnnouncement={project.winnerAnnouncement}
           currentApplication={application}
+          status={project.status}
         />
       </div>
     </div>

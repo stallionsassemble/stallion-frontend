@@ -83,7 +83,7 @@ export function StepUpModal({ open, onOpenChange, onSuccess }: StepUpModalProps)
     setIsSubmitting(true)
     try {
       const options = await adminService.stepUpPasskeyOptions()
-      const authResponse = await startAuthentication(options as PasskeyStartOptions)
+      const authResponse = await startAuthentication({ optionsJSON: options as any })
       const { token, expiresInSeconds } = await adminService.stepUpPasskeyVerify(
         authResponse as AuthenticationResponseJSON
       )

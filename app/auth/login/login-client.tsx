@@ -69,7 +69,7 @@ export function LoginClient() {
       const options = await passkeyAuthOptions(email)
 
       // 2. Authenticate with browser
-      const authResponse = await startAuthentication(options)
+      const authResponse = await startAuthentication({ optionsJSON: options })
 
       // 3. Verify with backend
       const response = await passkeyAuthVerify({

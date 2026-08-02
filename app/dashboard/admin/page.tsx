@@ -2,6 +2,8 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import { AlertCircle, Briefcase, DollarSign, Users, Loader2 } from 'lucide-react'
 import {
   Bar,
@@ -101,11 +103,20 @@ export default function AdminDashboardPage() {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div>
-        <h1 className='text-2xl font-bold text-foreground'>Admin Dashboard</h1>
-        <p className='text-sm text-muted-foreground'>
-          Overview of platform performance and management.
-        </p>
+      <div className='flex items-center justify-between flex-wrap gap-4'>
+        <div>
+          <h1 className='text-2xl font-bold text-foreground'>Admin Dashboard</h1>
+          <p className='text-sm text-muted-foreground'>
+            Overview of platform performance and management.
+          </p>
+        </div>
+        <div className='flex items-center gap-3'>
+          <Link href='/dashboard/admin/forum-categories'>
+            <Button variant='outline' className='flex items-center gap-2 border-primary/50 text-foreground hover:bg-primary/10'>
+              Manage Categories
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Cards */}

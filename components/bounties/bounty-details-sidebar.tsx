@@ -47,6 +47,7 @@ interface BountyDetailsSidebarProps {
   distribution?: BountyDistribution[]; // New prop
   submissionFields?: any[]; // New prop passed to modal
   currentApplication?: ApplyProjectResponse; // Corrected type
+  status?: string;
 }
 
 export function BountyDetailsSidebar({
@@ -66,6 +67,7 @@ export function BountyDetailsSidebar({
   distribution,
   submissionFields,
   currentApplication,
+  status,
 }: BountyDetailsSidebarProps) {
 
   // ... existing time calc logic ...
@@ -91,7 +93,9 @@ export function BountyDetailsSidebar({
   };
 
   const isMfaEnabled = user?.mfaEnabled;
-  const isExpired = deadline ? new Date(deadline).getTime() < Date.now() : false;
+  const isExpired = (deadline ? new Date(deadline).getTime() < Date.now() : false) || 
+    (status === 'COMPLETED' || status === 'CLOSED' || status === 'Completed' || status === 'Closed' || 
+    (type === 'PROJECT' && status !== 'OPEN') || (type === 'BOUNTY' && status !== 'ACTIVE'));
 
   // Helper to calculate amount from percentage
   const getAmount = (percentage: number) => {

@@ -72,6 +72,17 @@ export function BountiesClient() {
   const meta = data?.meta;
   const totalPages = meta?.totalPages || 1;
 
+  const displayedBounties = useMemo(() => {
+    let list = bounties;
+    if (activeStatus === "ACTIVE") {
+      list = list.filter((bounty: any) => {
+        const isExpired = bounty.submissionDeadline ? new Date(bounty.submissionDeadline).getTime() < Date.now() : false;
+        return !isExpired && bounty.status !== 'COMPLETED' && bounty.status !== 'CLOSED';
+      });
+    }
+    return list;
+  }, [bounties, activeStatus]);
+
   // Derive unique skills from ALL fetched bounties (not just filtered ones)
   const uniqueSkills = useMemo(() => {
     const list = allBountiesData?.data || [];
@@ -115,7 +126,7 @@ export function BountiesClient() {
         onSortChange={(sort) => { setActiveSort(sort); setCurrentPage(1); }}
         onStatusChange={(status) => { setActiveStatus(status); setCurrentPage(1); }}
         type="BOUNTY"
-        count={meta?.total || 0}
+        count={displayedBounties.length}
         availableSkills={uniqueSkills}
       />
 
@@ -125,7 +136,7 @@ export function BountiesClient() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {bounties.map((bounty: any) => (
+          {displayedBounties.map((bounty: any) => (
             <BountyCard
               key={bounty.id}
               id={bounty.id}
@@ -140,9 +151,10 @@ export function BountiesClient() {
               dueDate={bounty.submissionDeadline ? formatDistanceToNow(new Date(bounty.submissionDeadline), { addSuffix: true }) : "No deadline"}
               className="w-full min-w-0 md:w-full md:min-w-0"
               version="BOUNTY"
+              status={bounty.status === 'ACTIVE' ? (bounty.submissionDeadline && new Date(bounty.submissionDeadline).getTime() < Date.now() ? 'Completed' : 'Active') : bounty.status}
             />
           ))}
-          {!isLoading && bounties.length === 0 && (
+          {!isLoading && displayedBounties.length === 0 && (
             <EmptyState
               title="No bounties found"
               description="Try adjusting your filters or search to find what you're looking for."

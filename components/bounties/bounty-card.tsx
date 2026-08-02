@@ -46,10 +46,13 @@ export function BountyCard({
   hired,
   submissions,
 }: BountyCardProps) {
+  const isEnded = dueDate.includes('Ended') || dueDate.includes('ago') || status === 'Completed' || (status as string) === 'CLOSED' || (status as string) === 'Closed';
+
   return (
     <div
       className={cn(
-        "group relative flex flex-col shrink-0 bg-background w-full md:w-[450.93px] md:min-w-[450.93px] border border-primary shadow-sm p-5 md:py-[25.77px] md:px-[30.92px]",
+        "group relative flex flex-col shrink-0 bg-background w-full md:w-[450.93px] md:min-w-[450.93px] border shadow-sm p-5 md:py-[25.77px] md:px-[30.92px]",
+        isEnded ? "border-muted-foreground/30 opacity-75" : "border-primary",
         className
       )}
       style={{
@@ -74,12 +77,17 @@ export function BountyCard({
           <span className="text-lg text-muted-foreground font-inter font-medium">{company}</span>
         </div>
 
-        {/* Status Badge (Owner View) */}
-        {status && (
+        {/* Status Badge */}
+        {(status || isEnded) && (
           <div className="flex gap-2">
             {status === "In Progress" && <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-0 rounded-sm text-[10px] px-1.5">{version}</Badge>}
-            <Badge variant="secondary" className="bg-[#1E1E1E] text-[#9CA3AF] hover:bg-[#2A2A2A] border-0 rounded-md text-[10px] font-medium px-2 py-0.5 uppercase tracking-wide">
-              {status}
+            <Badge variant="secondary" className={cn(
+              "border-0 rounded-md text-[10px] font-medium px-2 py-0.5 uppercase tracking-wide",
+              isEnded
+                ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                : "bg-green-500/10 text-green-400 hover:bg-green-500/20"
+            )}>
+              {status || (isEnded ? "Ended" : "Active")}
             </Badge>
           </div>
         )}
@@ -143,7 +151,7 @@ export function BountyCard({
             )}
             <div className="flex items-center gap-2">
               <Clock className="h-3 w-3 text-primary" />
-              <span>{dueDate.includes('Ended') ? 'Ended' : `Due in ${dueDate.replace('d', '')}`}</span>
+              <span>{isEnded ? 'Ended' : `Due in ${dueDate.replace('d', '')}`}</span>
             </div>
             {hired && <span className="text-green-500 text-xs flex items-center gap-1">• Hired</span>}
           </div>

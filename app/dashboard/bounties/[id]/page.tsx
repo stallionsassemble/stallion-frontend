@@ -285,6 +285,7 @@ export default function BountyDetailsPage() {
               distribution={bounty.distribution || bounty.rewardDistribution}
               submissionFields={bounty.submissionFields}
               winnerAnnouncement={bounty.judgingDeadline}
+              status={bounty.status}
             />
           </div>
         </div>
@@ -308,6 +309,7 @@ export default function BountyDetailsPage() {
           distribution={bounty.rewardDistribution}
           submissionFields={bounty.submissionFields}
           winnerAnnouncement={bounty.judgingDeadline}
+          status={bounty.status}
         />
       </div>
     </div>
