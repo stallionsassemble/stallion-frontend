@@ -14,7 +14,7 @@ import { useCreateBounty, useUpdateBounty } from "@/lib/api/bounties/queries";
 import { uploadService } from "@/lib/api/upload";
 import { useGetWalletBalances } from "@/lib/api/wallet/queries";
 import { usePersistedState } from "@/lib/hooks/use-persisted-state";
-import { Bounty, BountyAttachment, CreateBountyDto } from "@/lib/types/bounties";
+import { Bounty, BountyAttachment, CreateBountyDto, UpdateBountyDto } from "@/lib/types/bounties";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
@@ -57,14 +57,14 @@ export function CreateBountyModal({
   const [budget, setBudget] = usePersistedState("draft_bounty_budget", "");
   const [currency, setCurrency] = usePersistedState("draft_bounty_currency", "USDC");
 
-  // Date handling: Start Date & End Date
-  const [startDateStr, setStartDateStr] = usePersistedState<string | undefined>("draft_bounty_start_date", undefined);
-  const startDate = startDateStr ? new Date(startDateStr) : undefined;
-  const setStartDate = (date: Date | undefined) => setStartDateStr(date ? date.toISOString() : undefined);
+  // Date handling: Submission Deadline & Judging Deadline
+  const [submissionDeadlineStr, setSubmissionDeadlineStr] = usePersistedState<string | undefined>("draft_bounty_submission_deadline", undefined);
+  const submissionDeadline = submissionDeadlineStr ? new Date(submissionDeadlineStr) : undefined;
+  const setSubmissionDeadline = (date: Date | undefined) => setSubmissionDeadlineStr(date ? date.toISOString() : undefined);
 
-  const [endDateStr, setEndDateStr] = usePersistedState<string | undefined>("draft_bounty_end_date", undefined);
-  const endDate = endDateStr ? new Date(endDateStr) : undefined;
-  const setEndDate = (date: Date | undefined) => setEndDateStr(date ? date.toISOString() : undefined);
+  const [judgingDeadlineStr, setJudgingDeadlineStr] = usePersistedState<string | undefined>("draft_bounty_judging_deadline", undefined);
+  const judgingDeadline = judgingDeadlineStr ? new Date(judgingDeadlineStr) : undefined;
+  const setJudgingDeadline = (date: Date | undefined) => setJudgingDeadlineStr(date ? date.toISOString() : undefined);
 
   // Prize Pool
   const [prizeDistribution, setPrizeDistribution] = usePersistedState<{ rank: number; amount: string }[]>("draft_bounty_distribution", [
@@ -98,20 +98,16 @@ export function CreateBountyModal({
       setBudget(existingBounty.reward);
       setCurrency(existingBounty.rewardCurrency);
 
-      const existingStart = existingBounty.startDate
-        ? new Date(existingBounty.startDate)
-        : existingBounty.createdAt
-        ? new Date(existingBounty.createdAt)
-        : undefined;
-
-      const existingEnd = existingBounty.endDate
-        ? new Date(existingBounty.endDate)
-        : existingBounty.submissionDeadline
+      const existingSubmission = existingBounty.submissionDeadline
         ? new Date(existingBounty.submissionDeadline)
         : undefined;
 
-      setStartDate(existingStart);
-      setEndDate(existingEnd);
+      const existingJudging = existingBounty.judgingDeadline
+        ? new Date(existingBounty.judgingDeadline)
+        : undefined;
+
+      setSubmissionDeadline(existingSubmission);
+      setJudgingDeadline(existingJudging);
       setSelectedTags(existingBounty.skills || []);
 
       const distList = existingBounty.distribution || existingBounty.rewardDistribution;
@@ -206,15 +202,34 @@ export function CreateBountyModal({
   };
 
   const handleSubmit = () => {
-    // Validation
-    if (!title || !description || !budget || !startDate || !endDate) {
-      toast.error("Please fill in all required fields (including Start Date & End Date)");
+    // Validation: Required fields
+    if (!title || !description || (!existingBounty && !budget) || !submissionDeadline || (!existingBounty && !judgingDeadline)) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
-    if (endDate < startDate) {
-      toast.error("End date cannot be before start date");
+    // Format submission deadline date
+    const subFormatted = new Date(submissionDeadline);
+    subFormatted.setHours(23, 59, 59, 999);
+
+    // Validate submission deadline is in the future
+    if (subFormatted <= new Date()) {
+      toast.error("Submission deadline must be in the future");
       return;
+    }
+
+    // Effective judging deadline (state or existing bounty)
+    const effectiveJudgingDeadline = judgingDeadline || (existingBounty?.judgingDeadline ? new Date(existingBounty.judgingDeadline) : undefined);
+
+    if (effectiveJudgingDeadline) {
+      const judgeFormatted = new Date(effectiveJudgingDeadline);
+      judgeFormatted.setHours(23, 59, 59, 999);
+
+      // Validate submission deadline is before judging deadline
+      if (judgeFormatted <= subFormatted) {
+        toast.error("Submission deadline must be before judging deadline");
+        return;
+      }
     }
 
     const totalBudget = Number(budget.replace(/,/g, ''));
@@ -223,12 +238,13 @@ export function CreateBountyModal({
       return;
     }
 
-    // Check Balance
-    const balance = walletData?.balances.find(b => b.currency === currency)?.availableBalance || 0;
-
-    if (!existingBounty && balance < totalBudget) {
-      setShowInsufficientBalance(true);
-      return;
+    // Check Balance (only required when creating a new bounty)
+    if (!existingBounty) {
+      const balance = walletData?.balances.find(b => b.currency === currency)?.availableBalance || 0;
+      if (balance < totalBudget) {
+        setShowInsufficientBalance(true);
+        return;
+      }
     }
 
     // Prepare distribution
@@ -247,30 +263,19 @@ export function CreateBountyModal({
       }))
       .filter(d => d.percentage > 0);
 
-    // Format dates to ISO
-    const startIso = startDate.toISOString();
-
-    const endFormatted = new Date(endDate);
-    endFormatted.setHours(23, 59, 59, 999);
-    const endIso = endFormatted.toISOString();
-
-    // Base payload with Start Date and End Date
-    const basePayload = {
-      title,
-      shortDescription: description.replace(/<[^>]*>/g, '').substring(0, 150),
-      description,
-      requirements,
-      deliverables,
-      skills: selectedTags,
-      startDate: startIso,
-      endDate: endIso,
-      distribution: distribution,
-      attachments: attachments.map(a => ({ filename: a.filename, url: a.url, size: a.size, mimetype: a.mimetype })),
-    };
+    const submissionDeadlineIso = subFormatted.toISOString();
 
     if (existingBounty) {
-      const updatePayload: any = {
-        ...basePayload,
+      const updatePayload: UpdateBountyDto = {
+        title,
+        shortDescription: description.replace(/<[^>]*>/g, '').substring(0, 150),
+        description,
+        requirements,
+        deliverables,
+        skills: selectedTags,
+        submissionDeadline: submissionDeadlineIso,
+        distribution,
+        attachments: attachments.map(a => ({ filename: a.filename, url: a.url, size: a.size, mimetype: a.mimetype })),
       };
 
       if (isAdmin) {
@@ -291,17 +296,21 @@ export function CreateBountyModal({
         });
       }
     } else {
+      const judgeFormatted = new Date(judgingDeadline!);
+      judgeFormatted.setHours(23, 59, 59, 999);
+      const judgingDeadlineIso = judgeFormatted.toISOString();
+
       const createPayload: CreateBountyDto = {
-        title: basePayload.title,
-        shortDescription: basePayload.shortDescription,
-        description: basePayload.description,
-        requirements: basePayload.requirements,
-        deliverables: basePayload.deliverables,
-        skills: basePayload.skills,
-        startDate: basePayload.startDate,
-        endDate: basePayload.endDate,
-        distribution: basePayload.distribution,
-        attachments: basePayload.attachments,
+        title,
+        shortDescription: description.replace(/<[^>]*>/g, '').substring(0, 150),
+        description,
+        requirements,
+        deliverables,
+        skills: selectedTags,
+        submissionDeadline: submissionDeadlineIso,
+        judgingDeadline: judgingDeadlineIso,
+        distribution,
+        attachments: attachments.map(a => ({ filename: a.filename, url: a.url, size: a.size, mimetype: a.mimetype })),
         reward: totalBudget,
         rewardCurrency: currency,
       };
@@ -315,8 +324,8 @@ export function CreateBountyModal({
           setBudget("");
           setRequirements([]);
           setDeliverables([]);
-          setStartDate(undefined);
-          setEndDate(undefined);
+          setSubmissionDeadline(undefined);
+          setJudgingDeadline(undefined);
           setPrizeDistribution([{ rank: 1, amount: "" }, { rank: 2, amount: "" }, { rank: 3, amount: "" }]);
         }
       });
@@ -421,20 +430,21 @@ export function CreateBountyModal({
 
             {/* Budget */}
             <div className="space-y-2 min-w-0">
-              <Label className="text-foreground">Total Budget <span className="text-destructive">*</span></Label>
+              <Label className="text-foreground">Total Budget {!existingBounty && <span className="text-destructive">*</span>}</Label>
               <div className="flex gap-2 min-w-0">
                 <div className="relative flex-1 min-w-0">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                   <Input
                     placeholder="20,000"
-                    className="bg-transparent border-input text-foreground pl-7 w-full min-w-0"
+                    className="bg-transparent border-input text-foreground pl-7 w-full min-w-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
                     type="number"
+                    disabled={!!existingBounty}
                   />
                 </div>
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger className="w-[100px] shrink-0 bg-transparent border-input text-foreground">
+                <Select value={currency} onValueChange={setCurrency} disabled={!!existingBounty}>
+                  <SelectTrigger className="w-[100px] shrink-0 bg-transparent border-input text-foreground disabled:opacity-50 disabled:cursor-not-allowed">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border text-foreground">
@@ -444,31 +454,39 @@ export function CreateBountyModal({
                   </SelectContent>
                 </Select>
               </div>
+              {existingBounty && (
+                <p className="text-xs text-muted-foreground">Total budget and currency cannot be modified after bounty creation.</p>
+              )}
             </div>
 
-            {/* Start Date & End Date */}
+            {/* Submission Deadline & Judging Deadline */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
               <div className="space-y-2 min-w-0">
-                <Label className="text-foreground">Start Date <span className="text-destructive">*</span></Label>
-                <p className="text-xs text-muted-foreground">Date when the bounty opens for submissions.</p>
+                <Label className="text-foreground">Submission Deadline <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">Date by which participants must submit their work. Submissions close after this date.</p>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full min-w-0 justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !startDate && "text-muted-foreground")}>
+                    <Button variant="outline" className={cn("w-full min-w-0 justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !submissionDeadline && "text-muted-foreground")}>
                       <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                      <span className="truncate">{startDate ? format(startDate, "PPP") : "Select start date"}</span>
+                      <span className="truncate">{submissionDeadline ? format(submissionDeadline, "PPP") : "Select submission deadline"}</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
                     <Calendar
                       mode="single"
-                      selected={startDate}
+                      selected={submissionDeadline}
                       onSelect={(date) => {
-                        setStartDate(date);
-                        if (date && endDate && endDate < date) {
-                          setEndDate(undefined);
+                        setSubmissionDeadline(date);
+                        if (date && judgingDeadline && judgingDeadline <= date) {
+                          setJudgingDeadline(undefined);
                         }
                       }}
-                      initialFocus
+                      disabled={(date) => {
+                        const minDate = new Date();
+                        minDate.setHours(0, 0, 0, 0);
+                        return date < minDate;
+                      }}
+                      autoFocus
                       className="bg-card text-foreground"
                     />
                   </PopoverContent>
@@ -476,29 +494,39 @@ export function CreateBountyModal({
               </div>
 
               <div className="space-y-2 min-w-0">
-                <Label className="text-foreground">End Date <span className="text-destructive">*</span></Label>
-                <p className="text-xs text-muted-foreground">Date when the bounty closes for submissions.</p>
+                <Label className="text-foreground">Judging Deadline {!existingBounty && <span className="text-destructive">*</span>}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {existingBounty
+                    ? "Judging deadline cannot be modified after bounty creation."
+                    : "Date by which the bounty owner must review submissions and select winners (cannot be changed after creation)."}
+                </p>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full min-w-0 justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground", !endDate && "text-muted-foreground")}>
+                    <Button
+                      variant="outline"
+                      disabled={!!existingBounty}
+                      className={cn("w-full min-w-0 justify-start text-left font-normal bg-transparent border-input text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed", !judgingDeadline && "text-muted-foreground")}
+                    >
                       <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-                      <span className="truncate">{endDate ? format(endDate, "PPP") : "Select end date"}</span>
+                      <span className="truncate">{judgingDeadline ? format(judgingDeadline, "PPP") : "Select judging deadline"}</span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      disabled={(date) => {
-                        const minDate = startDate ? new Date(startDate) : new Date();
-                        minDate.setHours(0, 0, 0, 0);
-                        return date < minDate;
-                      }}
-                      initialFocus
-                      className="bg-card text-foreground"
-                    />
-                  </PopoverContent>
+                  {!existingBounty && (
+                    <PopoverContent className="w-auto p-0 bg-card border-border" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={judgingDeadline}
+                        onSelect={setJudgingDeadline}
+                        disabled={(date) => {
+                          const minDate = submissionDeadline ? new Date(submissionDeadline) : new Date();
+                          minDate.setHours(0, 0, 0, 0);
+                          return date <= minDate;
+                        }}
+                        autoFocus
+                        className="bg-card text-foreground"
+                      />
+                    </PopoverContent>
+                  )}
                 </Popover>
               </div>
             </div>
