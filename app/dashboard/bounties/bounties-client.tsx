@@ -58,7 +58,7 @@ export function BountiesClient() {
     search: debouncedSearch,
     sortBy,
     sortOrder,
-    status: activeStatus !== "ALL" ? activeStatus as any : undefined,
+    status: activeStatus === "ACTIVE" ? "ACTIVE" as any : undefined,
     ownerId: filterOwnerId,
   });
 
@@ -78,6 +78,16 @@ export function BountiesClient() {
       list = list.filter((bounty: any) => {
         const isExpired = bounty.submissionDeadline ? new Date(bounty.submissionDeadline).getTime() < Date.now() : false;
         return !isExpired && bounty.status !== 'COMPLETED' && bounty.status !== 'CLOSED';
+      });
+    } else if (activeStatus === "COMPLETED") {
+      list = list.filter((bounty: any) => {
+        const isExpired = bounty.submissionDeadline ? new Date(bounty.submissionDeadline).getTime() < Date.now() : false;
+        return isExpired || bounty.status === 'COMPLETED';
+      });
+    } else if (activeStatus === "CLOSED") {
+      list = list.filter((bounty: any) => {
+        const isExpired = bounty.submissionDeadline ? new Date(bounty.submissionDeadline).getTime() < Date.now() : false;
+        return isExpired || bounty.status === 'CLOSED';
       });
     }
     return list;

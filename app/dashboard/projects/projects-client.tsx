@@ -28,7 +28,7 @@ export function ProjectsClient() {
   // Fetch Projects with Filters (Server-side for Status/Type)
   // Note: API might support more, but keeping existing pattern
   const { data: projects, isLoading, isError } = useGetProjects({
-    status: filterStatus === "ALL" ? undefined : filterStatus as ProjectStatus,
+    status: (filterStatus === "OPEN" || filterStatus === "ACTIVE") ? "OPEN" as ProjectStatus : undefined,
     type: filterType === "ALL" ? undefined : filterType as ProjectType,
     ownerId: undefined,
   });
@@ -96,6 +96,16 @@ export function ProjectsClient() {
       result = result.filter((project: any) => {
         const isExpired = project.deadline ? new Date(project.deadline).getTime() < Date.now() : false
         return !isExpired && project.status !== 'COMPLETED' && project.status !== 'CLOSED'
+      })
+    } else if (filterStatus === "COMPLETED") {
+      result = result.filter((project: any) => {
+        const isExpired = project.deadline ? new Date(project.deadline).getTime() < Date.now() : false
+        return isExpired || project.status === 'COMPLETED'
+      })
+    } else if (filterStatus === "CLOSED") {
+      result = result.filter((project: any) => {
+        const isExpired = project.deadline ? new Date(project.deadline).getTime() < Date.now() : false
+        return isExpired || project.status === 'CLOSED'
       })
     }
     return result
