@@ -242,7 +242,7 @@ export default function ProjectDetailsPage() {
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-primary" />
-                <span className="text-foreground/70">Due in {formatDistanceToNow(project.deadline)}</span>
+                <span className="text-foreground/70">{new Date(project.deadline).getTime() < Date.now() ? 'Ended' : `Due in ${formatDistanceToNow(new Date(project.deadline))}`}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-primary" />

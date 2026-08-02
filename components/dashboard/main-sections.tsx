@@ -374,7 +374,7 @@ export function OpportunityList({ title = "Browse Opportunities", type = "bounti
                         <Timer className="w-3.5 h-3.5" />
                       </div>
                       <span className="truncate">
-                        {opp.dueDate ? `Due in ${formatDistanceToNow(new Date(opp.dueDate))}` : 'No deadline'}
+                        {opp.dueDate ? (new Date(opp.dueDate).getTime() < Date.now() ? 'Ended' : `Due in ${formatDistanceToNow(new Date(opp.dueDate))}`) : 'No deadline'}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5">
