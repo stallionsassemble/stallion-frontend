@@ -23,8 +23,6 @@ import { toast } from "sonner";
 import { InsufficientBalanceModal } from "./insufficient-balance-modal";
 import { adminService } from "@/lib/api/admin";
 import { StepUpModal } from "@/components/admin/step-up-modal";
-import { useAdminStore } from "@/lib/store/use-admin-store";
-import { useAuth } from "@/lib/store/use-auth";
 
 interface CreateBountyModalProps {
   children?: React.ReactNode;
@@ -49,9 +47,6 @@ export function CreateBountyModal({
 
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
   const [stepUpOpen, setStepUpOpen] = useState(false);
-  const getValidStepUpToken = useAdminStore((state) => state.getValidStepUpToken);
-  const userRole = useAuth((state) => state.user?.role);
-  const requiresStepUp = Boolean(isAdmin) || userRole === "ADMIN";
 
   // Form State - Persisted
   const [title, setTitle] = usePersistedState("draft_bounty_title", "");
@@ -272,11 +267,6 @@ export function CreateBountyModal({
 
     const submissionDeadlineIso = subFormatted.toISOString();
 
-    if (requiresStepUp && !getValidStepUpToken()) {
-      setStepUpOpen(true);
-      return;
-    }
-
     if (existingBounty) {
       const updatePayload: UpdateBountyDto = {
         title,
@@ -292,7 +282,7 @@ export function CreateBountyModal({
 
       const handleErr = (err: any, toastId?: string | number) => {
         const msg = err.response?.data?.message || err.message || "";
-        if (String(msg).toLowerCase().includes("step-up")) {
+        if (String(msg).toLowerCase().includes("step-up") || (err.response?.status === 403 && !msg)) {
           if (toastId) toast.dismiss(toastId);
           setStepUpOpen(true);
           return;
@@ -342,7 +332,7 @@ export function CreateBountyModal({
 
       const handleCreateErr = (err: any) => {
         const msg = err.response?.data?.message || err.message || "";
-        if (String(msg).toLowerCase().includes("step-up")) {
+        if (String(msg).toLowerCase().includes("step-up") || (err.response?.status === 403 && !msg)) {
           setStepUpOpen(true);
           return;
         }
