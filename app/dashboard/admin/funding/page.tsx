@@ -47,7 +47,7 @@ export default function FundingWalletPage() {
   // Admin Step-up State
   const [stepUpOpen, setStepUpOpen] = useState(false)
   const [pendingAction, setPendingAction] = useState<{ type: 'save' | 'delete' } | null>(null)
-  const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
+  const getValidStepUpToken = useAdminStore((state) => state.getValidStepUpToken)
   const stepUpToken = useAdminStore((state) => state.stepUpToken)
 
   const fetchFundingWallet = async () => {
@@ -74,7 +74,9 @@ export default function FundingWalletPage() {
       return
     }
 
-    if (!isStepUpValid && !token) {
+    const activeToken = token || getValidStepUpToken() || undefined
+
+    if (!activeToken) {
       setPendingAction({ type: 'save' })
       setStepUpOpen(true)
       return
@@ -84,18 +86,27 @@ export default function FundingWalletPage() {
     const toastId = toast.loading('Saving funding wallet...')
 
     try {
-      await adminService.updateFundingWallet({ fundingWalletId: newWalletId })
+      await adminService.updateFundingWallet({ fundingWalletId: newWalletId }, activeToken)
       toast.success('Funding wallet updated successfully', { id: toastId })
       fetchFundingWallet()
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Failed to update funding wallet'), { id: toastId })
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || getErrorMessage(error, 'Failed to update funding wallet')
+      if (msg.toLowerCase().includes('step-up') || error?.response?.status === 401 || error?.response?.status === 403) {
+        toast.dismiss(toastId)
+        setPendingAction({ type: 'save' })
+        setStepUpOpen(true)
+        return
+      }
+      toast.error(msg, { id: toastId })
     } finally {
       setIsSaving(false)
     }
   }
 
   const handleDelete = async (token?: string) => {
-    if (!isStepUpValid && !token) {
+    const activeToken = token || getValidStepUpToken() || undefined
+
+    if (!activeToken) {
       setPendingAction({ type: 'delete' })
       setStepUpOpen(true)
       return
@@ -105,11 +116,18 @@ export default function FundingWalletPage() {
     const toastId = toast.loading('Deleting funding wallet...')
 
     try {
-      await adminService.deleteFundingWallet()
+      await adminService.deleteFundingWallet(activeToken)
       toast.success('Funding wallet configuration deleted', { id: toastId })
       fetchFundingWallet()
-    } catch (error: unknown) {
-      toast.error(getErrorMessage(error, 'Failed to delete funding wallet'), { id: toastId })
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || getErrorMessage(error, 'Failed to delete funding wallet')
+      if (msg.toLowerCase().includes('step-up') || error?.response?.status === 401 || error?.response?.status === 403) {
+        toast.dismiss(toastId)
+        setPendingAction({ type: 'delete' })
+        setStepUpOpen(true)
+        return
+      }
+      toast.error(msg, { id: toastId })
     } finally {
       setIsDeleting(false)
     }

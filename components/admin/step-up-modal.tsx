@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { adminService } from '@/lib/api/admin'
 import { useAdminStore } from '@/lib/store/use-admin-store'
+import type { StepUpResponse } from '@/lib/types/admin'
 import { toast } from 'sonner'
 import { KeyRound, ShieldCheck } from 'lucide-react'
 import { startAuthentication } from '@simplewebauthn/browser'
@@ -66,7 +67,12 @@ export function StepUpModal({ open, onOpenChange, onSuccess }: StepUpModalProps)
 
     setIsSubmitting(true)
     try {
-      const { token, expiresInSeconds } = await adminService.stepUpTotp(totpCode)
+      const result = await adminService.stepUpTotp(totpCode) as StepUpResponse & Record<string, unknown>
+      const token = result.token || (result.stepUpToken as string)
+      const expiresInSeconds = Number(result.expiresInSeconds ?? result.expiresIn ?? 600)
+      if (!token) {
+        throw new Error('Step-up verification did not return a token')
+      }
       setStepUpToken(token, expiresInSeconds)
       onSuccess(token)
       onOpenChange(false)
@@ -84,10 +90,15 @@ export function StepUpModal({ open, onOpenChange, onSuccess }: StepUpModalProps)
     try {
       const options = await adminService.stepUpPasskeyOptions()
       const authResponse = await startAuthentication({ optionsJSON: options as any })
-      const { token, expiresInSeconds } = await adminService.stepUpPasskeyVerify(
+      const result = await adminService.stepUpPasskeyVerify(
         authResponse as AuthenticationResponseJSON
-      )
-      
+      ) as StepUpResponse & Record<string, unknown>
+      const token = result.token || (result.stepUpToken as string)
+      const expiresInSeconds = Number(result.expiresInSeconds ?? result.expiresIn ?? 600)
+      if (!token) {
+        throw new Error('Step-up verification did not return a token')
+      }
+
       setStepUpToken(token, expiresInSeconds)
       onSuccess(token)
       onOpenChange(false)

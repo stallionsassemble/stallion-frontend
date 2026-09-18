@@ -79,7 +79,7 @@ export default function ProjectManagementPage() {
   // Admin Step-up State
   const [stepUpOpen, setStepUpOpen] = useState(false)
   const [pendingAction, setPendingAction] = useState<{ type: string; projectId: string; data?: any } | null>(null)
-  const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
+  const getValidStepUpToken = useAdminStore((state) => state.getValidStepUpToken)
   const stepUpToken = useAdminStore((state) => state.stepUpToken)
 
   const { data: stats } = useAdminProjectsStats()
@@ -100,7 +100,9 @@ export default function ProjectManagementPage() {
   const totalPages = projectsData?.meta?.totalPages || 1
 
   const handleDelete = async (projectId: string, token?: string) => {
-    if (!isStepUpValid && !token) {
+    const activeToken = token || getValidStepUpToken() || undefined
+
+    if (!activeToken) {
       setPendingAction({ type: 'delete', projectId })
       setStepUpOpen(true)
       return
@@ -109,16 +111,25 @@ export default function ProjectManagementPage() {
     const toastId = toast.loading('Deleting project...')
     
     try {
-      await adminService.deleteProject(projectId)
+      await adminService.deleteProject(projectId, activeToken)
       toast.success('Project deleted successfully', { id: toastId })
       refetch()
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete project', { id: toastId })
+      const msg = error.response?.data?.message || error.message || ''
+      if (msg.toLowerCase().includes('step-up') || error.response?.status === 401 || error.response?.status === 403) {
+        toast.dismiss(toastId)
+        setPendingAction({ type: 'delete', projectId })
+        setStepUpOpen(true)
+        return
+      }
+      toast.error(msg || 'Failed to delete project', { id: toastId })
     }
   }
 
   const handleFeature = async (projectId: string, isFeatured: boolean, token?: string) => {
-    if (!isStepUpValid && !token) {
+    const activeToken = token || getValidStepUpToken() || undefined
+
+    if (!activeToken) {
       setPendingAction({ type: 'feature', projectId, data: { isFeatured } })
       setStepUpOpen(true)
       return
@@ -127,11 +138,18 @@ export default function ProjectManagementPage() {
     const toastId = toast.loading(isFeatured ? 'Featuring project...' : 'Unfeaturing project...')
     
     try {
-      await adminService.featureProject(projectId, isFeatured)
+      await adminService.featureProject(projectId, isFeatured, activeToken)
       toast.success(isFeatured ? 'Project featured' : 'Project unfeatured', { id: toastId })
       refetch()
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Action failed', { id: toastId })
+      const msg = error.response?.data?.message || error.message || ''
+      if (msg.toLowerCase().includes('step-up') || error.response?.status === 401 || error.response?.status === 403) {
+        toast.dismiss(toastId)
+        setPendingAction({ type: 'feature', projectId, data: { isFeatured } })
+        setStepUpOpen(true)
+        return
+      }
+      toast.error(msg || 'Action failed', { id: toastId })
     }
   }
 

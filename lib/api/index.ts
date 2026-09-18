@@ -1,5 +1,6 @@
 /* eslint-disable */
 import { useAuth } from '@/lib/store/use-auth'
+import { useAdminStore } from '@/lib/store/use-admin-store'
 import axios from 'axios'
 
 export const api = axios.create({
@@ -28,6 +29,16 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+
+  // Attach step-up token for sensitive admin or security-restricted operations if valid
+  const stepUpToken = useAdminStore.getState().getValidStepUpToken?.()
+  const existingStepUp =
+    config.headers?.['x-admin-step-up-token'] ||
+    config.headers?.['X-Admin-Step-Up-Token']
+  if (stepUpToken && !existingStepUp) {
+    config.headers['x-admin-step-up-token'] = stepUpToken
+  }
+
   return config
 })
 

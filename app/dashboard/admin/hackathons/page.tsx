@@ -185,7 +185,7 @@ export default function HackathonAdministrationPage() {
 
   // Admin Step-up State
   const [stepUpOpen, setStepUpOpen] = useState(false)
-  const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
+  const getValidStepUpToken = useAdminStore((state) => state.getValidStepUpToken)
   const stepUpToken = useAdminStore((state) => state.stepUpToken)
 
   // Form State
@@ -320,10 +320,9 @@ export default function HackathonAdministrationPage() {
     }
 
     // Step-up authentication check
-    const currentStepUpToken = token || stepUpToken
-    const isStepUpOk = token ? true : isStepUpValid()
+    const currentStepUpToken = token || getValidStepUpToken()
     
-    if (!isStepUpOk) {
+    if (!currentStepUpToken) {
       setStepUpOpen(true)
       return
     }
@@ -375,7 +374,7 @@ export default function HackathonAdministrationPage() {
 
   const handleDelete = async (hackathonId: string) => {
     // Check step-up for delete as well
-    if (!isStepUpValid()) {
+    if (!getValidStepUpToken()) {
       setStepUpOpen(true)
       // Note: We don't have a good way to resume delete after step-up without a pending action system
       // For now, the user just has to click delete again.

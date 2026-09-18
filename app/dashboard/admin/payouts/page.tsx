@@ -88,7 +88,7 @@ export default function PayoutAdministrationPage() {
   // Admin Step-up State
   const [stepUpOpen, setStepUpOpen] = useState(false)
   const [pendingAction, setPendingAction] = useState<{ type: string; payoutId: string } | null>(null)
-  const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
+  const getValidStepUpToken = useAdminStore((state) => state.getValidStepUpToken)
   const stepUpToken = useAdminStore((state) => state.stepUpToken)
 
   const { data: stats } = useAdminPayoutsStats()
@@ -119,7 +119,9 @@ export default function PayoutAdministrationPage() {
   const totalPages = payoutsData?.meta?.totalPages || 1
 
   const handleRetryPayout = async (payoutId: string, token?: string) => {
-    if (!isStepUpValid && !token) {
+    const activeToken = token || getValidStepUpToken() || undefined
+
+    if (!activeToken) {
       setPendingAction({ type: 'retry', payoutId })
       setStepUpOpen(true)
       return
@@ -128,11 +130,18 @@ export default function PayoutAdministrationPage() {
     const toastId = toast.loading('Retrying payout...')
     
     try {
-      await adminService.retryPayout(payoutId)
+      await adminService.retryPayout(payoutId, activeToken)
       toast.success('Payout retry initiated', { id: toastId })
       refetch()
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to retry payout', { id: toastId })
+      const msg = error.response?.data?.message || error.message || ''
+      if (msg.toLowerCase().includes('step-up') || error.response?.status === 401 || error.response?.status === 403) {
+        toast.dismiss(toastId)
+        setPendingAction({ type: 'retry', payoutId })
+        setStepUpOpen(true)
+        return
+      }
+      toast.error(msg || 'Failed to retry payout', { id: toastId })
     }
   }
 

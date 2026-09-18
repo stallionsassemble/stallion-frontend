@@ -10,8 +10,12 @@ export const customInstance = async <T>(
 
   const response = await api({
     ...config,
-    url: normalizedUrl,
     ...options,
+    url: normalizedUrl,
+    headers: {
+      ...(config.headers as Record<string, string> | undefined),
+      ...(options?.headers as Record<string, string> | undefined),
+    },
   })
 
   return response.data as T

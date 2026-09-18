@@ -80,7 +80,7 @@ export default function UserManagementPage() {
   // Admin Step-up State
   const [stepUpOpen, setStepUpOpen] = useState(false)
   const [pendingAction, setPendingAction] = useState<{ type: string; userId: string; data?: any } | null>(null)
-  const isStepUpValid = useAdminStore((state) => state.isStepUpValid)
+  const getValidStepUpToken = useAdminStore((state) => state.getValidStepUpToken)
   const stepUpToken = useAdminStore((state) => state.stepUpToken)
 
   const handleInviteUser = () => {
@@ -105,7 +105,9 @@ export default function UserManagementPage() {
   const totalPages = meta?.totalPages || 0
 
   const handleAction = async (type: string, userId: string, data?: any, token?: string) => {
-    if (!isStepUpValid && !token) {
+    const activeToken = token || getValidStepUpToken() || undefined
+
+    if (!activeToken) {
       setPendingAction({ type, userId, data })
       setStepUpOpen(true)
       return
@@ -115,21 +117,28 @@ export default function UserManagementPage() {
     
     try {
       if (type === 'suspend') {
-        await adminService.suspendUser(userId, data || { reason: 'Administrative action' })
+        await adminService.suspendUser(userId, data || { reason: 'Administrative action' }, activeToken)
         toast.success('User suspended successfully', { id: toastId })
       } else if (type === 'ban') {
-        await adminService.banUser(userId, data || { reason: 'Administrative action' })
+        await adminService.banUser(userId, data || { reason: 'Administrative action' }, activeToken)
         toast.success('User banned successfully', { id: toastId })
       } else if (type === 'make-admin') {
-        await adminService.makeAdmin(userId)
+        await adminService.makeAdmin(userId, activeToken)
         toast.success('User role updated to Admin', { id: toastId })
       } else if (type === 'reset-2fa') {
-        await adminService.reset2fa(userId)
+        await adminService.reset2fa(userId, activeToken)
         toast.success('2FA reset successfully', { id: toastId })
       }
       refetch()
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Action failed', { id: toastId })
+      const msg = error.response?.data?.message || error.message || ''
+      if (String(msg).toLowerCase().includes('step-up')) {
+        toast.dismiss(toastId)
+        setPendingAction({ type, userId, data })
+        setStepUpOpen(true)
+        return
+      }
+      toast.error(msg || 'Action failed', { id: toastId })
     }
   }
 

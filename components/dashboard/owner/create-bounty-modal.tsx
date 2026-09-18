@@ -22,6 +22,9 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { InsufficientBalanceModal } from "./insufficient-balance-modal";
 import { adminService } from "@/lib/api/admin";
+import { StepUpModal } from "@/components/admin/step-up-modal";
+import { useAdminStore } from "@/lib/store/use-admin-store";
+import { useAuth } from "@/lib/store/use-auth";
 
 interface CreateBountyModalProps {
   children?: React.ReactNode;
@@ -45,6 +48,10 @@ export function CreateBountyModal({
   const setOpen = setControlledOpen !== undefined ? setControlledOpen : setInternalOpen;
 
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
+  const [stepUpOpen, setStepUpOpen] = useState(false);
+  const getValidStepUpToken = useAdminStore((state) => state.getValidStepUpToken);
+  const userRole = useAuth((state) => state.user?.role);
+  const requiresStepUp = Boolean(isAdmin) || userRole === "ADMIN";
 
   // Form State - Persisted
   const [title, setTitle] = usePersistedState("draft_bounty_title", "");
@@ -265,6 +272,11 @@ export function CreateBountyModal({
 
     const submissionDeadlineIso = subFormatted.toISOString();
 
+    if (requiresStepUp && !getValidStepUpToken()) {
+      setStepUpOpen(true);
+      return;
+    }
+
     if (existingBounty) {
       const updatePayload: UpdateBountyDto = {
         title,
@@ -278,6 +290,20 @@ export function CreateBountyModal({
         attachments: attachments.map(a => ({ filename: a.filename, url: a.url, size: a.size, mimetype: a.mimetype })),
       };
 
+      const handleErr = (err: any, toastId?: string | number) => {
+        const msg = err.response?.data?.message || err.message || "";
+        if (String(msg).toLowerCase().includes("step-up")) {
+          if (toastId) toast.dismiss(toastId);
+          setStepUpOpen(true);
+          return;
+        }
+        if (toastId) {
+          toast.error(msg || "Failed to submit bounty", { id: toastId });
+        } else {
+          toast.error(msg || "Failed to submit bounty");
+        }
+      };
+
       if (isAdmin) {
         const toastId = toast.loading("Updating as admin...");
         adminService.updateBounty(existingBounty.id, updatePayload)
@@ -285,14 +311,13 @@ export function CreateBountyModal({
             toast.success("Bounty updated successfully", { id: toastId });
             setOpen(false);
           })
-          .catch((err) => {
-            toast.error(err.response?.data?.message || "Failed to update bounty", { id: toastId });
-          });
+          .catch((err) => handleErr(err, toastId));
       } else {
         updateBounty({ id: existingBounty.id, payload: updatePayload }, {
           onSuccess: () => {
             setOpen(false);
-          }
+          },
+          onError: (err) => handleErr(err),
         });
       }
     } else {
@@ -315,6 +340,15 @@ export function CreateBountyModal({
         rewardCurrency: currency,
       };
 
+      const handleCreateErr = (err: any) => {
+        const msg = err.response?.data?.message || err.message || "";
+        if (String(msg).toLowerCase().includes("step-up")) {
+          setStepUpOpen(true);
+          return;
+        }
+        toast.error(msg || "Failed to create bounty");
+      };
+
       createBounty(createPayload, {
         onSuccess: () => {
           setOpen(false);
@@ -327,7 +361,8 @@ export function CreateBountyModal({
           setSubmissionDeadline(undefined);
           setJudgingDeadline(undefined);
           setPrizeDistribution([{ rank: 1, amount: "" }, { rank: 2, amount: "" }, { rank: 3, amount: "" }]);
-        }
+        },
+        onError: (err) => handleCreateErr(err),
       });
     }
   };
@@ -677,6 +712,14 @@ export function CreateBountyModal({
           </div>
         </DialogContent>
       </Dialog>
+
+      <StepUpModal
+        open={stepUpOpen}
+        onOpenChange={setStepUpOpen}
+        onSuccess={() => {
+          handleSubmit();
+        }}
+      />
 
       <InsufficientBalanceModal
         isOpen={showInsufficientBalance}

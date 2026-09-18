@@ -37,9 +37,14 @@ type AdminStepUpHeader = {
 
 const adminSdk = getStallionBackendAPI()
 
-const withStepUp = (stepUpToken: string): AdminStepUpHeader => ({
-  headers: { 'x-admin-step-up-token': stepUpToken }
-})
+const resolveStepUpToken = (stepUpToken?: string) =>
+  stepUpToken || useAdminStore.getState().getValidStepUpToken?.() || ''
+
+const withStepUp = (stepUpToken?: string): AdminStepUpHeader | undefined => {
+  const token = resolveStepUpToken(stepUpToken)
+  if (!token) return undefined
+  return { headers: { 'x-admin-step-up-token': token } }
+}
 
 class AdminService {
   // --- Dashboard ---
@@ -62,28 +67,23 @@ class AdminService {
       role: data.role as AdminCreateUserDtoRole,
     }
 
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerCreateUser(payload, withStepUp(token))
+    return adminSdk.adminControllerCreateUser(payload, withStepUp(stepUpToken))
   }
 
   async reset2fa(userId: string, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerResetUser2FA(userId, withStepUp(token))
+    return adminSdk.adminControllerResetUser2FA(userId, withStepUp(stepUpToken))
   }
 
   async makeAdmin(userId: string, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerMakeAdmin(userId, withStepUp(token))
+    return adminSdk.adminControllerMakeAdmin(userId, withStepUp(stepUpToken))
   }
 
   async suspendUser(userId: string, data: { indefinite?: boolean; durationHours?: number; reason: string }, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerSuspendUser(userId, data, withStepUp(token))
+    return adminSdk.adminControllerSuspendUser(userId, data, withStepUp(stepUpToken))
   }
 
   async banUser(userId: string, data: { reason: string }, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerBanUser(userId, data, withStepUp(token))
+    return adminSdk.adminControllerBanUser(userId, data, withStepUp(stepUpToken))
   }
 
   // --- Bounties ---
@@ -96,22 +96,19 @@ class AdminService {
   }
 
   async featureBounty(bountyId: string, isFeatured: boolean, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
     return adminSdk.adminControllerToggleBountyFeature(
       bountyId,
       { isFeatured },
-      withStepUp(token)
+      withStepUp(stepUpToken)
     )
   }
 
   async updateBounty(bountyId: string, data: AdminEntityPayload, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerUpdateBounty(bountyId, data, withStepUp(token))
+    return adminSdk.adminControllerUpdateBounty(bountyId, data, withStepUp(stepUpToken))
   }
 
   async deleteBounty(bountyId: string, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerDeleteBounty(bountyId, withStepUp(token))
+    return adminSdk.adminControllerDeleteBounty(bountyId, withStepUp(stepUpToken))
   }
 
   // --- Projects ---
@@ -124,22 +121,19 @@ class AdminService {
   }
 
   async featureProject(projectId: string, isFeatured: boolean, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
     return adminSdk.adminControllerToggleProjectFeature(
       projectId,
       { isFeatured },
-      withStepUp(token)
+      withStepUp(stepUpToken)
     )
   }
 
   async updateProject(projectId: string, data: AdminEntityPayload, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerUpdateProject(projectId, data, withStepUp(token))
+    return adminSdk.adminControllerUpdateProject(projectId, data, withStepUp(stepUpToken))
   }
 
   async deleteProject(projectId: string, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerDeleteProject(projectId, withStepUp(token))
+    return adminSdk.adminControllerDeleteProject(projectId, withStepUp(stepUpToken))
   }
 
   // --- Payouts ---
@@ -152,8 +146,7 @@ class AdminService {
   }
 
   async retryPayout(payoutId: string, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerRetryPayout(payoutId, withStepUp(token))
+    return adminSdk.adminControllerRetryPayout(payoutId, withStepUp(stepUpToken))
   }
 
   // --- Hackathons ---
@@ -166,18 +159,15 @@ class AdminService {
   }
 
   async createHackathon(data: AdminCreateHackathonDto, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerCreateHackathon(data, withStepUp(token))
+    return adminSdk.adminControllerCreateHackathon(data, withStepUp(stepUpToken))
   }
 
   async updateHackathon(hackathonId: string, data: AdminEntityPayload, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerUpdateHackathon(hackathonId, data, withStepUp(token))
+    return adminSdk.adminControllerUpdateHackathon(hackathonId, data, withStepUp(stepUpToken))
   }
 
   async deleteHackathon(hackathonId: string, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerDeleteHackathon(hackathonId, withStepUp(token))
+    return adminSdk.adminControllerDeleteHackathon(hackathonId, withStepUp(stepUpToken))
   }
 
   // --- Funding Wallet ---
@@ -186,13 +176,11 @@ class AdminService {
   }
 
   async updateFundingWallet(data: { fundingWalletId: string }, stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerSetFundingWallet(data, withStepUp(token))
+    return adminSdk.adminControllerSetFundingWallet(data, withStepUp(stepUpToken))
   }
 
   async deleteFundingWallet(stepUpToken?: string) {
-    const token = stepUpToken || useAdminStore.getState().stepUpToken || ''
-    return adminSdk.adminControllerClearFundingWallet(withStepUp(token))
+    return adminSdk.adminControllerClearFundingWallet(withStepUp(stepUpToken))
   }
 
   // --- Step-Up ---
