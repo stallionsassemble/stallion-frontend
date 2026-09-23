@@ -112,20 +112,51 @@ export default function BountyManagementPage() {
   const totalItems = bountiesData?.meta?.total || 0
   const totalPages = bountiesData?.meta?.totalPages || 1
 
+  // Admin Step-up State
+  const [stepUpOpen, setStepUpOpen] = useState(false)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const getValidStepUpToken = useAdminStore((state) => state.getValidStepUpToken)
+
   const handleEditBounty = (bounty: Bounty) => {
     setSelectedBounty(bounty)
     setIsEditModalOpen(true)
   }
 
-  const handleDelete = async (bountyId: string) => {
+  const handleDelete = async (bountyId: string, token?: string) => {
+    const activeToken = token || getValidStepUpToken() || undefined
+
+    if (!activeToken) {
+      setPendingDeleteId(bountyId)
+      setStepUpOpen(true)
+      return
+    }
+
     const toastId = toast.loading('Deleting bounty...')
     
     try {
-      await adminService.deleteBounty(bountyId)
+      await adminService.deleteBounty(bountyId, activeToken)
       toast.success('Bounty deleted successfully', { id: toastId })
       refetch()
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete bounty', { id: toastId })
+      const msg = error?.response?.data?.message || error?.message || ''
+      if (
+        msg.toLowerCase().includes('step-up') ||
+        error?.response?.status === 401 ||
+        error?.response?.status === 403
+      ) {
+        toast.dismiss(toastId)
+        setPendingDeleteId(bountyId)
+        setStepUpOpen(true)
+        return
+      }
+      toast.error(msg || 'Failed to delete bounty', { id: toastId })
+    }
+  }
+
+  const onStepUpSuccess = (token: string) => {
+    if (pendingDeleteId) {
+      handleDelete(pendingDeleteId, token)
+      setPendingDeleteId(null)
     }
   }
 
@@ -191,6 +222,11 @@ export default function BountyManagementPage() {
 
   return (
     <div className='space-y-6'>
+      <StepUpModal 
+        open={stepUpOpen} 
+        onOpenChange={setStepUpOpen} 
+        onSuccess={onStepUpSuccess} 
+      />
 
       {/* Header */}
       <div className='flex items-center justify-between'>

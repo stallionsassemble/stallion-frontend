@@ -1,5 +1,6 @@
 /* eslint-disable */
 import { MfaRequiredDialog } from "@/components/common/mfa-required-dialog";
+import { StepUpVerification } from "@/components/common/step-up-verification";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,7 +40,6 @@ const withdrawSchema = z.object({
   currency: z.string().min(1, "Currency is required"),
   methodId: z.string().optional(),
   address: z.string().optional(),
-  totpCode: z.string().min(6, "2FA code must be at least 6 digits"),
 }).superRefine((data, ctx) => {
   if (!data.methodId && !data.address) {
     ctx.addIssue({
@@ -91,6 +91,8 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 0, curr
   const [step, setStep] = useState<"form" | "success">("form");
   const [withdrawnAmount, setWithdrawnAmount] = useState<string>("0");
   const [withdrawType, setWithdrawType] = useState<"method" | "address">("address"); // Default to address as per screenshot implied priority? Or method? Screenshot shows address. Tab state.
+  const [isStepUpOpen, setIsStepUpOpen] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<any>(null);
 
   const { user } = useAuth();
   const { data: payoutMethods = [], isLoading: isLoadingMethods } = useGetPayoutMethods();
@@ -104,7 +106,6 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 0, curr
       currency: currency, // Pre-fill if passed, but mutable
       methodId: "",
       address: "",
-      totpCode: "",
     },
   });
 
@@ -126,7 +127,6 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 0, curr
     const payload: any = {
       amount: Number(values.amount),
       currency: values.currency,
-      totpCode: values.totpCode,
     };
 
     if (withdrawType === "method") {
@@ -143,21 +143,36 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 0, curr
       payload.address = values.address;
     }
 
-    withdraw(payload, {
+    setPendingPayload(payload);
+    setIsStepUpOpen(true);
+  };
+
+  const handleStepUpSuccess = (stepUpToken: string) => {
+    if (!pendingPayload) return;
+    const finalPayload = {
+      ...pendingPayload,
+      stepUpToken,
+    };
+
+    withdraw(finalPayload, {
       onSuccess: () => {
-        setWithdrawnAmount(values.amount);
+        setWithdrawnAmount(String(pendingPayload.amount));
         setStep("success");
-      }
+      },
     });
   };
 
   const handleClose = () => {
     setStep("form");
     form.reset();
+    setPendingPayload(null);
+    setIsStepUpOpen(false);
     onClose();
   };
 
-  if (isOpen && user && !user.mfaEnabled) {
+  const has2FA = Boolean(user?.mfaEnabled || user?.hasPasskeys);
+
+  if (isOpen && user && !has2FA) {
     return (
       <MfaRequiredDialog
         open={isOpen}
@@ -303,26 +318,6 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 0, curr
                 </TabsContent>
               </Tabs>
 
-              {/* 2FA Code */}
-              <FormField
-                control={form.control}
-                name="totpCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground font-bold text-sm">2FA Code</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter 6-digit code"
-                        {...field}
-                        className="bg-background border border-border h-12 tracking-widest text-center text-lg font-mono placeholder:tracking-normal placeholder:font-sans placeholder:text-base placeholder:text-left sm:placeholder:text-center"
-                        maxLength={6}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <Button
                 type="submit"
                 disabled={isWithdrawing}
@@ -352,6 +347,17 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 0, curr
           </div>
         )}
       </DialogContent>
+
+      {/* Step-Up Authentication Dialog (TOTP or Passkey) */}
+      <StepUpVerification
+        open={isStepUpOpen}
+        onOpenChange={setIsStepUpOpen}
+        hasTotp={Boolean(user?.mfaEnabled)}
+        hasPasskeys={Boolean(user?.hasPasskeys)}
+        onSuccess={handleStepUpSuccess}
+        title="Authorize Withdrawal"
+        description="Verify your identity with your authenticator app or passkey to authorize this withdrawal."
+      />
     </Dialog>
   );
 }

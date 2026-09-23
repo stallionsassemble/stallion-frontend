@@ -97,6 +97,29 @@ export class AuthService {
     return response.data
   }
 
+  // --- Step-Up Authentication ---
+
+  async stepUpTotp(code: string) {
+    const response = await api.post<{
+      stepUpToken: string
+      expiresInSeconds: number
+    }>('/auth/step-up/totp', { code })
+    return response.data
+  }
+
+  async stepUpPasskeyOptions() {
+    const response = await api.post('/auth/step-up/passkey/options')
+    return response.data
+  }
+
+  async stepUpPasskeyVerify(response: any) {
+    const res = await api.post<{
+      stepUpToken: string
+      expiresInSeconds: number
+    }>('/auth/step-up/passkey/verify', { response })
+    return res.data
+  }
+
   // --- MFA & Security ---
 
   async setupMfa(userId: string) {

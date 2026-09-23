@@ -27,7 +27,7 @@ export function MfaRequiredDialog({ open, onOpenChange }: MfaRequiredDialogProps
           </div>
           <DialogTitle className="text-center">Authentication Required</DialogTitle>
           <DialogDescription className="text-center">
-            For your security, Two-Factor Authentication (2FA) must be enabled to perform this action.
+            For your security, Two-Factor Authentication (an Authenticator App or Passkey) must be enabled to perform this action.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col space-y-2 sm:space-y-0 mt-4 sm:flex-col sm:space-y-2">

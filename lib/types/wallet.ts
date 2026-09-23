@@ -62,7 +62,7 @@ export interface WithdrawFundPayload {
   currency: string
   payoutMethodId?: string
   address?: string
-  totpCode: string
+  stepUpToken: string
 }
 
 export interface PayoutMethodPayload {

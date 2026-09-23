@@ -29,6 +29,7 @@ export interface User {
   emailNotifications?: boolean
   profileCompleted?: boolean
   mfaEnabled?: boolean
+  hasPasskeys?: boolean
   emailVerified?: boolean
   createdAt?: string
   updatedAt?: string
