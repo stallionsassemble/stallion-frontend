@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { adminService } from '@/lib/api/admin'
 import { useAdminStore } from '@/lib/store/use-admin-store'
+import { useAuth } from '@/lib/store/use-auth'
 import type { StepUpResponse } from '@/lib/types/admin'
 import { toast } from 'sonner'
 import { KeyRound, ShieldCheck } from 'lucide-react'
@@ -57,6 +58,37 @@ export function StepUpModal({ open, onOpenChange, onSuccess }: StepUpModalProps)
   const [totpCode, setTotpCode] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const setStepUpToken = useAdminStore((state) => state.setStepUpToken)
+  const isAdmin = useAuth((state) => state.user?.role === 'ADMIN')
+  // Admins are exempt from step-up on the backend (ADMIN_2FA_BYPASS), which
+  // issues a token without checking the code. Fetch it silently; show the
+  // normal prompt only if the backend refuses.
+  const [adminAutoFailed, setAdminAutoFailed] = useState(false)
+  const autoRequested = useRef(false)
+
+  useEffect(() => {
+    if (!open) {
+      autoRequested.current = false
+      return
+    }
+    if (!isAdmin || adminAutoFailed || autoRequested.current) return
+    autoRequested.current = true
+
+    adminService
+      .stepUpTotp('000000')
+      .then((raw) => {
+        const result = raw as StepUpResponse & Record<string, unknown>
+        const token = result.token || (result.stepUpToken as string)
+        if (!token) throw new Error('No step-up token returned')
+        setStepUpToken(token, Number(result.expiresInSeconds ?? result.expiresIn ?? 600))
+        onSuccess(token)
+        onOpenChange(false)
+      })
+      .catch(() => setAdminAutoFailed(true))
+  }, [open, isAdmin, adminAutoFailed, onSuccess, onOpenChange, setStepUpToken])
+
+  if (open && isAdmin && !adminAutoFailed) {
+    return null
+  }
 
   const handleTotpSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()

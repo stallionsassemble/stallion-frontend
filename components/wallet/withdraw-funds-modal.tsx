@@ -27,6 +27,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetSupportedCurrencies } from "@/lib/api/bounties/queries";
 import { useGetPayoutMethods, useWithdrawFunds } from "@/lib/api/wallet/queries";
+import { authService } from "@/lib/api/auth";
 import { useAuth } from "@/lib/store/use-auth";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -95,6 +96,8 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 0, curr
   const [pendingPayload, setPendingPayload] = useState<any>(null);
 
   const { user } = useAuth();
+  // Admins are exempt from 2FA/step-up on the backend (ADMIN_2FA_BYPASS)
+  const isAdmin = user?.role === "ADMIN";
   const { data: payoutMethods = [], isLoading: isLoadingMethods } = useGetPayoutMethods();
   const { data: currencies = [], isLoading: isLoadingCurrencies } = useGetSupportedCurrencies();
   const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawFunds();
@@ -144,22 +147,31 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 0, curr
     }
 
     setPendingPayload(payload);
+
+    if (isAdmin) {
+      // Backend issues the step-up token to admins without checking the code
+      authService
+        .stepUpTotp("000000")
+        .then(({ stepUpToken }) => submitWithdrawal(payload, stepUpToken))
+        .catch(() => setIsStepUpOpen(true));
+      return;
+    }
+
     setIsStepUpOpen(true);
+  };
+
+  const submitWithdrawal = (payload: any, stepUpToken: string) => {
+    withdraw({ ...payload, stepUpToken }, {
+      onSuccess: () => {
+        setWithdrawnAmount(String(payload.amount));
+        setStep("success");
+      },
+    });
   };
 
   const handleStepUpSuccess = (stepUpToken: string) => {
     if (!pendingPayload) return;
-    const finalPayload = {
-      ...pendingPayload,
-      stepUpToken,
-    };
-
-    withdraw(finalPayload, {
-      onSuccess: () => {
-        setWithdrawnAmount(String(pendingPayload.amount));
-        setStep("success");
-      },
-    });
+    submitWithdrawal(pendingPayload, stepUpToken);
   };
 
   const handleClose = () => {
@@ -172,7 +184,7 @@ export function WithdrawFundsModal({ isOpen, onClose, availableBalance = 0, curr
 
   const has2FA = Boolean(user?.mfaEnabled || user?.hasPasskeys);
 
-  if (isOpen && user && !has2FA) {
+  if (isOpen && user && !has2FA && !isAdmin) {
     return (
       <MfaRequiredDialog
         open={isOpen}
