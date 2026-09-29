@@ -140,7 +140,7 @@ export default function BountyDetailsPage() {
                 {requirements.map((req, i) => (
                   <li key={i} className='flex items-start gap-2'>
                     <span className='text-primary mt-0.5'>•</span>
-                    {req}
+                    <span className='whitespace-pre-line'>{req}</span>
                   </li>
                 ))}
               </ul>
@@ -159,7 +159,7 @@ export default function BountyDetailsPage() {
                     <div className='mt-0.5 bg-blue-500/10 p-0.5 rounded px-1'>
                       <span className='text-primary text-[10px]'>✓</span>
                     </div>
-                    {item}
+                    <span className='whitespace-pre-line'>{item}</span>
                   </li>
                 ))}
               </ul>

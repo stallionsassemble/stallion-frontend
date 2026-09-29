@@ -2,7 +2,7 @@
 "use client";
 
 import { RichTextEditor } from "@/components/shared/rich-text-editor";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -52,8 +52,10 @@ export function CreateBountyModal({
   const [title, setTitle] = usePersistedState("draft_bounty_title", "");
   const [description, setDescription] = usePersistedState("draft_bounty_description", "");
 
-  const [requirements, setRequirements] = usePersistedState<string[]>("draft_bounty_requirements", []);
-  const [requirementInput, setRequirementInput] = useState("");
+  // Requirements: one free-text block (sent as a single-entry array)
+  const [requirements, setRequirements] = usePersistedState<string>("draft_bounty_requirements_text", "");
+
+  // Deliverables: an editable list, so each item can be removed on its own
   const [deliverables, setDeliverables] = usePersistedState<string[]>("draft_bounty_deliverables", []);
   const [deliverableInput, setDeliverableInput] = useState("");
   const [budget, setBudget] = usePersistedState("draft_bounty_budget", "");
@@ -95,8 +97,8 @@ export function CreateBountyModal({
       setTitle(existingBounty.title);
       setDescription(existingBounty.description);
 
-      setRequirements(existingBounty.requirements || []);
-      setDeliverables(existingBounty.deliverables || []);
+      setRequirements((existingBounty.requirements || []).join("\n"));
+      setDeliverables(blockToList(existingBounty.deliverables));
       setBudget(existingBounty.reward);
       setCurrency(existingBounty.rewardCurrency);
 
@@ -136,29 +138,66 @@ export function CreateBountyModal({
     }
   }, [existingBounty, isOpen]);
 
+  // Delivered as a single block of text (the column is a string array)
+  const toTextBlock = (text: string) => (text.trim() ? [text.trim()] : []);
+
+  // Stored values may be a single block with newlines or one entry per line
+  const blockToList = (value?: string[]) =>
+    (value || [])
+      .flatMap((block) => String(block).split("\n"))
+      .map((line) => line.trim())
+      .filter(Boolean);
+
   const handleAddDeliverable = () => {
-    if (deliverableInput.trim()) {
-      setDeliverables([...deliverables, deliverableInput.trim()]);
-      setDeliverableInput("");
+    const item = deliverableInput.trim();
+    if (!item) return;
+    if (deliverables.some((d) => d.toLowerCase() === item.toLowerCase())) {
+      toast.error("That deliverable is already listed");
+      return;
     }
+    setDeliverables([...deliverables, item]);
+    setDeliverableInput("");
   };
 
-  const handleAddRequirement = () => {
-    if (requirementInput.trim()) {
-      setRequirements([...requirements, requirementInput.trim()]);
-      setRequirementInput("");
-    }
+  const handleRemoveDeliverable = (index: number) => {
+    setDeliverables(deliverables.filter((_, i) => i !== index));
   };
 
-  const handleAddTag = (tag: string) => {
-    if (!selectedTags.includes(tag)) {
-      if (selectedTags.length >= 5) {
-        toast.error("Max 5 tags allowed");
-        return;
-      }
-      setSelectedTags([...selectedTags, tag]);
+  const handleUpdateDeliverable = (index: number, value: string) => {
+    const next = [...deliverables];
+    next[index] = value;
+    setDeliverables(next);
+  };
+
+  const handleAddTag = (rawTag: string) => {
+    const tag = rawTag.trim().replace(/\s+/g, " ");
+    if (!tag) return;
+
+    if (selectedTags.some((t) => t.toLowerCase() === tag.toLowerCase())) {
+      toast.error(`"${tag}" is already added`);
+      setTagInput("");
+      return;
     }
+
+    if (selectedTags.length >= 5) {
+      toast.error("You can add up to 5 tags. Remove one to add another.");
+      return;
+    }
+
+    setSelectedTags([...selectedTags, tag]);
     setTagInput("");
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setSelectedTags(selectedTags.filter((t) => t !== tag));
+  };
+
+  const handleToggleTag = (tag: string) => {
+    if (selectedTags.some((t) => t.toLowerCase() === tag.toLowerCase())) {
+      handleRemoveTag(tag);
+    } else {
+      handleAddTag(tag);
+    }
   };
 
   const handleAddPrize = () => {
@@ -207,6 +246,17 @@ export function CreateBountyModal({
     // Validation: Required fields
     if (!title || !description || (!existingBounty && !budget) || !submissionDeadline || (!existingBounty && !judgingDeadline)) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    if (!existingBounty && selectedTags.length === 0) {
+      toast.error("Please add at least one tag");
+      return;
+    }
+
+    const cleanedDeliverables = blockToList(deliverables);
+    if (cleanedDeliverables.length === 0) {
+      toast.error("Please add at least one deliverable");
       return;
     }
 
@@ -272,8 +322,8 @@ export function CreateBountyModal({
         title,
         shortDescription: description.replace(/<[^>]*>/g, '').substring(0, 150),
         description,
-        requirements,
-        deliverables,
+        requirements: toTextBlock(requirements),
+        deliverables: cleanedDeliverables,
         skills: selectedTags,
         submissionDeadline: submissionDeadlineIso,
         distribution,
@@ -319,8 +369,8 @@ export function CreateBountyModal({
         title,
         shortDescription: description.replace(/<[^>]*>/g, '').substring(0, 150),
         description,
-        requirements,
-        deliverables,
+        requirements: toTextBlock(requirements),
+        deliverables: cleanedDeliverables,
         skills: selectedTags,
         submissionDeadline: submissionDeadlineIso,
         judgingDeadline: judgingDeadlineIso,
@@ -346,8 +396,10 @@ export function CreateBountyModal({
           setTitle("");
           setDescription("");
           setBudget("");
-          setRequirements([]);
+          setRequirements("");
           setDeliverables([]);
+          setDeliverableInput("");
+          setSelectedTags([]);
           setSubmissionDeadline(undefined);
           setJudgingDeadline(undefined);
           setPrizeDistribution([{ rank: 1, amount: "" }, { rank: 2, amount: "" }, { rank: 3, amount: "" }]);
@@ -399,57 +451,75 @@ export function CreateBountyModal({
             {/* Requirements */}
             <div className="space-y-2 min-w-0">
               <Label className="text-foreground">Requirements <span className="text-destructive">*</span></Label>
-              <div className="flex gap-2 min-w-0">
-                <Input
-                  placeholder="Add a requirement"
-                  className="bg-transparent border-input text-foreground flex-1 min-w-0"
-                  value={requirementInput}
-                  onChange={(e) => setRequirementInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && requirementInput) {
-                      handleAddRequirement();
-                    }
-                  }}
-                />
-                <Button variant="secondary" onClick={handleAddRequirement} className="bg-secondary hover:bg-secondary/80 border border-input shrink-0">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              {requirements.length > 0 && (
-                <div className="flex flex-col gap-2 mt-2 min-w-0">
-                  {requirements.map((r, i) => (
-                    <Badge key={i} variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/80 gap-2 justify-between py-2 px-3 w-full min-w-0">
-                      <span className="truncate flex-1 min-w-0 text-left">{r}</span>
-                      <X className="h-3 w-3 cursor-pointer shrink-0 ml-1" onClick={() => setRequirements(prev => prev.filter((_, idx) => idx !== i))} />
-                    </Badge>
-                  ))}
-                </div>
-              )}
+              <p className="text-xs text-muted-foreground">What participants need to meet. Write it as one block of text.</p>
+              <Textarea
+                placeholder="Describe what participants need to meet (one per line, or free text)"
+                className="bg-transparent border-input text-foreground w-full min-w-0 min-h-[120px]"
+                value={requirements}
+                onChange={(e) => setRequirements(e.target.value)}
+                maxLength={5000}
+              />
             </div>
 
             {/* Deliverables */}
             <div className="space-y-2 min-w-0">
               <Label className="text-foreground">Deliverables <span className="text-destructive">*</span></Label>
+              <p className="text-xs text-muted-foreground">What participants must submit. Add each item separately — you can edit or remove any of them.</p>
               <div className="flex gap-2 min-w-0">
                 <Input
-                  placeholder="Link title"
+                  placeholder="e.g. Working demo link"
                   className="bg-transparent border-input text-foreground flex-1 min-w-0"
                   value={deliverableInput}
                   onChange={(e) => setDeliverableInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddDeliverable();
+                    }
+                  }}
                 />
-                <Button variant="secondary" onClick={handleAddDeliverable} className="bg-secondary hover:bg-secondary/80 border border-input shrink-0">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleAddDeliverable}
+                  className="bg-secondary hover:bg-secondary/80 border border-input shrink-0"
+                >
                   <Plus className="h-4 w-4" />
+                  Add
                 </Button>
               </div>
-              {deliverables.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2 max-w-full">
-                  {deliverables.map((d, i) => (
-                    <Badge key={i} variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary/80 gap-2 max-w-full">
-                      <span className="truncate max-w-[200px]">{d}</span>
-                      <X className="h-3 w-3 cursor-pointer shrink-0" onClick={() => setDeliverables(prev => prev.filter((_, idx) => idx !== i))} />
-                    </Badge>
-                  ))}
+
+              {deliverables.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">
+                  No deliverables yet. Add at least one.
                 </div>
+              ) : (
+                <ul className="space-y-2 mt-2 min-w-0">
+                  {deliverables.map((item, i) => (
+                    <li key={i} className="flex items-center gap-2 min-w-0">
+                      <span className="shrink-0 flex h-9 w-9 items-center justify-center rounded-md border border-input bg-secondary/20 text-xs font-medium text-foreground">
+                        {i + 1}
+                      </span>
+                      <Input
+                        value={item}
+                        onChange={(e) => handleUpdateDeliverable(i, e.target.value)}
+                        placeholder="Deliverable"
+                        className="bg-transparent border-input text-foreground flex-1 min-w-0"
+                        maxLength={500}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveDeliverable(i)}
+                        aria-label={`Remove deliverable ${i + 1}`}
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-9 w-9 shrink-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
 
@@ -611,44 +681,65 @@ export function CreateBountyModal({
 
             {/* Tags */}
             <div className="space-y-2 min-w-0">
-              <Label className="text-foreground">Tags <span className="text-destructive">*</span></Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-foreground truncate">Tags <span className="text-destructive">*</span></Label>
+                <span className="text-xs text-muted-foreground shrink-0">{selectedTags.length}/5 selected</span>
+              </div>
+
+              {selectedTags.length > 0 && (
+                <ul className="flex flex-wrap gap-2">
+                  {selectedTags.map((tag) => (
+                    <li key={tag} className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary text-primary-foreground pl-3 pr-1 py-1 text-xs font-medium max-w-full">
+                      <span className="truncate">{tag}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        aria-label={`Remove tag ${tag}`}
+                        className="shrink-0 rounded-full p-0.5 opacity-80 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
               <Input
-                placeholder="Select Tags"
+                placeholder="Type a tag and press Enter"
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && tagInput) {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
                     handleAddTag(tagInput);
+                  } else if (e.key === 'Backspace' && !tagInput && selectedTags.length > 0) {
+                    e.preventDefault();
+                    handleRemoveTag(selectedTags[selectedTags.length - 1]);
                   }
                 }}
-                className="bg-transparent border-input text-foreground w-full min-w-0"
+                disabled={selectedTags.length >= 5}
+                className="bg-transparent border-input text-foreground w-full min-w-0 disabled:opacity-50 disabled:cursor-not-allowed"
               />
-              <div className="flex flex-wrap gap-2 mt-2 max-w-full">
-                {DEFAULT_TAGS.map(tag => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => handleAddTag(tag)}
-                    className={cn(
-                      "text-xs px-3 py-1 rounded-full border transition-colors shrink-0",
-                      selectedTags.includes(tag)
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-transparent text-foreground border-input hover:border-foreground/50"
-                    )}
-                  >
-                    {tag} {selectedTags.includes(tag) ? '-' : '+'}
-                  </button>
-                ))}
-                {selectedTags.filter(t => !DEFAULT_TAGS.includes(t)).map(tag => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))}
-                    className="bg-primary text-primary-foreground border-primary text-xs px-3 py-1 rounded-full border transition-colors shrink-0"
-                  >
-                    {tag} -
-                  </button>
-                ))}
+
+              <div className="flex flex-wrap gap-2 max-w-full">
+                {DEFAULT_TAGS.map(tag => {
+                  const isSelected = selectedTags.some((t) => t.toLowerCase() === tag.toLowerCase());
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleToggleTag(tag)}
+                      className={cn(
+                        "text-xs px-3 py-1 rounded-full border transition-colors shrink-0",
+                        isSelected
+                          ? "bg-secondary text-secondary-foreground border-secondary-foreground/20"
+                          : "bg-transparent text-foreground border-input hover:border-foreground/50"
+                      )}
+                    >
+                      {isSelected ? "✓ " : "+ "}{tag}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

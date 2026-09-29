@@ -290,7 +290,7 @@ export default function BountyDetailsPage() {
                     {bounty.requirements.map((req: string, i: number) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
                         <span className="text-primary mt-1">•</span>
-                        <span>{req}</span>
+                        <span className="whitespace-pre-line">{req}</span>
                       </li>
                     ))}
                   </ul>
@@ -365,8 +365,29 @@ export default function BountyDetailsPage() {
                 })
               ) : (
                 <div className="text-center py-10 text-slate-500">No submissions found for this tab.</div>
-              )}
-            </div>
+            )}
+
+            {/* Deliverables */}
+            {bounty.deliverables && bounty.deliverables.length > 0 && (
+              <Card className="bg-background border-[1.17px] border-border">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Deliverables
+                  </h3>
+                  <ul className="space-y-2">
+                    {bounty.deliverables.map((item: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
+                        <span className="text-primary mt-1">✓</span>
+                        <span className="whitespace-pre-line">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
           ) : (
             <div className="space-y-4">
               {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full bg-slate-800" />)}
