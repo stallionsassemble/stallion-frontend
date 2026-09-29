@@ -17,7 +17,7 @@ import { usePersistedState } from "@/lib/hooks/use-persisted-state";
 import { Bounty, BountyAttachment, CreateBountyDto, UpdateBountyDto } from "@/lib/types/bounties";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
+import { CalendarIcon, Check, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { InsufficientBalanceModal } from "./insufficient-balance-modal";
@@ -33,6 +33,17 @@ interface CreateBountyModalProps {
 }
 
 const DEFAULT_TAGS = ["Frontend", "Backend", "Ui/UX Design", "Writing", "Digital Marketing", "Mobile", "Web3"];
+const MAX_TAGS = 5;
+
+// Stored values may be a single block with newlines or one entry per line
+const blockToList = (value?: unknown) =>
+  (Array.isArray(value) ? value : typeof value === "string" ? [value] : [])
+    .flatMap((block) => String(block).split("\n"))
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+// Drafts saved by older versions of this form may be a string or contain non-strings
+const parseStringList = (value: unknown) => blockToList(value);
 
 export function CreateBountyModal({ 
   children, 
@@ -48,25 +59,29 @@ export function CreateBountyModal({
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
   const [stepUpOpen, setStepUpOpen] = useState(false);
 
+  // Only a brand-new bounty keeps a local draft. Edit sessions (owner or admin)
+  // must not write into the create draft, or edits leak into the next "Create".
+  const draft = { enabled: !existingBounty && !isAdmin };
+
   // Form State - Persisted
-  const [title, setTitle] = usePersistedState("draft_bounty_title", "");
-  const [description, setDescription] = usePersistedState("draft_bounty_description", "");
+  const [title, setTitle] = usePersistedState("draft_bounty_title", "", draft);
+  const [description, setDescription] = usePersistedState("draft_bounty_description", "", draft);
 
   // Requirements: one free-text block (sent as a single-entry array)
-  const [requirements, setRequirements] = usePersistedState<string>("draft_bounty_requirements_text", "");
+  const [requirements, setRequirements] = usePersistedState<string>("draft_bounty_requirements_text", "", draft);
 
   // Deliverables: an editable list, so each item can be removed on its own
-  const [deliverables, setDeliverables] = usePersistedState<string[]>("draft_bounty_deliverables", []);
+  const [deliverables, setDeliverables] = usePersistedState<string[]>("draft_bounty_deliverables_list", [], { ...draft, parse: parseStringList });
   const [deliverableInput, setDeliverableInput] = useState("");
-  const [budget, setBudget] = usePersistedState("draft_bounty_budget", "");
-  const [currency, setCurrency] = usePersistedState("draft_bounty_currency", "USDC");
+  const [budget, setBudget] = usePersistedState("draft_bounty_budget", "", draft);
+  const [currency, setCurrency] = usePersistedState("draft_bounty_currency", "USDC", draft);
 
   // Date handling: Submission Deadline & Judging Deadline
-  const [submissionDeadlineStr, setSubmissionDeadlineStr] = usePersistedState<string | undefined>("draft_bounty_submission_deadline", undefined);
+  const [submissionDeadlineStr, setSubmissionDeadlineStr] = usePersistedState<string | undefined>("draft_bounty_submission_deadline", undefined, draft);
   const submissionDeadline = submissionDeadlineStr ? new Date(submissionDeadlineStr) : undefined;
   const setSubmissionDeadline = (date: Date | undefined) => setSubmissionDeadlineStr(date ? date.toISOString() : undefined);
 
-  const [judgingDeadlineStr, setJudgingDeadlineStr] = usePersistedState<string | undefined>("draft_bounty_judging_deadline", undefined);
+  const [judgingDeadlineStr, setJudgingDeadlineStr] = usePersistedState<string | undefined>("draft_bounty_judging_deadline", undefined, draft);
   const judgingDeadline = judgingDeadlineStr ? new Date(judgingDeadlineStr) : undefined;
   const setJudgingDeadline = (date: Date | undefined) => setJudgingDeadlineStr(date ? date.toISOString() : undefined);
 
@@ -75,11 +90,13 @@ export function CreateBountyModal({
     { rank: 1, amount: "" },
     { rank: 2, amount: "" },
     { rank: 3, amount: "" },
-  ]);
+  ], draft);
 
   // Tags
-  const [selectedTags, setSelectedTags] = usePersistedState<string[]>("draft_bounty_tags", []);
+  const [selectedTags, setSelectedTags] = usePersistedState<string[]>("draft_bounty_tags", [], { ...draft, parse: parseStringList });
   const [tagInput, setTagInput] = useState("");
+  const isTagSelected = (tag: string) => selectedTags.some((t) => t.toLowerCase() === tag.toLowerCase());
+  const tagLimitReached = selectedTags.length >= MAX_TAGS;
 
   // Documents/Attachments
   const [attachments, setAttachments] = useState<BountyAttachment[]>([]);
@@ -92,8 +109,18 @@ export function CreateBountyModal({
 
   const isPending = isCreating || isUpdating;
 
+  // Hydrate from the bounty once per open. Re-running on every new `existingBounty`
+  // reference (query refetch) would wipe in-progress edits, e.g. restore a
+  // deliverable the user just removed.
+  const hydratedBountyId = useRef<string | null>(null);
+
   useEffect(() => {
-    if (existingBounty && isOpen) {
+    if (!isOpen) {
+      hydratedBountyId.current = null;
+      return;
+    }
+    if (existingBounty && hydratedBountyId.current !== existingBounty.id) {
+      hydratedBountyId.current = existingBounty.id;
       setTitle(existingBounty.title);
       setDescription(existingBounty.description);
 
@@ -113,6 +140,9 @@ export function CreateBountyModal({
       setSubmissionDeadline(existingSubmission);
       setJudgingDeadline(existingJudging);
       setSelectedTags(existingBounty.skills || []);
+      setAttachments(existingBounty.attachments || []);
+      setDeliverableInput("");
+      setTagInput("");
 
       const distList = existingBounty.distribution || existingBounty.rewardDistribution;
       if (distList) {
@@ -141,13 +171,6 @@ export function CreateBountyModal({
   // Delivered as a single block of text (the column is a string array)
   const toTextBlock = (text: string) => (text.trim() ? [text.trim()] : []);
 
-  // Stored values may be a single block with newlines or one entry per line
-  const blockToList = (value?: string[]) =>
-    (value || [])
-      .flatMap((block) => String(block).split("\n"))
-      .map((line) => line.trim())
-      .filter(Boolean);
-
   const handleAddDeliverable = () => {
     const item = deliverableInput.trim();
     if (!item) return;
@@ -155,45 +178,43 @@ export function CreateBountyModal({
       toast.error("That deliverable is already listed");
       return;
     }
-    setDeliverables([...deliverables, item]);
+    setDeliverables((prev) => [...prev, item]);
     setDeliverableInput("");
   };
 
   const handleRemoveDeliverable = (index: number) => {
-    setDeliverables(deliverables.filter((_, i) => i !== index));
+    setDeliverables((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleUpdateDeliverable = (index: number, value: string) => {
-    const next = [...deliverables];
-    next[index] = value;
-    setDeliverables(next);
+    setDeliverables((prev) => prev.map((d, i) => (i === index ? value : d)));
   };
 
   const handleAddTag = (rawTag: string) => {
     const tag = rawTag.trim().replace(/\s+/g, " ");
     if (!tag) return;
 
-    if (selectedTags.some((t) => t.toLowerCase() === tag.toLowerCase())) {
+    if (isTagSelected(tag)) {
       toast.error(`"${tag}" is already added`);
       setTagInput("");
       return;
     }
 
-    if (selectedTags.length >= 5) {
-      toast.error("You can add up to 5 tags. Remove one to add another.");
+    if (tagLimitReached) {
+      toast.error(`You can add up to ${MAX_TAGS} tags. Remove one to add another.`);
       return;
     }
 
-    setSelectedTags([...selectedTags, tag]);
+    setSelectedTags((prev) => [...prev, tag]);
     setTagInput("");
   };
 
   const handleRemoveTag = (tag: string) => {
-    setSelectedTags(selectedTags.filter((t) => t !== tag));
+    setSelectedTags((prev) => prev.filter((t) => t.toLowerCase() !== tag.toLowerCase()));
   };
 
   const handleToggleTag = (tag: string) => {
-    if (selectedTags.some((t) => t.toLowerCase() === tag.toLowerCase())) {
+    if (isTagSelected(tag)) {
       handleRemoveTag(tag);
     } else {
       handleAddTag(tag);
@@ -400,6 +421,8 @@ export function CreateBountyModal({
           setDeliverables([]);
           setDeliverableInput("");
           setSelectedTags([]);
+          setTagInput("");
+          setAttachments([]);
           setSubmissionDeadline(undefined);
           setJudgingDeadline(undefined);
           setPrizeDistribution([{ rank: 1, amount: "" }, { rank: 2, amount: "" }, { rank: 3, amount: "" }]);
@@ -494,7 +517,7 @@ export function CreateBountyModal({
                   No deliverables yet. Add at least one.
                 </div>
               ) : (
-                <ul className="space-y-2 mt-2 min-w-0">
+                <ul className="space-y-2 mt-2 min-w-0" aria-label="Deliverables">
                   {deliverables.map((item, i) => (
                     <li key={i} className="flex items-center gap-2 min-w-0">
                       <span className="shrink-0 flex h-9 w-9 items-center justify-center rounded-md border border-input bg-secondary/20 text-xs font-medium text-foreground">
@@ -513,7 +536,8 @@ export function CreateBountyModal({
                         size="icon"
                         onClick={() => handleRemoveDeliverable(i)}
                         aria-label={`Remove deliverable ${i + 1}`}
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-9 w-9 shrink-0"
+                        title="Remove deliverable"
+                        className="h-9 w-9 shrink-0 border border-input text-muted-foreground hover:text-destructive hover:border-destructive/50 hover:bg-destructive/10"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -683,13 +707,18 @@ export function CreateBountyModal({
             <div className="space-y-2 min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <Label className="text-foreground truncate">Tags <span className="text-destructive">*</span></Label>
-                <span className="text-xs text-muted-foreground shrink-0">{selectedTags.length}/5 selected</span>
+                <span className={cn("text-xs shrink-0", tagLimitReached ? "text-primary font-medium" : "text-muted-foreground")}>
+                  {selectedTags.length}/{MAX_TAGS} selected
+                </span>
               </div>
 
-              {selectedTags.length > 0 && (
-                <ul className="flex flex-wrap gap-2">
+              {selectedTags.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No tags selected yet. Pick from the suggestions below or type your own.</p>
+              ) : (
+                <ul className="flex flex-wrap gap-2" aria-label="Selected tags">
                   {selectedTags.map((tag) => (
-                    <li key={tag} className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary text-primary-foreground pl-3 pr-1 py-1 text-xs font-medium max-w-full">
+                    <li key={tag} className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary text-primary-foreground pl-2 pr-1 py-1 text-xs font-medium max-w-full">
+                      <Check className="h-3 w-3 shrink-0" aria-hidden />
                       <span className="truncate">{tag}</span>
                       <button
                         type="button"
@@ -705,7 +734,7 @@ export function CreateBountyModal({
               )}
 
               <Input
-                placeholder="Type a tag and press Enter"
+                placeholder={tagLimitReached ? `Tag limit reached (${MAX_TAGS}). Remove one to add another.` : "Type a tag and press Enter"}
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -717,26 +746,32 @@ export function CreateBountyModal({
                     handleRemoveTag(selectedTags[selectedTags.length - 1]);
                   }
                 }}
-                disabled={selectedTags.length >= 5}
+                disabled={tagLimitReached}
                 className="bg-transparent border-input text-foreground w-full min-w-0 disabled:opacity-50 disabled:cursor-not-allowed"
               />
 
+              <p className="text-xs text-muted-foreground">Suggestions (click to toggle)</p>
               <div className="flex flex-wrap gap-2 max-w-full">
                 {DEFAULT_TAGS.map(tag => {
-                  const isSelected = selectedTags.some((t) => t.toLowerCase() === tag.toLowerCase());
+                  const isSelected = isTagSelected(tag);
+                  const isDisabled = !isSelected && tagLimitReached;
                   return (
                     <button
                       key={tag}
                       type="button"
                       onClick={() => handleToggleTag(tag)}
+                      aria-pressed={isSelected}
+                      disabled={isDisabled}
                       className={cn(
-                        "text-xs px-3 py-1 rounded-full border transition-colors shrink-0",
+                        "inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full border transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         isSelected
-                          ? "bg-secondary text-secondary-foreground border-secondary-foreground/20"
-                          : "bg-transparent text-foreground border-input hover:border-foreground/50"
+                          ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90"
+                          : "bg-transparent text-muted-foreground border-input border-dashed hover:text-foreground hover:border-foreground/50",
+                        isDisabled && "opacity-40 cursor-not-allowed hover:text-muted-foreground hover:border-input"
                       )}
                     >
-                      {isSelected ? "✓ " : "+ "}{tag}
+                      {isSelected ? <Check className="h-3 w-3" aria-hidden /> : <Plus className="h-3 w-3" aria-hidden />}
+                      {tag}
                     </button>
                   );
                 })}
