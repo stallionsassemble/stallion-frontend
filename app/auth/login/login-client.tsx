@@ -24,7 +24,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { GoogleLogin } from '@react-oauth/google'
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button'
 import { appleAuthHelpers } from 'react-apple-signin-auth'
 import { RoleSelectionModal } from '@/components/auth/role-selection-modal'
 
@@ -156,7 +156,15 @@ export function LoginClient() {
         setShowRoleModal(true)
         toast.dismiss(toastId)
       } else {
-        toast.error(error.response?.data?.message || `Failed to sign in with ${provider}`, { id: toastId })
+        toast.error(
+          error.response?.data?.message ||
+            (error.code === 'ECONNABORTED'
+              ? 'The server took too long to respond. Please try again.'
+              : !error.response
+                ? `Could not reach the server. Check that the API at ${process.env.NEXT_PUBLIC_BACKEND_URL} is running.`
+                : `Failed to sign in with ${provider}`),
+          { id: toastId }
+        )
       }
     } finally {
       setIsSubmitting(false)
@@ -214,23 +222,10 @@ export function LoginClient() {
             <AppleIcon className='h-5 w-5' />
             Continue with Apple
           </Button>
-          <div className="w-full h-[40px] md:h-[48px] overflow-hidden rounded-full">
-            <GoogleLogin
-              onSuccess={async (credentialResponse) => {
-                if (credentialResponse.credential) {
-                  await processSocialAuth('GOOGLE', credentialResponse.credential);
-                }
-              }}
-              onError={() => {
-                toast.error('Failed to sign in with Google');
-              }}
-              theme="outline"
-              size="large"
-              shape="pill"
-              width="100%"
-              use_fedcm_for_prompt={true}
-            />
-          </div>
+          <GoogleSignInButton
+            action="sign in"
+            onCredential={(idToken) => processSocialAuth('GOOGLE', idToken)}
+          />
         </div>
 
         <div className='relative'>

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { registerSchema, RegisterValues } from "@/lib/schemas/auth";
 import { useAuth } from "@/lib/store/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 import { Briefcase, Loader2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
@@ -241,23 +241,10 @@ export function RegisterClient(props: { searchParamsPromise: Promise<{ role?: st
                 <AppleIcon className="h-5 w-5" />
                 Continue with Apple
               </Button>
-              <div className="w-full h-[40px] md:h-[48px] overflow-hidden rounded-full">
-                <GoogleLogin
-                  onSuccess={async (credentialResponse) => {
-                    if (credentialResponse.credential) {
-                      await processSocialAuth('GOOGLE', credentialResponse.credential);
-                    }
-                  }}
-                  onError={() => {
-                    toast.error('Failed to sign in with Google');
-                  }}
-                  theme="outline"
-                  size="large"
-                  shape="pill"
-                  width="100%"
-                  use_fedcm_for_prompt={true}
-                />
-              </div>
+              <GoogleSignInButton
+                action="sign up"
+                onCredential={(idToken) => processSocialAuth('GOOGLE', idToken)}
+              />
             </div>
 
             <div className="relative">

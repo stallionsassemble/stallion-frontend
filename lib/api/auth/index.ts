@@ -15,7 +15,9 @@ export class AuthService {
   // --- Auth & Verification ---
 
   async socialAuth(data: SocialAuthDto) {
-    const response = await api.post<SocialAuthResponse>('/auth/social', data)
+    const response = await api.post<SocialAuthResponse>('/auth/social', data, {
+      timeout: 20000,
+    })
     return response.data
   }
 
