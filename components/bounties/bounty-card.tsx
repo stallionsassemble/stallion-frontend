@@ -151,7 +151,7 @@ export function BountyCard({
             )}
             <div className="flex items-center gap-2">
               <Clock className="h-3 w-3 text-primary" />
-              <span>{isEnded ? 'Ended' : `Due in ${dueDate.replace('d', '')}`}</span>
+              <span>{isEnded ? 'Ended' : `Due in ${dueDate.replace('', '')}`}</span>
             </div>
             {hired && <span className="text-green-500 text-xs flex items-center gap-1">• Hired</span>}
           </div>
