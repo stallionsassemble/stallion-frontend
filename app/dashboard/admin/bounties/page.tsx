@@ -207,7 +207,7 @@ export default function BountyManagementPage() {
           },
           { 
             header: 'Applicants', 
-            key: (b: any) => b.submissionCount || b.applicantsCount || 0 
+            key: (b: any) => b.applicantCount ?? b.submissionCount ?? b.applicantsCount ?? 0 
           },
         ],
         'bounties_export'
@@ -474,7 +474,7 @@ export default function BountyManagementPage() {
                       : 'No deadline'}
                   </TableCell>
                   <TableCell className='text-muted-foreground text-sm'>
-                    {bounty.submissionCount || (bounty as any).applicantsCount || 0}
+                    {(bounty as any).applicantCount ?? bounty.submissionCount ?? (bounty as any).applicantsCount ?? 0}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
