@@ -55,6 +55,7 @@ import {
   Loader2,
   Check,
   ChevronsUpDown,
+  Info,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
@@ -67,6 +68,7 @@ import { exportToCSV } from '@/lib/csv'
 import { useAuth } from '@/lib/store/use-auth'
 import { AdminHackathon } from '@/lib/types/admin'
 import { cn } from "@/lib/utils"
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Command,
   CommandEmpty,
@@ -196,17 +198,43 @@ const generateSlug = (title: string) => {
   return `${base}-${Math.random().toString(36).slice(2, 6)}`
 }
 
-function FormSection({ title, step, children }: { title: string; step: number; children: React.ReactNode }) {
+const inputClass =
+  'h-[42px] rounded-lg border-[1.19px] border-input bg-transparent text-foreground placeholder:text-muted-foreground focus-visible:border-primary'
+
+const ordinal = (n: number) => {
+  const mod100 = n % 100
+  if (mod100 >= 11 && mod100 <= 13) return `${n}th`
+  return `${n}${({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th'}`
+}
+
+function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className='space-y-4 rounded-xl border border-border bg-background/40 p-4'>
-      <div className='flex items-center gap-2'>
-        <span className='flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary'>
-          {step}
-        </span>
-        <h3 className='text-sm font-semibold text-foreground'>{title}</h3>
-      </div>
+    <section className='space-y-4'>
+      <h3 className='text-base font-bold text-foreground font-inter border-b border-border pb-2'>{title}</h3>
       {children}
     </section>
+  )
+}
+
+function Field({
+  label,
+  required,
+  hint,
+  children,
+}: {
+  label: string
+  required?: boolean
+  hint?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className='space-y-2'>
+      <Label className='text-foreground text-sm font-semibold'>
+        {label} {required && <span className='text-destructive'>*</span>}
+      </Label>
+      {children}
+      {hint && <p className='text-xs text-muted-foreground'>{hint}</p>}
+    </div>
   )
 }
 
@@ -310,6 +338,32 @@ export default function HackathonAdministrationPage() {
 
   const prizeTotal = formData.prizePool.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
   const prizeRemaining = Math.round((Number(formData.totalBudget || 0) - prizeTotal) * 1e7) / 1e7
+
+  const renumber = (pool: HackathonPrize[]) => pool.map((p, i) => ({ ...p, position: i + 1 }))
+
+  const addPrize = () =>
+    setFormData(prev => ({ ...prev, prizePool: renumber([...prev.prizePool, { position: 0, amount: 0 }]) }))
+
+  const removePrize = (idx: number) =>
+    setFormData(prev => ({ ...prev, prizePool: renumber(prev.prizePool.filter((_, i) => i !== idx)) }))
+
+  const updatePrizeAmount = (idx: number, amount: number) =>
+    setFormData(prev => ({
+      ...prev,
+      prizePool: prev.prizePool.map((p, i) => (i === idx ? { ...p, amount } : p)),
+    }))
+
+  const splitPrizesEvenly = () =>
+    setFormData(prev => {
+      const budget = parseFloat(prev.totalBudget)
+      const n = prev.prizePool.length
+      if (!(budget > 0) || n === 0) return prev
+      const each = Math.floor((budget / n) * 1e7) / 1e7
+      const pool = prev.prizePool.map((p) => ({ ...p, amount: each }))
+      // Put any rounding remainder on first place so the total matches the budget exactly.
+      pool[0].amount = Math.round((budget - each * (n - 1)) * 1e7) / 1e7
+      return { ...prev, prizePool: pool }
+    })
 
   const resetForm = () => {
     setFormData(defaultFormData)
@@ -834,29 +888,25 @@ export default function HackathonAdministrationPage() {
 
       {/* Create / Edit Hackathon Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={handleCreateModalOpenChange}>
-        <DialogContent
-          showCloseButton
-          className='bg-card border-border w-[calc(100%-1.5rem)] sm:max-w-2xl max-h-[92dvh] flex flex-col gap-0 overflow-hidden p-0'
-        >
-          <DialogHeader className='px-4 sm:px-6 py-4 border-b border-border text-left'>
-            <DialogTitle className='text-lg sm:text-xl font-bold text-foreground'>
+        <DialogContent className='bg-card border-border w-[calc(100%-1.5rem)] sm:max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden p-0 gap-0'>
+          <DialogHeader className='p-4 sm:p-6 border-b border-border text-left'>
+            <DialogTitle className='text-xl sm:text-2xl font-bold text-foreground font-inter'>
               {editingHackathon ? 'Edit Hackathon' : 'Create Hackathon'}
             </DialogTitle>
-            <DialogDescription className='text-xs sm:text-sm'>
+            <DialogDescription className='text-sm text-muted-foreground'>
               {editingHackathon
                 ? 'Update the details of this hackathon.'
-                : 'Fill in the details below. The prize budget is locked in escrow on creation.'}
+                : 'The prize budget is locked in escrow when you create the hackathon.'}
             </DialogDescription>
           </DialogHeader>
 
-          <div className='flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-5'>
-            {/* 1. Basics */}
-            <FormSection title='Basics' step={1}>
-              <div className='space-y-2'>
-                <Label className='text-sm text-foreground'>Title *</Label>
+          <div className='flex-1 overflow-y-auto p-4 sm:p-6 space-y-8'>
+            {/* Basics */}
+            <FormSection title='Basics'>
+              <Field label='Title' required>
                 <Input
                   placeholder='e.g. Stellar Builders Hackathon'
-                  className='bg-background border-border'
+                  className={inputClass}
                   value={formData.title}
                   onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                 />
@@ -868,261 +918,247 @@ export default function HackathonAdministrationPage() {
                     </span>
                   </p>
                 )}
-              </div>
+              </Field>
 
-              <div className='space-y-2'>
-                <Label className='text-sm text-foreground'>Format *</Label>
-                <div className='grid grid-cols-3 gap-1 rounded-lg bg-muted/40 p-1'>
-                  {HACKATHON_TYPES.map((t) => (
-                    <button
-                      key={t.value}
-                      type='button'
-                      onClick={() => setFormData(prev => ({ ...prev, type: t.value }))}
-                      className={cn(
-                        'rounded-md px-2 py-2 text-sm font-medium transition-colors',
-                        formData.type === t.value
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
+              <Field label='Hackathon type' required>
+                <Tabs
+                  value={formData.type}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, type: v as HackathonFormData['type'] }))}
+                >
+                  <TabsList className='grid w-full grid-cols-3 h-11 p-1 rounded-lg bg-muted-foreground/20'>
+                    {HACKATHON_TYPES.map((t) => (
+                      <TabsTrigger
+                        key={t.value}
+                        value={t.value}
+                        className='text-xs sm:text-sm font-medium rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'
+                      >
+                        {t.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
                 <p className='text-xs text-muted-foreground'>
                   {HACKATHON_TYPES.find((t) => t.value === formData.type)?.hint}
                 </p>
-              </div>
+              </Field>
 
-              <div className='space-y-2'>
-                <Label className='text-sm text-foreground'>Description *</Label>
+              <Field label='Description' required>
                 <Textarea
-                  className='bg-background border-border min-h-[100px]'
+                  placeholder='What is this hackathon about?'
+                  className='min-h-[110px] rounded-lg border-[1.19px] border-input bg-transparent text-foreground focus-visible:border-primary'
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 />
-              </div>
+              </Field>
 
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label className='text-sm text-foreground'>Deliverables</Label>
+                <Field label='Deliverables' hint='Separate with commas'>
                   <Input
                     placeholder='GitHub repo, Demo video'
-                    className='bg-background border-border'
+                    className={inputClass}
                     value={formData.deliverables}
                     onChange={(e) => setFormData(prev => ({ ...prev, deliverables: e.target.value }))}
                   />
-                  <p className='text-xs text-muted-foreground'>Separate with commas</p>
-                </div>
-                <div className='space-y-2'>
-                  <Label className='text-sm text-foreground'>Tags</Label>
+                </Field>
+                <Field label='Tags' hint='Separate with commas'>
                   <Input
-                    placeholder='DeFi, Soroban, Web3'
-                    className='bg-background border-border'
+                    placeholder='DeFi, Soroban'
+                    className={inputClass}
                     value={formData.tags}
                     onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
                   />
-                  <p className='text-xs text-muted-foreground'>Separate with commas</p>
-                </div>
+                </Field>
               </div>
 
-              <div className='space-y-2'>
-                <Label className='text-sm text-foreground'>Tracks</Label>
+              <Field label='Tracks' hint='Separate with commas. Defaults to “Main”.'>
                 <Input
-                  placeholder='Main, Track 1...'
-                  className='bg-background border-border'
+                  placeholder='Main, Track 1'
+                  className={inputClass}
                   value={formData.tracks}
                   onChange={(e) => setFormData(prev => ({ ...prev, tracks: e.target.value }))}
                 />
-                <p className='text-xs text-muted-foreground'>Separate with commas. Defaults to “Main”.</p>
-              </div>
+              </Field>
             </FormSection>
 
-            {/* 2. Schedule */}
-            <FormSection title='Schedule' step={2}>
+            {/* Schedule */}
+            <FormSection title='Schedule'>
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label className='text-sm text-foreground'>Submission deadline *</Label>
+                <Field label='Submission deadline' required>
                   <Input
                     type='date'
-                    className='bg-background border-border'
+                    className={inputClass}
                     value={formData.deadline}
                     onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
                   />
-                </div>
-                <div className='space-y-2'>
-                  <Label className='text-sm text-foreground'>Publish on</Label>
+                </Field>
+                <Field label='Publish on' hint='Today or earlier publishes immediately.'>
                   <Input
                     type='date'
-                    className='bg-background border-border'
+                    className={inputClass}
                     value={formData.announcementDate}
                     onChange={(e) => setFormData(prev => ({ ...prev, announcementDate: e.target.value }))}
                   />
-                  <p className='text-xs text-muted-foreground'>Today or earlier publishes immediately.</p>
-                </div>
+                </Field>
               </div>
             </FormSection>
 
-            {/* 3. Prizes */}
-            <FormSection title='Prizes & funding' step={3}>
+            {/* Prizes */}
+            <FormSection title='Prizes & funding'>
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label className='text-sm text-foreground'>Total budget *</Label>
+                <Field label='Total budget' required>
                   <Input
                     type='number'
                     inputMode='decimal'
                     min='0'
                     placeholder='1000'
-                    className='bg-background border-border'
+                    className={inputClass}
                     value={formData.totalBudget}
                     onChange={(e) => setFormData(prev => ({ ...prev, totalBudget: e.target.value }))}
                   />
-                </div>
-                <div className='space-y-2'>
-                  <Label className='text-sm text-foreground'>Paid in *</Label>
+                </Field>
+                <Field label='Paid in' required>
                   <Select
                     value={formData.asset}
                     onValueChange={(v) => setFormData(prev => ({ ...prev, asset: v }))}
                   >
-                    <SelectTrigger className='bg-background border-border w-full'>
+                    <SelectTrigger className='w-full h-[42px] bg-transparent border-[1.19px] border-input text-foreground'>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className='bg-card border-[1.19px] border-input text-foreground'>
                       {HACKATHON_ASSETS.map((a) => (
                         <SelectItem key={a} value={a}>{a}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
+                </Field>
               </div>
 
               {!editingHackathon && (
-                <div className='flex gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200'>
-                  <AlertTriangle className='h-4 w-4 shrink-0 mt-0.5 text-amber-500' />
+                <div className='flex gap-2 rounded-lg bg-primary/10 p-3 text-xs text-foreground'>
+                  <Info className='h-4 w-4 shrink-0 mt-0.5 text-primary' />
                   <p>
                     {formData.totalBudget || 'The total budget'} {formData.asset} is taken from your admin wallet and
-                    locked in escrow. The wallet needs that balance, a {formData.asset} trustline, and a little XLM
-                    for fees. The token contract is set automatically.
+                    locked in escrow. It needs that balance, a {formData.asset} trustline, and a little XLM for fees.
                   </p>
                 </div>
               )}
 
               <div className='space-y-3'>
                 <div className='flex items-center justify-between gap-2'>
-                  <Label className='text-sm text-foreground'>Prize pool *</Label>
+                  <Label className='text-foreground text-sm font-semibold'>
+                    Prize positions <span className='text-destructive'>*</span>
+                  </Label>
                   <Button
                     type='button'
                     variant='outline'
                     size='sm'
-                    onClick={() => setFormData(prev => ({
-                      ...prev,
-                      prizePool: [...prev.prizePool, { position: prev.prizePool.length + 1, amount: 0 }],
-                    }))}
+                    className='gap-1 border-input'
+                    onClick={addPrize}
                   >
-                    <Plus className='h-4 w-4 mr-1' /> Add prize
+                    <Plus className='h-4 w-4' /> Add position
                   </Button>
                 </div>
-                <div className='grid gap-2'>
+
+                <div className='space-y-2'>
                   {formData.prizePool.map((prize, idx) => (
-                    <div key={idx} className='flex items-center gap-2 rounded-lg bg-muted/20 p-2'>
-                      <span className='shrink-0 w-14 text-xs text-muted-foreground text-center'>
-                        Rank
-                        <Input
-                          type='number'
-                          min='1'
-                          className='mt-1 h-9 px-2 text-center'
-                          value={prize.position}
-                          onChange={(e) => {
-                            const newPool = formData.prizePool.map((p, i) =>
-                              i === idx ? { ...p, position: parseInt(e.target.value) || 0 } : p
-                            )
-                            setFormData(prev => ({ ...prev, prizePool: newPool }))
-                          }}
-                        />
-                      </span>
-                      <span className='flex-1 min-w-0 text-xs text-muted-foreground'>
-                        Amount ({formData.asset})
-                        <Input
-                          type='number'
-                          inputMode='decimal'
-                          min='0'
-                          className='mt-1 h-9'
-                          value={prize.amount}
-                          onChange={(e) => {
-                            const newPool = formData.prizePool.map((p, i) =>
-                              i === idx ? { ...p, amount: parseFloat(e.target.value) || 0 } : p
-                            )
-                            setFormData(prev => ({ ...prev, prizePool: newPool }))
-                          }}
-                        />
-                      </span>
+                    <div
+                      key={idx}
+                      className='flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2 pl-3'
+                    >
+                      <Badge className='shrink-0 w-12 justify-center bg-primary/10 text-primary border-0 hover:bg-primary/10'>
+                        {ordinal(prize.position)}
+                      </Badge>
+                      <Input
+                        type='number'
+                        inputMode='decimal'
+                        min='0'
+                        aria-label={`Prize for ${ordinal(prize.position)} place`}
+                        placeholder='Amount'
+                        className={cn(inputClass, 'flex-1 min-w-0')}
+                        value={prize.amount || ''}
+                        onChange={(e) => updatePrizeAmount(idx, parseFloat(e.target.value) || 0)}
+                      />
+                      <span className='hidden sm:block text-xs text-muted-foreground w-12'>{formData.asset}</span>
                       <Button
                         type='button'
                         variant='ghost'
                         size='icon'
-                        className='shrink-0 self-end'
-                        aria-label='Remove prize'
-                        onClick={() => setFormData(prev => ({
-                          ...prev,
-                          prizePool: prev.prizePool.filter((_, i) => i !== idx),
-                        }))}
+                        className='shrink-0 text-muted-foreground hover:text-destructive'
+                        aria-label='Remove position'
+                        disabled={formData.prizePool.length <= 1}
+                        onClick={() => removePrize(idx)}
                       >
                         <X className='h-4 w-4' />
                       </Button>
                     </div>
                   ))}
                 </div>
-                <p
-                  className={cn(
-                    'text-xs',
-                    prizeRemaining === 0 && Number(formData.totalBudget) > 0
-                      ? 'text-green-500'
-                      : 'text-muted-foreground'
-                  )}
-                >
-                  Allocated {prizeTotal} of {Number(formData.totalBudget) || 0} {formData.asset}
-                  {Number(formData.totalBudget) > 0 &&
-                    (prizeRemaining === 0
-                      ? ' — fully allocated'
-                      : prizeRemaining > 0
-                        ? ` — ${prizeRemaining} left to allocate`
-                        : ` — over budget by ${Math.abs(prizeRemaining)}`)}
-                </p>
+
+                <div className='flex flex-wrap items-center justify-between gap-2'>
+                  <p
+                    className={cn(
+                      'text-xs',
+                      prizeRemaining === 0 && Number(formData.totalBudget) > 0
+                        ? 'text-green-500'
+                        : prizeRemaining < 0
+                          ? 'text-destructive'
+                          : 'text-muted-foreground'
+                    )}
+                  >
+                    Allocated {prizeTotal} of {Number(formData.totalBudget) || 0} {formData.asset}
+                    {Number(formData.totalBudget) > 0 &&
+                      (prizeRemaining === 0
+                        ? ' — fully allocated'
+                        : prizeRemaining > 0
+                          ? ` — ${prizeRemaining} left`
+                          : ` — over by ${Math.abs(prizeRemaining)}`)}
+                  </p>
+                  <div className='flex gap-2'>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      className='h-7 px-2 text-xs text-primary'
+                      disabled={!(Number(formData.totalBudget) > 0)}
+                      onClick={splitPrizesEvenly}
+                    >
+                      Split evenly
+                    </Button>
+                  </div>
+                </div>
               </div>
             </FormSection>
 
-            {/* 4. Participation */}
-            <FormSection title='Participation & judging' step={4}>
-              <div className='flex items-center justify-between gap-4 rounded-xl border border-border p-4'>
+            {/* Participation */}
+            <FormSection title='Participation & judging'>
+              <div className='flex items-center justify-between gap-4 rounded-lg border border-border p-4'>
                 <div>
-                  <Label className='text-sm text-foreground'>Team based</Label>
+                  <Label className='text-foreground text-sm font-semibold'>Team based</Label>
                   <p className='text-xs text-muted-foreground'>Allow teams to participate</p>
                 </div>
                 <Switch checked={teamBasedParticipation} onCheckedChange={setTeamBasedParticipation} />
               </div>
 
               {teamBasedParticipation && (
-                <div className='space-y-2'>
-                  <Label className='text-sm text-foreground'>Max team size</Label>
+                <Field label='Max team size'>
                   <Input
                     type='number'
                     min='2'
-                    className='bg-background border-border'
+                    className={inputClass}
                     value={formData.maxTeamSize}
                     onChange={(e) => setFormData(prev => ({ ...prev, maxTeamSize: e.target.value }))}
                   />
-                </div>
+                </Field>
               )}
 
-              <div className='space-y-2'>
-                <Label className='text-sm text-foreground'>Project owner (judge)</Label>
+              <Field label='Project owner (judge)' hint='Optional. Defaults to you if left empty.'>
                 <Popover open={userSearchOpen} onOpenChange={setUserSearchOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant='outline'
                       role='combobox'
                       aria-expanded={userSearchOpen}
-                      className='w-full justify-between bg-background border-border font-normal'
+                      className='w-full h-[42px] justify-between bg-transparent border-[1.19px] border-input font-normal text-foreground'
                     >
                       <span className='truncate'>
                         {formData.companyId
@@ -1132,7 +1168,7 @@ export default function HackathonAdministrationPage() {
                       <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className='w-(--radix-popover-trigger-width) p-0 border-border bg-card'>
+                  <PopoverContent className='w-(--radix-popover-trigger-width) p-0 border-[1.19px] border-input bg-card'>
                     <Command className='bg-card'>
                       <CommandInput placeholder='Search project owners...' className='h-9' />
                       <CommandList>
@@ -1171,20 +1207,25 @@ export default function HackathonAdministrationPage() {
                     </Command>
                   </PopoverContent>
                 </Popover>
-                <p className='text-xs text-muted-foreground'>
-                  Optional. Defaults to you if left empty.
-                </p>
-              </div>
+              </Field>
             </FormSection>
           </div>
 
-          <div className='px-4 sm:px-6 py-4 border-t border-border bg-card'>
+          <div className='flex flex-col-reverse gap-2 sm:flex-row sm:justify-end p-4 sm:p-6 border-t border-border'>
             <Button
-              className='w-full h-11 font-semibold'
+              type='button'
+              variant='ghost'
+              className='text-muted-foreground'
+              onClick={() => handleCreateModalOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className='bg-primary hover:bg-primary/90 text-primary-foreground sm:min-w-[160px]'
               disabled={isSubmitting}
               onClick={() => void handleCreateSubmit()}
             >
-              {isSubmitting ? <Loader2 className='h-5 w-5 animate-spin mr-2' /> : null}
+              {isSubmitting ? <Loader2 className='h-4 w-4 animate-spin mr-2' /> : null}
               {editingHackathon ? 'Save changes' : 'Create hackathon'}
             </Button>
           </div>
