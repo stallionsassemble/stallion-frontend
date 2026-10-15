@@ -292,6 +292,9 @@ export default function HackathonAdministrationPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [recoverOpen, setRecoverOpen] = useState(false)
+  const [recoverId, setRecoverId] = useState('')
+  const [isRecovering, setIsRecovering] = useState(false)
   const [editingHackathon, setEditingHackathon] = useState<HackathonAdminListItem | null>(null)
 
   // Admin Step-up State
@@ -527,7 +530,41 @@ export default function HackathonAdministrationPage() {
   }
 
   const onStepUpSuccess = (token: string) => {
-    void handleCreateSubmit(token)
+    if (recoverOpen) void handleRecoverEscrow(token)
+    else void handleCreateSubmit(token)
+  }
+
+  const handleRecoverEscrow = async (token?: string) => {
+    const id = recoverId.trim()
+    if (!/^\d+$/.test(id)) {
+      toast.error('Enter the on-chain hackathon id', { description: 'It is a long number, digits only.' })
+      return
+    }
+    const currentStepUpToken = token || getValidStepUpToken()
+    if (!currentStepUpToken) {
+      setStepUpOpen(true)
+      return
+    }
+    setIsRecovering(true)
+    const toastId = toast.loading('Cancelling on-chain hackathon...')
+    try {
+      const result = await adminService.recoverHackathonEscrow(id, currentStepUpToken)
+      toast.success('Escrow refunded', {
+        id: toastId,
+        description: `${result.refundedAmount} returned to your admin wallet (tx ${result.txHash.slice(0, 10)}…).`,
+        duration: 12000,
+      })
+      setRecoverOpen(false)
+      setRecoverId('')
+    } catch (error: unknown) {
+      toast.error('Could not recover the escrow', {
+        id: toastId,
+        description: getErrorMessage(error, 'Something went wrong. Please try again.'),
+        duration: 15000,
+      })
+    } finally {
+      setIsRecovering(false)
+    }
   }
 
   const handleDelete = async (hackathonId: string) => {
@@ -618,6 +655,14 @@ export default function HackathonAdministrationPage() {
           >
             {isExporting ? <Loader2 className='h-4 w-4 animate-spin' /> : <Download className='h-4 w-4' />}
             Export
+          </Button>
+          <Button
+            variant='outline'
+            className='flex-1 sm:flex-none gap-2 border-border'
+            onClick={() => setRecoverOpen(true)}
+          >
+            <StopCircle className='h-4 w-4' />
+            Recover escrow
           </Button>
           <Button
             className='flex-1 sm:flex-none gap-2 bg-primary hover:bg-primary/90'
@@ -887,6 +932,46 @@ export default function HackathonAdministrationPage() {
           </div>
         </div>
       </div>
+
+      {/* Recover escrow for an on-chain hackathon that was never saved */}
+      <Dialog open={recoverOpen} onOpenChange={setRecoverOpen}>
+        <DialogContent className='bg-card border-border w-[calc(100%-1.5rem)] sm:max-w-[480px] p-0 gap-0'>
+          <DialogHeader className='p-4 sm:p-6 border-b border-border text-left'>
+            <DialogTitle className='text-xl font-bold text-foreground font-inter'>Recover escrow</DialogTitle>
+            <DialogDescription className='text-sm text-muted-foreground'>
+              Use this when a hackathon was funded on-chain but failed to save, so it is missing from the list. It cancels
+              the on-chain hackathon and refunds the escrow to your admin wallet.
+            </DialogDescription>
+          </DialogHeader>
+          <div className='p-4 sm:p-6 space-y-2'>
+            <Label className='text-foreground text-sm font-semibold'>On-chain hackathon id</Label>
+            <Input
+              inputMode='numeric'
+              placeholder='e.g. 270721946264535041'
+              className={inputClass}
+              value={recoverId}
+              onChange={(e) => setRecoverId(e.target.value.replace(/\D/g, ''))}
+            />
+            <p className='text-xs text-muted-foreground'>
+              The id is in the backend log line “Hackathon DB insert failed AFTER escrow was locked”, or in the error shown
+              when creation failed. Hackathons that appear in the list should be cancelled from the list instead.
+            </p>
+          </div>
+          <div className='flex flex-col-reverse gap-2 sm:flex-row sm:justify-end p-4 sm:p-6 border-t border-border'>
+            <Button variant='ghost' className='text-muted-foreground' onClick={() => setRecoverOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className='bg-primary hover:bg-primary/90 text-primary-foreground'
+              disabled={isRecovering || !recoverId}
+              onClick={() => void handleRecoverEscrow()}
+            >
+              {isRecovering ? <Loader2 className='h-4 w-4 animate-spin mr-2' /> : null}
+              Cancel & refund
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Create / Edit Hackathon Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={handleCreateModalOpenChange}>

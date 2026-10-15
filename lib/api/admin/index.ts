@@ -12,6 +12,7 @@ import {
   FundingWalletResponse
 } from '@/lib/types/admin'
 import { getStallionBackendAPI } from '@/lib/api/generated/admin/admin-sdk'
+import { api } from '@/lib/api'
 import { useAdminStore } from '@/lib/store/use-admin-store'
 import type {
   AdminCreateHackathonDto,
@@ -168,6 +169,16 @@ class AdminService {
 
   async deleteHackathon(hackathonId: string, stepUpToken?: string) {
     return adminSdk.adminControllerDeleteHackathon(hackathonId, withStepUp(stepUpToken))
+  }
+
+  // Cancels an on-chain hackathon that has no database record and refunds its escrow.
+  async recoverHackathonEscrow(contractHackathonId: string, stepUpToken?: string) {
+    const response = await api.post<{ refundedAmount: string; txHash: string }>(
+      '/admin/hackathons/recover-escrow',
+      { contractHackathonId },
+      withStepUp(stepUpToken)
+    )
+    return response.data
   }
 
   // --- Funding Wallet ---
