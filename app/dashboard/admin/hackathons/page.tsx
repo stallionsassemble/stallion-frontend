@@ -69,6 +69,7 @@ import { useAuth } from '@/lib/store/use-auth'
 import { AdminHackathon } from '@/lib/types/admin'
 import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { HackathonFundingNotice } from '@/components/admin/hackathon-funding-notice'
 import {
   Command,
   CommandEmpty,
@@ -1034,17 +1035,7 @@ export default function HackathonAdministrationPage() {
               </div>
 
               {!editingHackathon && (
-                <div className='flex gap-2 rounded-lg bg-primary/10 p-3 text-xs text-foreground'>
-                  <Info className='h-4 w-4 shrink-0 mt-0.5 text-primary' />
-                  <p>
-                    {formData.totalBudget || 'The total budget'} {formData.asset} is taken from your admin wallet and
-                    locked in escrow, plus a 5% platform fee
-                    {Number(formData.totalBudget) > 0 &&
-                      ` (${(Number(formData.totalBudget) * 1.05).toLocaleString(undefined, { maximumFractionDigits: 7 })} ${formData.asset} in total)`}
-                    . The wallet also needs a {formData.asset} trustline and some XLM for fees
-                    (Stellar keeps about 1.5 XLM locked in every account).
-                  </p>
-                </div>
+                <HackathonFundingNotice budget={parseFloat(formData.totalBudget)} asset={formData.asset} />
               )}
 
               <div className='space-y-3'>
