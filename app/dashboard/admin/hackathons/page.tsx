@@ -116,10 +116,11 @@ const getErrorMessage = (error: unknown, fallback: string) => {
     'data' in error.response &&
     error.response.data &&
     typeof error.response.data === 'object' &&
-    'message' in error.response.data &&
-    typeof error.response.data.message === 'string'
+    'message' in error.response.data
   ) {
-    return error.response.data.message
+    const message = (error.response.data as { message: unknown }).message
+    if (typeof message === 'string' && message) return message
+    if (Array.isArray(message) && message.length > 0) return message.join('. ')
   }
 
   if (error instanceof Error && error.message) {
@@ -127,6 +128,48 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   }
 
   return fallback
+}
+
+// Returns a specific, user-facing problem with the create form, or null if it looks valid.
+const validateHackathonForm = (
+  data: { totalBudget: string; asset: string; deadline: string; announcementDate: string; prizePool: HackathonPrize[] },
+  isEditing: boolean
+): string | null => {
+  const budget = parseFloat(data.totalBudget)
+  if (!Number.isFinite(budget) || budget <= 0) {
+    return 'Total budget must be a number greater than 0.'
+  }
+  if (!data.asset.trim()) {
+    return 'Choose the asset the prizes are paid in (e.g. USDC).'
+  }
+
+  const deadline = new Date(data.deadline)
+  if (Number.isNaN(deadline.getTime())) return 'Enter a valid deadline.'
+  if (!isEditing && deadline.getTime() <= Date.now()) {
+    return 'The deadline must be in the future.'
+  }
+
+  if (data.announcementDate) {
+    const announcement = new Date(data.announcementDate)
+    if (!Number.isNaN(announcement.getTime()) && announcement.getTime() >= deadline.getTime()) {
+      return 'The announcement date must be before the deadline.'
+    }
+  }
+
+  if (data.prizePool.length === 0) return 'Add at least one prize.'
+  if (data.prizePool.some((p) => !(Number(p.amount) > 0))) {
+    return 'Every prize must have an amount greater than 0. Remove any empty prize rows.'
+  }
+  const positions = data.prizePool.map((p) => p.position)
+  if (new Set(positions).size !== positions.length) {
+    return 'Prize positions must be unique (1, 2, 3 …).'
+  }
+  const prizeSum = data.prizePool.reduce((sum, p) => sum + Number(p.amount), 0)
+  if (Math.abs(prizeSum - budget) > 0.0000001) {
+    return `The prizes add up to ${prizeSum} ${data.asset}, but the total budget is ${budget} ${data.asset}. They must match exactly.`
+  }
+
+  return null
 }
 
 // Status badge styling helper
@@ -301,7 +344,10 @@ export default function HackathonAdministrationPage() {
       deliverables,
       tags,
       deadline: new Date(formData.deadline).toISOString(),
-      announcementDate: new Date(formData.announcementDate).toISOString(),
+      // A date that isn't in the future means "publish immediately", which the API expects as no date.
+      ...(formData.announcementDate && new Date(formData.announcementDate).getTime() > Date.now()
+        ? { announcementDate: new Date(formData.announcementDate).toISOString() }
+        : {}),
       totalBudget: parseFloat(formData.totalBudget),
       token: formData.token.trim() || 'native',
       asset: formData.asset,
@@ -316,6 +362,12 @@ export default function HackathonAdministrationPage() {
   const handleCreateSubmit = async (token?: string) => {
     if (!formData.title || !formData.description || !formData.deadline || !formData.totalBudget) {
       toast.error('Please fill in all required fields')
+      return
+    }
+
+    const formProblem = validateHackathonForm(formData, Boolean(editingHackathon))
+    if (formProblem) {
+      toast.error('Check the hackathon details', { description: formProblem, duration: 8000 })
       return
     }
 
@@ -350,18 +402,27 @@ export default function HackathonAdministrationPage() {
       }
       
       toast.success(
-        editingHackathon ? 'Hackathon updated successfully' : 'Hackathon created successfully',
-        { id: toastId }
+        editingHackathon ? 'Hackathon updated' : 'Hackathon created',
+        {
+          id: toastId,
+          description: editingHackathon
+            ? undefined
+            : `${formData.totalBudget} ${formData.asset} has been placed in escrow on-chain.`,
+        }
       )
       handleCreateModalOpenChange(false)
       refetch()
     } catch (error: unknown) {
       toast.error(
-        getErrorMessage(
-          error,
-          editingHackathon ? 'Failed to update hackathon' : 'Failed to create hackathon'
-        ),
-        { id: toastId }
+        editingHackathon ? 'Could not update the hackathon' : 'Could not create the hackathon',
+        {
+          id: toastId,
+          description: getErrorMessage(
+            error,
+            'Something went wrong. Please check your details and try again.'
+          ),
+          duration: 15000,
+        }
       )
     } finally {
       setIsSubmitting(false)
@@ -858,6 +919,14 @@ export default function HackathonAdministrationPage() {
                 />
               </div>
             </div>
+
+            {!editingHackathon && (
+              <p className='text-xs text-muted-foreground'>
+                The total budget is locked in escrow when you create the hackathon. Your admin wallet must hold at
+                least {formData.totalBudget || 'the total budget'} {formData.asset || 'of the asset'} (with a
+                trustline for it) plus a little XLM for network fees.
+              </p>
+            )}
 
             <div className='space-y-2'>
               <Label className='text-sm text-foreground'>Tracks *</Label>
