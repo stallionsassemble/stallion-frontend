@@ -1038,7 +1038,11 @@ export default function HackathonAdministrationPage() {
                   <Info className='h-4 w-4 shrink-0 mt-0.5 text-primary' />
                   <p>
                     {formData.totalBudget || 'The total budget'} {formData.asset} is taken from your admin wallet and
-                    locked in escrow. It needs that balance, a {formData.asset} trustline, and a little XLM for fees.
+                    locked in escrow, plus a 5% platform fee
+                    {Number(formData.totalBudget) > 0 &&
+                      ` (${(Number(formData.totalBudget) * 1.05).toLocaleString(undefined, { maximumFractionDigits: 7 })} ${formData.asset} in total)`}
+                    . The wallet also needs a {formData.asset} trustline and some XLM for fees
+                    (Stellar keeps about 1.5 XLM locked in every account).
                   </p>
                 </div>
               )}
