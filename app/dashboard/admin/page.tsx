@@ -22,6 +22,7 @@ import {
 } from 'recharts'
 import { useAdminDashboardStats } from '@/lib/api/admin/queries'
 import { useMemo } from 'react'
+import { AdminWalletCard } from '@/components/admin/admin-wallet-card'
 
 export default function AdminDashboardPage() {
   const { data: stats, isLoading } = useAdminDashboardStats()
@@ -118,6 +119,8 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
       </div>
+
+      <AdminWalletCard />
 
       {/* Stats Cards */}
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
