@@ -69,6 +69,7 @@ import { useAuth } from '@/lib/store/use-auth'
 import { AdminHackathon } from '@/lib/types/admin'
 import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TrackInput } from '@/components/admin/track-input'
 import { HackathonFundingNotice } from '@/components/admin/hackathon-funding-notice'
 import {
   Command,
@@ -971,12 +972,13 @@ export default function HackathonAdministrationPage() {
                 </Field>
               </div>
 
-              <Field label='Tracks' hint='Separate with commas. Defaults to “Main”.'>
-                <Input
-                  placeholder='Main, Track 1'
-                  className={inputClass}
-                  value={formData.tracks}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tracks: e.target.value }))}
+              <Field
+                label='Tracks'
+                hint='Split the hackathon into categories. Type a name and press Enter or “Add track”. You can add as many as you like.'
+              >
+                <TrackInput
+                  tracks={formData.tracks.split(',').map((t) => t.trim()).filter(Boolean)}
+                  onChange={(next) => setFormData(prev => ({ ...prev, tracks: next.join(', ') }))}
                 />
               </Field>
             </FormSection>
