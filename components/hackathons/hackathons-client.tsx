@@ -126,6 +126,7 @@ export function HackathonsClient() {
               <SelectItem value="all">All Formats</SelectItem>
               <SelectItem value="VIRTUAL">Virtual</SelectItem>
               <SelectItem value="PHYSICAL">Physical</SelectItem>
+              <SelectItem value="HYBRID">Hybrid</SelectItem>
             </SelectContent>
           </Select>
 

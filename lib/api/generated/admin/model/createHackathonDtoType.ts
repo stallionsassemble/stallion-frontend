@@ -12,4 +12,5 @@ export type CreateHackathonDtoType = typeof CreateHackathonDtoType[keyof typeof 
 export const CreateHackathonDtoType = {
   VIRTUAL: 'VIRTUAL',
   PHYSICAL: 'PHYSICAL',
+  HYBRID: 'HYBRID',
 } as const;

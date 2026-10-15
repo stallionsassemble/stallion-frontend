@@ -12,4 +12,5 @@ export type HackathonsControllerGetHackathonsType = typeof HackathonsControllerG
 export const HackathonsControllerGetHackathonsType = {
   VIRTUAL: 'VIRTUAL',
   PHYSICAL: 'PHYSICAL',
+  HYBRID: 'HYBRID',
 } as const;

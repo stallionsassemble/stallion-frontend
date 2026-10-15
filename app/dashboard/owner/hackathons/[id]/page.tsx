@@ -60,7 +60,7 @@ import { cn } from '@/lib/utils'
 
 type EditableHackathonForm = {
   title: string
-  type: 'VIRTUAL' | 'PHYSICAL'
+  type: 'VIRTUAL' | 'PHYSICAL' | 'HYBRID'
   description: string
   startDate: string
   endDate: string
@@ -175,7 +175,7 @@ const getDisplayName = (user?: User) => {
 
 const mapHackathonToForm = (hackathon: HackathonView): EditableHackathonForm => ({
   title: hackathon.title || '',
-  type: (hackathon as any).type === 'PHYSICAL' ? 'PHYSICAL' : 'VIRTUAL',
+  type: ['PHYSICAL', 'HYBRID'].includes((hackathon as any).type) ? (hackathon as any).type : 'VIRTUAL',
   description: hackathon.description || '',
   startDate: hackathon.startDate ? new Date(hackathon.startDate).toISOString().slice(0, 10) : '',
   endDate: hackathon.endDate ? new Date(hackathon.endDate).toISOString().slice(0, 10) : '',
