@@ -19,6 +19,8 @@ interface SubmitHackathonModalProps {
   hackathonTitle: string;
   isTeamBased: boolean;
   initialTeamId?: string;
+  /** The hackathon's tracks. When there are any, the submission must pick one. */
+  tracks?: string[];
 }
 
 export function SubmitHackathonModal({
@@ -28,6 +30,7 @@ export function SubmitHackathonModal({
   hackathonTitle,
   isTeamBased,
   initialTeamId,
+  tracks = [],
 }: SubmitHackathonModalProps) {
   const [step, setStep] = useState<"team-setup" | "project-details">("project-details");
   const [teamMode, setTeamMode] = useState<"create" | "join" | null>(null);
@@ -41,6 +44,7 @@ export function SubmitHackathonModal({
   const [submissionLink, setSubmissionLink] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [track, setTrack] = useState<string>(tracks.length === 1 ? tracks[0] : "");
 
   const submitMutation = useSubmitProject();
   const createTeamMutation = useCreateTeam();
@@ -102,6 +106,10 @@ export function SubmitHackathonModal({
       toast.error("Please fill in all required fields");
       return;
     }
+    if (tracks.length > 0 && !track) {
+      toast.error("Choose a track for your project");
+      return;
+    }
 
     submitMutation.mutate({
       id: hackathonId,
@@ -113,6 +121,7 @@ export function SubmitHackathonModal({
         repositoryUrl: githubUrl || undefined,
         videoUrl: videoUrl || undefined,
         teamId: currentTeamId || undefined,
+        track: track || undefined,
       },
     }, {
       onSuccess: () => {
@@ -128,6 +137,7 @@ export function SubmitHackathonModal({
     setSubmissionLink("");
     setGithubUrl("");
     setVideoUrl("");
+    setTrack(tracks.length === 1 ? tracks[0] : "");
     setTeamName("");
     setJoinCode("");
     setTeamMode(null);
@@ -242,6 +252,30 @@ export function SubmitHackathonModal({
                     className="bg-white/5 border-white/10 h-12 text-white rounded-xl"
                   />
                 </div>
+
+                {tracks.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-gray-400 text-xs uppercase tracking-widest font-bold">Track *</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {tracks.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setTrack(t)}
+                          className={cn(
+                            "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+                            track === t
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-white/10 bg-white/5 text-gray-300 hover:bg-white/10"
+                          )}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500">Pick the track your project belongs to.</p>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="description" className="text-gray-400 text-xs uppercase tracking-widest font-bold">Project Description *</Label>
