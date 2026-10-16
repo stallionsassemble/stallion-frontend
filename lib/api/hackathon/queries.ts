@@ -1,3 +1,4 @@
+import type { ApplicationAnswers } from '@/lib/hackathon-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { hackathonService } from './index'
@@ -82,6 +83,35 @@ export const useGetHackathonWinners = (hackathonId: string) => {
       return (response as any).data || response
     },
     enabled: !!hackathonId,
+  })
+}
+
+export const useMyApplication = (hackathonId?: string) => {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['hackathons', hackathonId, 'my-application', user?.id],
+    queryFn: () => hackathonService.getMyApplication(hackathonId as string),
+    enabled: !!hackathonId && !!user,
+  })
+}
+
+export const useApplyHackathon = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, answers }: { id: string; answers: ApplicationAnswers }) =>
+      hackathonService.apply(id, answers),
+    onSuccess: (application, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['hackathons'] })
+      queryClient.invalidateQueries({ queryKey: ['hackathons', id, 'my-application'] })
+      if (application.status === 'PENDING') {
+        toast.success('Application sent', {
+          description: "We'll email you as soon as it has been reviewed.",
+        })
+      } else {
+        toast.success("You're in!", { description: 'Your application was accepted. Good luck building.' })
+      }
+    },
+    // The modal shows the error next to the form, so no toast here.
   })
 }
 

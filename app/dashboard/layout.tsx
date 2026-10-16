@@ -1,3 +1,4 @@
+import { PostAuthRedirect } from '@/components/auth/post-auth-redirect'
 import { AuthGuard } from '@/components/auth/auth-guard'
 import { Header } from '@/components/dashboard/header'
 import { Sidebar } from '@/components/dashboard/sidebar'
@@ -12,6 +13,7 @@ export default function DashboardLayout({
   return (
     <AuthGuard>
       <SocketProvider>
+        <PostAuthRedirect />
         <div className='flex min-h-screen bg-background text-foreground'>
           {/* Sidebar - Fixed width */}
           <Sidebar />

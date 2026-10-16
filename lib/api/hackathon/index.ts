@@ -1,4 +1,6 @@
 /* eslint-disable */
+import { api } from '@/lib/api'
+import type { ApplicationAnswers } from '@/lib/hackathon-form'
 import { getStallionBackendAPI } from '@/lib/api/generated/hackathons/hackathons-sdk'
 import type {
   CreateHackathonDto,
@@ -10,6 +12,24 @@ import type {
 } from '@/lib/api/generated/hackathons/model'
 
 const hackathonsSdk = getStallionBackendAPI()
+
+export type ApplicationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN'
+
+export interface HackathonApplication {
+  id: string
+  status: ApplicationStatus
+  teamId: string | null
+  lookingForTeam: boolean
+  applicationData: ApplicationAnswers | null
+  appliedAt: string
+  reviewNote?: string | null
+  team?: { id: string; name: string; leaderId: string; _count?: { participants: number } } | null
+}
+
+export interface MyApplicationResponse {
+  applied: boolean
+  application: HackathonApplication | null
+}
 
 class HackathonService {
   async createHackathon(payload: CreateHackathonDto) {
@@ -38,6 +58,16 @@ class HackathonService {
 
   async createSubmission(id: string, payload: CreateSubmissionDto) {
     return hackathonsSdk.hackathonsControllerSubmitProject(id, payload)
+  }
+
+  async apply(id: string, answers: ApplicationAnswers) {
+    const response = await api.post<HackathonApplication>(`/hackathons/${id}/apply`, { answers })
+    return response.data
+  }
+
+  async getMyApplication(id: string) {
+    const response = await api.get<MyApplicationResponse>(`/hackathons/${id}/my-application`)
+    return response.data
   }
 
   async participate(id: string) {

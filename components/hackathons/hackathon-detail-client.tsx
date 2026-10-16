@@ -1,7 +1,11 @@
 /* eslint-disable */
 "use client";
 
-import { useGetHackathon, useGetHackathonWinners, useParticipateHackathon } from "@/lib/api/hackathon/queries";
+import { useGetHackathon, useGetHackathonWinners, useMyApplication } from "@/lib/api/hackathon/queries";
+import { ApplyHackathonModal } from "./apply-hackathon-modal";
+import { rememberPostAuthRedirect } from "@/lib/post-auth-redirect";
+import { useRouter } from "next/navigation";
+import type { ApplicationQuestion } from "@/lib/hackathon-form";
 import { useAuth } from "@/lib/store/use-auth";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +31,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SubmitHackathonModal } from "./submit-hackathon-modal";
 import { HackathonTeamManagement } from "./hackathon-team-management";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const getAwardIcon = (rank: number) => {
   switch (rank) {
@@ -64,17 +68,43 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
   const { data: hackathon, isLoading } = useGetHackathon(id);
   const { data: winners } = useGetHackathonWinners(id);
   const { user } = useAuth();
-  const participateMutation = useParticipateHackathon();
+  const router = useRouter();
+  const { data: myApplication } = useMyApplication(hackathon?.id);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [isApplyOpen, setIsApplyOpen] = useState(false);
+
+  const application = myApplication?.application ?? null;
+  const applicationStatus = application?.status;
+  const hasApplied = !!myApplication?.applied;
+  const isAccepted = applicationStatus === "ACCEPTED";
+  const applicationQuestions: ApplicationQuestion[] = Array.isArray((hackathon as any)?.applicationForm)
+    ? ((hackathon as any).applicationForm as ApplicationQuestion[])
+    : [];
 
   const handleRegister = () => {
+    if (!hackathon) return;
     if (!user) {
-      toast.error("Please login to register for hackathons");
+      // Send them to log in, then bring them back here with the form open.
+      rememberPostAuthRedirect(`/hackathons/${id}?apply=1`);
+      toast.info("Log in or create an account to apply", {
+        description: "We'll bring you back to this hackathon afterwards.",
+      });
+      router.push("/auth/login");
       return;
     }
-    if (!hackathon) return;
-    participateMutation.mutate(hackathon.id);
+    setIsApplyOpen(true);
   };
+
+  // Coming back from login with ?apply=1: open the form once, then tidy the URL.
+  useEffect(() => {
+    if (!hackathon || !user || myApplication === undefined) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("apply") !== "1") return;
+    params.delete("apply");
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+    if (!myApplication.applied) setIsApplyOpen(true);
+  }, [hackathon, user, myApplication]);
 
   if (isLoading) {
     return (
@@ -196,60 +226,72 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
           <p className="text-gray-500 uppercase tracking-widest text-xs font-bold font-inter">In Total Prizes</p>
         </div>
 
-        {(() => {
-          const isJoined = !!(hackathon.isParticipant || hackathon.userTeam || hackathon.myTeam || hackathon.team || hackathon.participation);
-          const hasSubmitted = !!(hackathon.userSubmission || hackathon.participation?.submission);
-          
-          return (
-            <div className="flex items-center gap-4 pt-4">
-              <Button 
-                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-12 h-14 text-lg font-bold shadow-2xl shadow-primary/20"
-                disabled={isExpired || participateMutation.isPending || isJoined}
-                onClick={() => handleRegister()}
-              >
-                {participateMutation.isPending ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : isExpired ? (
-                  "Registration Closed"
-                ) : isJoined ? (
-                  "Joined"
-                ) : (
-                  "Register Now"
-                )}
-              </Button>
-              <Button 
-                variant="outline" 
-                className={cn(
-                  "rounded-full px-12 h-14 text-lg font-bold transition-all",
-                  hasSubmitted 
-                    ? "bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20" 
-                    : "bg-white/5 border-white/10 hover:bg-white/10 text-white"
-                )}
-                onClick={() => {
-                  if (!user) {
-                    toast.error("Please login to submit a project");
-                    return;
-                  }
-                  if (hasSubmitted) {
-                    toast.info("You have already submitted a project for this hackathon.");
-                    return;
-                  }
-                  setIsSubmitModalOpen(true);
-                }}
-                disabled={hasSubmitted}
-              >
-                {hasSubmitted ? (
-                  <>
-                    <CheckCircle2 className="h-5 w-5 mr-2" />
-                    Submitted
-                  </>
-                ) : (
-                  "Submit Project"
-                )}
-              </Button>
-            </div>
-          );
-        })()}
+        <div className="flex flex-col items-center gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <Button
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-12 h-14 text-lg font-bold shadow-2xl shadow-primary/20"
+              disabled={isExpired || hasApplied}
+              onClick={handleRegister}
+            >
+              {isExpired && !hasApplied
+                ? "Registration Closed"
+                : applicationStatus === "PENDING"
+                  ? "Application Pending"
+                  : applicationStatus === "REJECTED"
+                    ? "Not Accepted"
+                    : hasApplied
+                      ? "Applied"
+                      : "Apply Now"}
+            </Button>
+            <Button
+              variant="outline"
+              className={cn(
+                "rounded-full px-12 h-14 text-lg font-bold transition-all",
+                hasSubmitted
+                  ? "bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20"
+                  : "bg-white/5 border-white/10 hover:bg-white/10 text-white"
+              )}
+              onClick={() => {
+                if (!user) {
+                  handleRegister();
+                  return;
+                }
+                if (!isAccepted) {
+                  toast.info(
+                    hasApplied
+                      ? "You can submit once your application is accepted."
+                      : "Apply to this hackathon first, then you can submit your project."
+                  );
+                  return;
+                }
+                if (hasSubmitted) {
+                  toast.info("You have already submitted a project for this hackathon.");
+                  return;
+                }
+                setIsSubmitModalOpen(true);
+              }}
+              disabled={hasSubmitted}
+            >
+              {hasSubmitted ? (
+                <>
+                  <CheckCircle2 className="h-5 w-5 mr-2" />
+                  Submitted
+                </>
+              ) : (
+                "Submit Project"
+              )}
+            </Button>
+          </div>
+          {applicationStatus === "PENDING" && (
+            <p className="text-sm text-amber-400">Your application is being reviewed. We will email you the decision.</p>
+          )}
+          {applicationStatus === "REJECTED" && (
+            <p className="text-sm text-red-400">Your application was not accepted this time.</p>
+          )}
+          {isAccepted && !hasSubmitted && (
+            <p className="text-sm text-green-400">You are in. Submit your project before the deadline.</p>
+          )}
+        </div>
       </div>
 
       {/* Main Image Section */}
@@ -274,25 +316,31 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
               <section className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-white font-syne">Team Formation</h2>
-                  {hackathon.isParticipant && !hackathon.userTeam && !hackathon.myTeam && !hackathon.participation?.team && (
+                  {hasApplied && !application?.team && (
                     <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary">Required</Badge>
                   )}
                 </div>
                 <HackathonTeamManagement 
                   hackathonId={hackathon.id} 
-                  userTeam={hackathon.userTeam || hackathon.myTeam || hackathon.participation?.team} 
+                  userTeam={application?.team ?? hackathon.userTeam ?? hackathon.myTeam ?? hackathon.participation?.team} 
                 />
               </section>
             )
           ) : (
-            (hackathon.isParticipant || hackathon.participation) && (
+            hasApplied && (
               <section className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md flex items-center gap-4">
                 <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
                   <Check className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-white font-bold">You're Registered</h3>
-                  <p className="text-gray-500 text-sm">Individual participation confirmed</p>
+                  <h3 className="text-white font-bold">
+                    {applicationStatus === "PENDING" ? "Application received" : "You're Registered"}
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {applicationStatus === "PENDING"
+                      ? "We'll email you once it has been reviewed"
+                      : "Individual participation confirmed"}
+                  </p>
                 </div>
               </section>
             )
@@ -476,23 +524,32 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
               <div className="space-y-4">
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/20" 
-                  disabled={isExpired || participateMutation.isPending}
+                  disabled={isExpired || hasApplied}
                   onClick={handleRegister}
                 >
-                  {participateMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : "Apply Now"}
+                  {applicationStatus === "PENDING" ? "Application Pending" : hasApplied ? "Applied" : isExpired ? "Registration Closed" : "Apply Now"}
                 </Button>
                 <Button 
                   variant="outline"
                   className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white h-14 rounded-2xl text-lg font-bold border-dashed"
+                  disabled={hasSubmitted}
                   onClick={() => {
                     if (!user) {
-                      toast.error("Please login to submit a project");
+                      handleRegister();
+                      return;
+                    }
+                    if (!isAccepted) {
+                      toast.info(
+                        hasApplied
+                          ? "You can submit once your application is accepted."
+                          : "Apply to this hackathon first, then you can submit your project."
+                      );
                       return;
                     }
                     setIsSubmitModalOpen(true);
                   }}
                 >
-                  Submit Project
+                  {hasSubmitted ? "Submitted" : "Submit Project"}
                 </Button>
                 <div className="flex flex-col gap-3 pt-2">
                   <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium uppercase tracking-wider">
@@ -515,13 +572,24 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
         </div>
       </div>
 
+      <ApplyHackathonModal
+        isOpen={isApplyOpen}
+        onClose={() => setIsApplyOpen(false)}
+        hackathonId={hackathon.id}
+        hackathonTitle={hackathon.title}
+        questions={applicationQuestions}
+        requiresApproval={Boolean((hackathon as any).requiresApproval)}
+        defaultEmail={(user as any)?.email}
+        defaultName={[(user as any)?.firstName, (user as any)?.lastName].filter(Boolean).join(" ") || undefined}
+      />
+
       <SubmitHackathonModal
         isOpen={isSubmitModalOpen}
         onClose={() => setIsSubmitModalOpen(false)}
         hackathonId={hackathon.id}
         hackathonTitle={hackathon.title}
         isTeamBased={!!(hackathon.teamBased || (hackathon as any).teamBasedParticipation)}
-        initialTeamId={hackathon.userTeam?.id || hackathon.myTeam?.id || hackathon.team?.id || hackathon.participation?.team?.id || hackathon.participation?.teamId}
+        initialTeamId={application?.teamId || hackathon.userTeam?.id || hackathon.myTeam?.id || hackathon.team?.id || hackathon.participation?.team?.id || hackathon.participation?.teamId}
       />
     </div>
   );

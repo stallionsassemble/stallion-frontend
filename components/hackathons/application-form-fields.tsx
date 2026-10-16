@@ -56,7 +56,7 @@ export function ApplicationFormFields({ questions, answers, onChange, errors = {
             const error = errors[q.id]
 
             return (
-              <div key={q.id} className='space-y-2'>
+              <div key={q.id} id={`application-${q.id}`} className='space-y-2'>
                 <Label className='text-sm font-semibold text-foreground'>
                   {q.label} {q.required && <span className='text-destructive'>*</span>}
                 </Label>
