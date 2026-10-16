@@ -69,6 +69,8 @@ import { useAuth } from '@/lib/store/use-auth'
 import { AdminHackathon } from '@/lib/types/admin'
 import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ApplicationFormBuilder } from '@/components/admin/application-form-builder'
+import { ApplicationQuestion, cleanFormForSubmit, validateFormDefinition } from '@/lib/hackathon-form'
 import { TrackInput } from '@/components/admin/track-input'
 import { HackathonFundingNotice } from '@/components/admin/hackathon-funding-notice'
 import {
@@ -109,6 +111,8 @@ type HackathonFormData = {
   maxTeamSize: string
   companyId: string
   tracks: string
+  applicationForm: ApplicationQuestion[]
+  requiresApproval: boolean
 }
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -283,6 +287,8 @@ export default function HackathonAdministrationPage() {
     maxTeamSize: '4',
     companyId: '',
     tracks: 'Main',
+    applicationForm: [],
+    requiresApproval: false,
   }
 
   const [currentPage, setCurrentPage] = useState(1)
@@ -411,7 +417,9 @@ export default function HackathonAdministrationPage() {
       teamBased: hackathon.teamBasedParticipation ?? true,
       maxTeamSize: String(hackathon.maxTeamSize || 4),
       companyId: hackathon.ownerId || '',
-      tracks: (hackathon.tracks || ['Main']).join(', '),
+      tracks: (hackathon.tracks?.length ? hackathon.tracks : ['Main']).join(', '),
+      applicationForm: ((hackathon as any).applicationForm as ApplicationQuestion[]) || [],
+      requiresApproval: Boolean((hackathon as any).requiresApproval),
     })
     setTeamBasedParticipation(
       typeof hackathon.teamBasedParticipation === 'boolean'
@@ -456,6 +464,8 @@ export default function HackathonAdministrationPage() {
       maxTeamSize: teamBasedParticipation ? parseInt(formData.maxTeamSize, 10) : 1,
       companyId: formData.companyId.trim() || (user?.id as string),
       tracks,
+      applicationForm: cleanFormForSubmit(formData.applicationForm),
+      requiresApproval: formData.requiresApproval,
     }
   }
 
@@ -468,6 +478,12 @@ export default function HackathonAdministrationPage() {
     const formProblem = validateHackathonForm(formData, Boolean(editingHackathon))
     if (formProblem) {
       toast.error('Check the hackathon details', { description: formProblem, duration: 8000 })
+      return
+    }
+
+    const formDefinitionProblem = validateFormDefinition(formData.applicationForm)
+    if (formDefinitionProblem) {
+      toast.error('Check the application form', { description: formDefinitionProblem, duration: 8000 })
       return
     }
 
@@ -1289,6 +1305,46 @@ export default function HackathonAdministrationPage() {
                     </Command>
                   </PopoverContent>
                 </Popover>
+              </Field>
+            </FormSection>
+
+            {/* Application form */}
+            <FormSection title='Application form'>
+              <Field label='Who can join?'>
+                <Tabs
+                  value={formData.requiresApproval ? 'approval' : 'open'}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, requiresApproval: v === 'approval' }))}
+                >
+                  <TabsList className='grid w-full grid-cols-2 h-11 p-1 rounded-lg bg-muted-foreground/20'>
+                    <TabsTrigger
+                      value='open'
+                      className='text-xs sm:text-sm font-medium rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'
+                    >
+                      Open to everyone
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value='approval'
+                      className='text-xs sm:text-sm font-medium rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'
+                    >
+                      Approval required
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <p className='text-xs text-muted-foreground'>
+                  {formData.requiresApproval
+                    ? 'Applications stay pending until you accept them. Only accepted applicants can submit a project.'
+                    : 'Anyone who applies is accepted straight away and can submit a project.'}
+                </p>
+              </Field>
+
+              <Field
+                label='Questions'
+                hint='Build the application form participants fill in. Leave it empty for one-click registration.'
+              >
+                <ApplicationFormBuilder
+                  questions={formData.applicationForm}
+                  onChange={(applicationForm) => setFormData(prev => ({ ...prev, applicationForm }))}
+                />
               </Field>
             </FormSection>
           </div>
