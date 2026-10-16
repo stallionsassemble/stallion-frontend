@@ -40,6 +40,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { adminService } from '@/lib/api/admin'
+import { HackathonApplicationsPanel } from '@/components/admin/hackathon-applications-panel'
 import {
   useGetHackathon,
   useGetHackathonSubmissions,
@@ -784,6 +785,14 @@ export default function HackathonAdminDetailsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <HackathonApplicationsPanel
+        hackathonId={hackathonId}
+        teamBased={Boolean((hackathon as any).teamBased ?? (hackathon as any).teamBasedParticipation)}
+        maxTeamSize={(hackathon as any).maxTeamSize}
+        requiresApproval={Boolean((hackathon as any).requiresApproval)}
+        questions={Array.isArray((hackathon as any).applicationForm) ? (hackathon as any).applicationForm : []}
+      />
 
       <Card className='border-border bg-card'>
         <CardHeader>

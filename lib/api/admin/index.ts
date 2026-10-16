@@ -47,6 +47,31 @@ const withStepUp = (stepUpToken?: string): AdminStepUpHeader | undefined => {
   return { headers: { 'x-admin-step-up-token': token } }
 }
 
+export interface AdminApplication {
+  id: string
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN'
+  appliedAt: string
+  lookingForTeam: boolean
+  teamId: string | null
+  team: { id: string; name: string } | null
+  applicationData: Record<string, string | string[]> | null
+  reviewNote?: string | null
+  user: {
+    id: string
+    email: string
+    username: string
+    firstName?: string | null
+    lastName?: string | null
+    profilePicture?: string | null
+  }
+}
+
+export interface HackathonApplicationsResponse {
+  data: AdminApplication[]
+  meta: { total: number; page: number; limit: number; totalPages: number }
+  counts: { PENDING: number; ACCEPTED: number; REJECTED: number; WITHDRAWN: number; lookingForTeam: number }
+}
+
 class AdminService {
   // --- Dashboard ---
   async getDashboardStats() {
@@ -178,6 +203,38 @@ class AdminService {
       { contractHackathonId },
       withStepUp(stepUpToken)
     )
+    return response.data
+  }
+
+  // --- Hackathon applications ---
+  async getHackathonApplications(hackathonId: string, params: Record<string, unknown> = {}) {
+    const response = await api.get<HackathonApplicationsResponse>(
+      `/admin/hackathons/${hackathonId}/applications`,
+      { params }
+    )
+    return response.data
+  }
+
+  async reviewHackathonApplication(
+    hackathonId: string,
+    participantId: string,
+    payload: { decision: 'ACCEPTED' | 'REJECTED'; note?: string },
+    stepUpToken?: string
+  ) {
+    const response = await api.post(
+      `/admin/hackathons/${hackathonId}/applications/${participantId}/review`,
+      payload,
+      withStepUp(stepUpToken)
+    )
+    return response.data
+  }
+
+  async groupHackathonApplicants(
+    hackathonId: string,
+    payload: { teamName: string; participantIds: string[] },
+    stepUpToken?: string
+  ) {
+    const response = await api.post(`/admin/hackathons/${hackathonId}/teams`, payload, withStepUp(stepUpToken))
     return response.data
   }
 
