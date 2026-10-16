@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Send, Plus, Users, UserPlus, ChevronRight } from "lucide-react";
+import { Loader2, Send, Plus, Users, UserPlus, ChevronRight, ImagePlus, X } from "lucide-react";
+import { uploadService } from "@/lib/api/upload";
 import { useSubmitProject, useCreateTeam, useJoinTeam } from "@/lib/api/hackathon/queries";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,8 @@ export function SubmitHackathonModal({
   const [submissionLink, setSubmissionLink] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [screenshots, setScreenshots] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [track, setTrack] = useState<string>(tracks.length === 1 ? tracks[0] : "");
 
   const submitMutation = useSubmitProject();
@@ -101,6 +104,38 @@ export function SubmitHackathonModal({
     });
   };
 
+  const MAX_SCREENSHOTS = 5;
+  const MAX_IMAGE_MB = 5;
+
+  const handleScreenshots = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const files = Array.from(input.files ?? []);
+    input.value = "";
+    if (files.length === 0) return;
+
+    const room = MAX_SCREENSHOTS - screenshots.length;
+    if (room <= 0) {
+      toast.error(`You can add up to ${MAX_SCREENSHOTS} images`);
+      return;
+    }
+    const valid = files.filter((f) => f.type.startsWith("image/") && f.size <= MAX_IMAGE_MB * 1024 * 1024);
+    if (valid.length < files.length) {
+      toast.error(`Only images up to ${MAX_IMAGE_MB} MB are allowed`);
+    }
+    const batch = valid.slice(0, room);
+    if (batch.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const uploaded = await Promise.all(batch.map((file) => uploadService.uploadImage(file)));
+      setScreenshots((prev) => [...prev, ...uploaded.map((u) => u.url)]);
+    } catch {
+      toast.error("Could not upload an image. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!title || !description || !submissionLink) {
       toast.error("Please fill in all required fields");
@@ -122,6 +157,7 @@ export function SubmitHackathonModal({
         videoUrl: videoUrl || undefined,
         teamId: currentTeamId || undefined,
         track: track || undefined,
+        submissionData: screenshots.length > 0 ? { images: screenshots } : undefined,
       },
     }, {
       onSuccess: () => {
@@ -138,6 +174,7 @@ export function SubmitHackathonModal({
     setGithubUrl("");
     setVideoUrl("");
     setTrack(tracks.length === 1 ? tracks[0] : "");
+    setScreenshots([]);
     setTeamName("");
     setJoinCode("");
     setTeamMode(null);
@@ -312,6 +349,40 @@ export function SubmitHackathonModal({
                 </div>
 
                 <div className="space-y-2">
+                  <Label className="text-gray-400 text-xs uppercase tracking-widest font-bold">Screenshots (Optional)</Label>
+                  <div className="flex flex-wrap gap-3">
+                    {screenshots.map((url) => (
+                      <div key={url} className="relative h-20 w-20 overflow-hidden rounded-xl border border-white/10">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="Project screenshot" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          aria-label="Remove image"
+                          className="absolute right-1 top-1 rounded-full bg-black/70 p-0.5 text-white hover:bg-black"
+                          onClick={() => setScreenshots((prev) => prev.filter((u) => u !== url))}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {screenshots.length < MAX_SCREENSHOTS && (
+                      <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-xl border border-dashed border-white/20 text-gray-400 hover:bg-white/5">
+                        {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          disabled={isUploading}
+                          onChange={handleScreenshots}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500">Up to {MAX_SCREENSHOTS} images, {MAX_IMAGE_MB} MB each.</p>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="videoUrl" className="text-gray-400 text-xs uppercase tracking-widest font-bold">Video URL (Optional)</Label>
                   <Input
                     id="videoUrl"
@@ -337,7 +408,7 @@ export function SubmitHackathonModal({
           {step === "project-details" && (
             <Button
               onClick={handleSubmit}
-              disabled={submitMutation.isPending}
+              disabled={submitMutation.isPending || isUploading}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-full px-10 h-12 shadow-xl shadow-primary/20"
             >
               {submitMutation.isPending ? (

@@ -383,6 +383,16 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                         )}
                       </div>
                       {sub.description && <p className="text-sm text-gray-400 line-clamp-3">{sub.description}</p>}
+                      {Array.isArray(sub.submissionData?.images) && sub.submissionData.images.length > 0 && (
+                        <div className="flex gap-2 overflow-x-auto">
+                          {(sub.submissionData.images as string[]).slice(0, 5).map((url) => (
+                            <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={url} alt="" className="h-20 w-28 rounded-lg border border-white/10 object-cover" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                       <p className="text-xs text-gray-500">
                         By {sub.team?.name ? `Team ${sub.team.name}` : [sub.user?.firstName, sub.user?.lastName].filter(Boolean).join(" ") || "a participant"}
                       </p>
