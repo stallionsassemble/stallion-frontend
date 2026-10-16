@@ -841,6 +841,18 @@ export default function OwnerHackathonDetailsPage() {
                       <ExternalLink className="h-4 w-4" /> Video: {selectedSubmission.videoUrl}
                     </a>
                   )}
+                  {((hackathon as any)?.submissionForm ?? []).map((q: { id: string; label: string }) => {
+                    const answer = (selectedSubmission as any).submissionData?.answers?.[q.id]
+                    if (!answer) return null
+                    const text = Array.isArray(answer) ? answer.join(', ') : String(answer)
+                    return /^https?:\/\//i.test(text) ? (
+                      <a key={q.id} href={text} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-primary hover:underline text-sm break-all">
+                        <ExternalLink className="h-4 w-4 shrink-0" /> {q.label}: {text}
+                      </a>
+                    ) : (
+                      <p key={q.id} className="text-sm"><span className="font-medium">{q.label}:</span> {text}</p>
+                    )
+                  })}
                 </div>
               </div>
 

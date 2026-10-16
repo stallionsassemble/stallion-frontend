@@ -114,6 +114,7 @@ type HackathonFormData = {
   companyId: string
   tracks: string
   applicationForm: ApplicationQuestion[]
+  submissionForm: ApplicationQuestion[]
   requiresApproval: boolean
 }
 
@@ -288,6 +289,7 @@ export default function HackathonAdministrationPage() {
     companyId: '',
     tracks: 'Main',
     applicationForm: [],
+    submissionForm: [],
     requiresApproval: false,
   }
 
@@ -392,6 +394,7 @@ export default function HackathonAdministrationPage() {
       companyId: hackathon.ownerId || '',
       tracks: (hackathon.tracks?.length ? hackathon.tracks : ['Main']).join(', '),
       applicationForm: ((hackathon as any).applicationForm as ApplicationQuestion[]) || [],
+      submissionForm: ((hackathon as any).submissionForm as ApplicationQuestion[]) || [],
       requiresApproval: Boolean((hackathon as any).requiresApproval),
     })
     setTeamBasedParticipation(
@@ -438,6 +441,7 @@ export default function HackathonAdministrationPage() {
       companyId: formData.companyId.trim() || (user?.id as string),
       tracks,
       applicationForm: cleanFormForSubmit(formData.applicationForm),
+      submissionForm: cleanFormForSubmit(formData.submissionForm),
       requiresApproval: formData.requiresApproval,
     }
   }
@@ -457,6 +461,12 @@ export default function HackathonAdministrationPage() {
     const formDefinitionProblem = validateFormDefinition(formData.applicationForm)
     if (formDefinitionProblem) {
       toast.error('Check the application form', { description: formDefinitionProblem, duration: 8000 })
+      return
+    }
+
+    const submissionFormProblem = validateFormDefinition(formData.submissionForm)
+    if (submissionFormProblem) {
+      toast.error('Check the submission form', { description: submissionFormProblem, duration: 8000 })
       return
     }
 
@@ -1252,6 +1262,20 @@ export default function HackathonAdministrationPage() {
                 <ApplicationFormBuilder
                   questions={formData.applicationForm}
                   onChange={(applicationForm) => setFormData(prev => ({ ...prev, applicationForm }))}
+                />
+              </Field>
+            </FormSection>
+
+            {/* Submission form */}
+            <FormSection title='Project submission'>
+              <Field
+                label='Extra questions'
+                hint='Questions participants answer when they submit a project, for example a pitch deck link. Description, demo link and screenshots are always asked.'
+              >
+                <ApplicationFormBuilder
+                  variant='submission'
+                  questions={formData.submissionForm}
+                  onChange={(submissionForm) => setFormData(prev => ({ ...prev, submissionForm }))}
                 />
               </Field>
             </FormSection>

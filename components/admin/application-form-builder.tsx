@@ -31,6 +31,7 @@ import {
   EMPOWERHER_TEMPLATE,
   QUESTION_TYPE_LABELS,
   SIMPLE_APPLICATION_TEMPLATE,
+  SUBMISSION_TEMPLATE,
   createQuestion,
   hasOptions,
 } from '@/lib/hackathon-form'
@@ -55,9 +56,15 @@ const ADDABLE_TYPES: ApplicationQuestionType[] = [
 interface Props {
   questions: ApplicationQuestion[]
   onChange: (questions: ApplicationQuestion[]) => void
+  /** Submission forms have no team matching, so they hide the team question types. */
+  variant?: 'application' | 'submission'
 }
 
-export function ApplicationFormBuilder({ questions, onChange }: Props) {
+export function ApplicationFormBuilder({ questions, onChange, variant = 'application' }: Props) {
+  const isSubmission = variant === 'submission'
+  const addableTypes = isSubmission
+    ? ADDABLE_TYPES.filter((t) => t !== 'TEAM_MODE' && t !== 'TEAM_NAME')
+    : ADDABLE_TYPES
   const [openId, setOpenId] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const [previewAnswers, setPreviewAnswers] = useState<ApplicationAnswers>({})
@@ -120,7 +127,7 @@ export function ApplicationFormBuilder({ questions, onChange }: Props) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='start' className='border-border bg-popover'>
-            {ADDABLE_TYPES.map((type) => (
+            {addableTypes.map((type) => (
               <DropdownMenuItem key={type} className='cursor-pointer' onClick={() => add(type)}>
                 {QUESTION_TYPE_LABELS[type]}
               </DropdownMenuItem>
@@ -136,12 +143,20 @@ export function ApplicationFormBuilder({ questions, onChange }: Props) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align='start' className='border-border bg-popover'>
             <DropdownMenuLabel>Start from</DropdownMenuLabel>
-            <DropdownMenuItem className='cursor-pointer' onClick={() => applyTemplate(EMPOWERHER_TEMPLATE)}>
-              EmpowerHer application form
-            </DropdownMenuItem>
-            <DropdownMenuItem className='cursor-pointer' onClick={() => applyTemplate(SIMPLE_APPLICATION_TEMPLATE)}>
-              Simple form
-            </DropdownMenuItem>
+            {isSubmission ? (
+              <DropdownMenuItem className='cursor-pointer' onClick={() => applyTemplate(SUBMISSION_TEMPLATE)}>
+                Pitch deck and demo video
+              </DropdownMenuItem>
+            ) : (
+              <>
+                <DropdownMenuItem className='cursor-pointer' onClick={() => applyTemplate(EMPOWERHER_TEMPLATE)}>
+                  EmpowerHer application form
+                </DropdownMenuItem>
+                <DropdownMenuItem className='cursor-pointer' onClick={() => applyTemplate(SIMPLE_APPLICATION_TEMPLATE)}>
+                  Simple form
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className='cursor-pointer text-destructive focus:text-destructive'
@@ -167,7 +182,9 @@ export function ApplicationFormBuilder({ questions, onChange }: Props) {
 
       {questions.length === 0 ? (
         <div className='rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground'>
-          No questions yet. Applicants will just register with one click. Add questions or start from a template.
+          {isSubmission
+            ? 'No extra questions. Participants only fill in the standard project details. Add a pitch deck link or start from a template.'
+            : 'No questions yet. Applicants will just register with one click. Add questions or start from a template.'}
         </div>
       ) : (
         <div className='space-y-2'>

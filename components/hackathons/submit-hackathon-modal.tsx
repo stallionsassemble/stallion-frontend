@@ -12,6 +12,8 @@ import { uploadService } from "@/lib/api/upload";
 import { useSubmitProject, useCreateTeam, useJoinTeam } from "@/lib/api/hackathon/queries";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ApplicationFormFields } from "@/components/hackathons/application-form-fields";
+import { ApplicationAnswers, ApplicationQuestion, validateAnswers } from "@/lib/hackathon-form";
 
 interface SubmitHackathonModalProps {
   isOpen: boolean;
@@ -22,6 +24,8 @@ interface SubmitHackathonModalProps {
   initialTeamId?: string;
   /** The hackathon's tracks. When there are any, the submission must pick one. */
   tracks?: string[];
+  /** Extra questions the admin added for submissions, e.g. a pitch deck link. */
+  submissionQuestions?: ApplicationQuestion[];
 }
 
 export function SubmitHackathonModal({
@@ -32,6 +36,7 @@ export function SubmitHackathonModal({
   isTeamBased,
   initialTeamId,
   tracks = [],
+  submissionQuestions = [],
 }: SubmitHackathonModalProps) {
   const [step, setStep] = useState<"team-setup" | "project-details">("project-details");
   const [teamMode, setTeamMode] = useState<"create" | "join" | null>(null);
@@ -47,6 +52,8 @@ export function SubmitHackathonModal({
   const [videoUrl, setVideoUrl] = useState("");
   const [screenshots, setScreenshots] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [extraAnswers, setExtraAnswers] = useState<ApplicationAnswers>({});
+  const [extraErrors, setExtraErrors] = useState<Record<string, string>>({});
   const [track, setTrack] = useState<string>(tracks.length === 1 ? tracks[0] : "");
 
   const submitMutation = useSubmitProject();
@@ -146,6 +153,17 @@ export function SubmitHackathonModal({
       return;
     }
 
+    const problems = validateAnswers(submissionQuestions, extraAnswers);
+    setExtraErrors(problems);
+    if (Object.keys(problems).length > 0) {
+      toast.error("Please fix the highlighted questions");
+      return;
+    }
+
+    const submissionData: Record<string, unknown> = {};
+    if (screenshots.length > 0) submissionData.images = screenshots;
+    if (submissionQuestions.length > 0) submissionData.answers = extraAnswers;
+
     submitMutation.mutate({
       id: hackathonId,
       payload: {
@@ -157,7 +175,7 @@ export function SubmitHackathonModal({
         videoUrl: videoUrl || undefined,
         teamId: currentTeamId || undefined,
         track: track || undefined,
-        submissionData: screenshots.length > 0 ? { images: screenshots } : undefined,
+        submissionData: Object.keys(submissionData).length > 0 ? submissionData : undefined,
       },
     }, {
       onSuccess: () => {
@@ -175,6 +193,8 @@ export function SubmitHackathonModal({
     setVideoUrl("");
     setTrack(tracks.length === 1 ? tracks[0] : "");
     setScreenshots([]);
+    setExtraAnswers({});
+    setExtraErrors({});
     setTeamName("");
     setJoinCode("");
     setTeamMode(null);
@@ -381,6 +401,16 @@ export function SubmitHackathonModal({
                   </div>
                   <p className="text-xs text-gray-500">Up to {MAX_SCREENSHOTS} images, {MAX_IMAGE_MB} MB each.</p>
                 </div>
+
+                {submissionQuestions.length > 0 && (
+                  <ApplicationFormFields
+                    questions={submissionQuestions}
+                    answers={extraAnswers}
+                    onChange={setExtraAnswers}
+                    errors={extraErrors}
+                    disabled={submitMutation.isPending}
+                  />
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="videoUrl" className="text-gray-400 text-xs uppercase tracking-widest font-bold">Video URL (Optional)</Label>

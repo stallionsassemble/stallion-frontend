@@ -201,3 +201,11 @@ export const EMPOWERHER_TEMPLATE: ApplicationQuestion[] = [
     visibleWhen: { questionId: 'team_mode', equals: EXISTING_TEAM },
   }),
 ]
+
+/** Extra questions asked when a project is submitted. */
+export const SUBMISSION_TEMPLATE: ApplicationQuestion[] = [
+  q('pitch_deck', 'URL', 'Pitch deck link', 'Project materials', {
+    helpText: 'Link to your slides (Google Slides, Canva, Drive, Pitch). Make sure anyone with the link can view it.',
+  }),
+  q('demo_video', 'URL', 'Demo video link', 'Project materials', { required: false }),
+]

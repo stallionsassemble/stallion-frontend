@@ -79,6 +79,9 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
   const applicationStatus = application?.status;
   const hasApplied = !!myApplication?.applied;
   const isAccepted = applicationStatus === "ACCEPTED";
+  const submissionQuestions: ApplicationQuestion[] = Array.isArray((hackathon as any)?.submissionForm)
+    ? ((hackathon as any).submissionForm as ApplicationQuestion[])
+    : [];
   const applicationQuestions: ApplicationQuestion[] = Array.isArray((hackathon as any)?.applicationForm)
     ? ((hackathon as any).applicationForm as ApplicationQuestion[])
     : [];
@@ -407,6 +410,13 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                         {sub.videoUrl && (
                           <a href={sub.videoUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Video</a>
                         )}
+                        {submissionQuestions
+                          .filter((q) => q.type === "URL" && typeof sub.submissionData?.answers?.[q.id] === "string")
+                          .map((q) => (
+                            <a key={q.id} href={sub.submissionData.answers[q.id]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                              {q.label}
+                            </a>
+                          ))}
                       </div>
                     </div>
                   ))}
@@ -649,6 +659,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
         hackathonTitle={hackathon.title}
         isTeamBased={!!(hackathon.teamBased || (hackathon as any).teamBasedParticipation)}
         tracks={Array.isArray((hackathon as any).tracks) ? ((hackathon as any).tracks as string[]) : []}
+        submissionQuestions={submissionQuestions}
         initialTeamId={application?.teamId || hackathon.userTeam?.id || hackathon.myTeam?.id || hackathon.team?.id || hackathon.participation?.team?.id || hackathon.participation?.teamId}
       />
     </div>
