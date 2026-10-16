@@ -152,7 +152,7 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
 
         <div className="flex items-center gap-2 mt-auto">
           <span className="text-xl font-bold text-white">
-            ${(
+            {(
               Number((hackathon as any).totalPrizePool || 0) || 
               Number((hackathon as any).totalBudget || 0) || 
               Number((hackathon as any).totalReward || 0)

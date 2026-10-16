@@ -130,7 +130,13 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
     );
   }
 
-  const isExpired = hackathon.registrationDeadline ? new Date(hackathon.registrationDeadline) < new Date() : false;
+  const isExpired =
+    (hackathon.registrationDeadline ? new Date(hackathon.registrationDeadline) < new Date() : false) ||
+    (hackathon.status !== "PUBLISHED" && hackathon.status !== undefined);
+  const submitDeadline = (hackathon as any).deadline ? new Date((hackathon as any).deadline) : null;
+  const submissionsClosed =
+    hackathon.status !== "PUBLISHED" ||
+    (submitDeadline !== null && !isNaN(submitDeadline.getTime()) && submitDeadline < new Date());
   const prizes = hackathon.prizePool || hackathon.prizeDistribution || [];
   const currency = hackathon.currency || hackathon.asset || "USDC";
   const hasSubmitted = !!(hackathon.userSubmission || hackathon.participation?.submission);
@@ -182,7 +188,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
         </div>
         
         <div className="space-y-4">
-          <h1 className="text-4xl md:text-7xl font-bold text-white tracking-tight leading-tight font-syne">
+          <h1 className="text-3xl sm:text-4xl md:text-7xl font-bold text-white tracking-tight leading-tight font-syne break-words">
             {hackathon.title}
           </h1>
           <div className="flex flex-wrap justify-center gap-2">
@@ -194,7 +200,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-8 text-sm text-gray-400">
+        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-gray-400">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-primary" />
             <span className="font-medium">
@@ -216,13 +222,16 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
           )}
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
-            <span className="font-medium">{(hackathon as any)._count?.participants || hackathon.participantCount || 0} participants signed up</span>
+            <span className="font-medium">{(() => {
+              const count = (hackathon as any)._count?.participants || hackathon.participantCount || 0;
+              return `${count} ${count === 1 ? "participant" : "participants"} signed up`;
+            })()}</span>
           </div>
         </div>
 
         <div className="space-y-2 py-4">
-          <p className="text-5xl md:text-7xl font-bold text-blue-500 font-inter tracking-tighter">
-            ${(
+          <p className="text-4xl sm:text-5xl md:text-7xl font-bold text-blue-500 font-inter tracking-tighter break-words">
+            {(
               Number((hackathon as any).totalPrizePool || 0) || 
               Number((hackathon as any).totalBudget || 0) || 
               Number((hackathon as any).totalReward || 0)
@@ -231,10 +240,10 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
           <p className="text-gray-500 uppercase tracking-widest text-xs font-bold font-inter">In Total Prizes</p>
         </div>
 
-        <div className="flex flex-col items-center gap-3 pt-4">
-          <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="flex w-full flex-col items-center gap-3 pt-4">
+          <div className="flex w-full flex-col sm:w-auto sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             <Button
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-12 h-14 text-lg font-bold shadow-2xl shadow-primary/20"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 sm:px-12 h-12 sm:h-14 text-base sm:text-lg font-bold shadow-2xl shadow-primary/20"
               disabled={isExpired || hasApplied}
               onClick={handleRegister}
             >
@@ -251,7 +260,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
             <Button
               variant="outline"
               className={cn(
-                "rounded-full px-12 h-14 text-lg font-bold transition-all",
+                "rounded-full px-8 sm:px-12 h-12 sm:h-14 text-base sm:text-lg font-bold transition-all",
                 hasSubmitted
                   ? "bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20"
                   : "bg-white/5 border-white/10 hover:bg-white/10 text-white"
@@ -275,13 +284,15 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                 }
                 setIsSubmitModalOpen(true);
               }}
-              disabled={hasSubmitted}
+              disabled={hasSubmitted || (submissionsClosed && !hasSubmitted)}
             >
               {hasSubmitted ? (
                 <>
                   <CheckCircle2 className="h-5 w-5 mr-2" />
                   Submitted
                 </>
+              ) : submissionsClosed ? (
+                "Submissions Closed"
               ) : (
                 "Submit Project"
               )}
@@ -581,11 +592,11 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                 <div className="pt-4 flex items-center justify-between">
                   <span className="text-sm text-gray-400">Total Pool</span>
                   <span className="text-2xl font-bold text-white">
-                    ${(
+                    {(
                       Number((hackathon as any).totalPrizePool || 0) || 
                       Number((hackathon as any).totalBudget || 0) || 
                       Number((hackathon as any).totalReward || 0)
-                    ).toLocaleString()}
+                    ).toLocaleString()} {currency}
                   </span>
                 </div>
               </div>

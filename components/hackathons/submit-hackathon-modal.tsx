@@ -202,10 +202,10 @@ export function SubmitHackathonModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#09090B] border-white/10 sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-0 rounded-3xl overflow-hidden shadow-2xl">
-        <div className="p-8 space-y-8">
+      <DialogContent className="bg-[#09090B] border-white/10 w-[calc(100%-1.5rem)] sm:max-w-[600px] max-h-[90vh] flex flex-col gap-0 overflow-hidden p-0 rounded-2xl sm:rounded-3xl shadow-2xl">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 sm:space-y-8">
           <DialogHeader>
-            <DialogTitle className="text-3xl font-black text-white font-syne tracking-tighter">
+            <DialogTitle className="text-2xl sm:text-3xl font-black text-white font-syne tracking-tighter">
               {step === "team-setup" ? "Form Your Team" : "Submit Project"}
             </DialogTitle>
             <p className="text-gray-500 text-sm font-medium">
@@ -239,10 +239,10 @@ export function SubmitHackathonModal({
                   </div>
 
                   {!teamMode ? (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <button 
                         onClick={() => setTeamMode("create")}
-                        className="flex flex-col items-center gap-4 p-8 bg-white/5 border border-white/10 rounded-3xl transition-all hover:bg-white/10 hover:border-primary/50 group"
+                        className="flex flex-col items-center gap-4 p-5 sm:p-8 bg-white/5 border border-white/10 rounded-3xl transition-all hover:bg-white/10 hover:border-primary/50 group"
                       >
                         <div className="h-14 w-14 rounded-2xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                           <Plus className="h-7 w-7" />
@@ -251,7 +251,7 @@ export function SubmitHackathonModal({
                       </button>
                       <button 
                         onClick={() => setTeamMode("join")}
-                        className="flex flex-col items-center gap-4 p-8 bg-white/5 border border-white/10 rounded-3xl transition-all hover:bg-white/10 hover:border-blue-500/50 group"
+                        className="flex flex-col items-center gap-4 p-5 sm:p-8 bg-white/5 border border-white/10 rounded-3xl transition-all hover:bg-white/10 hover:border-blue-500/50 group"
                       >
                         <div className="h-14 w-14 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
                           <UserPlus className="h-7 w-7" />
@@ -427,11 +427,11 @@ export function SubmitHackathonModal({
           )}
         </div>
 
-        <div className="p-8 pt-0 flex justify-end gap-3">
+        <div className="flex flex-col-reverse gap-2 border-t border-white/10 p-4 sm:flex-row sm:justify-end sm:gap-3 sm:p-6">
           <Button
             variant="ghost"
             onClick={onClose}
-            className="text-gray-500 hover:text-white rounded-full px-8"
+            className="text-gray-500 hover:text-white rounded-full px-8 h-12"
           >
             Cancel
           </Button>
@@ -439,7 +439,7 @@ export function SubmitHackathonModal({
             <Button
               onClick={handleSubmit}
               disabled={submitMutation.isPending || isUploading}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-full px-10 h-12 shadow-xl shadow-primary/20"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-full px-10 h-12 shadow-xl shadow-primary/20 sm:min-w-[170px]"
             >
               {submitMutation.isPending ? (
                 <Loader2 className="h-5 w-5 animate-spin mr-2" />

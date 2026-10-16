@@ -60,8 +60,10 @@ export function HackathonsClient() {
   const allTags = useMemo(() => {
     const tags = new Set<string>();
     hackathons.forEach(h => h.tags?.forEach(t => tags.add(t)));
+    // Keep the chosen tag selectable even when the filtered results no longer list the others.
+    if (techStack !== "all") tags.add(techStack);
     return Array.from(tags).sort();
-  }, [hackathons]);
+  }, [hackathons, techStack]);
 
   const isFiltered = searchQuery || techStack !== "all" || status !== "all" || type !== "all";
 
@@ -69,7 +71,7 @@ export function HackathonsClient() {
     <div className="container mx-auto px-4 py-12 space-y-12">
       {/* Hero Header */}
       <div className="text-center space-y-4 max-w-4xl mx-auto">
-        <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight font-syne">
+        <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-white tracking-tight font-syne">
           Hackathons
         </h1>
         <p className="text-gray-400 text-lg md:text-xl leading-relaxed">
@@ -93,7 +95,7 @@ export function HackathonsClient() {
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 md:flex md:flex-wrap items-center gap-3 w-full md:w-auto">
           <Select value={techStack} onValueChange={(v) => { setTechStack(v); setCurrentPage(1); }}>
             <SelectTrigger className="w-full md:w-[160px] bg-white/5 border-white/10 text-white h-11 rounded-lg">
               <SelectValue placeholder="Tech Stack" />
@@ -134,15 +136,12 @@ export function HackathonsClient() {
             <Button 
               variant="ghost" 
               onClick={clearFilters}
-              className="text-muted-foreground hover:text-white"
+              className="text-muted-foreground hover:text-white sm:col-span-3 md:col-span-1"
             >
               Clear All
             </Button>
           )}
 
-          <Button variant="outline" className="w-full md:w-auto bg-white/5 border-white/10 text-white h-11 rounded-lg gap-2">
-            More Filters
-          </Button>
         </div>
       </div>
 
