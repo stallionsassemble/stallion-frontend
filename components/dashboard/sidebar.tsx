@@ -54,6 +54,11 @@ const talentSidebarItems: SidebarItem[] = [
     icon: Briefcase,
   },
   {
+    title: 'Hackathons',
+    href: '/hackathons',
+    icon: FileCode2,
+  },
+  {
     title: 'Leaderboard',
     href: '/dashboard/leaderboard',
     icon: Trophy,

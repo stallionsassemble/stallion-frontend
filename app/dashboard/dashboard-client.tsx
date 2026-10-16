@@ -7,6 +7,7 @@ import {
 } from '@/components/dashboard/main-sections'
 import { DashboardRightSidebar } from '@/components/dashboard/right-sidebar'
 import { StatsRow } from '@/components/dashboard/stats-row'
+import { OpenHackathons } from '@/components/dashboard/open-hackathons'
 import { useAuth } from '@/lib/store/use-auth'
 
 import { WelcomeBanner } from '@/components/dashboard/welcome-banner'
@@ -22,6 +23,9 @@ export function DashboardClient() {
 
         {/* Stats Row */}
         <StatsRow />
+
+        {/* Open hackathons */}
+        <OpenHackathons />
 
         {/* Browse Opportunities */}
         <OpportunityList title='Browse Opportunities' type='bounties' />
