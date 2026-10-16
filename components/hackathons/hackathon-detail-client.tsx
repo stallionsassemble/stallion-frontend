@@ -3,6 +3,7 @@
 
 import { useGetHackathon, useGetHackathonSubmissions, useGetHackathonWinners, useMyApplication } from "@/lib/api/hackathon/queries";
 import { ApplyHackathonModal } from "./apply-hackathon-modal";
+import { describePrizeSlot } from "@/lib/hackathon-prizes";
 import { rememberPostAuthRedirect } from "@/lib/post-auth-redirect";
 import { useRouter } from "next/navigation";
 import type { ApplicationQuestion } from "@/lib/hackathon-form";
@@ -517,7 +518,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                           <span className="text-5xl">{getAwardIcon(rank)}</span>
                           <div className="space-y-1">
                             <p className={cn("text-xs font-bold uppercase tracking-widest opacity-60", getAwardColor(rank))}>
-                              {award.label || getAwardLabel(rank)}
+                              {award.label || ((award as any).track ? describePrizeSlot(award as any, prizes as any) : getAwardLabel(rank))}
                             </p>
                             <p className="text-3xl font-bold text-white">${award.amount.toLocaleString()}</p>
                           </div>

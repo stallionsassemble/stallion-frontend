@@ -71,6 +71,7 @@ import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ApplicationFormBuilder } from '@/components/admin/application-form-builder'
 import { ApplicationQuestion, cleanFormForSubmit, validateFormDefinition } from '@/lib/hackathon-form'
+import { PrizePoolEditor, renumberPrizes } from '@/components/admin/prize-pool-editor'
 import { TrackInput } from '@/components/admin/track-input'
 import { HackathonFundingNotice } from '@/components/admin/hackathon-funding-notice'
 import {
@@ -92,6 +93,7 @@ type HackathonAdminListItem = AdminHackathon
 type HackathonPrize = {
   position: number
   amount: number
+  track?: string
 }
 
 type HackathonFormData = {
@@ -169,6 +171,10 @@ const validateHackathonForm = (
   if (data.prizePool.some((p) => !(Number(p.amount) > 0))) {
     return 'Every prize must have an amount greater than 0. Remove any empty prize rows.'
   }
+  const tracked = data.prizePool.filter((p) => p.track).length
+  if (tracked > 0 && tracked !== data.prizePool.length) {
+    return 'Either give every prize a track or none of them.'
+  }
   const positions = data.prizePool.map((p) => p.position)
   if (new Set(positions).size !== positions.length) {
     return 'Prize positions must be unique (1, 2, 3 …).'
@@ -206,12 +212,6 @@ const generateSlug = (title: string) => {
 
 const inputClass =
   'h-[42px] rounded-lg border-[1.19px] border-input bg-transparent text-foreground placeholder:text-muted-foreground focus-visible:border-primary'
-
-const ordinal = (n: number) => {
-  const mod100 = n % 100
-  if (mod100 >= 11 && mod100 <= 13) return `${n}th`
-  return `${n}${({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th'}`
-}
 
 function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -347,34 +347,7 @@ export default function HackathonAdministrationPage() {
   const totalItems = hackathonsData?.meta?.total || 0
   const totalPages = hackathonsData?.meta?.totalPages || 1
 
-  const prizeTotal = formData.prizePool.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
-  const prizeRemaining = Math.round((Number(formData.totalBudget || 0) - prizeTotal) * 1e7) / 1e7
-
-  const renumber = (pool: HackathonPrize[]) => pool.map((p, i) => ({ ...p, position: i + 1 }))
-
-  const addPrize = () =>
-    setFormData(prev => ({ ...prev, prizePool: renumber([...prev.prizePool, { position: 0, amount: 0 }]) }))
-
-  const removePrize = (idx: number) =>
-    setFormData(prev => ({ ...prev, prizePool: renumber(prev.prizePool.filter((_, i) => i !== idx)) }))
-
-  const updatePrizeAmount = (idx: number, amount: number) =>
-    setFormData(prev => ({
-      ...prev,
-      prizePool: prev.prizePool.map((p, i) => (i === idx ? { ...p, amount } : p)),
-    }))
-
-  const splitPrizesEvenly = () =>
-    setFormData(prev => {
-      const budget = parseFloat(prev.totalBudget)
-      const n = prev.prizePool.length
-      if (!(budget > 0) || n === 0) return prev
-      const each = Math.floor((budget / n) * 1e7) / 1e7
-      const pool = prev.prizePool.map((p) => ({ ...p, amount: each }))
-      // Put any rounding remainder on first place so the total matches the budget exactly.
-      pool[0].amount = Math.round((budget - each * (n - 1)) * 1e7) / 1e7
-      return { ...prev, prizePool: pool }
-    })
+  const trackList = formData.tracks.split(',').map((t) => t.trim()).filter(Boolean)
 
   const resetForm = () => {
     setFormData(defaultFormData)
@@ -1079,7 +1052,19 @@ export default function HackathonAdministrationPage() {
               >
                 <TrackInput
                   tracks={formData.tracks.split(',').map((t) => t.trim()).filter(Boolean)}
-                  onChange={(next) => setFormData(prev => ({ ...prev, tracks: next.join(', ') }))}
+                  onChange={(next) =>
+                    setFormData(prev => {
+                      // Per-track prizes follow the tracks: drop prizes whose track was removed.
+                      const kept = prev.prizePool.some((p) => p.track)
+                        ? prev.prizePool.filter((p) => !p.track || next.includes(p.track))
+                        : prev.prizePool
+                      return {
+                        ...prev,
+                        tracks: next.join(', '),
+                        prizePool: kept.length > 0 ? renumberPrizes(kept, next) : prev.prizePool,
+                      }
+                    })
+                  }
                 />
               </Field>
             </FormSection>
@@ -1141,90 +1126,13 @@ export default function HackathonAdministrationPage() {
                 <HackathonFundingNotice budget={parseFloat(formData.totalBudget)} asset={formData.asset} />
               )}
 
-              <div className='space-y-3'>
-                <div className='flex items-center justify-between gap-2'>
-                  <Label className='text-foreground text-sm font-semibold'>
-                    Prize positions <span className='text-destructive'>*</span>
-                  </Label>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    className='gap-1 border-input'
-                    onClick={addPrize}
-                  >
-                    <Plus className='h-4 w-4' /> Add position
-                  </Button>
-                </div>
-
-                <div className='space-y-2'>
-                  {formData.prizePool.map((prize, idx) => (
-                    <div
-                      key={idx}
-                      className='flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-2 pl-3'
-                    >
-                      <Badge className='shrink-0 w-12 justify-center bg-primary/10 text-primary border-0 hover:bg-primary/10'>
-                        {ordinal(prize.position)}
-                      </Badge>
-                      <Input
-                        type='number'
-                        inputMode='decimal'
-                        min='0'
-                        aria-label={`Prize for ${ordinal(prize.position)} place`}
-                        placeholder='Amount'
-                        className={cn(inputClass, 'flex-1 min-w-0')}
-                        value={prize.amount || ''}
-                        onChange={(e) => updatePrizeAmount(idx, parseFloat(e.target.value) || 0)}
-                      />
-                      <span className='hidden sm:block text-xs text-muted-foreground w-12'>{formData.asset}</span>
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='icon'
-                        className='shrink-0 text-muted-foreground hover:text-destructive'
-                        aria-label='Remove position'
-                        disabled={formData.prizePool.length <= 1}
-                        onClick={() => removePrize(idx)}
-                      >
-                        <X className='h-4 w-4' />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-
-                <div className='flex flex-wrap items-center justify-between gap-2'>
-                  <p
-                    className={cn(
-                      'text-xs',
-                      prizeRemaining === 0 && Number(formData.totalBudget) > 0
-                        ? 'text-green-500'
-                        : prizeRemaining < 0
-                          ? 'text-destructive'
-                          : 'text-muted-foreground'
-                    )}
-                  >
-                    Allocated {prizeTotal} of {Number(formData.totalBudget) || 0} {formData.asset}
-                    {Number(formData.totalBudget) > 0 &&
-                      (prizeRemaining === 0
-                        ? ' — fully allocated'
-                        : prizeRemaining > 0
-                          ? ` — ${prizeRemaining} left`
-                          : ` — over by ${Math.abs(prizeRemaining)}`)}
-                  </p>
-                  <div className='flex gap-2'>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='sm'
-                      className='h-7 px-2 text-xs text-primary'
-                      disabled={!(Number(formData.totalBudget) > 0)}
-                      onClick={splitPrizesEvenly}
-                    >
-                      Split evenly
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <PrizePoolEditor
+                prizePool={formData.prizePool}
+                tracks={trackList}
+                asset={formData.asset}
+                budget={Number(formData.totalBudget) || 0}
+                onChange={(prizePool) => setFormData(prev => ({ ...prev, prizePool }))}
+              />
             </FormSection>
 
             {/* Participation */}

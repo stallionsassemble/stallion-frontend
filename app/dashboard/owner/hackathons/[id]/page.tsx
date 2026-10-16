@@ -57,6 +57,7 @@ import { Hackathon } from '@/lib/types/hackathon'
 import { User } from '@/lib/types'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { describePrizeSlot, slotsForSubmission, type PrizeSlot } from '@/lib/hackathon-prizes'
 
 type EditableHackathonForm = {
   title: string
@@ -216,9 +217,17 @@ export default function OwnerHackathonDetailsPage() {
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null)
   const [winnerPosition, setWinnerPosition] = useState('1')
   const [winnerFeedback, setWinnerFeedback] = useState('')
+  const prizeSlots = (Array.isArray((hackathonData as any)?.prizePool) ? (hackathonData as any).prizePool : []) as PrizeSlot[]
+  const hackathonAsset = (hackathonData as any)?.asset || (hackathonData as any)?.currency || 'USDC'
 
   const hackathon = (hackathonData || null) as HackathonView | null
   const submissions = unwrapList<SubmissionView>(submissionsData)
+  const winnerCandidate = submissions.find((sub) => sub.id === selectedSubmissionId)
+  const winnerSlots = slotsForSubmission(prizeSlots, (winnerCandidate as { track?: string } | undefined)?.track)
+  // Keep the chosen prize valid for the submission being judged (per-track prizes differ by track).
+  const effectiveWinnerPosition = winnerSlots.some((slot) => String(slot.position) === winnerPosition)
+    ? winnerPosition
+    : String(winnerSlots[0]?.position ?? '')
   const winners = unwrapList<WinnerView>(winnersData)
   
   const participantCount =
@@ -313,7 +322,7 @@ export default function OwnerHackathonDetailsPage() {
         sid: selectedSubmissionId,
         payload: {
           submissionId: selectedSubmissionId,
-          position: parseInt(winnerPosition, 10),
+          position: parseInt(effectiveWinnerPosition, 10),
           feedback: winnerFeedback.trim() || undefined,
         }
       })
@@ -733,16 +742,22 @@ export default function OwnerHackathonDetailsPage() {
           <div className='space-y-4 pt-4'>
             <div className='space-y-2'>
               <Label>Position</Label>
-              <Select value={winnerPosition} onValueChange={setWinnerPosition}>
+              <Select value={effectiveWinnerPosition} onValueChange={setWinnerPosition}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder='Choose a prize' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='1'>1st Place</SelectItem>
-                  <SelectItem value='2'>2nd Place</SelectItem>
-                  <SelectItem value='3'>3rd Place</SelectItem>
-                  <SelectItem value='4'>4th Place</SelectItem>
-                  <SelectItem value='5'>5th Place</SelectItem>
+                  {winnerSlots.length === 0 ? (
+                    <div className='p-3 text-sm text-muted-foreground'>
+                      No prize positions are available for this submission's track.
+                    </div>
+                  ) : (
+                    winnerSlots.map((slot) => (
+                      <SelectItem key={slot.position} value={String(slot.position)}>
+                        {describePrizeSlot(slot, prizeSlots)} ({Number(slot.amount).toLocaleString()} {hackathonAsset})
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
