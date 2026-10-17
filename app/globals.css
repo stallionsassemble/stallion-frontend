@@ -148,10 +148,14 @@
     background-position: center top, center top, center top;
   }
 
-  /* Phones get larger cells so the page never looks busy. */
+  /* Phones get a quiet dot pattern instead of lines, so text stays easy to read. */
   @media (max-width: 639px) {
     .bg-grid-pattern {
-      background-size: auto, 32px 32px, 32px 32px;
+      background-image:
+        radial-gradient(ellipse 90% 35% at 50% 0%, var(--grid-glow), transparent 70%),
+        radial-gradient(circle, var(--grid-line) 1px, transparent 1.5px);
+      background-size: auto, 24px 24px;
+      background-position: center top, center top;
     }
   }
 

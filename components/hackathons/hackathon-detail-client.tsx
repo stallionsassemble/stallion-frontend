@@ -100,6 +100,49 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
     setIsApplyOpen(true);
   };
 
+  const handleSubmitClick = () => {
+    if (!user) {
+      handleRegister();
+      return;
+    }
+    if (!isAccepted) {
+      if (applicationStatus === "REJECTED") {
+        toast.error("Your application wasn't accepted", {
+          description: "Only accepted applicants can submit a project to this hackathon.",
+        });
+      } else {
+        toast.info(
+          hasApplied
+            ? "Your application is still being reviewed. You can submit once it is accepted."
+            : "Apply to this hackathon first, then you can submit your project."
+        );
+      }
+      return;
+    }
+    if (hasSubmitted) {
+      toast.info("You have already submitted a project for this hackathon.");
+      return;
+    }
+    setIsSubmitModalOpen(true);
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const title = (hackathon as any)?.title ?? "Stallion hackathon";
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title, text: `Check out ${title} on Stallion`, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied", { description: "Share it with anyone you like." });
+    } catch (error) {
+      // Closing the share sheet is not an error.
+      if ((error as Error)?.name === "AbortError") return;
+      toast.error("Could not share automatically", { description: url });
+    }
+  };
+
   // Coming back from login with ?apply=1: open the form once, then tidy the URL.
   useEffect(() => {
     if (!hackathon || !user || myApplication === undefined) return;
@@ -266,25 +309,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                   ? "bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20"
                   : "bg-white/5 border-white/10 hover:bg-white/10 text-white"
               )}
-              onClick={() => {
-                if (!user) {
-                  handleRegister();
-                  return;
-                }
-                if (!isAccepted) {
-                  toast.info(
-                    hasApplied
-                      ? "You can submit once your application is accepted."
-                      : "Apply to this hackathon first, then you can submit your project."
-                  );
-                  return;
-                }
-                if (hasSubmitted) {
-                  toast.info("You have already submitted a project for this hackathon.");
-                  return;
-                }
-                setIsSubmitModalOpen(true);
-              }}
+              onClick={handleSubmitClick}
               disabled={hasSubmitted || (submissionsClosed && !hasSubmitted)}
             >
               {hasSubmitted ? (
@@ -513,7 +538,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                       </div>
                       <div className="pt-4 border-t border-white/5 flex items-center justify-between">
                         <span className="text-sm text-gray-400">Prize Won</span>
-                        <span className="text-xl font-bold text-primary">${winner.prizeAmount?.toLocaleString()}</span>
+                        <span className="text-xl font-bold text-primary">{winner.prizeAmount?.toLocaleString()} {currency}</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -542,7 +567,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                             <p className={cn("text-xs font-bold uppercase tracking-widest opacity-60", getAwardColor(rank))}>
                               {award.label || ((award as any).track ? describePrizeSlot(award as any, prizes as any) : getAwardLabel(rank))}
                             </p>
-                            <p className="text-3xl font-bold text-white">${award.amount.toLocaleString()}</p>
+                            <p className="text-3xl font-bold text-white">{award.amount.toLocaleString()} <span className="text-sm font-medium text-gray-400">{currency}</span></p>
                           </div>
                         </CardContent>
                       </Card>
@@ -614,21 +639,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                   variant="outline"
                   className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white h-14 rounded-2xl text-lg font-bold border-dashed"
                   disabled={hasSubmitted}
-                  onClick={() => {
-                    if (!user) {
-                      handleRegister();
-                      return;
-                    }
-                    if (!isAccepted) {
-                      toast.info(
-                        hasApplied
-                          ? "You can submit once your application is accepted."
-                          : "Apply to this hackathon first, then you can submit your project."
-                      );
-                      return;
-                    }
-                    setIsSubmitModalOpen(true);
-                  }}
+                  onClick={handleSubmitClick}
                 >
                   {hasSubmitted ? "Submitted" : "Submit Project"}
                 </Button>
@@ -646,7 +657,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
             </CardContent>
           </Card>
 
-          <Button variant="outline" className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white h-14 rounded-2xl text-md gap-2 border-dashed">
+          <Button variant="outline" onClick={handleShare} className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white h-14 rounded-2xl text-md gap-2 border-dashed">
             <Share2 className="h-4 w-4" />
             Share Hackathon
           </Button>
