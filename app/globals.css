@@ -53,7 +53,9 @@
 :root {
   --radius: 0.625rem;
   --grid-line: rgb(0 0 0 / 0.06);
+  --grid-dot: rgb(0 0 0 / 0.12);
   --grid-glow: rgb(0 122 255 / 0.08);
+  --grid-glow-2: rgb(124 58 237 / 0.05);
   --background: oklch(1 0 0);
   --foreground: #171717;
   --card: oklch(1 0 0);
@@ -90,8 +92,10 @@
 
 .dark {
   color-scheme: dark;
-  --grid-line: rgb(255 255 255 / 0.045);
-  --grid-glow: rgb(0 122 255 / 0.14);
+  --grid-line: rgb(255 255 255 / 0.06);
+  --grid-dot: rgb(255 255 255 / 0.12);
+  --grid-glow: rgb(0 122 255 / 0.2);
+  --grid-glow-2: rgb(124 58 237 / 0.12);
   --background: #04020e;
   --foreground: #fafafa;
   --card: #04020e;
@@ -142,10 +146,11 @@
   .bg-grid-pattern {
     background-image:
       radial-gradient(ellipse 70% 45% at 50% 0%, var(--grid-glow), transparent 70%),
+      radial-gradient(ellipse 50% 40% at 100% 100%, var(--grid-glow-2), transparent 70%),
       linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
       linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-    background-size: auto, 40px 40px, 40px 40px;
-    background-position: center top, center top, center top;
+    background-size: auto, auto, 40px 40px, 40px 40px;
+    background-position: center top, center, center top, center top;
   }
 
   /* Phones get a quiet dot pattern instead of lines, so text stays easy to read. */
@@ -153,9 +158,10 @@
     .bg-grid-pattern {
       background-image:
         radial-gradient(ellipse 90% 35% at 50% 0%, var(--grid-glow), transparent 70%),
-        radial-gradient(circle, var(--grid-line) 1px, transparent 1.5px);
-      background-size: auto, 24px 24px;
-      background-position: center top, center top;
+        radial-gradient(ellipse 80% 30% at 100% 100%, var(--grid-glow-2), transparent 70%),
+        radial-gradient(circle, var(--grid-dot) 1px, transparent 1.5px);
+      background-size: auto, auto, 24px 24px;
+      background-position: center top, center, center top;
     }
   }
 
