@@ -39,7 +39,9 @@ interface Props {
   onChange: (pool: PrizeEntry[]) => void
 }
 
-export function PrizePoolEditor({ prizePool, tracks, asset, budget, onChange }: Props) {
+export function PrizePoolEditor({ prizePool: rawPrizePool, tracks, asset, budget, onChange }: Props) {
+  // Guard against a malformed value so the editor can never crash the whole modal.
+  const prizePool = Array.isArray(rawPrizePool) ? rawPrizePool : []
   const perTrack = prizePool.some((p) => p.track)
   const total = prizePool.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
   const remaining = Math.round((budget - total) * 1e7) / 1e7

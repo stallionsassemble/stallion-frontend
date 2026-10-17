@@ -57,18 +57,6 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { describePrizeSlot, slotsForSubmission, type PrizeSlot } from '@/lib/hackathon-prizes'
 
-type EditableHackathonForm = {
-  title: string
-  type: 'OPEN_SOURCE' | 'CLOSED_SOURCE'
-  description: string
-  startDate: string
-  endDate: string
-  totalPrizePool: string
-  currency: string
-  maxTeamSize: string
-  hostName: string
-}
-
 type HackathonView = Hackathon & {
   type?: 'OPEN_SOURCE' | 'CLOSED_SOURCE'
   ownerId?: string
@@ -108,18 +96,6 @@ type WinnerView = {
   teamName?: string
   user?: User
   submission?: SubmissionView
-}
-
-const defaultFormData: EditableHackathonForm = {
-  title: '',
-  type: 'OPEN_SOURCE',
-  description: '',
-  startDate: '',
-  endDate: '',
-  totalPrizePool: '',
-  currency: 'USDC',
-  maxTeamSize: '4',
-  hostName: '',
 }
 
 const getStatusBadgeClass = (status?: string) => {
@@ -172,18 +148,6 @@ const getDisplayName = (user?: User) => {
   return fullName || (user as any).name || user.username || user.companyName || user.email || 'Unknown user'
 }
 
-const mapHackathonToForm = (hackathon: HackathonView): EditableHackathonForm => ({
-  title: hackathon.title || '',
-  type: hackathon.type || 'OPEN_SOURCE',
-  description: hackathon.description || '',
-  startDate: hackathon.startDate ? new Date(hackathon.startDate).toISOString().slice(0, 10) : '',
-  endDate: hackathon.endDate ? new Date(hackathon.endDate).toISOString().slice(0, 10) : '',
-  totalPrizePool: String(hackathon.totalPrizePool || hackathon.totalReward || ''),
-  currency: hackathon.currency || 'USDC',
-  maxTeamSize: String(hackathon.maxTeamSize || 4),
-  hostName: hackathon.hostName || hackathon.owner?.companyName || '',
-})
-
 export default function HackathonAdminDetailsPage() {
   const params = useParams<{ id: string | string[] }>()
   const router = useRouter()
@@ -192,10 +156,7 @@ export default function HackathonAdminDetailsPage() {
 
   const hackathonId = Array.isArray(params.id) ? params.id[0] : params.id
 
-  const [isEditOpen, setIsEditOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [teamBasedParticipation, setTeamBasedParticipation] = useState(true)
-  const [formData, setFormData] = useState<EditableHackathonForm>(defaultFormData)
   const [selectedSubmission, setSelectedSubmission] = useState<SubmissionView | null>(null)
 
 
@@ -228,22 +189,17 @@ export default function HackathonAdminDetailsPage() {
     : String(winnerSlots[0]?.position ?? '')
   const winners = unwrapList<WinnerView>(winnersData)
 
-  const participantCount =
-    hackathon?.participantCount || hackathon?.participantsCount || 0
-  const submissionCount = hackathon?.submissionCount || submissions.length
-  const totalPrizePool = hackathon?.totalPrizePool || hackathon?.totalReward || 0
+  const raw = (hackathonData || {}) as any
+  const participantCount = Number(
+    raw._count?.participants ?? hackathon?.participantCount ?? hackathon?.participantsCount ?? 0
+  )
+  const submissionCount = Number(raw._count?.submissions ?? hackathon?.submissionCount ?? submissions.length)
+  const totalPrizePool = Number(raw.totalBudget ?? hackathon?.totalPrizePool ?? hackathon?.totalReward ?? 0) || 0
+  const ownerUser = raw.createdBy ?? raw.company ?? hackathon?.owner
+  const hostName = raw.company?.companyName || hackathon?.hostName || raw.title
 
-  const openEditModal = () => {
-    if (!hackathon) return
-
-    setFormData(mapHackathonToForm(hackathon))
-    setTeamBasedParticipation(
-      typeof hackathon.teamBasedParticipation === 'boolean'
-        ? hackathon.teamBasedParticipation
-        : Number(hackathon.maxTeamSize || 1) > 1
-    )
-    setIsEditOpen(true)
-  }
+  // Editing happens in the full hackathon form on the list page, so both places stay identical.
+  const openEditModal = () => router.push(`/dashboard/admin/hackathons?edit=${hackathonId}`)
 
   const invalidateHackathonQueries = async () => {
     await queryClient.invalidateQueries({ queryKey: ['hackathons'] })
@@ -261,57 +217,6 @@ export default function HackathonAdminDetailsPage() {
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : 'Failed to delete hackathon'
-      toast.error(message, { id: toastId })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleSave = async () => {
-    if (!hackathon) return
-
-    if (
-      !formData.title ||
-      !formData.description ||
-      !formData.startDate ||
-      !formData.endDate ||
-      !formData.totalPrizePool
-    ) {
-      toast.error('Please fill in all required fields')
-      return
-    }
-
-    if (new Date(formData.startDate) > new Date(formData.endDate)) {
-      toast.error('End date must be after the start date')
-      return
-    }
-
-    const payload = {
-      title: formData.title.trim(),
-      type: formData.type,
-      description: formData.description.trim(),
-      startDate: new Date(formData.startDate).toISOString(),
-      endDate: new Date(formData.endDate).toISOString(),
-      totalBudget: parseFloat(formData.totalPrizePool),
-      totalPrizePool: parseFloat(formData.totalPrizePool),
-      currency: formData.currency,
-      teamBasedParticipation,
-      maxTeamSize: teamBasedParticipation ? parseInt(formData.maxTeamSize, 10) : 1,
-      hostName: formData.hostName.trim(),
-      ownerId: hackathon.ownerId || user?.id,
-    }
-
-    setIsSubmitting(true)
-    const toastId = toast.loading('Saving hackathon changes...')
-
-    try {
-      await adminService.updateHackathon(hackathonId, payload)
-      toast.success('Hackathon updated successfully', { id: toastId })
-      setIsEditOpen(false)
-      await invalidateHackathonQueries()
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to update hackathon'
       toast.error(message, { id: toastId })
     } finally {
       setIsSubmitting(false)
@@ -415,188 +320,6 @@ export default function HackathonAdminDetailsPage() {
   return (
     <div className='space-y-6'>
 
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className='max-w-2xl border-border bg-card'>
-          <DialogHeader>
-            <DialogTitle>Edit Hackathon</DialogTitle>
-          </DialogHeader>
-
-          <div className='grid gap-4'>
-            <div className='space-y-2'>
-              <Label>Hackathon Name</Label>
-              <Input
-                value={formData.title}
-                onChange={(event) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    title: event.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label>Hackathon Type</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value) =>
-                  setFormData((previous) => ({ ...previous, type: value as 'OPEN_SOURCE' | 'CLOSED_SOURCE' }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='OPEN_SOURCE'>Open Source</SelectItem>
-                  <SelectItem value='CLOSED_SOURCE'>Closed Source</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className='space-y-2'>
-              <Label>Description</Label>
-              <Textarea
-                className='min-h-32'
-                value={formData.description}
-                onChange={(event) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    description: event.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label>Start Date</Label>
-                <Input
-                  type='date'
-                  value={formData.startDate}
-                  onChange={(event) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      startDate: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>End Date</Label>
-                <Input
-                  type='date'
-                  value={formData.endDate}
-                  onChange={(event) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      endDate: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
-
-            <div className='grid gap-4 sm:grid-cols-[1fr_120px]'>
-              <div className='space-y-2'>
-                <Label>Total Prize Pool</Label>
-                <Input
-                  value={formData.totalPrizePool}
-                  onChange={(event) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      totalPrizePool: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>Currency</Label>
-                <Select
-                  value={formData.currency}
-                  onValueChange={(value) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      currency: value,
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='USDC'>USDC</SelectItem>
-                    <SelectItem value='USGLO'>USGLO</SelectItem>
-                    <SelectItem value='XLM'>XLM</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className='flex items-center justify-between rounded-lg border border-border px-4 py-3'>
-              <div>
-                <p className='text-sm font-medium text-foreground'>
-                  Team-Based Participation
-                </p>
-                <p className='text-xs text-muted-foreground'>
-                  Allow participants to join as teams
-                </p>
-              </div>
-              <Switch
-                checked={teamBasedParticipation}
-                onCheckedChange={setTeamBasedParticipation}
-              />
-            </div>
-
-            {teamBasedParticipation ? (
-              <div className='space-y-2'>
-                <Label>Maximum Team Size</Label>
-                <Input
-                  type='number'
-                  value={formData.maxTeamSize}
-                  onChange={(event) =>
-                    setFormData((previous) => ({
-                      ...previous,
-                      maxTeamSize: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-            ) : null}
-
-            <div className='space-y-2'>
-              <Label>Host Name</Label>
-              <Input
-                value={formData.hostName}
-                onChange={(event) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    hostName: event.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div className='flex justify-end gap-3 pt-2'>
-              <Button
-                variant='outline'
-                onClick={() => setIsEditOpen(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button onClick={() => void handleSave()} disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                ) : (
-                  <Save className='mr-2 h-4 w-4' />
-                )}
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
         <div className='space-y-2'>
           <Link
@@ -686,7 +409,7 @@ export default function HackathonAdminDetailsPage() {
             <div>
               <p className='text-sm text-muted-foreground'>Prize Pool</p>
               <p className='text-2xl font-bold text-foreground'>
-                ${totalPrizePool.toLocaleString()}
+                {totalPrizePool.toLocaleString()} {hackathonAsset}
               </p>
             </div>
             <Trophy className='h-5 w-5 text-primary' />
@@ -695,9 +418,9 @@ export default function HackathonAdminDetailsPage() {
         <Card className='border-border bg-card'>
           <CardContent className='flex items-center justify-between p-5'>
             <div>
-              <p className='text-sm text-muted-foreground'>Timeline</p>
+              <p className='text-sm text-muted-foreground'>Created to deadline</p>
               <p className='text-sm font-semibold text-foreground'>
-                {formatDate(hackathon.startDate)} - {formatDate(hackathon.endDate)}
+                {formatDate(raw.createdAt)} - {formatDate(raw.deadline)}
               </p>
             </div>
             <Calendar className='h-5 w-5 text-primary' />
@@ -714,28 +437,28 @@ export default function HackathonAdminDetailsPage() {
           <div className='grid gap-4 sm:grid-cols-2'>
               <div>
                 <p className='font-medium text-foreground'>Owner</p>
-                <p>{getDisplayName(hackathon?.owner || (hackathon as any)?.createdBy || (hackathon as any)?.creator || (hackathonData as any)?.owner || (hackathonData as any)?.createdBy)}</p>
+                <p>{getDisplayName(ownerUser)}</p>
               </div>
               <div>
                 <p className='font-medium text-foreground'>Host</p>
-                <p>{hackathon?.hostName || (hackathon as any)?.host || (hackathonData as any)?.hostName || (hackathon as any)?.title || 'Not set'}</p>
+                <p>{hostName || 'Not set'}</p>
               </div>
               <div>
                 <p className='font-medium text-foreground'>Currency</p>
-                <p>{hackathon.currency || 'USDC'}</p>
+                <p>{hackathonAsset}</p>
               </div>
               <div>
                 <p className='font-medium text-foreground'>Team Rules</p>
                 <p>
-                  {hackathon.maxTeamSize && hackathon.maxTeamSize > 1
-                    ? `Teams allowed up to ${hackathon.maxTeamSize} members`
+                  {raw.teamBased && Number(raw.maxTeamSize) > 1
+                    ? `Teams allowed up to ${raw.maxTeamSize} members`
                     : 'Solo participation only'}
                 </p>
               </div>
               <div>
                 <p className='font-medium text-foreground'>Type</p>
                 <Badge variant='outline' className='mt-1 capitalize'>
-                  {hackathon.type?.replace('_', ' ') || 'OPEN SOURCE'}
+                  {String(raw.type || 'VIRTUAL').replace('_', ' ')}
                 </Badge>
               </div>
             </div>

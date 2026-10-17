@@ -58,7 +58,8 @@ import {
   Info,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAdminHackathons, useAdminHackathonsStats, useAdminUsers } from '@/lib/api/admin/queries'
 import { adminService } from '@/lib/api/admin'
 import { StepUpModal } from '@/components/admin/step-up-modal'
@@ -73,6 +74,8 @@ import { ApplicationFormBuilder } from '@/components/admin/application-form-buil
 import { ApplicationQuestion, cleanFormForSubmit, validateFormDefinition } from '@/lib/hackathon-form'
 import { PrizePoolEditor, renumberPrizes } from '@/components/admin/prize-pool-editor'
 import { TrackInput } from '@/components/admin/track-input'
+import { RequirementsInput } from '@/components/admin/requirements-input'
+import { api } from '@/lib/api'
 import { HackathonFundingNotice } from '@/components/admin/hackathon-funding-notice'
 import {
   Command,
@@ -113,9 +116,63 @@ type HackathonFormData = {
   maxTeamSize: string
   companyId: string
   tracks: string
+  requirements: string[]
   applicationForm: ApplicationQuestion[]
   submissionForm: ApplicationQuestion[]
   requiresApproval: boolean
+}
+
+const toNumber = (value: unknown) => {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : 0
+}
+
+const toList = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []
+
+const toDateInput = (value: unknown) => {
+  const date = value ? new Date(value as string) : null
+  return date && !isNaN(date.getTime()) ? date.toISOString().slice(0, 10) : ''
+}
+
+/** The list row sends the prize as { amount, currency }; the full record sends totalBudget. */
+const rowPrizeAmount = (h: any) => toNumber(h?.prizePool?.amount ?? h?.totalBudget ?? h?.totalPrizePool ?? h?.totalReward)
+const rowCurrency = (h: any) => h?.prizePool?.currency || h?.asset || h?.currency || 'USDC'
+
+/** Reads a hackathon (list row or full record) into form values without ever throwing on a missing field. */
+const toFormData = (h: any, fallback: HackathonFormData): HackathonFormData => {
+  const rawPrizes = Array.isArray(h?.prizes) ? h.prizes : Array.isArray(h?.prizePool) ? h.prizePool : []
+  const prizePool: HackathonPrize[] = rawPrizes
+    .filter((p: any) => p && typeof p === 'object')
+    .map((p: any, i: number) => ({
+      position: toNumber(p.position) || i + 1,
+      amount: toNumber(p.amount),
+      ...(typeof p.track === 'string' && p.track ? { track: p.track } : {}),
+    }))
+  const tracks = toList(h?.tracks)
+  return {
+    ...fallback,
+    title: h?.title || '',
+    slug: h?.slug || '',
+    type: h?.type || 'VIRTUAL',
+    description: h?.description || '',
+    deadline: toDateInput(h?.deadline ?? h?.submissionDeadline ?? h?.duration?.endDate ?? h?.endDate),
+    announcementDate: toDateInput(h?.announcementDate) || fallback.announcementDate,
+    totalBudget: String(rowPrizeAmount(h) || ''),
+    token: h?.token || '',
+    asset: h?.asset || h?.currency || rowCurrency(h),
+    deliverables: toList(h?.deliverables).join(', '),
+    tags: toList(h?.tags).join(', '),
+    prizePool: prizePool.length > 0 ? prizePool : fallback.prizePool,
+    teamBased: typeof h?.teamBased === 'boolean' ? h.teamBased : (h?.teamBasedParticipation ?? true),
+    maxTeamSize: String(h?.maxTeamSize || 4),
+    companyId: h?.companyId || h?.ownerId || '',
+    tracks: (tracks.length ? tracks : ['Main']).join(', '),
+    requirements: toList(h?.requirements),
+    applicationForm: Array.isArray(h?.applicationForm) ? h.applicationForm : [],
+    submissionForm: Array.isArray(h?.submissionForm) ? h.submissionForm : [],
+    requiresApproval: Boolean(h?.requiresApproval),
+  }
 }
 
 const getErrorMessage = (error: unknown, fallback: string) => {
@@ -267,6 +324,7 @@ const getStatusBadgeClass = (status?: string) => {
 }
 
 export default function HackathonAdministrationPage() {
+  const queryClient = useQueryClient()
   const defaultFormData: HackathonFormData = {
     title: '',
     slug: '',
@@ -288,6 +346,7 @@ export default function HackathonAdministrationPage() {
     maxTeamSize: '4',
     companyId: '',
     tracks: 'Main',
+    requirements: [],
     applicationForm: [],
     submissionForm: [],
     requiresApproval: false,
@@ -370,40 +429,34 @@ export default function HackathonAdministrationPage() {
     setIsCreateModalOpen(true)
   }
 
-  const openEditModal = (hackathon: HackathonAdminListItem) => {
+  const openEditModal = async (hackathon: HackathonAdminListItem) => {
+    // The list row is a summary. Load the full record so every field is filled in, and fall back
+    // to the row if that request fails.
+    let record: any = hackathon
+    try {
+      const full = await api.get(`/hackathons/${hackathon.id}`)
+      record = { ...hackathon, ...(full?.data ?? {}) }
+    } catch {
+      // keep the list row
+    }
+
     setEditingHackathon(hackathon)
-    setFormData({
-      title: hackathon.title || '',
-      slug: hackathon.slug || '',
-      type: (hackathon.type as any) || 'VIRTUAL',
-      description: hackathon.description || '',
-      deadline: (hackathon as any).submissionDeadline || hackathon.endDate ? new Date((hackathon as any).submissionDeadline || hackathon.endDate).toISOString().slice(0, 10) : '',
-      announcementDate: (hackathon as any).announcementDate ? new Date((hackathon as any).announcementDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
-      totalBudget: String(hackathon.totalBudget || hackathon.totalPrizePool || hackathon.totalReward || ''),
-      token: (hackathon as any).token || '',
-      asset: hackathon.asset || hackathon.currency || 'USDC',
-      deliverables: (hackathon.deliverables || []).join(', '),
-      tags: (hackathon.tags || []).join(', '),
-      prizePool: hackathon.prizePool || [
-        { position: 1, amount: 0 },
-        { position: 2, amount: 0 },
-        { position: 3, amount: 0 },
-      ],
-      teamBased: hackathon.teamBasedParticipation ?? true,
-      maxTeamSize: String(hackathon.maxTeamSize || 4),
-      companyId: hackathon.ownerId || '',
-      tracks: (hackathon.tracks?.length ? hackathon.tracks : ['Main']).join(', '),
-      applicationForm: ((hackathon as any).applicationForm as ApplicationQuestion[]) || [],
-      submissionForm: ((hackathon as any).submissionForm as ApplicationQuestion[]) || [],
-      requiresApproval: Boolean((hackathon as any).requiresApproval),
-    })
-    setTeamBasedParticipation(
-      typeof hackathon.teamBasedParticipation === 'boolean'
-        ? hackathon.teamBasedParticipation
-        : Number(hackathon.maxTeamSize || 1) > 1
-    )
+    setFormData(toFormData(record, defaultFormData))
+    const teamBased = typeof record.teamBased === 'boolean' ? record.teamBased : undefined
+    setTeamBasedParticipation(teamBased ?? Number(record.maxTeamSize || 1) > 1)
     setIsCreateModalOpen(true)
   }
+
+  // The hackathon detail page sends admins here with ?edit=<id> to use this same form.
+  const handledEditParam = useRef(false)
+  useEffect(() => {
+    if (handledEditParam.current) return
+    handledEditParam.current = true
+    const id = new URLSearchParams(window.location.search).get('edit')
+    if (!id) return
+    window.history.replaceState(null, '', window.location.pathname)
+    void openEditModal({ id } as HackathonAdminListItem)
+  }, [])
 
   const handleCreateHackathon = () => {
     openCreateModal()
@@ -427,6 +480,7 @@ export default function HackathonAdministrationPage() {
       description: formData.description.trim(),
       deliverables,
       tags,
+      requirements: formData.requirements.map((r) => r.trim()).filter(Boolean),
       deadline: new Date(formData.deadline).toISOString(),
       // A date that isn't in the future means "publish immediately", which the API expects as no date.
       ...(formData.announcementDate && new Date(formData.announcementDate).getTime() > Date.now()
@@ -511,6 +565,8 @@ export default function HackathonAdministrationPage() {
       )
       handleCreateModalOpenChange(false)
       refetch()
+      // Public pages and the detail view read from their own cache, so refresh those too.
+      void queryClient.invalidateQueries({ queryKey: ['hackathons'] })
     } catch (error: unknown) {
       toast.error(
         editingHackathon ? 'Could not update the hackathon' : 'Could not create the hackathon',
@@ -611,11 +667,11 @@ export default function HackathonAdministrationPage() {
           { header: 'Slug', key: 'slug' },
           { header: 'Type', key: 'type' },
           { header: 'Status', key: 'status' },
-          { header: 'Participants', key: (h: any) => h.participantsCount || 0 },
-          { header: 'Submissions', key: (h: any) => h.submissionsCount || 0 },
-          { header: 'Prize Pool', key: (h: any) => h.totalPrizePool || h.totalBudget || 0 },
-          { header: 'Currency', key: (h: any) => h.asset || h.currency || 'USDC' },
-          { header: 'Deadline', key: (h: any) => h.submissionDeadline || h.endDate ? new Date((h as any).submissionDeadline || h.endDate).toLocaleDateString() : 'N/A' },
+          { header: 'Participants', key: (h: any) => toNumber(h.numParticipants ?? h.participantsCount) },
+          { header: 'Submissions', key: (h: any) => toNumber(h.totalSubmissions ?? h.submissionsCount) },
+          { header: 'Prize Pool', key: (h: any) => rowPrizeAmount(h) },
+          { header: 'Currency', key: (h: any) => rowCurrency(h) },
+          { header: 'Deadline', key: (h: any) => { const d = toDateInput(h.deadline ?? h.duration?.endDate ?? h.endDate); return d ? new Date(d).toLocaleDateString() : 'N/A' } },
         ],
         'hackathons_export'
       )
@@ -824,7 +880,7 @@ export default function HackathonAdministrationPage() {
                         </div>
                         <div className='text-xs text-muted-foreground truncate max-w-[10rem] sm:max-w-xs'>
                           <span className='md:hidden'>
-                            ${(hackathon.totalPrizePool || hackathon.totalBudget || 0).toLocaleString()} {hackathon.asset || hackathon.currency || 'USDC'}
+                            {rowPrizeAmount(hackathon).toLocaleString()} {rowCurrency(hackathon)}
                             {' · '}
                           </span>
                           {hackathon.slug}
@@ -838,10 +894,10 @@ export default function HackathonAdministrationPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className='hidden sm:table-cell text-muted-foreground text-sm'>
-                    {(hackathon.participantsCount || 0).toLocaleString()}
+                    {toNumber((hackathon as any).numParticipants ?? hackathon.participantsCount).toLocaleString()}
                   </TableCell>
                   <TableCell className='hidden md:table-cell text-muted-foreground text-sm whitespace-nowrap'>
-                    ${(hackathon.totalPrizePool || hackathon.totalBudget || 0).toLocaleString()} {hackathon.asset || hackathon.currency || 'USDC'}
+                    {rowPrizeAmount(hackathon).toLocaleString()} {rowCurrency(hackathon)}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -1075,6 +1131,16 @@ export default function HackathonAdministrationPage() {
                       }
                     })
                   }
+                />
+              </Field>
+
+              <Field
+                label='Requirements'
+                hint='What participants need to take part. Shown on the public hackathon page. Optional.'
+              >
+                <RequirementsInput
+                  requirements={formData.requirements}
+                  onChange={(requirements) => setFormData(prev => ({ ...prev, requirements }))}
                 />
               </Field>
             </FormSection>
