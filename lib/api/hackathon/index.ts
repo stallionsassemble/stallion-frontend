@@ -23,7 +23,13 @@ export interface HackathonApplication {
   applicationData: ApplicationAnswers | null
   appliedAt: string
   reviewNote?: string | null
-  team?: { id: string; name: string; leaderId: string; _count?: { participants: number } } | null
+  team?: {
+    id: string
+    name: string
+    leaderId: string
+    leader?: { id: string; firstName?: string | null; lastName?: string | null; username?: string | null }
+    _count?: { participants: number }
+  } | null
 }
 
 export interface MyApplicationResponse {

@@ -121,7 +121,17 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
       return;
     }
     if (hasSubmitted) {
-      toast.info("You have already submitted a project for this hackathon.");
+      toast.info(
+        team
+          ? "Your team has already submitted its project."
+          : "You have already submitted a project for this hackathon."
+      );
+      return;
+    }
+    if (!isTeamLeader) {
+      toast.info("Only your team leader submits for the team", {
+        description: `${leaderName} will submit the project. You will see it here once it is in.`,
+      });
       return;
     }
     setIsSubmitModalOpen(true);
@@ -183,6 +193,11 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
     (submitDeadline !== null && !isNaN(submitDeadline.getTime()) && submitDeadline < new Date());
   const prizes = hackathon.prizePool || hackathon.prizeDistribution || [];
   const currency = hackathon.currency || hackathon.asset || "USDC";
+  const team = application?.team ?? null;
+  // In a team, one person submits for everyone: the team leader. Solo applicants submit for themselves.
+  const isTeamLeader = !team || team.leaderId === user?.id;
+  const leaderName =
+    [team?.leader?.firstName, team?.leader?.lastName].filter(Boolean).join(" ") || team?.leader?.username || "your team leader";
   const hasSubmitted = !!(myApplication?.submission || hackathon.userSubmission || hackathon.participation?.submission);
 
   return (
@@ -331,12 +346,21 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
           {applicationStatus === "REJECTED" && (
             <p className="text-sm text-red-400">Your application was not accepted this time.</p>
           )}
-          {isAccepted && !hasSubmitted && (
-            <p className="text-sm text-green-400">You are in. Submit your project before the deadline.</p>
+          {isAccepted && !hasSubmitted && isTeamLeader && (
+            <p className="text-sm text-green-400">
+              {team
+                ? "You are in. As team leader, submit one project for your team before the deadline."
+                : "You are in. Submit your project before the deadline."}
+            </p>
+          )}
+          {isAccepted && !hasSubmitted && !isTeamLeader && (
+            <p className="text-sm text-amber-400">
+              You are in. {leaderName} is your team leader and submits the project for the team. It will show here once it is in.
+            </p>
           )}
           {hasSubmitted && (
             <p className="text-sm text-green-400">
-              Your project{myApplication?.submission?.title ? ` “${myApplication.submission.title}”` : ""} has been
+              {team ? "Your team’s project" : "Your project"}{myApplication?.submission?.title ? ` “${myApplication.submission.title}”` : ""} has been
               submitted. {(hackathon as any).announcementDate
                 ? `Results will be announced on ${format(new Date((hackathon as any).announcementDate), "MMMM d, yyyy")}.`
                 : "We will announce the results soon."}
