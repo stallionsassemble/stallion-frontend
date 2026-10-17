@@ -58,6 +58,7 @@ import { useAuth } from '@/lib/store/use-auth'
 import { Hackathon } from '@/lib/types/hackathon'
 import { User } from '@/lib/types'
 import { toast } from 'sonner'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { cn } from '@/lib/utils'
 import { describePrizeSlot, slotsForSubmission, type PrizeSlot } from '@/lib/hackathon-prizes'
 
@@ -202,6 +203,11 @@ export default function OwnerHackathonDetailsPage() {
     await queryClient.invalidateQueries({ queryKey: ['hackathons'] })
   }
 
+  const judgingOpen = hackathon?.status === 'JUDGING'
+  const deadlineValue = (hackathonData as any)?.deadline
+  const deadlineLabel = deadlineValue && !isNaN(new Date(deadlineValue).getTime()) ? formatDate(deadlineValue) : ''
+  const judgingNotice = 'Judging opens when submissions close.'
+
   const handleReview = async (submissionId: string) => {
     const toastId = toast.loading('Marking submission as in review...')
     try {
@@ -209,7 +215,7 @@ export default function OwnerHackathonDetailsPage() {
       toast.success('Submission marked as in review', { id: toastId })
       await invalidateHackathonQueries()
     } catch (error: any) {
-      toast.error(error.message || 'Failed to review submission', { id: toastId })
+      toast.error(getApiErrorMessage(error, 'Failed to review submission'), { id: toastId })
     }
   }
 
@@ -233,7 +239,7 @@ export default function OwnerHackathonDetailsPage() {
       setWinnerFeedback('')
       await invalidateHackathonQueries()
     } catch (error: any) {
-      toast.error(error.message || 'Failed to select winner', { id: toastId })
+      toast.error(getApiErrorMessage(error, 'Failed to select winner'), { id: toastId })
     }
   }
 
@@ -244,7 +250,7 @@ export default function OwnerHackathonDetailsPage() {
       toast.success('Winner status removed', { id: toastId })
       await invalidateHackathonQueries()
     } catch (error: any) {
-      toast.error(error.message || 'Failed to remove winner', { id: toastId })
+      toast.error(getApiErrorMessage(error, 'Failed to remove winner'), { id: toastId })
     }
   }
 
@@ -259,7 +265,7 @@ export default function OwnerHackathonDetailsPage() {
       toast.success('Results published and payouts triggered successfully!', { id: toastId })
       await invalidateHackathonQueries()
     } catch (error: any) {
-      toast.error(error.message || 'Failed to publish results', { id: toastId })
+      toast.error(getApiErrorMessage(error, 'Failed to publish results'), { id: toastId })
     }
   }
 
@@ -414,6 +420,11 @@ export default function OwnerHackathonDetailsPage() {
             <CardTitle>Submissions</CardTitle>
           </CardHeader>
           <CardContent className='space-y-3'>
+            {!judgingOpen && hackathon.status !== 'COMPLETED' && (
+            <div className='mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-400'>
+              Judging opens when submissions close{deadlineLabel ? ` on ${deadlineLabel}` : ''}. You can review and pick winners from then.
+            </div>
+          )}
             {isSubmissionsLoading ? (
               <div className='flex justify-center py-8'>
                 <Loader2 className='h-6 w-6 animate-spin text-primary' />
@@ -452,7 +463,8 @@ export default function OwnerHackathonDetailsPage() {
                           size='sm' 
                           variant='secondary' 
                           onClick={() => handleReview(submission.id)}
-                          disabled={reviewMutation.isPending}
+                          disabled={reviewMutation.isPending || !judgingOpen}
+                          title={!judgingOpen ? judgingNotice : undefined}
                         >
                           Mark Review
                         </Button>

@@ -56,6 +56,9 @@ import { useAuth } from '@/lib/store/use-auth'
 import { Hackathon } from '@/lib/types/hackathon'
 import { User } from '@/lib/types'
 import { toast } from 'sonner'
+import { getApiErrorMessage } from '@/lib/api-error'
+import { StepUpModal } from '@/components/admin/step-up-modal'
+import { useAdminStore } from '@/lib/store/use-admin-store'
 import { cn } from '@/lib/utils'
 import { describePrizeSlot, slotsForSubmission, type PrizeSlot } from '@/lib/hackathon-prizes'
 
@@ -225,6 +228,23 @@ export default function HackathonAdminDetailsPage() {
     }
   }
 
+  const judgingOpen = hackathon?.status === 'JUDGING'
+  const deadlineValue = (hackathonData as any)?.deadline
+  const deadlineLabel = deadlineValue && !isNaN(new Date(deadlineValue).getTime()) ? formatDate(deadlineValue) : ''
+  const judgingNotice = 'Judging opens when submissions close.'
+
+  // Picking, removing winners and publishing results need a fresh 2FA check for admins.
+  const [stepUpOpen, setStepUpOpen] = useState(false)
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null)
+  const ensureStepUp = (retry: () => void) => {
+    if (useAdminStore.getState().getValidStepUpToken()) return true
+    setPendingAction(() => retry)
+    setStepUpOpen(true)
+    return false
+  }
+  const looksLikeStepUpError = (error: unknown) =>
+    /step-up|2fa|verification/i.test(getApiErrorMessage(error, ''))
+
   const handleReview = async (submissionId: string) => {
     const toastId = toast.loading('Marking submission as in review...')
     try {
@@ -232,13 +252,14 @@ export default function HackathonAdminDetailsPage() {
       toast.success('Submission marked as in review', { id: toastId })
       await invalidateHackathonQueries()
     } catch (error: any) {
-      toast.error(error.message || 'Failed to review submission', { id: toastId })
+      toast.error(getApiErrorMessage(error, 'Failed to review submission'), { id: toastId })
     }
   }
 
   const handleSelectWinner = async () => {
     if (!selectedSubmissionId) return
-    
+    if (!ensureStepUp(() => void handleSelectWinner())) return
+
     const toastId = toast.loading('Selecting winner...')
     try {
       await selectWinnerMutation.mutateAsync({
@@ -256,18 +277,21 @@ export default function HackathonAdminDetailsPage() {
       setWinnerFeedback('')
       await invalidateHackathonQueries()
     } catch (error: any) {
-      toast.error(error.message || 'Failed to select winner', { id: toastId })
+      toast.error(getApiErrorMessage(error, 'Failed to select winner'), { id: toastId })
+      if (looksLikeStepUpError(error)) setStepUpOpen(true)
     }
   }
 
   const handleRemoveWinner = async (submissionId: string) => {
+    if (!ensureStepUp(() => void handleRemoveWinner(submissionId))) return
     const toastId = toast.loading('Removing winner status...')
     try {
       await removeWinnerMutation.mutateAsync({ id: hackathonId, sid: submissionId })
       toast.success('Winner status removed', { id: toastId })
       await invalidateHackathonQueries()
     } catch (error: any) {
-      toast.error(error.message || 'Failed to remove winner', { id: toastId })
+      toast.error(getApiErrorMessage(error, 'Failed to remove winner'), { id: toastId })
+      if (looksLikeStepUpError(error)) setStepUpOpen(true)
     }
   }
 
@@ -275,6 +299,7 @@ export default function HackathonAdminDetailsPage() {
     if (!confirm('Are you sure you want to publish results? This will trigger on-chain payouts and cannot be undone.')) {
       return
     }
+    if (!ensureStepUp(() => void handlePublishResults())) return
     
     const toastId = toast.loading('Publishing results and triggering payouts...')
     try {
@@ -282,7 +307,8 @@ export default function HackathonAdminDetailsPage() {
       toast.success('Results published and payouts triggered successfully!', { id: toastId })
       await invalidateHackathonQueries()
     } catch (error: any) {
-      toast.error(error.message || 'Failed to publish results', { id: toastId })
+      toast.error(getApiErrorMessage(error, 'Failed to publish results'), { id: toastId })
+      if (looksLikeStepUpError(error)) setStepUpOpen(true)
     }
   }
 
@@ -321,6 +347,16 @@ export default function HackathonAdminDetailsPage() {
 
   return (
     <div className='space-y-6'>
+      <StepUpModal
+        open={stepUpOpen}
+        onOpenChange={setStepUpOpen}
+        onSuccess={() => {
+          const action = pendingAction
+          setPendingAction(null)
+          setStepUpOpen(false)
+          if (action) action()
+        }}
+      />
 
       <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
         <div className='space-y-2'>
@@ -358,7 +394,8 @@ export default function HackathonAdminDetailsPage() {
           <Button
             className='gap-2'
             onClick={() => void handlePublishResults()}
-            disabled={publishMutation.isPending || hackathon.status === 'COMPLETED'}
+            disabled={publishMutation.isPending || hackathon.status === 'COMPLETED' || !judgingOpen}
+            title={!judgingOpen ? judgingNotice : undefined}
           >
             {publishMutation.isPending ? (
               <Loader2 className='h-4 w-4 animate-spin' />
@@ -533,6 +570,11 @@ export default function HackathonAdminDetailsPage() {
           <CardTitle>Submissions</CardTitle>
         </CardHeader>
         <CardContent className='space-y-3'>
+          {!judgingOpen && hackathon.status !== 'COMPLETED' && (
+            <div className='mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-400'>
+              Judging opens when submissions close{deadlineLabel ? ` on ${deadlineLabel}` : ''}. You can review and pick winners from then.
+            </div>
+          )}
           {isSubmissionsLoading ? (
             <div className='flex justify-center py-10'>
               <Loader2 className='h-6 w-6 animate-spin text-primary' />
@@ -626,7 +668,8 @@ export default function HackathonAdminDetailsPage() {
                             size='sm' 
                             variant='secondary' 
                             onClick={() => handleReview(submission.id)}
-                            disabled={reviewMutation.isPending}
+                            disabled={reviewMutation.isPending || !judgingOpen}
+                            title={!judgingOpen ? judgingNotice : undefined}
                           >
                             Mark Review
                           </Button>
@@ -634,6 +677,8 @@ export default function HackathonAdminDetailsPage() {
                         <Button 
                           size='sm' 
                           className='bg-amber-600 hover:bg-amber-700 text-white'
+                          disabled={!judgingOpen}
+                          title={!judgingOpen ? judgingNotice : undefined}
                           onClick={() => {
                             setSelectedSubmissionId(submission.id)
                             setIsWinnerModalOpen(true)
@@ -649,7 +694,7 @@ export default function HackathonAdminDetailsPage() {
                         size='sm' 
                         variant='destructive'
                         onClick={() => handleRemoveWinner(submission.id)}
-                        disabled={removeWinnerMutation.isPending}
+                        disabled={removeWinnerMutation.isPending || !judgingOpen}
                       >
                         Remove Winner
                       </Button>

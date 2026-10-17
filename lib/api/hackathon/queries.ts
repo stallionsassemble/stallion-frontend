@@ -152,9 +152,10 @@ export const useSubmitProject = () => {
 
 export const useReviewSubmission = () => {
   const queryClient = useQueryClient()
-  const { stepUpToken } = useAdminStore()
   return useMutation({
     mutationFn: ({ id, sid }: { id: string; sid: string }) => {
+      // Read the token when the action runs, so a token issued a moment ago by the 2FA prompt is used.
+      const stepUpToken = useAdminStore.getState().getValidStepUpToken()
       const options = stepUpToken ? { headers: { 'x-admin-step-up-token': stepUpToken } } : undefined
       return hackathonService.reviewSubmission(id, sid, options)
     },
@@ -166,9 +167,10 @@ export const useReviewSubmission = () => {
 
 export const useSelectWinner = () => {
   const queryClient = useQueryClient()
-  const { stepUpToken } = useAdminStore()
   return useMutation({
     mutationFn: ({ id, sid, payload }: { id: string; sid: string; payload: any }) => {
+      // Read the token when the action runs, so a token issued a moment ago by the 2FA prompt is used.
+      const stepUpToken = useAdminStore.getState().getValidStepUpToken()
       const options = stepUpToken ? { headers: { 'x-admin-step-up-token': stepUpToken } } : undefined
       return hackathonService.selectWinner(id, sid, payload, options)
     },
@@ -181,9 +183,10 @@ export const useSelectWinner = () => {
 
 export const useRemoveWinner = () => {
   const queryClient = useQueryClient()
-  const { stepUpToken } = useAdminStore()
   return useMutation({
     mutationFn: ({ id, sid }: { id: string; sid: string }) => {
+      // Read the token when the action runs, so a token issued a moment ago by the 2FA prompt is used.
+      const stepUpToken = useAdminStore.getState().getValidStepUpToken()
       const options = stepUpToken ? { headers: { 'x-admin-step-up-token': stepUpToken } } : undefined
       return hackathonService.removeWinner(id, sid, options)
     },
@@ -196,9 +199,10 @@ export const useRemoveWinner = () => {
 
 export const usePublishHackathon = () => {
   const queryClient = useQueryClient()
-  const { stepUpToken } = useAdminStore()
   return useMutation({
     mutationFn: (id: string) => {
+      // Read the token when the action runs, so a token issued a moment ago by the 2FA prompt is used.
+      const stepUpToken = useAdminStore.getState().getValidStepUpToken()
       const options = stepUpToken ? { headers: { 'x-admin-step-up-token': stepUpToken } } : undefined
       return hackathonService.publishResults(id, options)
     },
