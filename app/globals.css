@@ -52,6 +52,8 @@
 
 :root {
   --radius: 0.625rem;
+  --grid-line: rgb(0 0 0 / 0.06);
+  --grid-glow: rgb(0 122 255 / 0.08);
   --background: oklch(1 0 0);
   --foreground: #171717;
   --card: oklch(1 0 0);
@@ -88,6 +90,8 @@
 
 .dark {
   color-scheme: dark;
+  --grid-line: rgb(255 255 255 / 0.045);
+  --grid-glow: rgb(0 122 255 / 0.14);
   --background: #04020e;
   --foreground: #fafafa;
   --card: #04020e;
@@ -134,6 +138,23 @@
 }
 
 @layer utilities {
+  /* Subtle blueprint grid with a soft glow at the top. Drawn in CSS so it stays crisp at any size. */
+  .bg-grid-pattern {
+    background-image:
+      radial-gradient(ellipse 70% 45% at 50% 0%, var(--grid-glow), transparent 70%),
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: auto, 40px 40px, 40px 40px;
+    background-position: center top, center top, center top;
+  }
+
+  /* Phones get larger cells so the page never looks busy. */
+  @media (max-width: 639px) {
+    .bg-grid-pattern {
+      background-size: auto, 32px 32px, 32px 32px;
+    }
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */

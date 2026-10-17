@@ -73,16 +73,6 @@ export function SubmissionDetailsModal({ isOpen, onClose, submission }: Submissi
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent showCloseButton={false} className="bg-background border border-border sm:max-w-[600px] max-h-[90vh] overflow-hidden p-0 gap-0 block font-inter shadow-2xl">
 
-          {/* Background Grid */}
-          <div
-            className="fixed inset-0 pointer-events-none z-0 opacity-20"
-            style={{
-              backgroundImage: "url('/grid-bg.png')",
-              backgroundRepeat: "repeat",
-              backgroundSize: "auto"
-            }}
-          />
-
           <div className="relative z-10 flex flex-col h-full max-h-[90vh]">
             {/* Header */}
             <div className="flex items-start justify-between p-4 sm:p-8 pb-4 shrink-0 border-b border-border">

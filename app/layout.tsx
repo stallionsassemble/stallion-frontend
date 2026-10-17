@@ -90,14 +90,7 @@ export default function RootLayout({
             <NotificationProvider>
               <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "517425817877-tu77tuts9ncakr5upo7uh6lst9o6hebs.apps.googleusercontent.com"}>
                 {/* GLOBAL GRID OVERLAY */}
-                <div
-                  className="fixed inset-0 pointer-events-none z-0 opacity-20"
-                  style={{
-                    backgroundImage: "url('/grid-bg.png')",
-                    backgroundRepeat: "repeat",
-                    backgroundSize: "auto"
-                  }}
-                />
+                <div className="fixed inset-0 pointer-events-none z-0 bg-grid-pattern" aria-hidden="true" />
                 <div className="relative z-10">
                   <AccountStatusGuard>
                     {children}

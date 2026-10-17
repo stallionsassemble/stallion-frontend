@@ -23,14 +23,7 @@ export default function DashboardLayout({
             <Header />
 
             {/* Page Content */}
-            <main
-              className='flex-1 overflow-y-auto p-4 md:p-8'
-              style={{
-                backgroundImage: "url('/grid-bg.png')",
-                backgroundRepeat: 'repeat',
-                backgroundSize: 'auto',
-              }}
-            >
+            <main className='flex-1 overflow-y-auto p-4 md:p-8 bg-grid-pattern'>
               {children}
             </main>
           </div>
