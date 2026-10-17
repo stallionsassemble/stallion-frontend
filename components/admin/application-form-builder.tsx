@@ -145,7 +145,7 @@ export function ApplicationFormBuilder({ questions, onChange, variant = 'applica
             <DropdownMenuLabel>Start from</DropdownMenuLabel>
             {isSubmission ? (
               <DropdownMenuItem className='cursor-pointer' onClick={() => applyTemplate(SUBMISSION_TEMPLATE)}>
-                Pitch deck and demo video
+                Pitch deck, GitHub and demo video
               </DropdownMenuItem>
             ) : (
               <>

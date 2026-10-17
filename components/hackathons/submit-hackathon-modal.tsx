@@ -56,6 +56,9 @@ export function SubmitHackathonModal({
   const [extraErrors, setExtraErrors] = useState<Record<string, string>>({});
   const [track, setTrack] = useState<string>(tracks.length === 1 ? tracks[0] : "");
 
+  // When the admin defines their own submission questions, GitHub, video and the like come from there.
+  const hasCustomForm = submissionQuestions.length > 0;
+
   const submitMutation = useSubmitProject();
   const createTeamMutation = useCreateTeam();
   const joinTeamMutation = useJoinTeam();
@@ -144,14 +147,8 @@ export function SubmitHackathonModal({
   };
 
   const handleSubmit = async () => {
-    if (!title || !description || !submissionLink || !githubUrl.trim()) {
-      toast.error("Please fill in all required fields", {
-        description: !githubUrl.trim() ? "A GitHub link is required." : undefined,
-      });
-      return;
-    }
-    if (!/^https?:\/\/\S+\.\S+$/i.test(githubUrl.trim())) {
-      toast.error("Enter a valid GitHub link", { description: "It should start with https://" });
+    if (!title || !description || !submissionLink) {
+      toast.error("Please fill in all required fields");
       return;
     }
     if (tracks.length > 0 && !track) {
@@ -177,7 +174,7 @@ export function SubmitHackathonModal({
         projectName: title,
         description,
         submissionLink,
-        repositoryUrl: githubUrl.trim(),
+        repositoryUrl: githubUrl.trim() || undefined,
         videoUrl: videoUrl || undefined,
         teamId: currentTeamId || undefined,
         track: track || undefined,
@@ -362,8 +359,9 @@ export function SubmitHackathonModal({
                       className="bg-white/5 border-white/10 h-12 text-white rounded-xl"
                     />
                   </div>
+                  {!hasCustomForm && (
                   <div className="space-y-2">
-                    <Label htmlFor="githubUrl" className="text-gray-400 text-xs uppercase tracking-widest font-bold">GitHub *</Label>
+                    <Label htmlFor="githubUrl" className="text-gray-400 text-xs uppercase tracking-widest font-bold">GitHub (Optional)</Label>
                     <Input
                       id="githubUrl"
                       placeholder="https://github.com/..."
@@ -372,6 +370,7 @@ export function SubmitHackathonModal({
                       className="bg-white/5 border-white/10 h-12 text-white rounded-xl"
                     />
                   </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -418,6 +417,7 @@ export function SubmitHackathonModal({
                   />
                 )}
 
+                {!hasCustomForm && (
                 <div className="space-y-2">
                   <Label htmlFor="videoUrl" className="text-gray-400 text-xs uppercase tracking-widest font-bold">Video URL (Optional)</Label>
                   <Input
@@ -428,6 +428,7 @@ export function SubmitHackathonModal({
                     className="bg-white/5 border-white/10 h-12 text-white rounded-xl"
                   />
                 </div>
+                )}
               </div>
             </div>
           )}

@@ -207,5 +207,8 @@ export const SUBMISSION_TEMPLATE: ApplicationQuestion[] = [
   q('pitch_deck', 'URL', 'Pitch deck link', 'Project materials', {
     helpText: 'Link to your slides (Google Slides, Canva, Drive, Pitch). Make sure anyone with the link can view it.',
   }),
+  q('github', 'URL', 'GitHub repository link', 'Project materials', {
+    helpText: 'Link to your code. Make sure the repository is public or shared with the judges.',
+  }),
   q('demo_video', 'URL', 'Demo video link', 'Project materials', { required: false }),
 ]
