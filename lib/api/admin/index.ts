@@ -69,7 +69,7 @@ export interface AdminApplication {
 export interface HackathonApplicationsResponse {
   data: AdminApplication[]
   meta: { total: number; page: number; limit: number; totalPages: number }
-  counts: { PENDING: number; ACCEPTED: number; REJECTED: number; WITHDRAWN: number; lookingForTeam: number }
+  counts: { PENDING: number; ACCEPTED: number; REJECTED: number; WITHDRAWN: number; lookingForTeam: number; inTeam?: number }
 }
 
 class AdminService {

@@ -1,7 +1,7 @@
 'use client'
 
 import { LinkifiedText } from '@/components/ui/linkified-text'
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Check, Download, Eye, Loader2, Search, Users, X } from 'lucide-react'
@@ -26,7 +26,7 @@ import type { ApplicationQuestion } from '@/lib/hackathon-form'
 import { useAdminStore } from '@/lib/store/use-admin-store'
 import { cn } from '@/lib/utils'
 
-type StatusFilter = 'ALL' | 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'LOOKING'
+type StatusFilter = 'ALL' | 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'LOOKING' | 'TEAMS'
 
 const STATUS_STYLES: Record<string, string> = {
   PENDING: 'bg-amber-500/20 text-amber-400 border-0 hover:bg-amber-500/20',
@@ -94,6 +94,7 @@ export function HackathonApplicationsPanel({
         search: search.trim() || undefined,
         status: filter === 'PENDING' || filter === 'ACCEPTED' || filter === 'REJECTED' ? filter : undefined,
         lookingForTeam: filter === 'LOOKING' ? true : undefined,
+        inTeam: filter === 'TEAMS' ? true : undefined,
       }),
     placeholderData: (previous) => previous,
   })
@@ -208,7 +209,12 @@ export function HackathonApplicationsPanel({
     { key: 'PENDING', label: 'Pending', count: counts?.PENDING },
     { key: 'ACCEPTED', label: 'Accepted', count: counts?.ACCEPTED },
     { key: 'REJECTED', label: 'Rejected', count: counts?.REJECTED },
-    ...(teamBased ? [{ key: 'LOOKING' as StatusFilter, label: 'Needs a team', count: counts?.lookingForTeam }] : []),
+    ...(teamBased
+      ? [
+          { key: 'LOOKING' as StatusFilter, label: 'Needs a team', count: counts?.lookingForTeam },
+          { key: 'TEAMS' as StatusFilter, label: 'In a team', count: counts?.inTeam },
+        ]
+      : []),
   ]
 
   const canSelect = (a: AdminApplication) => teamBased && !a.teamId && a.status !== 'REJECTED'
@@ -294,9 +300,18 @@ export function HackathonApplicationsPanel({
           </p>
         ) : (
           <div className='space-y-2'>
-            {applications.map((a) => (
+            {applications.map((a, index) => (
+              <Fragment key={a.id}>
+              {filter === 'TEAMS' && a.team && a.team.id !== applications[index - 1]?.team?.id && (
+                <div className='flex items-center gap-2 pt-2 text-sm font-semibold text-foreground'>
+                  <Users className='h-4 w-4 text-primary' />
+                  {a.team.name}
+                  <span className='text-xs font-normal text-muted-foreground'>
+                    {applications.filter((x) => x.team?.id === a.team?.id).length} on this page
+                  </span>
+                </div>
+              )}
               <div
-                key={a.id}
                 className='flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-3 sm:flex-row sm:items-center'
               >
                 <div className='flex min-w-0 flex-1 items-center gap-3'>
@@ -352,6 +367,7 @@ export function HackathonApplicationsPanel({
                   )}
                 </div>
               </div>
+              </Fragment>
             ))}
           </div>
         )}

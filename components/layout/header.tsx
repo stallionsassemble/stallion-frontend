@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, LogOut } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -57,7 +57,7 @@ export function Header() {
   ];
 
   return (
-    <header className="top-0 z-50 w-full ">
+    <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/95">
       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
         <Link href="/" className="flex items-center gap-2">
           <Image
@@ -130,17 +130,12 @@ export function Header() {
             className="text-white hover:bg-white/10"
             onClick={() => setIsOpen(!isOpen)}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 6H17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M4 12H20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M7 12H20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M7 18H17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            {isOpen ? <X className="h-6 w-6 text-white" /> : <Menu className="h-6 w-6 text-white" />}
             <span className="sr-only">Toggle menu</span>
           </Button>
 
           {isOpen && (
-            <div className="absolute top-20 left-0 w-full bg-black border-b border-white/10 p-6 flex flex-col gap-6 shadow-xl animate-in slide-in-from-top-5">
+            <div className="fixed inset-x-0 top-20 bottom-0 overflow-y-auto bg-background/95 backdrop-blur-xl border-t border-white/10 p-6 flex flex-col gap-6 animate-in fade-in slide-in-from-top-2">
               <nav className="flex flex-col gap-4">
                 {menuItems.map((item) => (
                   <Link

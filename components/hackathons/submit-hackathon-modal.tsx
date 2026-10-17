@@ -144,8 +144,14 @@ export function SubmitHackathonModal({
   };
 
   const handleSubmit = async () => {
-    if (!title || !description || !submissionLink) {
-      toast.error("Please fill in all required fields");
+    if (!title || !description || !submissionLink || !githubUrl.trim()) {
+      toast.error("Please fill in all required fields", {
+        description: !githubUrl.trim() ? "A GitHub link is required." : undefined,
+      });
+      return;
+    }
+    if (!/^https?:\/\/\S+\.\S+$/i.test(githubUrl.trim())) {
+      toast.error("Enter a valid GitHub link", { description: "It should start with https://" });
       return;
     }
     if (tracks.length > 0 && !track) {
@@ -171,7 +177,7 @@ export function SubmitHackathonModal({
         projectName: title,
         description,
         submissionLink,
-        repositoryUrl: githubUrl || undefined,
+        repositoryUrl: githubUrl.trim(),
         videoUrl: videoUrl || undefined,
         teamId: currentTeamId || undefined,
         track: track || undefined,
@@ -357,7 +363,7 @@ export function SubmitHackathonModal({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="githubUrl" className="text-gray-400 text-xs uppercase tracking-widest font-bold">GitHub (Optional)</Label>
+                    <Label htmlFor="githubUrl" className="text-gray-400 text-xs uppercase tracking-widest font-bold">GitHub *</Label>
                     <Input
                       id="githubUrl"
                       placeholder="https://github.com/..."
