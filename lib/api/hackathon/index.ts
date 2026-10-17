@@ -29,6 +29,7 @@ export interface HackathonApplication {
 export interface MyApplicationResponse {
   applied: boolean
   application: HackathonApplication | null
+  submission?: { id: string; title: string; createdAt: string; track?: string | null } | null
 }
 
 class HackathonService {

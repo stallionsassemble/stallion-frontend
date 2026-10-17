@@ -183,7 +183,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
     (submitDeadline !== null && !isNaN(submitDeadline.getTime()) && submitDeadline < new Date());
   const prizes = hackathon.prizePool || hackathon.prizeDistribution || [];
   const currency = hackathon.currency || hackathon.asset || "USDC";
-  const hasSubmitted = !!(hackathon.userSubmission || hackathon.participation?.submission);
+  const hasSubmitted = !!(myApplication?.submission || hackathon.userSubmission || hackathon.participation?.submission);
 
   return (
     <div className="container mx-auto px-4 py-12 space-y-12">
@@ -333,6 +333,14 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
           )}
           {isAccepted && !hasSubmitted && (
             <p className="text-sm text-green-400">You are in. Submit your project before the deadline.</p>
+          )}
+          {hasSubmitted && (
+            <p className="text-sm text-green-400">
+              Your project{myApplication?.submission?.title ? ` “${myApplication.submission.title}”` : ""} has been
+              submitted. {(hackathon as any).announcementDate
+                ? `Results will be announced on ${format(new Date((hackathon as any).announcementDate), "MMMM d, yyyy")}.`
+                : "We will announce the results soon."}
+            </p>
           )}
         </div>
       </div>
