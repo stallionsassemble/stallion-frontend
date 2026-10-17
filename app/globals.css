@@ -136,6 +136,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Chrome focuses scrollable containers for keyboard scrolling and draws a box around them.
+     Controls with a tabindex or that are links and buttons keep their focus ring. */
+  :where(div, main, section, aside):not([tabindex]):focus,
+  :where(div, main, section, aside):not([tabindex]):focus-visible {
+    outline: none;
+  }
   body {
     @apply bg-background text-foreground;
   }
