@@ -7,13 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Send, Plus, Users, UserPlus, ChevronRight, ImagePlus, X } from "lucide-react";
-import { uploadService } from "@/lib/api/upload";
+import { Loader2, Send, Plus, Users, UserPlus, ChevronRight } from "lucide-react";
 import { useSubmitProject, useCreateTeam, useJoinTeam } from "@/lib/api/hackathon/queries";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ApplicationFormFields } from "@/components/hackathons/application-form-fields";
-import { ApplicationAnswers, ApplicationQuestion, validateAnswers } from "@/lib/hackathon-form";
+import {
+  ApplicationAnswers,
+  ApplicationQuestion,
+  DEFAULT_SUBMISSION_QUESTIONS,
+  LEGACY_SUBMISSION_FIELDS,
+  validateAnswers,
+} from "@/lib/hackathon-form";
 
 interface SubmitHackathonModalProps {
   isOpen: boolean;
@@ -47,17 +52,12 @@ export function SubmitHackathonModal({
   // Form State
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [submissionLink, setSubmissionLink] = useState("");
-  const [githubUrl, setGithubUrl] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [screenshots, setScreenshots] = useState<string[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
   const [extraAnswers, setExtraAnswers] = useState<ApplicationAnswers>({});
   const [extraErrors, setExtraErrors] = useState<Record<string, string>>({});
   const [track, setTrack] = useState<string>(tracks.length === 1 ? tracks[0] : "");
 
-  // When the admin defines their own submission questions, GitHub, video and the like come from there.
-  const hasCustomForm = submissionQuestions.length > 0;
+  // The creator picks the submission fields. Title, track and description are always asked.
+  const fields = submissionQuestions.length > 0 ? submissionQuestions : DEFAULT_SUBMISSION_QUESTIONS;
 
   const submitMutation = useSubmitProject();
   const createTeamMutation = useCreateTeam();
@@ -114,40 +114,8 @@ export function SubmitHackathonModal({
     });
   };
 
-  const MAX_SCREENSHOTS = 5;
-  const MAX_IMAGE_MB = 5;
-
-  const handleScreenshots = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target;
-    const files = Array.from(input.files ?? []);
-    input.value = "";
-    if (files.length === 0) return;
-
-    const room = MAX_SCREENSHOTS - screenshots.length;
-    if (room <= 0) {
-      toast.error(`You can add up to ${MAX_SCREENSHOTS} images`);
-      return;
-    }
-    const valid = files.filter((f) => f.type.startsWith("image/") && f.size <= MAX_IMAGE_MB * 1024 * 1024);
-    if (valid.length < files.length) {
-      toast.error(`Only images up to ${MAX_IMAGE_MB} MB are allowed`);
-    }
-    const batch = valid.slice(0, room);
-    if (batch.length === 0) return;
-
-    setIsUploading(true);
-    try {
-      const uploaded = await Promise.all(batch.map((file) => uploadService.uploadImage(file)));
-      setScreenshots((prev) => [...prev, ...uploaded.map((u) => u.url)]);
-    } catch {
-      toast.error("Could not upload an image. Please try again.");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const handleSubmit = async () => {
-    if (!title || !description || !submissionLink) {
+    if (!title.trim() || !description.trim()) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -156,29 +124,32 @@ export function SubmitHackathonModal({
       return;
     }
 
-    const problems = validateAnswers(submissionQuestions, extraAnswers);
+    const problems = validateAnswers(fields, extraAnswers);
     setExtraErrors(problems);
     if (Object.keys(problems).length > 0) {
-      toast.error("Please fix the highlighted questions");
+      toast.error("Please fix the highlighted fields");
       return;
     }
 
-    const submissionData: Record<string, unknown> = {};
-    if (screenshots.length > 0) submissionData.images = screenshots;
-    if (submissionQuestions.length > 0) submissionData.answers = extraAnswers;
+    // Some answers are also copied into the older fixed fields so existing views keep working.
+    const legacy: Record<string, string> = {};
+    for (const [questionId, field] of Object.entries(LEGACY_SUBMISSION_FIELDS)) {
+      const value = extraAnswers[questionId];
+      if (typeof value === "string" && value.trim()) legacy[field] = value.trim();
+    }
 
     submitMutation.mutate({
       id: hackathonId,
       payload: {
-        title,
-        projectName: title,
-        description,
-        submissionLink,
-        repositoryUrl: githubUrl.trim() || undefined,
-        videoUrl: videoUrl || undefined,
+        title: title.trim(),
+        projectName: title.trim(),
+        description: description.trim(),
+        submissionLink: legacy.submissionLink ?? "",
+        repositoryUrl: legacy.repositoryUrl,
+        videoUrl: legacy.videoUrl,
         teamId: currentTeamId || undefined,
         track: track || undefined,
-        submissionData: Object.keys(submissionData).length > 0 ? submissionData : undefined,
+        submissionData: { answers: extraAnswers },
       },
     }, {
       onSuccess: () => {
@@ -191,11 +162,7 @@ export function SubmitHackathonModal({
   const resetForm = () => {
     setTitle("");
     setDescription("");
-    setSubmissionLink("");
-    setGithubUrl("");
-    setVideoUrl("");
     setTrack(tracks.length === 1 ? tracks[0] : "");
-    setScreenshots([]);
     setExtraAnswers({});
     setExtraErrors({});
     setTeamName("");
@@ -348,87 +315,13 @@ export function SubmitHackathonModal({
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="submissionLink" className="text-gray-400 text-xs uppercase tracking-widest font-bold">Demo Link *</Label>
-                    <Input
-                      id="submissionLink"
-                      placeholder="https://yourapp.com"
-                      value={submissionLink}
-                      onChange={(e) => setSubmissionLink(e.target.value)}
-                      className="bg-white/5 border-white/10 h-12 text-white rounded-xl"
-                    />
-                  </div>
-                  {!hasCustomForm && (
-                  <div className="space-y-2">
-                    <Label htmlFor="githubUrl" className="text-gray-400 text-xs uppercase tracking-widest font-bold">GitHub (Optional)</Label>
-                    <Input
-                      id="githubUrl"
-                      placeholder="https://github.com/..."
-                      value={githubUrl}
-                      onChange={(e) => setGithubUrl(e.target.value)}
-                      className="bg-white/5 border-white/10 h-12 text-white rounded-xl"
-                    />
-                  </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-gray-400 text-xs uppercase tracking-widest font-bold">Screenshots (Optional)</Label>
-                  <div className="flex flex-wrap gap-3">
-                    {screenshots.map((url) => (
-                      <div key={url} className="relative h-20 w-20 overflow-hidden rounded-xl border border-white/10">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={url} alt="Project screenshot" className="h-full w-full object-cover" />
-                        <button
-                          type="button"
-                          aria-label="Remove image"
-                          className="absolute right-1 top-1 rounded-full bg-black/70 p-0.5 text-white hover:bg-black"
-                          onClick={() => setScreenshots((prev) => prev.filter((u) => u !== url))}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                    {screenshots.length < MAX_SCREENSHOTS && (
-                      <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-xl border border-dashed border-white/20 text-gray-400 hover:bg-white/5">
-                        {isUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          className="hidden"
-                          disabled={isUploading}
-                          onChange={handleScreenshots}
-                        />
-                      </label>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500">Up to {MAX_SCREENSHOTS} images, {MAX_IMAGE_MB} MB each.</p>
-                </div>
-
-                {submissionQuestions.length > 0 && (
-                  <ApplicationFormFields
-                    questions={submissionQuestions}
-                    answers={extraAnswers}
-                    onChange={setExtraAnswers}
-                    errors={extraErrors}
-                    disabled={submitMutation.isPending}
-                  />
-                )}
-
-                {!hasCustomForm && (
-                <div className="space-y-2">
-                  <Label htmlFor="videoUrl" className="text-gray-400 text-xs uppercase tracking-widest font-bold">Video URL (Optional)</Label>
-                  <Input
-                    id="videoUrl"
-                    placeholder="YouTube or Loom link"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    className="bg-white/5 border-white/10 h-12 text-white rounded-xl"
-                  />
-                </div>
-                )}
+                <ApplicationFormFields
+                  questions={fields}
+                  answers={extraAnswers}
+                  onChange={setExtraAnswers}
+                  errors={extraErrors}
+                  disabled={submitMutation.isPending}
+                />
               </div>
             </div>
           )}
@@ -445,7 +338,7 @@ export function SubmitHackathonModal({
           {step === "project-details" && (
             <Button
               onClick={handleSubmit}
-              disabled={submitMutation.isPending || isUploading}
+              disabled={submitMutation.isPending}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-black rounded-full px-10 h-12 shadow-xl shadow-primary/20 sm:min-w-[170px]"
             >
               {submitMutation.isPending ? (

@@ -9,6 +9,7 @@ export type ApplicationQuestionType =
   | 'MULTI_CHOICE'
   | 'TEAM_MODE'
   | 'TEAM_NAME'
+  | 'IMAGE_UPLOAD'
 
 export interface ApplicationQuestion {
   id: string
@@ -34,6 +35,7 @@ export const QUESTION_TYPE_LABELS: Record<ApplicationQuestionType, string> = {
   MULTI_CHOICE: 'Multiple choice',
   TEAM_MODE: 'Team choice',
   TEAM_NAME: 'Team name',
+  IMAGE_UPLOAD: 'Image upload',
 }
 
 export const CHOICE_TYPES: ApplicationQuestionType[] = [
@@ -202,13 +204,72 @@ export const EMPOWERHER_TEMPLATE: ApplicationQuestion[] = [
   }),
 ]
 
-/** Extra questions asked when a project is submitted. */
-export const SUBMISSION_TEMPLATE: ApplicationQuestion[] = [
-  q('pitch_deck', 'URL', 'Pitch deck link', 'Project materials', {
-    helpText: 'Link to your slides (Google Slides, Canva, Drive, Pitch). Make sure anyone with the link can view it.',
-  }),
-  q('github', 'URL', 'GitHub repository link', 'Project materials', {
-    helpText: 'Link to your code. Make sure the repository is public or shared with the judges.',
-  }),
-  q('demo_video', 'URL', 'Demo video link', 'Project materials', { required: false }),
+/**
+ * Ready-made submission fields. The creator picks the ones they want and decides whether each is
+ * required. Title, track and description are always asked and are not part of this list.
+ */
+export const SUBMISSION_PRESETS: { key: string; label: string; question: ApplicationQuestion }[] = [
+  {
+    key: 'demo_link',
+    label: 'Demo link',
+    question: { id: 'demo_link', type: 'URL', label: 'Demo link', required: true, section: 'Project materials', helpText: 'Where can judges try your project?' },
+  },
+  {
+    key: 'pitch_deck',
+    label: 'Pitch deck',
+    question: {
+      id: 'pitch_deck',
+      type: 'URL',
+      label: 'Pitch deck link',
+      required: true, section: 'Project materials',
+      helpText: 'Link to your slides (Google Slides, Canva, Drive, Pitch). Make sure anyone with the link can view it.',
+    },
+  },
+  {
+    key: 'github',
+    label: 'GitHub repository',
+    question: {
+      id: 'github',
+      type: 'URL',
+      label: 'GitHub repository link',
+      required: false, section: 'Project materials',
+      helpText: 'Link to your code. Make sure the repository is public or shared with the judges.',
+    },
+  },
+  {
+    key: 'demo_video',
+    label: 'Demo video',
+    question: { id: 'demo_video', type: 'URL', label: 'Demo video link', required: false, section: 'Project materials', helpText: 'YouTube, Loom or similar.' },
+  },
+  {
+    key: 'screenshots',
+    label: 'Screenshots',
+    question: { id: 'screenshots', type: 'IMAGE_UPLOAD', label: 'Screenshots', required: false, section: 'Project materials', helpText: 'Up to 5 images, 5 MB each.' },
+  },
 ]
+
+/** What participants see when the creator has not set any submission fields. */
+export const DEFAULT_SUBMISSION_QUESTIONS: ApplicationQuestion[] = ['demo_link', 'github', 'screenshots', 'demo_video'].map(
+  (key) => ({ ...SUBMISSION_PRESETS.find((p) => p.key === key)!.question })
+)
+
+/** The old fixed fields that some answers are also copied into, so existing views keep working. */
+export const LEGACY_SUBMISSION_FIELDS: Record<string, 'submissionLink' | 'repositoryUrl' | 'videoUrl'> = {
+  demo_link: 'submissionLink',
+  github: 'repositoryUrl',
+  demo_video: 'videoUrl',
+}
+
+/** Image links stored in a submission, from the legacy list and from upload questions. */
+export function submissionImages(
+  submissionData: { images?: unknown; answers?: Record<string, unknown> } | null | undefined,
+  questions: ApplicationQuestion[]
+): string[] {
+  const urls: string[] = []
+  if (Array.isArray(submissionData?.images)) urls.push(...(submissionData!.images as string[]))
+  for (const q of questions) {
+    const value = submissionData?.answers?.[q.id]
+    if (q.type === 'IMAGE_UPLOAD' && Array.isArray(value)) urls.push(...(value as string[]))
+  }
+  return urls.filter((u) => typeof u === 'string')
+}

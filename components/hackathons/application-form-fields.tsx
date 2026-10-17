@@ -1,5 +1,9 @@
 'use client'
 
+import { useState } from 'react'
+import { ImagePlus, Loader2, X } from 'lucide-react'
+import { toast } from 'sonner'
+import { uploadService } from '@/lib/api/upload'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -26,6 +30,81 @@ interface Props {
   onChange: (answers: ApplicationAnswers) => void
   errors?: Record<string, string>
   disabled?: boolean
+}
+
+const MAX_IMAGES = 5
+const MAX_IMAGE_MB = 5
+
+/** Image picker that uploads right away and keeps the list of uploaded image links as the answer. */
+function ImageUploadField({
+  urls,
+  disabled,
+  onChange,
+}: {
+  urls: string[]
+  disabled?: boolean
+  onChange: (urls: string[]) => void
+}) {
+  const [uploading, setUploading] = useState(false)
+
+  const handleFiles = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.target
+    const files = Array.from(input.files ?? [])
+    input.value = ''
+    if (files.length === 0) return
+
+    const room = MAX_IMAGES - urls.length
+    if (room <= 0) {
+      toast.error(`You can add up to ${MAX_IMAGES} images`)
+      return
+    }
+    const valid = files.filter((f) => f.type.startsWith('image/') && f.size <= MAX_IMAGE_MB * 1024 * 1024)
+    if (valid.length < files.length) toast.error(`Only images up to ${MAX_IMAGE_MB} MB are allowed`)
+    const batch = valid.slice(0, room)
+    if (batch.length === 0) return
+
+    setUploading(true)
+    try {
+      const uploaded = await Promise.all(batch.map((file) => uploadService.uploadImage(file)))
+      onChange([...urls, ...uploaded.map((u) => u.url)])
+    } catch {
+      toast.error('Could not upload an image. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className='flex flex-wrap gap-3'>
+      {urls.map((url) => (
+        <div key={url} className='relative h-20 w-20 overflow-hidden rounded-lg border border-border'>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt='Uploaded' className='h-full w-full object-cover' />
+          <button
+            type='button'
+            aria-label='Remove image'
+            className='absolute right-1 top-1 rounded-full bg-black/70 p-0.5 text-white hover:bg-black'
+            onClick={() => onChange(urls.filter((u) => u !== url))}
+          >
+            <X className='h-3 w-3' />
+          </button>
+        </div>
+      ))}
+      {urls.length < MAX_IMAGES && (
+        <label className='flex h-20 w-20 cursor-pointer items-center justify-center rounded-lg border border-dashed border-input text-muted-foreground hover:bg-muted/40'>
+          {uploading ? <Loader2 className='h-5 w-5 animate-spin' /> : <ImagePlus className='h-5 w-5' />}
+          <input
+            type='file'
+            accept='image/*'
+            multiple
+            className='hidden'
+            disabled={disabled || uploading}
+            onChange={handleFiles}
+          />
+        </label>
+      )}
+    </div>
+  )
 }
 
 /** Renders an admin-defined application form. Shared by the builder preview and the apply modal. */
@@ -170,6 +249,10 @@ export function ApplicationFormFields({ questions, answers, onChange, errors = {
                       )
                     })}
                   </div>
+                )}
+
+                {q.type === 'IMAGE_UPLOAD' && (
+                  <ImageUploadField urls={selected} disabled={disabled} onChange={(urls) => set(q.id, urls)} />
                 )}
 
                 {error && <p className='text-xs text-destructive'>{error}</p>}

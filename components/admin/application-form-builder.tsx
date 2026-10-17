@@ -31,7 +31,7 @@ import {
   EMPOWERHER_TEMPLATE,
   QUESTION_TYPE_LABELS,
   SIMPLE_APPLICATION_TEMPLATE,
-  SUBMISSION_TEMPLATE,
+  SUBMISSION_PRESETS,
   createQuestion,
   hasOptions,
 } from '@/lib/hackathon-form'
@@ -51,6 +51,7 @@ const ADDABLE_TYPES: ApplicationQuestionType[] = [
   'MULTI_CHOICE',
   'TEAM_MODE',
   'TEAM_NAME',
+  'IMAGE_UPLOAD',
 ]
 
 interface Props {
@@ -64,7 +65,14 @@ export function ApplicationFormBuilder({ questions, onChange, variant = 'applica
   const isSubmission = variant === 'submission'
   const addableTypes = isSubmission
     ? ADDABLE_TYPES.filter((t) => t !== 'TEAM_MODE' && t !== 'TEAM_NAME')
-    : ADDABLE_TYPES
+    : ADDABLE_TYPES.filter((t) => t !== 'IMAGE_UPLOAD')
+
+  const addPreset = (key: string) => {
+    const preset = SUBMISSION_PRESETS.find((p) => p.key === key)
+    if (!preset || questions.some((q) => q.id === preset.question.id)) return
+    onChange([...questions, { ...preset.question }])
+    setOpenId(preset.question.id)
+  }
   const [openId, setOpenId] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
   const [previewAnswers, setPreviewAnswers] = useState<ApplicationAnswers>({})
@@ -120,10 +128,36 @@ export function ApplicationFormBuilder({ questions, onChange, variant = 'applica
   return (
     <div className='space-y-4'>
       <div className='flex flex-wrap items-center gap-2'>
+        {isSubmission && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type='button' size='sm' className='gap-1'>
+                <Plus className='h-4 w-4' /> Add a field
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='start' className='border-border bg-popover'>
+              <DropdownMenuLabel>Pick what participants submit</DropdownMenuLabel>
+              {SUBMISSION_PRESETS.map((preset) => {
+                const added = questions.some((q) => q.id === preset.question.id)
+                return (
+                  <DropdownMenuItem
+                    key={preset.key}
+                    className='cursor-pointer'
+                    disabled={added}
+                    onClick={() => addPreset(preset.key)}
+                  >
+                    {preset.label}
+                    {added && <span className='ml-auto text-xs text-muted-foreground'>Added</span>}
+                  </DropdownMenuItem>
+                )
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button type='button' variant='outline' size='sm' className='gap-1 border-input'>
-              <Plus className='h-4 w-4' /> Add question
+              <Plus className='h-4 w-4' /> {isSubmission ? 'Custom field' : 'Add question'}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='start' className='border-border bg-popover'>
@@ -144,8 +178,11 @@ export function ApplicationFormBuilder({ questions, onChange, variant = 'applica
           <DropdownMenuContent align='start' className='border-border bg-popover'>
             <DropdownMenuLabel>Start from</DropdownMenuLabel>
             {isSubmission ? (
-              <DropdownMenuItem className='cursor-pointer' onClick={() => applyTemplate(SUBMISSION_TEMPLATE)}>
-                Pitch deck, GitHub and demo video
+              <DropdownMenuItem
+                className='cursor-pointer'
+                onClick={() => applyTemplate(SUBMISSION_PRESETS.map((p) => ({ ...p.question })))}
+              >
+                All common fields
               </DropdownMenuItem>
             ) : (
               <>
@@ -183,7 +220,7 @@ export function ApplicationFormBuilder({ questions, onChange, variant = 'applica
       {questions.length === 0 ? (
         <div className='rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground'>
           {isSubmission
-            ? 'No extra questions. Participants only fill in the standard project details. Add a pitch deck link or start from a template.'
+            ? 'No fields chosen yet. Participants will see a demo link, GitHub, screenshots and demo video. Pick your own to replace them.'
             : 'No questions yet. Applicants will just register with one click. Add questions or start from a template.'}
         </div>
       ) : (

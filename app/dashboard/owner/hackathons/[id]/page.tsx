@@ -1,6 +1,7 @@
 /* eslint-disable */
 'use client'
 
+import { DEFAULT_SUBMISSION_QUESTIONS } from '@/lib/hackathon-form'
 import { LinkifiedText } from '@/components/ui/linkified-text'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -649,9 +650,23 @@ export default function OwnerHackathonDetailsPage() {
                       <ExternalLink className="h-4 w-4" /> Video: {selectedSubmission.videoUrl}
                     </a>
                   )}
-                  {((hackathon as any)?.submissionForm ?? []).map((q: { id: string; label: string }) => {
+                  {(((hackathon as any)?.submissionForm?.length ? (hackathon as any).submissionForm : DEFAULT_SUBMISSION_QUESTIONS) as { id: string; label: string; type: string }[]).map((q) => {
                     const answer = (selectedSubmission as any).submissionData?.answers?.[q.id]
                     if (!answer) return null
+                    // These are already shown above as Demo, GitHub and Video.
+                    if (['demo_link', 'github', 'demo_video'].includes(q.id)) return null
+                    if (q.type === 'IMAGE_UPLOAD') {
+                      return (
+                        <div key={q.id} className="flex flex-wrap gap-2">
+                          {(answer as string[]).map((url) => (
+                            <a key={url} href={url} target="_blank" rel="noreferrer">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={url} alt={q.label} className="h-16 w-24 rounded-md border object-cover" />
+                            </a>
+                          ))}
+                        </div>
+                      )
+                    }
                     const text = Array.isArray(answer) ? answer.join(', ') : String(answer)
                     return /^https?:\/\//i.test(text) ? (
                       <a key={q.id} href={text} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-primary hover:underline text-sm break-all">

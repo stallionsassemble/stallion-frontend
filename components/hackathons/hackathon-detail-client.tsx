@@ -6,7 +6,7 @@ import { ApplyHackathonModal } from "./apply-hackathon-modal";
 import { describePrizeSlot } from "@/lib/hackathon-prizes";
 import { rememberPostAuthRedirect } from "@/lib/post-auth-redirect";
 import { useRouter } from "next/navigation";
-import type { ApplicationQuestion } from "@/lib/hackathon-form";
+import { DEFAULT_SUBMISSION_QUESTIONS, LEGACY_SUBMISSION_FIELDS, submissionImages, type ApplicationQuestion } from "@/lib/hackathon-form";
 import { useAuth } from "@/lib/store/use-auth";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +82,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
   const submissionQuestions: ApplicationQuestion[] = Array.isArray((hackathon as any)?.submissionForm)
     ? ((hackathon as any).submissionForm as ApplicationQuestion[])
     : [];
+  const submissionFields = submissionQuestions.length > 0 ? submissionQuestions : DEFAULT_SUBMISSION_QUESTIONS;
   const applicationQuestions: ApplicationQuestion[] = Array.isArray((hackathon as any)?.applicationForm)
     ? ((hackathon as any).applicationForm as ApplicationQuestion[])
     : [];
@@ -424,9 +425,9 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                         )}
                       </div>
                       {sub.description && <p className="text-sm text-gray-400 line-clamp-3">{sub.description}</p>}
-                      {Array.isArray(sub.submissionData?.images) && sub.submissionData.images.length > 0 && (
+                      {submissionImages(sub.submissionData, submissionFields).length > 0 && (
                         <div className="flex gap-2 overflow-x-auto">
-                          {(sub.submissionData.images as string[]).slice(0, 5).map((url) => (
+                          {submissionImages(sub.submissionData, submissionFields).slice(0, 5).map((url) => (
                             <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="shrink-0">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={url} alt="" className="h-20 w-28 rounded-lg border border-white/10 object-cover" />
@@ -447,8 +448,8 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                         {sub.videoUrl && (
                           <a href={sub.videoUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Video</a>
                         )}
-                        {submissionQuestions
-                          .filter((q) => q.type === "URL" && typeof sub.submissionData?.answers?.[q.id] === "string")
+                        {submissionFields
+                          .filter((q) => q.type === "URL" && !(q.id in LEGACY_SUBMISSION_FIELDS) && typeof sub.submissionData?.answers?.[q.id] === "string")
                           .map((q) => (
                             <a key={q.id} href={sub.submissionData.answers[q.id]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                               {q.label}
