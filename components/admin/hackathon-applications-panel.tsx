@@ -1,5 +1,6 @@
 'use client'
 
+import { LinkifiedText } from '@/components/ui/linkified-text'
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -397,7 +398,7 @@ export function HackathonApplicationsPanel({
                   <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
                     {questionLabels.get(id) ?? id}
                   </p>
-                  <p className='whitespace-pre-wrap break-words text-sm text-foreground'>{formatAnswer(value) || '-'}</p>
+                  <p className='text-sm text-foreground'>{formatAnswer(value) ? <LinkifiedText text={formatAnswer(value)} /> : '-'}</p>
                 </div>
               ))}
             {viewing?.reviewNote && (

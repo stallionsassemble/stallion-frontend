@@ -206,8 +206,9 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
             <span className="font-medium">
               {(() => {
                 try {
-                  const date = hackathon.startDate ? new Date(hackathon.startDate) : null;
-                  return date && !isNaN(date.getTime()) ? format(date, "MMMM d, yyyy") : "TBA";
+                  const raw = (hackathon as any).deadline ?? (hackathon as any).submissionDeadline ?? hackathon.endDate;
+                  const date = raw ? new Date(raw) : null;
+                  return date && !isNaN(date.getTime()) ? `Submissions close ${format(date, "MMMM d, yyyy")}` : "Deadline to be announced";
                 } catch (e) {
                   return "TBA";
                 }

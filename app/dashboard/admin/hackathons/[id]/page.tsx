@@ -1,5 +1,6 @@
 'use client'
 
+import { LinkifiedText } from '@/components/ui/linkified-text'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -736,7 +737,7 @@ export default function HackathonAdminDetailsPage() {
 
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Description</p>
-                <p className="text-sm leading-relaxed mt-1">{selectedSubmission.description || 'No description provided.'}</p>
+                <p className="text-sm leading-relaxed mt-1"><LinkifiedText text={selectedSubmission.description || 'No description provided.'} /></p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

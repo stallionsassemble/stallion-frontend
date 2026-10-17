@@ -130,20 +130,11 @@ export function HackathonCard({ hackathon, className }: HackathonCardProps) {
             <span>
               {(() => {
                 try {
-                  const start = hackathon.startDate ? new Date(hackathon.startDate) : null;
-                  const end = ((hackathon as any).deadline || (hackathon as any).submissionDeadline || hackathon.endDate) ? new Date((hackathon as any).deadline || (hackathon as any).submissionDeadline || hackathon.endDate) : null;
-                  
-                  const startStr = start && !isNaN(start.getTime()) 
-                    ? format(start, "MMM d") 
-                    : "TBA";
-                  
-                  const endStr = end && !isNaN(end.getTime()) 
-                    ? format(end, "MMM d, yyyy") 
-                    : "TBA";
-                  
-                  return `${startStr} - ${endStr}`;
+                  const raw = (hackathon as any).deadline || (hackathon as any).submissionDeadline || hackathon.endDate;
+                  const end = raw ? new Date(raw) : null;
+                  return end && !isNaN(end.getTime()) ? `Closes ${format(end, "MMM d, yyyy")}` : "Deadline TBA";
                 } catch (e) {
-                  return "TBA - TBA";
+                  return "Deadline TBA";
                 }
               })()}
             </span>
