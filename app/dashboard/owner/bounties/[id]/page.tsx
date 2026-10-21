@@ -18,7 +18,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetBounty, useGetBountyWinners, useGetSubmissions } from "@/lib/api/bounties/queries";
 import { useBountyWinners, Winner } from "@/lib/hooks/use-bounty-winners";
-import { exportToCSV } from "@/lib/csv";
+import { exportBountySubmissionsCSV } from "@/lib/bounty-submissions-csv";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ArrowLeft, BadgeDollarSign, Briefcase, Calendar, Clock, Download, Edit, FileText, Filter, Gift, MessageSquare, Share2, Trophy, Users } from "lucide-react";
@@ -111,29 +111,7 @@ export default function BountyDetailsPage() {
     { id: "winners", label: `Winners (${totalWinnersCount})` },
   ];
 
-  const handleExportSubmissions = () => {
-    const fields = bounty?.submissionFields || [];
-    const formatValue = (value: unknown) =>
-      value === null || value === undefined ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
-
-    exportToCSV(
-      submissions,
-      [
-        { header: "Name", key: (s: any) => [s.user?.firstName, s.user?.lastName].filter(Boolean).join(" ") },
-        { header: "Username", key: (s: any) => s.user?.username },
-        { header: "Email", key: (s: any) => s.user?.email },
-        { header: "Wallet", key: (s: any) => s.user?.wallet?.publicKey },
-        { header: "Submission Link", key: (s: any) => s.submissionLink },
-        ...fields.map((field) => ({
-          header: field.label || field.name,
-          key: (s: any) => formatValue(s.submissionData?.[field.name]),
-        })),
-        { header: "Status", key: (s: any) => s.status },
-        { header: "Submitted At", key: (s: any) => s.createdAt },
-      ],
-      `${(bounty?.title || "bounty").replace(/[^a-z0-9]+/gi, "_")}_submissions`,
-    );
-  };
+  const handleExportSubmissions = () => exportBountySubmissionsCSV(bounty, submissions);
 
   const handleShare = () => {
     const publicUrl = `${window.location.origin}/dashboard/bounties/${params.id}`;

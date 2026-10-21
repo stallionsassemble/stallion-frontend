@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { format } from 'date-fns'
-import { ArrowLeft, Calendar, ExternalLink, FileText, Loader2, Trophy, Users } from 'lucide-react'
+import { ArrowLeft, Calendar, Download, ExternalLink, FileText, Loader2, Trophy, Users } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { LinkifiedText } from '@/components/ui/linkified-text'
 import { useGetBounty, useGetBountyWinners, useGetSubmissions } from '@/lib/api/bounties/queries'
+import { exportBountySubmissionsCSV } from '@/lib/bounty-submissions-csv'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -151,8 +152,17 @@ export default function AdminBountyDetailsPage() {
 
       <div className='grid gap-6 lg:grid-cols-[1.5fr_1fr]'>
         <Card className='border-border bg-card'>
-          <CardHeader>
+          <CardHeader className='flex flex-row items-center justify-between space-y-0'>
             <CardTitle>Submissions</CardTitle>
+            <Button
+              variant='outline'
+              size='sm'
+              className='gap-2'
+              disabled={submissions.length === 0}
+              onClick={() => exportBountySubmissionsCSV(b, submissions)}
+            >
+              <Download className='h-4 w-4' /> Export CSV
+            </Button>
           </CardHeader>
           <CardContent className='space-y-3'>
             {isLoadingSubmissions ? (
