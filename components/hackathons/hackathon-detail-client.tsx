@@ -1,12 +1,12 @@
 /* eslint-disable */
 "use client";
 
-import { useGetHackathon, useGetHackathonSubmissions, useGetHackathonWinners, useMyApplication } from "@/lib/api/hackathon/queries";
+import { useGetHackathon, useGetHackathonWinners, useMyApplication } from "@/lib/api/hackathon/queries";
 import { ApplyHackathonModal } from "./apply-hackathon-modal";
 import { describePrizeSlot } from "@/lib/hackathon-prizes";
 import { rememberPostAuthRedirect } from "@/lib/post-auth-redirect";
 import { useRouter } from "next/navigation";
-import { DEFAULT_SUBMISSION_QUESTIONS, LEGACY_SUBMISSION_FIELDS, submissionImages, type ApplicationQuestion } from "@/lib/hackathon-form";
+import { type ApplicationQuestion } from "@/lib/hackathon-form";
 import { useAuth } from "@/lib/store/use-auth";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +68,6 @@ interface HackathonDetailClientProps {
 export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
   const { data: hackathon, isLoading } = useGetHackathon(id);
   const { data: winners } = useGetHackathonWinners(id);
-  const { data: submissionsData } = useGetHackathonSubmissions(id);
   const { user } = useAuth();
   const router = useRouter();
   const { data: myApplication } = useMyApplication(hackathon?.id);
@@ -82,7 +81,6 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
   const submissionQuestions: ApplicationQuestion[] = Array.isArray((hackathon as any)?.submissionForm)
     ? ((hackathon as any).submissionForm as ApplicationQuestion[])
     : [];
-  const submissionFields = submissionQuestions.length > 0 ? submissionQuestions : DEFAULT_SUBMISSION_QUESTIONS;
   const applicationQuestions: ApplicationQuestion[] = Array.isArray((hackathon as any)?.applicationForm)
     ? ((hackathon as any).applicationForm as ApplicationQuestion[])
     : [];
@@ -184,13 +182,14 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
     );
   }
 
+  const submitDeadline = (hackathon as any).deadline ? new Date((hackathon as any).deadline) : null;
+  const deadlinePassed = submitDeadline !== null && !isNaN(submitDeadline.getTime()) && submitDeadline < new Date();
+  // Applications close with the hackathon deadline, same as the backend enforces.
   const isExpired =
+    deadlinePassed ||
     (hackathon.registrationDeadline ? new Date(hackathon.registrationDeadline) < new Date() : false) ||
     (hackathon.status !== "PUBLISHED" && hackathon.status !== undefined);
-  const submitDeadline = (hackathon as any).deadline ? new Date((hackathon as any).deadline) : null;
-  const submissionsClosed =
-    hackathon.status !== "PUBLISHED" ||
-    (submitDeadline !== null && !isNaN(submitDeadline.getTime()) && submitDeadline < new Date());
+  const submissionsClosed = hackathon.status !== "PUBLISHED" || deadlinePassed;
   const prizes = hackathon.prizePool || hackathon.prizeDistribution || [];
   const currency = hackathon.currency || hackathon.asset || "USDC";
   const team = application?.team ?? null;
@@ -431,70 +430,6 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
             </div>
           </section>
 
-          {/* Submitted projects, shown once submissions have closed */}
-          {(() => {
-            const deadline = (hackathon as any).deadline ? new Date((hackathon as any).deadline) : null;
-            const closed =
-              hackathon.status === "JUDGING" ||
-              hackathon.status === "COMPLETED" ||
-              (deadline && !isNaN(deadline.getTime()) && deadline < new Date());
-            const list: any[] = Array.isArray(submissionsData)
-              ? submissionsData
-              : ((submissionsData as any)?.data ?? []);
-            if (!closed || list.length === 0) return null;
-            return (
-              <section className="space-y-6">
-                <h2 className="text-3xl font-bold text-white">Submitted Projects</h2>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {list.map((sub: any) => (
-                    <div key={sub.id} className="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <h3 className="text-lg font-bold text-white break-words">{sub.projectName || sub.title}</h3>
-                        {sub.track && (
-                          <Badge variant="outline" className="shrink-0 border-primary/30 bg-primary/10 text-primary">
-                            {sub.track}
-                          </Badge>
-                        )}
-                      </div>
-                      {sub.description && <p className="text-sm text-gray-400 line-clamp-3">{sub.description}</p>}
-                      {submissionImages(sub.submissionData, submissionFields).length > 0 && (
-                        <div className="flex gap-2 overflow-x-auto">
-                          {submissionImages(sub.submissionData, submissionFields).slice(0, 5).map((url) => (
-                            <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={url} alt="" className="h-20 w-28 rounded-lg border border-white/10 object-cover" />
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                      <p className="text-xs text-gray-500">
-                        By {sub.team?.name ? `Team ${sub.team.name}` : [sub.user?.firstName, sub.user?.lastName].filter(Boolean).join(" ") || "a participant"}
-                      </p>
-                      <div className="flex flex-wrap gap-3 text-sm">
-                        {sub.submissionLink && (
-                          <a href={sub.submissionLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Demo</a>
-                        )}
-                        {sub.repositoryUrl && (
-                          <a href={sub.repositoryUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Code</a>
-                        )}
-                        {sub.videoUrl && (
-                          <a href={sub.videoUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Video</a>
-                        )}
-                        {submissionFields
-                          .filter((q) => q.type === "URL" && !(q.id in LEGACY_SUBMISSION_FIELDS) && typeof sub.submissionData?.answers?.[q.id] === "string")
-                          .map((q) => (
-                            <a key={q.id} href={sub.submissionData.answers[q.id]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                              {q.label}
-                            </a>
-                          ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            );
-          })()}
-
           {/* Partners section removed as per request */}
           {/* <section className="space-y-8">
             <div className="space-y-2">
@@ -671,10 +606,10 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                 <Button 
                   variant="outline"
                   className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white h-14 rounded-2xl text-lg font-bold border-dashed"
-                  disabled={hasSubmitted}
+                  disabled={hasSubmitted || submissionsClosed}
                   onClick={handleSubmitClick}
                 >
-                  {hasSubmitted ? "Submitted" : "Submit Project"}
+                  {hasSubmitted ? "Submitted" : submissionsClosed ? "Submissions Closed" : "Submit Project"}
                 </Button>
                 <div className="flex flex-col gap-3 pt-2">
                   <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium uppercase tracking-wider">
