@@ -18,9 +18,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetBounty, useGetBountyWinners, useGetSubmissions } from "@/lib/api/bounties/queries";
 import { useBountyWinners, Winner } from "@/lib/hooks/use-bounty-winners";
+import { exportToCSV } from "@/lib/csv";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ArrowLeft, BadgeDollarSign, Briefcase, Calendar, Clock, Edit, FileText, Filter, Gift, MessageSquare, Share2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, BadgeDollarSign, Briefcase, Calendar, Clock, Download, Edit, FileText, Filter, Gift, MessageSquare, Share2, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -110,6 +111,30 @@ export default function BountyDetailsPage() {
     { id: "winners", label: `Winners (${totalWinnersCount})` },
   ];
 
+  const handleExportSubmissions = () => {
+    const fields = bounty?.submissionFields || [];
+    const formatValue = (value: unknown) =>
+      value === null || value === undefined ? "" : typeof value === "object" ? JSON.stringify(value) : String(value);
+
+    exportToCSV(
+      submissions,
+      [
+        { header: "Name", key: (s: any) => [s.user?.firstName, s.user?.lastName].filter(Boolean).join(" ") },
+        { header: "Username", key: (s: any) => s.user?.username },
+        { header: "Email", key: (s: any) => s.user?.email },
+        { header: "Wallet", key: (s: any) => s.user?.wallet?.publicKey },
+        { header: "Submission Link", key: (s: any) => s.submissionLink },
+        ...fields.map((field) => ({
+          header: field.label || field.name,
+          key: (s: any) => formatValue(s.submissionData?.[field.name]),
+        })),
+        { header: "Status", key: (s: any) => s.status },
+        { header: "Submitted At", key: (s: any) => s.createdAt },
+      ],
+      `${(bounty?.title || "bounty").replace(/[^a-z0-9]+/gi, "_")}_submissions`,
+    );
+  };
+
   const handleShare = () => {
     const publicUrl = `${window.location.origin}/dashboard/bounties/${params.id}`;
     navigator.clipboard.writeText(publicUrl);
@@ -163,6 +188,15 @@ export default function BountyDetailsPage() {
         </Link>
 
         <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-transparent border-border text-foreground hover:text-white gap-2"
+            onClick={handleExportSubmissions}
+            disabled={submissions.length === 0}
+          >
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
           <CreateBountyModal existingBounty={bounty}>
             <Button variant="outline" size="sm" className="bg-transparent border-border text-foreground hover:text-white gap-2">
               <Edit className="h-4 w-4" /> Edit

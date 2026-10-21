@@ -114,7 +114,7 @@ export default function BountyDetailsPage() {
               participants={bounty.applicationCount || 0}
               dueDate={bounty.submissionDeadline ? formatDistanceToNow(new Date(bounty.submissionDeadline), { addSuffix: true }) : "No deadline"}
               tags={tags}
-              status={bounty.status === 'ACTIVE' ? 'Submission Open' : bounty.status}
+              status={bounty.status === 'ACTIVE' ? (bounty.submissionDeadline && new Date(bounty.submissionDeadline).getTime() < Date.now() ? 'Submission Closed' : 'Submission Open') : bounty.status}
               commentsCount={0} // No comments data yet
             />
           </section>
