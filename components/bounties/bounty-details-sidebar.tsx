@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/store/use-auth";
 import { ArrowRight, BadgeDollarSign, Calendar, Gift, InfoIcon, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useWithdrawApplication } from "@/lib/api/projects/queries";
 import { useUserReputation } from "@/lib/api/reputation/queries";
 import { BountyDistribution } from "@/lib/types/bounties"; // Added import
@@ -93,7 +93,19 @@ export function BountyDetailsSidebar({
   };
 
   const isMfaEnabled = user?.mfaEnabled;
-  const isExpired = (deadline ? new Date(deadline).getTime() < Date.now() : false) || 
+  const deadlineMs = deadline ? new Date(deadline).getTime() : NaN;
+  const [deadlinePassed, setDeadlinePassed] = useState(() => deadlineMs < Date.now());
+  // Close submissions the moment the deadline hits, even if the page stays open.
+  useEffect(() => {
+    if (isNaN(deadlineMs)) return;
+    const msLeft = deadlineMs - Date.now();
+    setDeadlinePassed(msLeft <= 0);
+    if (msLeft <= 0 || msLeft > 2_147_483_647) return;
+    const timer = setTimeout(() => setDeadlinePassed(true), msLeft);
+    return () => clearTimeout(timer);
+  }, [deadlineMs]);
+
+  const isExpired = deadlinePassed || 
     (status === 'COMPLETED' || status === 'CLOSED' || status === 'Completed' || status === 'Closed' || 
     (type === 'PROJECT' && status !== 'OPEN') || (type === 'BOUNTY' && status !== 'ACTIVE'));
 
@@ -182,7 +194,7 @@ export function BountyDetailsSidebar({
         <div className="p-4 pt-0">
           {isExpired ? (
             <Button disabled className="w-full bg-muted text-muted-foreground font-bold h-11 cursor-not-allowed">
-              Submissions in Review
+              {deadlinePassed && status === 'ACTIVE' ? "Submissions Closed" : "Submissions in Review"}
             </Button>
           ) : applied ? (
             applicationId ? (
