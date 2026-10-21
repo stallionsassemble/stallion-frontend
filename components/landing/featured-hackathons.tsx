@@ -7,7 +7,7 @@ import { Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export function FeaturedHackathons() {
-  const { data, isLoading } = useGetHackathons({ limit: 4 });
+  const { data, isLoading } = useGetHackathons({ limit: 4, open: true });
   
   const hackathons = data?.data || [];
 

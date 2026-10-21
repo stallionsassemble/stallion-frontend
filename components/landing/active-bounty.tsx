@@ -13,7 +13,7 @@ const ActiveBounties = () => {
   // Fetch real bounties
   const { data, isLoading } = useGetAllBounties({
     limit: 6,
-    status: 'ACTIVE',
+    open: true,
     sortBy: 'createdAt',
     sortOrder: 'desc'
   });
@@ -111,7 +111,7 @@ const ActiveBounties = () => {
             {/* Reuse this slot for Status or Deadline */}
             <div className='w-full mb-6'>
               <div className='w-full py-3 rounded-xl border border-primary/30 bg-primary/5 text-primary font-medium font-space-grotesk text-sm md:text-base'>
-                {bounty.deadline ? new Date(bounty.deadline).toLocaleDateString() : 'Active Now'}
+                {bounty.submissionDeadline ? `Closes ${new Date(bounty.submissionDeadline).toLocaleDateString()}` : 'Active Now'}
               </div>
             </div>
 

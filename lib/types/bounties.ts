@@ -114,6 +114,8 @@ export interface GetAllBountiesPayload {
     | 'title'
   sortOrder?: 'asc' | 'desc'
   status?: 'ACTIVE' | 'COMPLETED' | 'CLOSED'
+  /** Only bounties still accepting submissions */
+  open?: boolean
   currency?: string
   skills?: string
   search?: string
