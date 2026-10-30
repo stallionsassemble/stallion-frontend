@@ -47,11 +47,62 @@ const payoutAddress = (winner: AdminHackathonWinner) => {
 
 const shorten = (value: string) => (value.length > 16 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value)
 
-interface Props {
-  hackathonId: string
+type StepState = 'done' | 'current' | 'upcoming'
+
+function Step({
+  number,
+  state,
+  title,
+  children,
+}: {
+  number: number
+  state: StepState
+  title: string
+  children?: React.ReactNode
+}) {
+  return (
+    <li className='flex gap-3'>
+      <span
+        className={cn(
+          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+          state === 'done' && 'bg-green-500/20 text-green-400',
+          state === 'current' && 'bg-primary text-primary-foreground',
+          state === 'upcoming' && 'bg-muted text-muted-foreground'
+        )}
+      >
+        {state === 'done' ? <Check className='h-4 w-4' /> : number}
+      </span>
+      <div className='min-w-0 flex-1 space-y-1 pb-1'>
+        <p className={cn('text-sm font-medium', state === 'upcoming' ? 'text-muted-foreground' : 'text-foreground')}>
+          {title}
+        </p>
+        {children && <div className='text-xs text-muted-foreground'>{children}</div>}
+      </div>
+    </li>
+  )
 }
 
-export function HackathonPayoutsPanel({ hackathonId }: Props) {
+interface Props {
+  hackathonId: string
+  status?: string
+  deadlineLabel?: string
+  prizeCount: number
+  onPublish: () => void
+  isPublishing: boolean
+}
+
+/**
+ * Guides an admin through a MANUAL hackathon: pick winners, publish results, then pay each
+ * winner outside the platform and record the payment here.
+ */
+export function HackathonPayoutsPanel({
+  hackathonId,
+  status,
+  deadlineLabel,
+  prizeCount,
+  onPublish,
+  isPublishing,
+}: Props) {
   const queryClient = useQueryClient()
   const getValidStepUpToken = useAdminStore((state) => state.getValidStepUpToken)
 
@@ -74,6 +125,59 @@ export function HackathonPayoutsPanel({ hackathonId }: Props) {
   const currency = data?.hackathon.currency ?? ''
   const resultsPublished = Boolean(data?.hackathon.resultsPublished)
   const paidCount = winners.filter((w) => w.isPaid).length
+
+  const judging = status === 'JUDGING'
+  const cancelled = status === 'CANCELLED'
+  const allPrizesFilled = prizeCount > 0 && winners.length >= prizeCount
+  const allPaid = resultsPublished && winners.length > 0 && paidCount === winners.length
+
+  const steps: { state: StepState; title: string; body: React.ReactNode }[] = [
+    {
+      state: judging || resultsPublished ? 'done' : 'current',
+      title: 'Wait for submissions to close',
+      body: judging || resultsPublished
+        ? 'Submissions are closed.'
+        : `Judging opens when submissions close${deadlineLabel ? ` on ${deadlineLabel}` : ''}.`,
+    },
+    {
+      state: resultsPublished || allPrizesFilled ? 'done' : judging ? 'current' : 'upcoming',
+      title: 'Pick a winner for every prize',
+      body: (
+        <>
+          {winners.length} of {prizeCount} prizes have a winner. Use <span className='text-foreground'>Select Winner</span> on a
+          submission in the{' '}
+          <a href='#submissions' className='text-primary hover:underline'>
+            submissions list
+          </a>
+          .
+        </>
+      ),
+    },
+    {
+      state: resultsPublished ? 'done' : judging && allPrizesFilled ? 'current' : 'upcoming',
+      title: 'Publish the results',
+      body: resultsPublished ? (
+        'Results are public. Winners can see they are awaiting payment.'
+      ) : (
+        <div className='space-y-2'>
+          <p>Announces the winners publicly. No money is sent by the platform.</p>
+          {judging && allPrizesFilled && (
+            <Button size='sm' onClick={onPublish} disabled={isPublishing}>
+              {isPublishing && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+              Publish results
+            </Button>
+          )}
+        </div>
+      ),
+    },
+    {
+      state: allPaid ? 'done' : resultsPublished ? 'current' : 'upcoming',
+      title: 'Pay each winner, then mark them paid',
+      body: resultsPublished
+        ? `${paidCount} of ${winners.length} paid. Send each prize to the address shown below from your own wallet or bank, then click Mark paid and add the transaction hash or reference.`
+        : 'After publishing, send each prize yourself and record the payment here.',
+    },
+  ]
 
   // Runs a protected action, asking for 2FA first when there is no valid step-up token.
   const withStepUp = (action: (token: string) => Promise<void>) => {
@@ -149,112 +253,137 @@ export function HackathonPayoutsPanel({ hackathonId }: Props) {
         }}
       />
 
-      <CardHeader className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+      <CardHeader className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
         <div>
-          <CardTitle>Prize payouts</CardTitle>
+          <CardTitle>Manual prize payouts</CardTitle>
           <p className='mt-1 text-xs text-muted-foreground'>
-            This hackathon pays winners manually. Send each prize, then record the payment here.
+            Nothing is escrowed for this hackathon and the platform never sends the prizes. Follow these steps to finish it.
           </p>
         </div>
-        {resultsPublished && winners.length > 0 && (
+        {allPaid ? (
+          <Badge className='w-fit border-0 bg-green-500/20 text-green-400 hover:bg-green-500/20'>All prizes paid</Badge>
+        ) : resultsPublished && winners.length > 0 ? (
           <Badge variant='outline' className='w-fit'>
             {paidCount} of {winners.length} paid
           </Badge>
-        )}
+        ) : null}
       </CardHeader>
 
-      <CardContent className='space-y-3'>
-        {isLoading ? (
+      <CardContent className='space-y-6'>
+        {cancelled ? (
+          <p className='text-sm text-muted-foreground'>This hackathon was cancelled, so no prizes are due.</p>
+        ) : isLoading ? (
           <div className='flex justify-center py-8'>
             <Loader2 className='h-6 w-6 animate-spin text-primary' />
           </div>
-        ) : !resultsPublished ? (
-          <p className='text-sm text-muted-foreground'>
-            Pick the winners and publish the results. Their payouts will then appear here to be paid.
-          </p>
-        ) : winners.length === 0 ? (
-          <p className='text-sm text-muted-foreground'>No winners were recorded for this hackathon.</p>
         ) : (
-          winners.map((winner) => {
-            const destination = payoutAddress(winner)
-            const reference = winner.txHash || winner.payout?.metadata?.paymentNote
-            return (
-              <div
-                key={winner.id}
-                className='flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between'
-              >
-                <div className='min-w-0 space-y-1'>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <p className='font-medium text-foreground'>
-                      #{winner.position} · {winner.user.username || winner.user.email}
-                    </p>
-                    {winner.submission.track && (
-                      <Badge variant='secondary' className='text-xs'>
-                        {winner.submission.track}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className='text-sm font-semibold text-foreground'>
-                    {Number(winner.prizeAmount).toLocaleString()} {currency}
-                  </p>
-                  {destination ? (
-                    <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                      <span>{destination.label}:</span>
-                      <code className='rounded bg-muted px-1.5 py-0.5 font-mono text-foreground'>
-                        {shorten(destination.address)}
-                      </code>
-                      <button
-                        type='button'
-                        onClick={() => void copy(destination.address)}
-                        className='text-muted-foreground hover:text-foreground'
-                        aria-label='Copy address'
-                      >
-                        {copied === destination.address ? <Check className='h-3.5 w-3.5' /> : <Copy className='h-3.5 w-3.5' />}
-                      </button>
-                    </div>
-                  ) : (
-                    <p className='text-xs text-amber-400'>No wallet or payout address on file. Contact the winner.</p>
-                  )}
-                  {winner.isPaid && reference && (
-                    <p className='flex items-center gap-1 text-xs text-muted-foreground'>
-                      Reference:{' '}
-                      {winner.txHash && isStellarTxHash(winner.txHash) ? (
-                        <a
-                          href={explorerTxUrl(winner.txHash)}
-                          target='_blank'
-                          rel='noreferrer'
-                          className='inline-flex items-center gap-1 text-primary hover:underline'
-                        >
-                          {shorten(winner.txHash)}
-                          <ExternalLink className='h-3 w-3' />
-                        </a>
-                      ) : (
-                        <span className='break-all text-foreground'>{reference}</span>
-                      )}
-                    </p>
-                  )}
-                </div>
+          <>
+            <ol className='space-y-4'>
+              {steps.map((step, i) => (
+                <Step key={step.title} number={i + 1} state={step.state} title={step.title}>
+                  {step.body}
+                </Step>
+              ))}
+            </ol>
 
-                <div className='flex shrink-0 items-center gap-2'>
-                  <Badge
-                    className={cn(
-                      'border-0',
-                      winner.isPaid
-                        ? 'bg-green-500/20 text-green-400 hover:bg-green-500/20'
-                        : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/20'
-                    )}
-                  >
-                    {winner.isPaid ? 'Paid' : 'Awaiting payment'}
-                  </Badge>
-                  {!winner.isPaid && (
-                    <Button size='sm' onClick={() => setMarking(winner)}>
-                      Mark paid
-                    </Button>
-                  )}
-                </div>
+            {winners.length > 0 && (
+              <div className='space-y-3 border-t border-border pt-4'>
+                <p className='text-sm font-medium text-foreground'>Winners</p>
+                {winners.map((winner) => {
+                  const destination = payoutAddress(winner)
+                  const reference = winner.txHash || winner.payout?.metadata?.paymentNote
+                  return (
+                    <div
+                      key={winner.id}
+                      className='flex flex-col gap-3 rounded-lg border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between'
+                    >
+                      <div className='min-w-0 space-y-1'>
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <p className='font-medium text-foreground'>
+                            #{winner.position} · {winner.user.username || winner.user.email}
+                          </p>
+                          {winner.submission.track && (
+                            <Badge variant='secondary' className='text-xs'>
+                              {winner.submission.track}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className='text-sm font-semibold text-foreground'>
+                          {Number(winner.prizeAmount).toLocaleString()} {currency}
+                        </p>
+                        {destination ? (
+                          <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                            <span>Send to {destination.label}:</span>
+                            <code className='rounded bg-muted px-1.5 py-0.5 font-mono text-foreground'>
+                              {shorten(destination.address)}
+                            </code>
+                            <button
+                              type='button'
+                              onClick={() => void copy(destination.address)}
+                              className='text-muted-foreground hover:text-foreground'
+                              aria-label='Copy address'
+                            >
+                              {copied === destination.address ? (
+                                <Check className='h-3.5 w-3.5' />
+                              ) : (
+                                <Copy className='h-3.5 w-3.5' />
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          <p className='text-xs text-amber-400'>No wallet or payout address on file. Contact the winner.</p>
+                        )}
+                        {winner.isPaid && reference && (
+                          <p className='flex items-center gap-1 text-xs text-muted-foreground'>
+                            Reference:{' '}
+                            {winner.txHash && isStellarTxHash(winner.txHash) ? (
+                              <a
+                                href={explorerTxUrl(winner.txHash)}
+                                target='_blank'
+                                rel='noreferrer'
+                                className='inline-flex items-center gap-1 text-primary hover:underline'
+                              >
+                                {shorten(winner.txHash)}
+                                <ExternalLink className='h-3 w-3' />
+                              </a>
+                            ) : (
+                              <span className='break-all text-foreground'>{reference}</span>
+                            )}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className='flex shrink-0 items-center gap-2'>
+                        {!resultsPublished ? (
+                          <Badge variant='outline' className='text-muted-foreground'>
+                            Publish results first
+                          </Badge>
+                        ) : (
+                          <>
+                            <Badge
+                              className={cn(
+                                'border-0',
+                                winner.isPaid
+                                  ? 'bg-green-500/20 text-green-400 hover:bg-green-500/20'
+                                  : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/20'
+                              )}
+                            >
+                              {winner.isPaid ? 'Paid' : 'Awaiting payment'}
+                            </Badge>
+                            {!winner.isPaid && (
+                              <Button size='sm' onClick={() => setMarking(winner)}>
+                                Mark paid
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-            )
-          })
+            )}
+          </>
         )}
       </CardContent>
 
@@ -264,7 +393,7 @@ export function HackathonPayoutsPanel({ hackathonId }: Props) {
             <DialogTitle>Mark prize as paid</DialogTitle>
             <DialogDescription>
               {marking
-                ? `Position #${marking.position}: ${Number(marking.prizeAmount).toLocaleString()} ${currency} to ${marking.user.username || marking.user.email}. Only do this after the payment has been sent.`
+                ? `Position #${marking.position}: ${Number(marking.prizeAmount).toLocaleString()} ${currency} to ${marking.user.username || marking.user.email}. Only do this after the payment has been sent. It can't be undone.`
                 : ''}
             </DialogDescription>
           </DialogHeader>

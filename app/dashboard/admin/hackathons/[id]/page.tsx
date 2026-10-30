@@ -212,7 +212,11 @@ export default function HackathonAdminDetailsPage() {
   const openEditModal = () => router.push(`/dashboard/admin/hackathons?edit=${hackathonId}`)
 
   const invalidateHackathonQueries = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['hackathons'] })
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['hackathons'] }),
+      // The manual payouts panel tracks winners and payment status separately.
+      queryClient.invalidateQueries({ queryKey: ['admin-hackathon-winners', hackathonId] }),
+    ])
   }
 
   const handleDelete = async () => {
@@ -318,10 +322,7 @@ export default function HackathonAdminDetailsPage() {
           : 'Results published and payouts triggered successfully!',
         { id: toastId }
       )
-      await Promise.all([
-        invalidateHackathonQueries(),
-        queryClient.invalidateQueries({ queryKey: ['admin-hackathon-winners', hackathonId] }),
-      ])
+      await invalidateHackathonQueries()
     } catch (error: any) {
       toast.error(getApiErrorMessage(error, 'Failed to publish results'), { id: toastId })
       if (looksLikeStepUpError(error)) setStepUpOpen(true)
@@ -435,6 +436,18 @@ export default function HackathonAdminDetailsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Manual hackathons get a step-by-step guide up top: judge, publish, then pay and record each prize. */}
+      {isManualPayout && (
+        <HackathonPayoutsPanel
+          hackathonId={hackathonId}
+          status={hackathon.status}
+          deadlineLabel={deadlineLabel}
+          prizeCount={prizeSlots.length}
+          onPublish={() => void handlePublishResults()}
+          isPublishing={publishMutation.isPending}
+        />
+      )}
 
       <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
         <Card className='border-border bg-card'>
@@ -585,8 +598,6 @@ export default function HackathonAdminDetailsPage() {
         </Card>
       </div>
 
-      {isManualPayout && <HackathonPayoutsPanel hackathonId={hackathonId} />}
-
       <HackathonApplicationsPanel
         hackathonId={hackathonId}
         teamBased={Boolean((hackathon as any).teamBased ?? (hackathon as any).teamBasedParticipation)}
@@ -595,7 +606,7 @@ export default function HackathonAdminDetailsPage() {
         questions={Array.isArray((hackathon as any).applicationForm) ? (hackathon as any).applicationForm : []}
       />
 
-      <Card className='border-border bg-card'>
+      <Card id='submissions' className='scroll-mt-6 border-border bg-card'>
         <CardHeader>
           <CardTitle>Submissions</CardTitle>
         </CardHeader>

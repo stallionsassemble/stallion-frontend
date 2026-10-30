@@ -896,9 +896,16 @@ export default function HackathonAdministrationPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusBadgeClass(hackathon.status)}>
-                      {hackathon.status}
-                    </Badge>
+                    <div className='flex flex-wrap items-center gap-1.5'>
+                      <Badge className={getStatusBadgeClass(hackathon.status)}>
+                        {hackathon.status}
+                      </Badge>
+                      {hackathon.payoutMode === 'MANUAL' && (
+                        <Badge variant='outline' className='text-xs text-muted-foreground'>
+                          Manual payouts
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className='hidden sm:table-cell text-muted-foreground text-sm'>
                     {toNumber((hackathon as any).numParticipants ?? hackathon.participantsCount).toLocaleString()}
@@ -1231,13 +1238,24 @@ export default function HackathonAdministrationPage() {
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
-                <p className='text-xs text-muted-foreground'>
-                  {editingHackathon
-                    ? 'The payout method is fixed once the hackathon is created.'
-                    : formData.payoutMode === 'MANUAL'
-                      ? 'Nothing is escrowed. After publishing results, pay each winner yourself and record the payment on the hackathon page.'
-                      : 'The budget is escrowed on-chain from your admin wallet and paid to winners automatically when results are published.'}
-                </p>
+                {formData.payoutMode === 'MANUAL' ? (
+                  <div className='space-y-1.5 rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground'>
+                    <p className='font-medium text-foreground'>How manual payouts work</p>
+                    <ol className='list-decimal space-y-1 pl-4'>
+                      <li>Nothing is escrowed, and your admin wallet does not need the budget now.</li>
+                      <li>After the deadline, pick a winner for every prize and publish the results.</li>
+                      <li>Send each prize yourself (wallet or bank), then click Mark paid on the hackathon page.</li>
+                    </ol>
+                  </div>
+                ) : (
+                  <p className='text-xs text-muted-foreground'>
+                    The budget is escrowed on-chain from your admin wallet and paid to winners automatically when results are
+                    published.
+                  </p>
+                )}
+                {editingHackathon && (
+                  <p className='text-xs text-muted-foreground'>The payout method is fixed once the hackathon is created.</p>
+                )}
               </Field>
 
               {!editingHackathon && formData.payoutMode === 'CONTRACT' && (
