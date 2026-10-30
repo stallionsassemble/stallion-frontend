@@ -43,6 +43,7 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { adminService } from '@/lib/api/admin'
 import { HackathonApplicationsPanel } from '@/components/admin/hackathon-applications-panel'
+import { HackathonPayoutsPanel } from '@/components/admin/hackathon-payouts-panel'
 import {
   useGetHackathon,
   useGetHackathonSubmissions,
@@ -96,6 +97,9 @@ type SubmissionView = {
 type WinnerView = {
   id?: string
   rank?: number
+  // Winning submissions carry their placement, prize and payment status.
+  winner?: { position: number; prizeAmount: string | number; isPaid: boolean } | null
+  team?: { name?: string } | null
   prizeAmount?: number
   amount?: number
   teamName?: string
@@ -202,6 +206,7 @@ export default function HackathonAdminDetailsPage() {
   const totalPrizePool = Number(raw.totalBudget ?? hackathon?.totalPrizePool ?? hackathon?.totalReward ?? 0) || 0
   const ownerUser = raw.createdBy ?? raw.company ?? hackathon?.owner
   const hostName = raw.company?.companyName || hackathon?.hostName || raw.title
+  const isManualPayout = raw.payoutMode === 'MANUAL'
 
   // Editing happens in the full hackathon form on the list page, so both places stay identical.
   const openEditModal = () => router.push(`/dashboard/admin/hackathons?edit=${hackathonId}`)
@@ -296,16 +301,27 @@ export default function HackathonAdminDetailsPage() {
   }
 
   const handlePublishResults = async () => {
-    if (!confirm('Are you sure you want to publish results? This will trigger on-chain payouts and cannot be undone.')) {
+    const confirmMessage = isManualPayout
+      ? 'Publish results? Winners are announced publicly. Prizes are NOT sent automatically: pay each winner and mark them paid on this page. This cannot be undone.'
+      : 'Are you sure you want to publish results? This will trigger on-chain payouts and cannot be undone.'
+    if (!confirm(confirmMessage)) {
       return
     }
     if (!ensureStepUp(() => void handlePublishResults())) return
     
-    const toastId = toast.loading('Publishing results and triggering payouts...')
+    const toastId = toast.loading(isManualPayout ? 'Publishing results...' : 'Publishing results and triggering payouts...')
     try {
       await publishMutation.mutateAsync(hackathonId)
-      toast.success('Results published and payouts triggered successfully!', { id: toastId })
-      await invalidateHackathonQueries()
+      toast.success(
+        isManualPayout
+          ? 'Results published. Pay each winner, then mark them paid below.'
+          : 'Results published and payouts triggered successfully!',
+        { id: toastId }
+      )
+      await Promise.all([
+        invalidateHackathonQueries(),
+        queryClient.invalidateQueries({ queryKey: ['admin-hackathon-winners', hackathonId] }),
+      ])
     } catch (error: any) {
       toast.error(getApiErrorMessage(error, 'Failed to publish results'), { id: toastId })
       if (looksLikeStepUpError(error)) setStepUpOpen(true)
@@ -487,6 +503,10 @@ export default function HackathonAdminDetailsPage() {
                 <p>{hackathonAsset}</p>
               </div>
               <div>
+                <p className='font-medium text-foreground'>Payouts</p>
+                <p>{isManualPayout ? 'Manual (paid outside the platform)' : 'Smart contract (escrowed on-chain)'}</p>
+              </div>
+              <div>
                 <p className='font-medium text-foreground'>Team Rules</p>
                 <p>
                   {raw.teamBased && Number(raw.maxTeamSize) > 1
@@ -531,20 +551,28 @@ export default function HackathonAdminDetailsPage() {
                   <div className='flex items-center justify-between gap-4'>
                     <div>
                       <p className='font-medium text-foreground'>
-                        {winner.teamName ||
+                        {winner.team?.name ||
+                          winner.teamName ||
                           winner.submission?.teamName ||
                           getDisplayName(winner.user || winner.submission?.user)}
                       </p>
                       <p className='text-sm text-muted-foreground'>
-                        Rank #{winner.rank || index + 1}
+                        Rank #{winner.winner?.position || winner.rank || index + 1}
                       </p>
                     </div>
-                    <p className='font-semibold text-foreground'>
-                      $
-                      {Number(
-                        winner.prizeAmount || winner.amount || winner.submission?.prizeAmount || 0
-                      ).toLocaleString()}
-                    </p>
+                    <div className='text-right'>
+                      <p className='font-semibold text-foreground'>
+                        {Number(
+                          winner.winner?.prizeAmount || winner.prizeAmount || winner.amount || winner.submission?.prizeAmount || 0
+                        ).toLocaleString()}{' '}
+                        {hackathonAsset}
+                      </p>
+                      {winner.winner && hackathon.status === 'COMPLETED' && (
+                        <p className={cn('text-xs', winner.winner.isPaid ? 'text-green-400' : 'text-amber-400')}>
+                          {winner.winner.isPaid ? 'Paid' : 'Awaiting payment'}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))
@@ -556,6 +584,8 @@ export default function HackathonAdminDetailsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {isManualPayout && <HackathonPayoutsPanel hackathonId={hackathonId} />}
 
       <HackathonApplicationsPanel
         hackathonId={hackathonId}

@@ -126,6 +126,9 @@ export interface AdminHackathon {
   deliverables?: string[]
   tags?: string[]
   prizePool?: Array<{ position: number; amount: number }>
+  // CONTRACT: prizes escrowed on-chain. MANUAL: winners are paid outside the platform.
+  payoutMode?: 'CONTRACT' | 'MANUAL'
+  resultsPublished?: boolean
 }
 
 export interface SocialAuthDto {

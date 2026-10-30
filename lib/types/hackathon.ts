@@ -31,6 +31,8 @@ export interface Hackathon {
   asset?: string
   prizeDistribution?: PrizeDistribution[]
   prizePool?: PrizeDistribution[]
+  // CONTRACT: prizes escrowed in the Soroban contract. MANUAL: organizers pay winners directly.
+  payoutMode?: 'CONTRACT' | 'MANUAL'
   
   tracks?: string[]
   requirements?: string[]
@@ -106,6 +108,13 @@ export interface HackathonSubmission {
   feedback?: string
   rank?: number
   prizeAmount?: number
+  // Present on winning submissions. prizeAmount is a decimal string from the API.
+  winner?: {
+    position: number
+    prizeAmount: string | number
+    isPaid: boolean
+    paidAt?: string | null
+  } | null
   createdAt: string
   updatedAt: string
 }

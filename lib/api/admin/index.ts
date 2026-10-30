@@ -66,6 +66,39 @@ export interface AdminApplication {
   }
 }
 
+export interface AdminHackathonWinner {
+  id: string
+  position: number
+  prizeAmount: string
+  isPaid: boolean
+  paidAt: string | null
+  txHash: string | null
+  submission: { id: string; track: string | null }
+  payout: {
+    id: string
+    status: 'PENDING_APPROVAL' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'DISPUTED'
+    txHash: string | null
+    metadata: { paymentNote?: string } | null
+  } | null
+  user: {
+    id: string
+    username: string | null
+    email: string
+    wallet: { publicKey: string } | null
+    payoutMethods: { name: string; publicKey: string; isDefault: boolean }[]
+  }
+}
+
+export interface AdminHackathonWinnersResponse {
+  hackathon: {
+    id: string
+    payoutMode: 'CONTRACT' | 'MANUAL'
+    currency: string
+    resultsPublished: boolean
+  }
+  winners: AdminHackathonWinner[]
+}
+
 export interface HackathonApplicationsResponse {
   data: AdminApplication[]
   meta: { total: number; page: number; limit: number; totalPages: number }
@@ -201,6 +234,26 @@ class AdminService {
     const response = await api.post<{ refundedAmount: string; txHash: string }>(
       '/admin/hackathons/recover-escrow',
       { contractHackathonId },
+      withStepUp(stepUpToken)
+    )
+    return response.data
+  }
+
+  // --- Hackathon payouts (MANUAL hackathons) ---
+  async getHackathonWinners(hackathonId: string) {
+    const response = await api.get<AdminHackathonWinnersResponse>(`/admin/hackathons/${hackathonId}/winners`)
+    return response.data
+  }
+
+  async markHackathonWinnerPaid(
+    hackathonId: string,
+    winnerId: string,
+    payload: { txHash?: string; note?: string },
+    stepUpToken?: string
+  ) {
+    const response = await api.post(
+      `/admin/hackathons/${hackathonId}/winners/${winnerId}/mark-paid`,
+      payload,
       withStepUp(stepUpToken)
     )
     return response.data

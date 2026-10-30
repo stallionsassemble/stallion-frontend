@@ -120,6 +120,7 @@ type HackathonFormData = {
   applicationForm: ApplicationQuestion[]
   submissionForm: ApplicationQuestion[]
   requiresApproval: boolean
+  payoutMode: 'CONTRACT' | 'MANUAL'
 }
 
 const toNumber = (value: unknown) => {
@@ -172,6 +173,7 @@ const toFormData = (h: any, fallback: HackathonFormData): HackathonFormData => {
     applicationForm: Array.isArray(h?.applicationForm) ? h.applicationForm : [],
     submissionForm: Array.isArray(h?.submissionForm) ? h.submissionForm : [],
     requiresApproval: Boolean(h?.requiresApproval),
+    payoutMode: h?.payoutMode === 'MANUAL' ? 'MANUAL' : 'CONTRACT',
   }
 }
 
@@ -350,6 +352,7 @@ export default function HackathonAdministrationPage() {
     applicationForm: [],
     submissionForm: [],
     requiresApproval: false,
+    payoutMode: 'CONTRACT',
   }
 
   const [currentPage, setCurrentPage] = useState(1)
@@ -497,6 +500,8 @@ export default function HackathonAdministrationPage() {
       applicationForm: cleanFormForSubmit(formData.applicationForm),
       submissionForm: cleanFormForSubmit(formData.submissionForm),
       requiresApproval: formData.requiresApproval,
+      // Fixed at creation: the backend rejects changing it later.
+      ...(editingHackathon ? {} : { payoutMode: formData.payoutMode }),
     }
   }
 
@@ -560,7 +565,9 @@ export default function HackathonAdministrationPage() {
           id: toastId,
           description: editingHackathon
             ? undefined
-            : `${formData.totalBudget} ${formData.asset} has been placed in escrow on-chain.`,
+            : formData.payoutMode === 'MANUAL'
+              ? 'Payouts are manual: after publishing results, pay each winner and mark them paid on the hackathon page.'
+              : `${formData.totalBudget} ${formData.asset} has been placed in escrow on-chain.`,
         }
       )
       handleCreateModalOpenChange(false)
@@ -1038,7 +1045,9 @@ export default function HackathonAdministrationPage() {
             <DialogDescription className='text-sm text-muted-foreground'>
               {editingHackathon
                 ? 'Update the details of this hackathon.'
-                : 'The prize budget is locked in escrow when you create the hackathon.'}
+                : formData.payoutMode === 'MANUAL'
+                  ? 'Prizes are paid manually after results are published. Nothing is escrowed.'
+                  : 'The prize budget is locked in escrow when you create the hackathon.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -1198,7 +1207,40 @@ export default function HackathonAdministrationPage() {
                 </Field>
               </div>
 
-              {!editingHackathon && (
+              <Field label='How are winners paid?'>
+                <Tabs
+                  value={formData.payoutMode}
+                  onValueChange={(v) =>
+                    !editingHackathon && setFormData(prev => ({ ...prev, payoutMode: v as HackathonFormData['payoutMode'] }))
+                  }
+                >
+                  <TabsList className='grid w-full grid-cols-2 h-11 p-1 rounded-lg bg-muted-foreground/20'>
+                    <TabsTrigger
+                      value='CONTRACT'
+                      disabled={Boolean(editingHackathon)}
+                      className='text-xs sm:text-sm font-medium rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'
+                    >
+                      Smart contract
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value='MANUAL'
+                      disabled={Boolean(editingHackathon)}
+                      className='text-xs sm:text-sm font-medium rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'
+                    >
+                      Manual
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <p className='text-xs text-muted-foreground'>
+                  {editingHackathon
+                    ? 'The payout method is fixed once the hackathon is created.'
+                    : formData.payoutMode === 'MANUAL'
+                      ? 'Nothing is escrowed. After publishing results, pay each winner yourself and record the payment on the hackathon page.'
+                      : 'The budget is escrowed on-chain from your admin wallet and paid to winners automatically when results are published.'}
+                </p>
+              </Field>
+
+              {!editingHackathon && formData.payoutMode === 'CONTRACT' && (
                 <HackathonFundingNotice budget={parseFloat(formData.totalBudget)} asset={formData.asset} />
               )}
 

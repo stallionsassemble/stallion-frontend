@@ -192,6 +192,7 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
   const submissionsClosed = hackathon.status !== "PUBLISHED" || deadlinePassed;
   const prizes = hackathon.prizePool || hackathon.prizeDistribution || [];
   const currency = hackathon.currency || hackathon.asset || "USDC";
+  const isManualPayout = hackathon.payoutMode === "MANUAL";
   const team = application?.team ?? null;
   // In a team, one person submits for everyone: the team leader. Solo applicants submit for themselves.
   const isTeamLeader = !team || team.leaderId === user?.id;
@@ -482,12 +483,16 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                 Winners
               </h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(winners as unknown as any[]).map((winner: any, i: number) => (
+                {(winners as unknown as any[]).map((winner: any, i: number) => {
+                  const rank = winner.winner?.position ?? winner.rank;
+                  const prizeAmount = winner.winner?.prizeAmount ?? winner.prizeAmount;
+                  const isPaid = winner.winner?.isPaid;
+                  return (
                   <Card key={i} className="bg-primary/5 border-primary/20 group hover:border-primary/50 transition-all overflow-hidden rounded-2xl shadow-xl">
                     <div className="bg-primary/10 p-4 border-b border-primary/20 flex items-center justify-between">
-                      <span className="text-2xl">{getAwardIcon(winner.rank)}</span>
+                      <span className="text-2xl">{getAwardIcon(rank)}</span>
                       <Badge className="bg-primary text-primary-foreground font-bold rounded-full">
-                        {getAwardLabel(winner.rank)}
+                        {getAwardLabel(rank)}
                       </Badge>
                     </div>
                     <CardContent className="p-6 space-y-4">
@@ -500,17 +505,31 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                           )}
                         </div>
                         <div>
-                          <p className="text-white font-bold">{winner.teamName || winner.user?.username || "Anonymous"}</p>
-                          <p className="text-xs text-gray-500">Project: {winner.projectTitle || "Submitted Project"}</p>
+                          <p className="text-white font-bold">{winner.team?.name || winner.teamName || winner.user?.username || "Anonymous"}</p>
+                          <p className="text-xs text-gray-500">Project: {winner.projectName || winner.title || "Submitted Project"}</p>
                         </div>
                       </div>
                       <div className="pt-4 border-t border-white/5 flex items-center justify-between">
                         <span className="text-sm text-gray-400">Prize Won</span>
-                        <span className="text-xl font-bold text-primary">{winner.prizeAmount?.toLocaleString()} {currency}</span>
+                        <span className="text-xl font-bold text-primary">{prizeAmount != null ? Number(prizeAmount).toLocaleString() : "—"} {currency}</span>
                       </div>
+                      {isPaid !== undefined && (
+                        <div className="flex items-center justify-end">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "rounded-full text-xs",
+                              isPaid ? "border-green-500/40 text-green-400" : "border-amber-500/40 text-amber-400",
+                            )}
+                          >
+                            {isPaid ? "Prize paid" : "Payment pending"}
+                          </Badge>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             </section>
           )}
@@ -614,11 +633,11 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
                 <div className="flex flex-col gap-3 pt-2">
                   <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium uppercase tracking-wider">
                     <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    <span>Verified Project & Smart Contracts</span>
+                    <span>{isManualPayout ? "Verified Project" : "Verified Project & Smart Contracts"}</span>
                   </div>
                   <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium uppercase tracking-wider">
                     <ShieldCheck className="h-3 w-3 text-blue-500" />
-                    <span>Secure Payouts via Soroban</span>
+                    <span>{isManualPayout ? "Prizes paid directly by the organizers" : "Secure Payouts via Soroban"}</span>
                   </div>
                 </div>
               </div>
