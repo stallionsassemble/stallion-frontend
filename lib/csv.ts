@@ -43,3 +43,25 @@ export function exportToCSV<T>(
   link.click()
   document.body.removeChild(link)
 }
+
+export type CSVCell = string | number | boolean | null | undefined
+
+/**
+ * Downloads a CSV built from raw rows, for files with several sections (e.g. a report with a
+ * summary followed by tables). Starts with a BOM so Excel reads non-ASCII names correctly.
+ */
+export function exportRowsToCSV(rows: CSVCell[][], filename: string) {
+  const csvContent = rows
+    .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+    .join('\n')
+  const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', `${filename}.csv`)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}

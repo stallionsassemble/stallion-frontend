@@ -99,6 +99,82 @@ export interface AdminHackathonWinnersResponse {
   winners: AdminHackathonWinner[]
 }
 
+export interface AdminReport {
+  range: { from: string; to: string }
+  summary: {
+    newUsers: number
+    newContributors: number
+    newProjectOwners: number
+    bountiesCreated: number
+    projectsCreated: number
+    hackathonsCreated: number
+    payoutsCompleted: number
+    payoutsCompletedUsd: number
+    payoutsPending: number
+  }
+  truncated: Record<'users' | 'bounties' | 'projects' | 'hackathons' | 'payouts', boolean>
+  users: Array<{
+    id: string
+    name: string
+    username: string | null
+    email: string
+    companyName: string | null
+    role: string
+    status: string
+    country: string | null
+    joinedAt: string
+  }>
+  bounties: Array<{
+    id: string
+    title: string
+    owner: string
+    reward: string
+    currency: string
+    status: string
+    submissions: number
+    winners: number
+    submissionDeadline: string
+    createdAt: string
+  }>
+  projects: Array<{
+    id: string
+    title: string
+    owner: string
+    reward: string
+    status: string
+    peopleNeeded: number
+    accepted: number
+    applications: number
+    createdAt: string
+  }>
+  hackathons: Array<{
+    id: string
+    title: string
+    host: string
+    budget: number | null
+    currency: string
+    payoutMode: string
+    status: string
+    participants: number
+    submissions: number
+    deadline: string
+    createdAt: string
+  }>
+  payouts: Array<{
+    id: string
+    source: string
+    sourceTitle: string
+    contributor: string
+    amount: number | null
+    token: string
+    usdAmount: number | null
+    status: string
+    requestedAt: string
+    completedAt: string | null
+    txHash: string | null
+  }>
+}
+
 export interface HackathonApplicationsResponse {
   data: AdminApplication[]
   meta: { total: number; page: number; limit: number; totalPages: number }
@@ -107,6 +183,12 @@ export interface HackathonApplicationsResponse {
 
 class AdminService {
   // --- Dashboard ---
+  // Platform activity between two dates (`to` is exclusive), for the dashboard report export.
+  async getReport(from: string, to: string) {
+    const response = await api.get<AdminReport>('/admin/reports', { params: { from, to } })
+    return response.data
+  }
+
   async getDashboardStats() {
     return adminSdk.adminControllerGetDashboard() as unknown as Promise<AdminDashboardStats>
   }

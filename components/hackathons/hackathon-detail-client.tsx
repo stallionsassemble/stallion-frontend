@@ -3,7 +3,7 @@
 
 import { useGetHackathon, useGetHackathonWinners, useMyApplication } from "@/lib/api/hackathon/queries";
 import { ApplyHackathonModal } from "./apply-hackathon-modal";
-import { describePrizeSlot } from "@/lib/hackathon-prizes";
+import { describePrizeSlot, ordinal } from "@/lib/hackathon-prizes";
 import { rememberPostAuthRedirect } from "@/lib/post-auth-redirect";
 import { useRouter } from "next/navigation";
 import { type ApplicationQuestion } from "@/lib/hackathon-form";
@@ -46,9 +46,7 @@ const getAwardIcon = (rank: number) => {
 const getAwardLabel = (rank: number) => {
   switch (rank) {
     case 1: return "Winner";
-    case 2: return "1st Runner-up";
-    case 3: return "2nd Runner-up";
-    default: return `${rank - 1}th Runner-up`;
+    default: return `${ordinal(rank - 1)} Runner-up`;
   }
 }
 
