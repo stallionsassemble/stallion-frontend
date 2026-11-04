@@ -45,7 +45,7 @@ const errorMessage = (error: unknown, fallback: string) => {
 }
 
 const displayName = (a: AdminApplication) =>
-  [a.user.firstName, a.user.lastName].filter(Boolean).join(' ') || a.user.username
+  [a.user.firstName, a.user.lastName].filter(Boolean).join(' ') || a.user.username || a.user.email || 'Unnamed user'
 
 const formatAnswer = (value: string | string[] | undefined) =>
   Array.isArray(value) ? value.join(', ') : (value ?? '')
