@@ -59,6 +59,15 @@ const getAwardColor = (rank: number) => {
   }
 }
 
+/**
+ * Hackathons whose application intake is closed by hand while they stay live.
+ * Mirrors the backend's APPLICATIONS_CLOSED_HACKATHON_IDS; submissions stay open
+ * for accepted participants. Remove an id here to reopen applications.
+ */
+const APPLICATIONS_CLOSED_HACKATHON_IDS = new Set<string>([
+  "cmvxtv3xe000l0klnb8go9zly", // EmpowerHer: Building the Agent Economy
+]);
+
 interface HackathonDetailClientProps {
   id: string;
 }
@@ -183,8 +192,12 @@ export function HackathonDetailClient({ id }: HackathonDetailClientProps) {
   const submitDeadline = (hackathon as any).deadline ? new Date((hackathon as any).deadline) : null;
   const deadlinePassed = submitDeadline !== null && !isNaN(submitDeadline.getTime()) && submitDeadline < new Date();
   // Applications close with the hackathon deadline, same as the backend enforces.
+  // Some live hackathons also have intake closed by hand (mirrors the backend's
+  // APPLICATIONS_CLOSED_HACKATHON_IDS); submissions stay open for accepted participants.
+  const applicationsClosedManually = APPLICATIONS_CLOSED_HACKATHON_IDS.has(hackathon.id);
   const isExpired =
     deadlinePassed ||
+    applicationsClosedManually ||
     (hackathon.registrationDeadline ? new Date(hackathon.registrationDeadline) < new Date() : false) ||
     (hackathon.status !== "PUBLISHED" && hackathon.status !== undefined);
   const submissionsClosed = hackathon.status !== "PUBLISHED" || deadlinePassed;
